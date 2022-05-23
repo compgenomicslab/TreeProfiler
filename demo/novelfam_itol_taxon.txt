@@ -1,4 +1,4 @@
-ID	fraction_uncultivated_cultivated	abundance	Taxon
+FeatureID	fraction_uncultivated_cultivated	abundance	Taxon
 o__Halobacteriales	0.26366559485530544	12.402777777777779	d__Archaea; p__Halobacteriota; c__Halobacteria; o__Halobacteriales
 o__Methanomicrobiales	0.6309523809523809	19.72961373390558	d__Archaea; p__Halobacteriota; c__Methanomicrobia; o__Methanomicrobiales
 o__Bog-38	1	119.93181818181819	d__Archaea; p__Halobacteriota; c__Bog-38; o__Bog-38
