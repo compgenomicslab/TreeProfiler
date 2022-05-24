@@ -7,14 +7,16 @@ from ete4 import GTDBTaxa, NCBITaxa
 from ete4 import random_color
 from collections import defaultdict
 import csv
+import sys
 
-NEWICK = '/home/deng/Projects/metatree_drawer/metatreedrawer/demo/tree_novel.nw' #phylotree.nw
+#NEWICK = '/home/deng/Projects/metatree_drawer/metatreedrawer/demo/tree_novel.nw' #phylotree.nw
 METADATA = '/home/deng/Projects/metatree_drawer/metatreedrawer/demo/novelfam_itol_taxon.txt' #emapper_annotations.tsv
 LAYOUTTEMPLATE = '/home/deng/Projects/metatree_drawer/metatreedrawer/ete4layout_template.txt'
 
+NEWICK = sys.argv[1]
 def ete4_parse(newick):
     try:
-        tree = PhyloTree(newick)        
+        tree = PhyloTree(newick)
     except NewickError:
         try:
             tree = PhyloTree(newick, format=1)            
@@ -42,9 +44,6 @@ def parse_metadata(metadata):
         metatable.append(row)
     tsv_file.close()
     return metatable, read_tsv.fieldnames
-
-def get_layout_metadata(template):
-    return layout_info
 
 def load_metadata_to_tree(tree, metadata):
     annotations, columns = parse_metadata(metadata)
@@ -76,7 +75,7 @@ def get_level(node, level=1):
 def get_layout_text(prop, color, column):
     def layout_new(node):
         nstyle = NodeStyle()
-        if node.is_leaf():
+        if node:
             # Modify the aspect of the root node
             #nstyle["fgcolor"] = "green" # yellow
             #level = get_level(node)
@@ -109,19 +108,34 @@ def get_layout_lca_rects(column):
     layout_fn.contains_aligned_face = True
     return layout_fn
 
+def get_layout_numeric():
+    return
+
 def set_layouts(props, aligned_faces=True):
     layouts = []
     column = 0 
     column_colors = random_color(num=len(props))
     for prop in props:
+        print(prop)
         layout = TreeLayout(name=prop, ns=get_layout_text(prop, column_colors[column], column), aligned_faces=True)
         layouts.append(layout)
         column += 1
     return layouts
 
-def annotate_tree(tree):
+def annotate_tree(newick, sp_delimiter=None, sp_field=0):
     gtdb = GTDBTaxa()
-    gtdb.annotate_tree(tree,  taxid_attr="name")
+    
+    def return_spcode(leaf):
+        try:
+            return leaf.name.split(sp_delimiter)[sp_field]
+        except IndexError:
+            return leaf.name
+
+    tree = PhyloTree(newick)
+    # extract sp codes from leaf names
+    #tree.set_species_naming_function(return_spcode)
+    
+    gtdb.annotate_tree(tree, taxid_attr="name")
 
     # Annotate tree for smartview visualization
     set_sci_names = set()
@@ -151,13 +165,14 @@ def annotate_tree(tree):
     return tree
 
 tree = ete4_parse(NEWICK)
-#tree = annotate_tree(tree)
+# gtdb= GTDBTaxa()
+# gtdb.annotate_tree(tree, taxid_attr="name")
+tree = annotate_tree(tree.write(properties=[]))
 
 if METADATA:
     tree, columns = load_metadata_to_tree(tree, METADATA)
     #print(tree.write(format=1, properties=[]))
     layouts = set_layouts(columns[1:])
-
-#layouts.append(LayoutLastCommonAncestor())
-
+#layouts = []
+layouts.append(LayoutLastCommonAncestor())
 tree.explore(tree_name='example',layouts=layouts)
