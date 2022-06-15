@@ -3,6 +3,7 @@ from ete4.parser.newick import NewickError
 from ete4.smartview import TreeStyle, NodeStyle, TreeLayout
 from ete4.smartview.renderer.faces import RectFace, TextFace, AttrFace, CircleFace, SeqMotifFace, ScaleFace
 from ete4.smartview.renderer.layouts.ncbi_taxonomy_layouts import LayoutLastCommonAncestor
+from ete4.smartview.renderer.layouts.staple_layouts import LayoutPlot, LayoutBarplot
 from ete4 import GTDBTaxa, NCBITaxa
 from ete4 import random_color
 
@@ -145,35 +146,63 @@ def get_layout_lca_rects(column):
     layout_fn.contains_aligned_face = True
     return layout_fn
 
-def get_layout_numeric(prop, column):
+def get_layout_numeric(prop, column, normalized=True):
     redgradient = color_gradient(0.95, 0.6, 10)
-    
-    def layout_new(node):
-        nstyle = NodeStyle()
-        if node.props.get(prop):
-            # Modify the aspect of the root node
-            #nstyle["fgcolor"] = "green" # yellow
-            #level = get_level(node)
-            normalize_value = float(node.props.get(prop))
-            color_idx = int(normalize_value*10)
-            color = redgradient[10-color_idx]
-            nstyle["fgcolor"] = color 
-            nstyle["size"] = color_idx
-            
-            node.set_style(nstyle)
-            # node.add_face(TextFace(f'{node.props.get(prop)}',
-            #             color=color), 
-            #             column=column, position='aligned')
-    return layout_new
+    if normalized:
+        def layout_new(node):
+            nstyle = NodeStyle()
+            if node.props.get(prop):
+                # Modify the aspect of the root node
+                #nstyle["fgcolor"] = "green" # yellow
+                #level = get_level(node)
+                normalize_value = float(node.props.get(prop))
+                color_idx = int(normalize_value*10)
+                color = redgradient[10-color_idx]
+                nstyle["fgcolor"] = color 
+                nstyle["size"] = color_idx
+                
+                node.set_style(nstyle)
+                # node.add_face(TextFace(f'{node.props.get(prop)}',
+                #             color=color), 
+                #             column=column, position='aligned')
+        return layout_new
+    else:
+        def layout_new(node):
+            nstyle = NodeStyle()
+            if node.props.get(prop):
+                # Modify the aspect of the root node
+                #nstyle["fgcolor"] = "green" # yellow
+                #level = get_level(node)
+                unnormalize_value = float(node.props.get(prop))
+                color = column_colors[column]
+                nstyle["fgcolor"] = color 
+                nstyle["size"] = unnormalize_value
+                
+                node.set_style(nstyle)
+                # node.add_face(TextFace(f'{node.props.get(prop)}',
+                #             color=color), 
+                #             column=column, position='aligned')
+        return layout_new
+
 
 def set_layouts(matrix, aligned_faces=True):
+    import numpy as np
+    global column_colors, column
     props = list(matrix.keys())[1:3] # exclude the first column, which is name
     layouts = []
     column = 0 
     column_colors = random_color(num=len(props))
     for prop in props:
-        layout = TreeLayout(name=prop, ns=get_layout_numeric(prop, column), aligned_faces=True)
-        
+        try:
+            array = np.array(matrix[prop], dtype = float)
+            layout_numeric_unnormalized = TreeLayout(name=prop+'_unnormalized', ns=get_layout_numeric(prop, column, normalized=False), aligned_faces=True)
+            layout_numeric_normalized = TreeLayout(name=prop+'_normalizTreeLayouted', ns=get_layout_numeric(prop, column, normalized=True), aligned_faces=True)
+
+            layouts.append(layout_numeric_unnormalized)
+            layouts.append(layout_numeric_normalized)
+        except ValueError:
+            layout_text = TreeLayout(name=prop+'_text', ns=get_layout_text(prop, column_colors[column], column), aligned_faces=True)
+            layouts.append(layout_text)
         # try:
         #     #print(column_colors[column])
         #     #raw_array = list(map(float, matrix[prop]))
@@ -184,7 +213,8 @@ def set_layouts(matrix, aligned_faces=True):
         #     pass
         #layout = TreeLayout(name=prop, ns=get_layout_text(prop, column_colors[column], column), aligned_faces=True)
         
-        layouts.append(layout)
+        #layouts.append(layout_text)
+        
         column += 1
     return layouts
 
@@ -234,13 +264,17 @@ tree = ete4_parse(NEWICK)
 # gtdb= GTDBTaxa()
 # gtdb.annotate_tree(tree, taxid_attr="name")
 #tree = annotate_tree(tree)
-#tree = annotate_tree(tree.write(properties=[]))
 
 if METADATA:
     tree, matrix = load_metadata_to_tree(tree, METADATA)
     #print(tree.write(format=1, properties=[]))
-    layouts = set_layouts(matrix)
+    #layouts = set_layouts(matrix)
 
-#layouts = []
+from ete4.smartview.renderer.layouts import ncbi_taxonomy_layouts, evol_events_layouts
+
+layouts = [
+    LayoutBarplot(name="fraction_uncultivated_cultivated")
+    ]
 #layouts.append(LayoutLastCommonAncestor())
+
 tree.explore(tree_name='example',layouts=layouts)
