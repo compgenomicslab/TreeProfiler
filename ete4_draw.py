@@ -273,7 +273,8 @@ if METADATA:
 from ete4.smartview.renderer.layouts import ncbi_taxonomy_layouts, evol_events_layouts
 
 layouts = [
-    LayoutBarplot(name="fraction_uncultivated_cultivated")
+    LayoutBarplot(name="fraction_uncultivated_cultivated", size_prop="fraction_uncultivated_cultivated"),
+    #LayoutBarplot(name="abundance", size_prop="abundance")
     ]
 #layouts.append(LayoutLastCommonAncestor())
 
