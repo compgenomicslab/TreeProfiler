@@ -8,7 +8,7 @@ import csv
 import sys
 
 NEWICK = sys.argv[1]
-#METADATA = sys.argv[2]
+METADATA = sys.argv[2]
 
 def ete4_parse(newick):
     try:
@@ -98,7 +98,7 @@ def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field
             pass
         else:
             n.name = n.props.get("sci_name", "")
-        print(n.name)
+
     return tree
 
 
@@ -111,8 +111,8 @@ tree = PhyloTree(clean_newick)
 tree = annotate_taxa(tree)
 
 # Metadata annotation
-#if METADATA:
-#    tree, matrix = load_metadata_to_tree(tree, METADATA)
+if METADATA:
+   tree, matrix = load_metadata_to_tree(tree, METADATA)
 
 #collapse
 def collapse(tree, prop, cutoff):
@@ -130,4 +130,4 @@ layouts = [
 ]
 
 
-#tree.explore(tree_name='example',layouts=[])
+tree.explore(tree_name='example',layouts=[])
