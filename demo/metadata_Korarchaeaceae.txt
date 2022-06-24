@@ -1,4 +1,4 @@
-FeatureID	fraction_uncultivated_cultivated	abundance	Taxon	Random_type
+FeatureID	random_fraction	random_abundance	Random_type
 f__Korarchaeaceae	0.031	221	high
 g__Korarchaeum	0.573	11	medium
 s__Methanodesulfokores_washburnensis	0.964	2	high
