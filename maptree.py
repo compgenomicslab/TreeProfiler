@@ -9,6 +9,7 @@ import sys
 
 NEWICK = sys.argv[1]
 METADATA = sys.argv[2]
+#METADATA = ''
 
 def ete4_parse(newick):
     try:
@@ -115,19 +116,31 @@ if METADATA:
    tree, matrix = load_metadata_to_tree(tree, METADATA)
 
 #collapse
-def collapse(tree, prop, cutoff):
-    return 
+def collapse_cutoff(prop, cutoff):
+    def layout_fn(node):
+        if node.props.get(prop):
+            if not node.is_root() and float(node.props.get(prop)) < float(cutoff):
+                #node = node.up
+                #face_name = TextFace(node.props.get('sci_name'), color="red")
+                node.sm_style["draw_descendants"] = False
+                node.sm_style["outline_color"] = "red"
+                #node.add_face(face_name, column = 5,  position = 'aligned', collapsed_only=True)
+    layout_fn.name = "collapse_" + prop
+    return layout_fn
+    return
+
 
 from taxon_layouts import *
 layouts = [
-    #TreeLayout(name='collapse_kingdom', ns=collapse_kingdom()),
-    #TreeLayout(name='collapse_phylum', ns=collapse_phylum()),
-    #TreeLayout(name='collapse_class', ns=collapse_class()),
-    #TreeLayout(name='collapse_order', ns=collapse_order()),
-    #TreeLayout(name='collapse_family', ns=collapse_family()),
-    #TreeLayout(name='collapse_genus', ns=collapse_genus()),
-    #TreeLayout(name='collapse_species', ns=collapse_species()),
+    # TreeLayout(name="collapse_cutoff", ns=collapse_cutoff('random_fraction', 0.70)),
+    # TreeLayout(name='collapse_kingdom', ns=collapse_kingdom()),
+    # TreeLayout(name='collapse_phylum', ns=collapse_phylum()),
+    # TreeLayout(name='collapse_class', ns=collapse_class()),
+    # TreeLayout(name='collapse_order', ns=collapse_order()),
+    # TreeLayout(name='collapse_family', ns=collapse_family()),
+    # TreeLayout(name='collapse_genus', ns=collapse_genus()),
+    # TreeLayout(name='collapse_species', ns=collapse_species()),
 ]
 
 
-tree.explore(tree_name='example',layouts=[])
+tree.explore(tree_name='example',layouts=layouts, port=5000)
