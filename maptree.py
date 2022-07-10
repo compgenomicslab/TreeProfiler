@@ -60,18 +60,19 @@ def load_metadata_to_tree(tree, metadata):
     columns = list(matrix.keys()) # load header of columns 
     for annotation in annotations:
         gene_name = next(iter(annotation.items()))[1] #gene name must be on first column
-        try:
-            target_node = tree.search_nodes(name=gene_name)[0]
-            for _ in range(1, len(columns)):
-                
-                # if columns[_] == 'seed_ortholog': # only for emapper annotations
-                #     taxid, gene = annotation[columns[_]].split('.', 1)
-                #     target_node.add_prop('taxid', taxid)
-                #     target_node.add_prop('gene', gene)
+        #GB_GCA_011332645.1
+        
+        target_nodes = list(filter(lambda n: n.name==gene_name and n.is_leaf(), tree.traverse()))
+        target_node = target_nodes[0]
 
-                target_node.add_prop(columns[_], annotation[columns[_]])
-        except:
-            pass
+        #target_node = tree.search_nodes(name=gene_name)[0] # funny 
+        
+        for _ in range(1, len(columns)):
+            # if columns[_] == 'seed_ortholog': # only for emapper annotations
+            #     taxid, gene = annotation[columns[_]].split('.', 1)
+            #     target_node.add_prop('taxid', taxid)
+            #     target_node.add_prop('gene', gene)
+            target_node.add_prop(columns[_], annotation[columns[_]])
 
     return tree, matrix
 
@@ -113,33 +114,39 @@ tree = annotate_taxa(tree)
 
 # Metadata annotation
 if METADATA:
-   tree, matrix = load_metadata_to_tree(tree, METADATA)
+    tree, matrix = load_metadata_to_tree(tree, METADATA)
+    props = list(matrix.keys())
 
-#collapse
-def collapse_cutoff(prop, cutoff):
-    def layout_fn(node):
-        if node.props.get(prop):
-            if not node.is_root() and float(node.props.get(prop)) < float(cutoff):
-                #node = node.up
-                #face_name = TextFace(node.props.get('sci_name'), color="red")
-                node.sm_style["draw_descendants"] = False
-                node.sm_style["outline_color"] = "red"
-                #node.add_face(face_name, column = 5,  position = 'aligned', collapsed_only=True)
-    layout_fn.name = "collapse_" + prop
-    return layout_fn
-    return
+# abundance calculation
+prop = props[1]
 
+from collections import Counter,defaultdict
+import numpy as np
+
+def children_prop_array(node, prop):
+    array = [n.props.get(prop) for n in node.children if n.props.get(prop)] 
+    return array
+
+def get_stats(array):
+    np_array = np.float_(array)
+    return np_array.sum(), np_array.mean(), np_array.max(), np_array.min()
+
+    
+# for node in tree.iter_leaves():
+#     print(node.name, node.props.get("random_abundance"))
+
+#tree.write(properties=[],outfile="test.nw",format=1)
 
 from taxon_layouts import *
 layouts = [
     # TreeLayout(name="collapse_cutoff", ns=collapse_cutoff('random_fraction', 0.70)),
-    # TreeLayout(name='collapse_kingdom', ns=collapse_kingdom()),
-    # TreeLayout(name='collapse_phylum', ns=collapse_phylum()),
-    # TreeLayout(name='collapse_class', ns=collapse_class()),
-    # TreeLayout(name='collapse_order', ns=collapse_order()),
-    # TreeLayout(name='collapse_family', ns=collapse_family()),
-    # TreeLayout(name='collapse_genus', ns=collapse_genus()),
-    # TreeLayout(name='collapse_species', ns=collapse_species()),
+    # TreeLayout(name='level1_kingdom', ns=collapse_kingdom()),
+    # TreeLayout(name='level2_phylum', ns=collapse_phylum()),
+    # TreeLayout(name='level3_class', ns=collapse_class()),
+    # TreeLayout(name='level4_order', ns=collapse_order()),
+    # TreeLayout(name='level5_family', ns=collapse_family()),
+    # TreeLayout(name='level6_genus', ns=collapse_genus()),
+    # TreeLayout(name='level7_species', ns=collapse_species()),
 ]
 
 

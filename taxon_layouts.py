@@ -10,8 +10,8 @@ def collapse_kingdom():
             face_name = TextFace(node.props.get('sci_name'), color="red")
             node.sm_style["draw_descendants"] = False
             node.sm_style["outline_color"] = "red"
-            node.add_face(face_name, column = 5,  position = 'aligned', collapsed_only=True)
-    layout_fn.name = "collapse_kingdom"
+            node.add_face(face_name, column = 8,  position = 'aligned', collapsed_only=True)
+    layout_fn.name = "level1_kingdom"
     return layout_fn
     return
 
@@ -21,8 +21,8 @@ def collapse_phylum():
             face_name = TextFace(node.props.get('sci_name'), color="orange")
             node.sm_style["draw_descendants"] = False
             node.sm_style["outline_color"] = "orange"
-            node.add_face(face_name, column = 5,  position = 'aligned', collapsed_only=True)
-    layout_fn.name = "collapse_phylum"
+            node.add_face(face_name, column = 8,  position = 'aligned', collapsed_only=True)
+    layout_fn.name = "level2_phylum"
     return layout_fn
     return
 
@@ -32,8 +32,8 @@ def collapse_class():
             face_name = TextFace(node.props.get('sci_name'), color="yellow")
             node.sm_style["draw_descendants"] = False
             node.sm_style["outline_color"] = "yellow"
-            node.add_face(face_name, column = 5,  position = 'aligned', collapsed_only=True)
-    layout_fn.name = "collapse_class"
+            node.add_face(face_name, column = 8,  position = 'aligned', collapsed_only=True)
+    layout_fn.name = "level3_class"
     return layout_fn
     return
 
@@ -43,8 +43,8 @@ def collapse_order():
             face_name = TextFace(node.props.get('sci_name'), color="green")
             node.sm_style["draw_descendants"] = False
             node.sm_style["outline_color"] = "green"
-            node.add_face(face_name, column = 5,  position = 'aligned', collapsed_only=True)
-    layout_fn.name = "collapse_order"
+            node.add_face(face_name, column = 8,  position = 'aligned', collapsed_only=True)
+    layout_fn.name = "level4_order"
     return layout_fn
     return 
 
@@ -54,8 +54,8 @@ def collapse_family():
             face_name = TextFace(node.props.get('sci_name'), color="blue")
             node.sm_style["draw_descendants"] = False
             node.sm_style["outline_color"] = "blue"
-            node.add_face(face_name, column = 5,  position = 'aligned', collapsed_only=True)
-    layout_fn.name = "collapse_genus"
+            node.add_face(face_name, column = 8,  position = 'aligned', collapsed_only=True)
+    layout_fn.name = "level5_family"
     return layout_fn
     return 
 
@@ -65,8 +65,8 @@ def collapse_genus():
             face_name = TextFace(node.props.get('sci_name'), color="indigo")
             node.sm_style["draw_descendants"] = False
             node.sm_style["outline_color"] = "indigo"
-            node.add_face(face_name, column = 5,  position = 'aligned', collapsed_only=True)
-    layout_fn.name = "collapse_genus"
+            node.add_face(face_name, column = 8,  position = 'aligned', collapsed_only=True)
+    layout_fn.name = "level6_genus"
     return layout_fn
     return
 
@@ -76,7 +76,7 @@ def collapse_species():
             face_name = TextFace(node.props.get('sci_name'), color="violet")
             node.sm_style["draw_descendants"] = False
             node.sm_style["outline_color"] = "violet"
-            node.add_face(face_name, column = 5,  position = 'aligned', collapsed_only=True)
-    layout_fn.name = "collapse_species"
+            node.add_face(face_name, column = 8,  position = 'aligned', collapsed_only=True)
+    layout_fn.name = "level7_species"
     return layout_fn
     return
