@@ -103,6 +103,31 @@ def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field
 
     return tree
 
+from collections import Counter,defaultdict
+import numpy as np
+
+def children_prop_array(node, prop):
+    array = [n.props.get(prop) for n in node.iter_leaves() if n.props.get(prop)] 
+    return array
+
+def get_stats(array):
+    if array:
+        np_array = np.float_(array)
+        return np_array.sum(), np_array.mean()
+    else:
+        return None
+    #return np_array.sum(), np_array.mean(), np_array.max(), np_array.min()
+
+#load prop
+def get_annotation(tree, prop):
+    for node in tree.traverse():
+        node_sum, node_mean = get_stats(children_prop_array(node, prop))
+        if node.is_leaf():
+            pass
+        else:
+            node.add_prop(prop+"_sum", node_sum)
+            node.add_prop(prop+"_mean", node_mean)
+    return tree
 
 # load and clean tree which will clean the original internal nodes
 clean_newick = ete4_parse(NEWICK).write(properties=[])
@@ -119,34 +144,18 @@ if METADATA:
 
 # abundance calculation
 prop = props[1]
-
-from collections import Counter,defaultdict
-import numpy as np
-
-def children_prop_array(node, prop):
-    array = [n.props.get(prop) for n in node.children if n.props.get(prop)] 
-    return array
-
-def get_stats(array):
-    np_array = np.float_(array)
-    return np_array.sum(), np_array.mean(), np_array.max(), np_array.min()
-
-    
-# for node in tree.iter_leaves():
-#     print(node.name, node.props.get("random_abundance"))
-
-#tree.write(properties=[],outfile="test.nw",format=1)
+tree = get_annotation(tree, prop)
 
 from taxon_layouts import *
 layouts = [
     # TreeLayout(name="collapse_cutoff", ns=collapse_cutoff('random_fraction', 0.70)),
-    # TreeLayout(name='level1_kingdom', ns=collapse_kingdom()),
-    # TreeLayout(name='level2_phylum', ns=collapse_phylum()),
-    # TreeLayout(name='level3_class', ns=collapse_class()),
-    # TreeLayout(name='level4_order', ns=collapse_order()),
-    # TreeLayout(name='level5_family', ns=collapse_family()),
-    # TreeLayout(name='level6_genus', ns=collapse_genus()),
-    # TreeLayout(name='level7_species', ns=collapse_species()),
+    TreeLayout(name='level1_kingdom', ns=collapse_kingdom()),
+    TreeLayout(name='level2_phylum', ns=collapse_phylum()),
+    TreeLayout(name='level3_class', ns=collapse_class()),
+    TreeLayout(name='level4_order', ns=collapse_order()),
+    TreeLayout(name='level5_family', ns=collapse_family()),
+    TreeLayout(name='level6_genus', ns=collapse_genus()),
+    TreeLayout(name='level7_species', ns=collapse_species()),
 ]
 
 
