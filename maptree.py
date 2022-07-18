@@ -146,16 +146,37 @@ if METADATA:
 prop = props[1]
 tree = get_annotation(tree, prop)
 
+# demo collapse
+from ete4.smartview import TreeStyle, NodeStyle, TreeLayout
+from ete4.smartview  import RectFace, CircleFace, SeqMotifFace, TextFace, OutlineFace
+
+def new_collapse_class():
+    def layout_fn(node):
+        if not node.is_root() and  node.props.get('rank') == 'class':
+            
+            node.sm_style["draw_descendants"] = False
+            node.sm_style["bgcolor"] ="#FFFFFF"
+            node.sm_style["outline_color"] = "deepyellow"
+            #node.sm_style["shape"] = "square"
+
+            face_name = TextFace(node.props.get('sci_name')+"||"+str(node.props.get('random_abundance_sum')), color="red")            
+            node.add_face(face_name, column = 8,  position = 'aligned', collapsed_only=True)
+
+    layout_fn.name = "level3_class"
+    return layout_fn
+    return
+
 from taxon_layouts import *
 layouts = [
     # TreeLayout(name="collapse_cutoff", ns=collapse_cutoff('random_fraction', 0.70)),
-    TreeLayout(name='level1_kingdom', ns=collapse_kingdom()),
-    TreeLayout(name='level2_phylum', ns=collapse_phylum()),
-    TreeLayout(name='level3_class', ns=collapse_class()),
-    TreeLayout(name='level4_order', ns=collapse_order()),
-    TreeLayout(name='level5_family', ns=collapse_family()),
-    TreeLayout(name='level6_genus', ns=collapse_genus()),
-    TreeLayout(name='level7_species', ns=collapse_species()),
+    TreeLayout(name='level3_class', ns=new_collapse_class()),
+    # TreeLayout(name='level1_kingdom', ns=collapse_kingdom()),
+    # TreeLayout(name='level2_phylum', ns=collapse_phylum()),
+    # TreeLayout(name='level3_class', ns=collapse_class()),
+    # TreeLayout(name='level4_order', ns=collapse_order()),
+    # TreeLayout(name='level5_family', ns=collapse_family()),
+    # TreeLayout(name='level6_genus', ns=collapse_genus()),
+    # TreeLayout(name='level7_species', ns=collapse_species()),
 ]
 
 
