@@ -6,10 +6,11 @@ from ete4.smartview  import RectFace, CircleFace, SeqMotifFace, TextFace, Outlin
 
 def collapse_kingdom():
     def layout_fn(node):
+        color = "red"
         if not node.is_root() and  node.props.get('rank') == 'superkingdom':
-            face_name = TextFace(node.props.get('sci_name'), color="red")
+            face_name = TextFace(node.props.get('sci_name'), color=color)
             node.sm_style["draw_descendants"] = False
-            node.sm_style["outline_color"] = "red"
+            node.sm_style["outline_color"] = color
             node.add_face(face_name, column = 8,  position = 'aligned', collapsed_only=True)
     layout_fn.name = "level1_kingdom"
     return layout_fn
@@ -17,10 +18,11 @@ def collapse_kingdom():
 
 def collapse_phylum():
     def layout_fn(node):
+        color="orange"
         if not node.is_root() and  node.props.get('rank') == 'phylum':
-            face_name = TextFace(node.props.get('sci_name'), color="orange")
+            face_name = TextFace(node.props.get('sci_name'), color=color)
             node.sm_style["draw_descendants"] = False
-            node.sm_style["outline_color"] = "orange"
+            node.sm_style["outline_color"] = color
             node.add_face(face_name, column = 8,  position = 'aligned', collapsed_only=True)
     layout_fn.name = "level2_phylum"
     return layout_fn
@@ -28,10 +30,11 @@ def collapse_phylum():
 
 def collapse_class():
     def layout_fn(node):
+        color="yellow"
         if not node.is_root() and  node.props.get('rank') == 'class':
-            face_name = TextFace(node.props.get('sci_name'), color="yellow")
+            face_name = TextFace(node.props.get('sci_name'), color=color)
             node.sm_style["draw_descendants"] = False
-            node.sm_style["outline_color"] = "yellow"
+            node.sm_style["outline_color"] = color
             node.add_face(face_name, column = 8,  position = 'aligned', collapsed_only=True)
     layout_fn.name = "level3_class"
     return layout_fn
@@ -39,10 +42,11 @@ def collapse_class():
 
 def collapse_order():
     def layout_fn(node):
+        color="green"
         if not node.is_root() and  node.props.get('rank') == 'order':
-            face_name = TextFace(node.props.get('sci_name'), color="green")
+            face_name = TextFace(node.props.get('sci_name'), color=color)
             node.sm_style["draw_descendants"] = False
-            node.sm_style["outline_color"] = "green"
+            node.sm_style["outline_color"] = color
             node.add_face(face_name, column = 8,  position = 'aligned', collapsed_only=True)
     layout_fn.name = "level4_order"
     return layout_fn
@@ -50,10 +54,11 @@ def collapse_order():
 
 def collapse_family():
     def layout_fn(node):
+        color="blue"
         if not node.is_root() and  node.props.get('rank') == 'family':
-            face_name = TextFace(node.props.get('sci_name'), color="blue")
+            face_name = TextFace(node.props.get('sci_name'), color=color)
             node.sm_style["draw_descendants"] = False
-            node.sm_style["outline_color"] = "blue"
+            node.sm_style["outline_color"] = color
             node.add_face(face_name, column = 8,  position = 'aligned', collapsed_only=True)
     layout_fn.name = "level5_family"
     return layout_fn
@@ -61,6 +66,7 @@ def collapse_family():
 
 def collapse_genus():
     def layout_fn(node):
+        color="indigo"
         if not node.is_root() and  node.props.get('rank') == 'genus':
             face_name = TextFace(node.props.get('sci_name'), color="indigo")
             node.sm_style["draw_descendants"] = False

@@ -1,4 +1,4 @@
-FeatureID	random_abundance
+FeatureID	abundance
 RS_GCF_001560035.1	53
 RS_GCF_001560635.1	45
 RS_GCF_001560215.1	9
