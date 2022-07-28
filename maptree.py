@@ -2,7 +2,7 @@ from ete4 import Tree, PhyloTree
 from ete4.parser.newick import NewickError
 from ete4.smartview import TreeStyle, NodeStyle, TreeLayout
 from ete4.smartview  import RectFace, CircleFace, SeqMotifFace, TextFace, OutlineFace
-
+from ete4.smartview.renderer.layouts.staple_layouts import LayoutBarplot
 from collections import defaultdict
 import csv
 import sys
@@ -128,15 +128,19 @@ def get_stats(array):
     #return np_array.sum(), np_array.mean(), np_array.max(), np_array.min()
 
 #load prop
-def get_calculation(tree, prop):
+def get_calculation(tree, props):
 
     for node in tree.traverse():
-        node_sum, node_mean = get_stats(children_prop_array(node, prop))
-        if node.is_leaf():
-            pass
-        else:
-            node.add_prop(prop+"_sum", node_sum)
-            node.add_prop(prop+"_mean", node_mean)
+        for prop in props:
+            try:
+                node_sum, node_mean = get_stats(children_prop_array(node, prop))
+                if node.is_leaf():
+                    pass
+                else:
+                    node.add_prop(prop+"_sum", node_sum)
+                    node.add_prop(prop+"_mean", node_mean)
+            except Exception as e: 
+                print(e)
     return tree
 
 #########################################run#############################################
@@ -159,6 +163,8 @@ if METADATA:
 # tree = get_calculation(tree, prop)
 
 # relative abundance
+heatmap_prop = props[1:]
+tree = get_calculation(tree, heatmap_prop)
 
 #################################################layout##########################################
 # demo collapse
@@ -166,9 +172,9 @@ from ete4.smartview import TreeStyle, NodeStyle, TreeLayout
 from ete4.smartview  import RectFace, CircleFace, SeqMotifFace, TextFace, OutlineFace
 import colorsys
 
-def new_collapse_class():
+def new_collapse_class(prop, level):
     def layout_fn(node):
-        if not node.is_root() and  node.props.get('rank') == 'class':
+        if not node.is_root() and  node.props.get('rank') == 'species':
             
             node.sm_style["draw_descendants"] = False
             node.sm_style["bgcolor"] ="#FFFFFF"
@@ -183,7 +189,39 @@ def new_collapse_class():
                 face_name = TextFace(node.props.get('sci_name'), color="red")
             node.add_face(face_name, column = 8,  position = 'aligned', collapsed_only=True)
 
-    layout_fn.name = "level3_class"
+            # heatmap
+            relative_abundance = float(node.props.get(prop))
+            color_idx = int(relative_abundance*10)
+            color = redgradient[color_idx]
+
+            identF = RectFace(width=50,height=50,text="%.1f" % (relative_abundance*100), color=color, 
+            padding_x=1, padding_y=1)
+            #face_name = TextFace(node.props.get('name'), color="red")
+            #face_name = TextFace("%.1f" % (relative_abundance*100), color=color)
+            node.add_face(identF, column = level,  position = 'branch_right')
+            node.add_face(identF, column = level,  position = 'branch_right', collapsed_only=True)
+
+    layout_fn.name = "level5_species"
+    return layout_fn
+    return
+
+def new_collapse_heatmap(prop, level):
+    def layout_fn(node):
+        if not node.is_root() and node.props.get(prop):
+
+            # heatmap
+            relative_abundance = float(node.props.get(prop))
+            color_idx = int(relative_abundance*10)
+            color = redgradient[color_idx]
+
+            identF = RectFace(width=50,height=50,text="%.1f" % (relative_abundance*100), color=color, 
+            padding_x=1, padding_y=1)
+            #face_name = TextFace(node.props.get('name'), color="red")
+            #face_name = TextFace("%.1f" % (relative_abundance*100), color=color)
+            node.add_face(identF, column = level,  position = 'branch_right')
+            node.add_face(identF, column = level,  position = 'branch_right', collapsed_only=True)
+
+    layout_fn.name = "level5_species"
     return layout_fn
     return
 
@@ -234,22 +272,27 @@ layouts = [
     # TreeLayout(name="collapse_cutoff", ns=collapse_cutoff('random_fraction', 0.70)),
     #TreeLayout(name='level3_class', ns=new_collapse_class()),
     #TreeLayout(name="taxa_face", ns=taxa_rect_layout()),
+    #TreeLayout(name="collapse_heatmap", ns=new_collapse_heatmap("sample1_mean", 5)),
+    LayoutBarplot(name="abundance", size_prop="abundance"),
     
     ### taxa default ####
     # TreeLayout(name='level1_kingdom', ns=collapse_kingdom()),
-    TreeLayout(name='level2_phylum', ns=collapse_phylum()),
-    TreeLayout(name='level3_class', ns=collapse_class()),
-    TreeLayout(name='level4_order', ns=collapse_order()),
-    TreeLayout(name='level5_family', ns=collapse_family()),
-    TreeLayout(name='level6_genus', ns=collapse_genus()),
-    TreeLayout(name='level7_species', ns=collapse_species()),
+    # TreeLayout(name='level2_phylum', ns=collapse_phylum()),
+    # TreeLayout(name='level3_class', ns=collapse_class()),
+    # TreeLayout(name='level4_order', ns=collapse_order()),
+    # TreeLayout(name='level5_family', ns=collapse_family()),
+    # TreeLayout(name='level6_genus', ns=collapse_genus()),
+    # TreeLayout(name='level7_species', ns=collapse_species()),
 
     ### relative abundance ####
-    TreeLayout(name="sample1",ns=heatmap_layout("sample1", 5)), 
-    TreeLayout(name="sample2",ns=heatmap_layout("sample2", 6)), 
-    TreeLayout(name="sample3",ns=heatmap_layout("sample3", 7)),
-    TreeLayout(name="sample4",ns=heatmap_layout("sample4", 8)),
-    TreeLayout(name="sample5",ns=heatmap_layout("sample5", 9)), 
+    # TreeLayout(name="sample1",ns=heatmap_layout("sample1", 5)), 
+    # TreeLayout(name="sample2",ns=heatmap_layout("sample2", 6)), 
+    # TreeLayout(name="sample3",ns=heatmap_layout("sample3", 7)),
+    # TreeLayout(name="sample4",ns=heatmap_layout("sample4", 8)),
+    # TreeLayout(name="sample5",ns=heatmap_layout("sample5", 9)), 
+    
+    
+
 ]
 
 
