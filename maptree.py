@@ -2,7 +2,8 @@ from ete4 import Tree, PhyloTree
 from ete4.parser.newick import NewickError
 from ete4.smartview import TreeStyle, NodeStyle, TreeLayout
 from ete4.smartview  import RectFace, CircleFace, SeqMotifFace, TextFace, OutlineFace
-from ete4.smartview.renderer.layouts.staple_layouts import LayoutBarplot
+#from ete4.smartview.renderer.layouts.staple_layouts import LayoutBarplot
+from staple_layouts import LayoutBarplot
 from collections import defaultdict
 import csv
 import sys
@@ -63,8 +64,13 @@ def load_metadata_to_tree(tree, metadata):
         gene_name = next(iter(annotation.items()))[1] #gene name must be on first column
         #GB_GCA_011332645.1
         
-        target_nodes = list(filter(lambda n: n.name==gene_name and n.is_leaf(), tree.traverse()))
+        # has to be leaf
+        #target_nodes = list(filter(lambda n: n.name==gene_name and n.is_leaf(), tree.traverse()))
         
+        # all the nodes including internal node
+        target_nodes = list(filter(lambda n: n.name==gene_name, tree.traverse()))
+
+
         if target_nodes:
             target_node = target_nodes[0]
             count += 1
@@ -140,7 +146,7 @@ def get_calculation(tree, props):
                     node.add_prop(prop+"_sum", node_sum)
                     node.add_prop(prop+"_mean", node_mean)
             except Exception as e: 
-                print(e)
+                pass
     return tree
 
 #########################################run#############################################
@@ -150,7 +156,7 @@ tree = PhyloTree(clean_newick)
 #tree = ete4_parse(NEWICK)
 
 # Taxonomic annotation
-tree = annotate_taxa(tree)
+tree = annotate_taxa(tree, taxid_attr="name")
 
 # Metadata annotation
 if METADATA:
@@ -259,6 +265,20 @@ def heatmap_layout(prop, level):
     return layout_fn
     return
 
+def text_layout(prop, level):
+    def layout_fn(node):
+        if node.is_leaf() and node.props.get(prop):
+            prop_text = node.props.get(prop)
+            prop_face = TextFace(prop_text, color="red")
+            node.add_face(prop_face, column = level, position = "aligned")
+            node.sm_style["bgcolor"] = 'black' # highligh clade
+            # while (node):
+            #         node = node.up
+            #         if node:
+            #             node.sm_style["hz_line_width"] = 5
+    return layout_fn
+    return
+
 redgradient = color_gradient(0.95, 0.6, 10)
 
 from taxon_layouts import *
@@ -267,13 +287,36 @@ from taxon_layouts import *
 # for n in tree.iter_leaves():
 #     print(n.props.get("sample1"))
 
+def get_layouts():
+    layouts = []
+    {
+        0: "TextLayout",
+        1: "NodeStyleLayout",
+        2: "TaxonLayout",
+        3: "NumericLayout",
+        4: "HeatmapLayout",
+
+    }
+    return layouts
 
 layouts = [
     # TreeLayout(name="collapse_cutoff", ns=collapse_cutoff('random_fraction', 0.70)),
     #TreeLayout(name='level3_class', ns=new_collapse_class()),
     #TreeLayout(name="taxa_face", ns=taxa_rect_layout()),
-    #TreeLayout(name="collapse_heatmap", ns=new_collapse_heatmap("sample1_mean", 5)),
-    LayoutBarplot(name="abundance", size_prop="abundance"),
+    
+    
+    # collapse_heatmap
+    # TreeLayout(name="collapse_heatmap_sample1", ns=new_collapse_heatmap("sample1_mean", 5)),
+    # TreeLayout(name="collapse_heatmap_sample2", ns=new_collapse_heatmap("sample2_mean", 6)),
+    
+    ### Default Text Layout
+    # TextAlign layout
+    TreeLayout(name='abundance', ns=text_layout('abundance', 6)),
+    # NodeStyle layout
+    
+
+    ### Bar plot of count
+    # LayoutBarplot(name="abundance", size_prop="abundance"),
     
     ### taxa default ####
     # TreeLayout(name='level1_kingdom', ns=collapse_kingdom()),
