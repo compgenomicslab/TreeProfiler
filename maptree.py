@@ -149,26 +149,40 @@ def get_calculation(tree, props):
                 pass
     return tree
 
+# get config
+def get_config(props, num_col=[3,4,5]):
+    config = {}
+    #props = props[1:] # ignore first column which is leaf name
+    for idx, prop in enumerate(props):
+        if idx not in num_col and idx != 0:
+            config[prop] = 0 #TextLayout
+        elif idx in num_col:
+            config[prop] = 4
+    return config
 #########################################run#############################################
 # load and clean tree which will clean the original internal nodes
+
 clean_newick = ete4_parse(NEWICK).write(properties=[])
 tree = PhyloTree(clean_newick)
 #tree = ete4_parse(NEWICK)
-
-# Taxonomic annotation
-tree = annotate_taxa(tree, taxid_attr="name")
 
 # Metadata annotation
 if METADATA:
     tree, matrix = load_metadata_to_tree(tree, METADATA)
     props = list(matrix.keys())
+    layouts_config = get_config(props)
 
+# Taxonomic annotation
+if "Taxon" in layouts_config.keys():
+    tree = annotate_taxa(tree, taxid_attr="Taxon")
+else:
+    tree = annotate_taxa(tree, taxid_attr="name")
 #########################################calculation#############################################
 # abundance calculation sum
 # prop = props[1]
 # tree = get_calculation(tree, prop)
 
-# relative abundance
+# relative abundance for heatmap
 heatmap_prop = props[1:]
 tree = get_calculation(tree, heatmap_prop)
 
@@ -265,12 +279,12 @@ def heatmap_layout(prop, level):
     return layout_fn
     return
 
-def text_layout(prop, level):
+def text_layout(prop, level, color='blue'):
     def layout_fn(node):
         if node.is_leaf() and node.props.get(prop):
             prop_text = node.props.get(prop)
-            prop_face = TextFace(prop_text, color="red")
-            node.add_face(prop_face, column = level, position = "aligned")
+            prop_face = TextFace(prop_text, color=color)
+            node.add_face(prop_face, column = level, position = "branch_right")
             node.sm_style["bgcolor"] = 'black' # highligh clade
             # while (node):
             #         node = node.up
@@ -287,56 +301,85 @@ from taxon_layouts import *
 # for n in tree.iter_leaves():
 #     print(n.props.get("sample1"))
 
-def get_layouts():
+def get_layouts(config):
     layouts = []
-    {
+    level = 10
+    mapping = {
         0: "TextLayout",
         1: "NodeStyleLayout",
         2: "TaxonLayout",
         3: "NumericLayout",
         4: "HeatmapLayout",
-
     }
+
+    for prop, code in config.items():
+        layout_name = mapping[code]
+        if layout_name == "TextLayout":
+            layout = TreeLayout(name=prop, ns=text_layout(prop, level))
+            level += 1
+        # elif layout_name == "TaxonLayout":
+        #     pass
+        elif layout_name == "NumericLayout":
+            pass
+        elif layout_name == "HeatmapLayout":
+            layout = TreeLayout(name=prop, ns=heatmap_layout(prop, level))
+            level += 1
+        layouts.append(layout)
+
+    taxon_layouts = [
+        TreeLayout(name='level1_kingdom', ns=collapse_kingdom()),
+        TreeLayout(name='level2_phylum', ns=collapse_phylum()),
+        TreeLayout(name='level3_class', ns=collapse_class()),
+        TreeLayout(name='level4_order', ns=collapse_order()),
+        TreeLayout(name='level5_family', ns=collapse_family()),
+        TreeLayout(name='level6_genus', ns=collapse_genus()),
+        TreeLayout(name='level7_species', ns=collapse_species()),
+    ]
+    layouts = layouts + taxon_layouts
     return layouts
 
-layouts = [
-    # TreeLayout(name="collapse_cutoff", ns=collapse_cutoff('random_fraction', 0.70)),
-    #TreeLayout(name='level3_class', ns=new_collapse_class()),
-    #TreeLayout(name="taxa_face", ns=taxa_rect_layout()),
+layouts = get_layouts(layouts_config)
+
+# layouts = [
+#     # TreeLayout(name="collapse_cutoff", ns=collapse_cutoff('random_fraction', 0.70)),
+#     #TreeLayout(name='level3_class', ns=new_collapse_class()),
+#     #TreeLayout(name="taxa_face", ns=taxa_rect_layout()),
     
     
-    # collapse_heatmap
-    # TreeLayout(name="collapse_heatmap_sample1", ns=new_collapse_heatmap("sample1_mean", 5)),
-    # TreeLayout(name="collapse_heatmap_sample2", ns=new_collapse_heatmap("sample2_mean", 6)),
+#     # collapse_heatmap
+#     # TreeLayout(name="collapse_heatmap_sample1", ns=new_collapse_heatmap("sample1_mean", 5)),
+#     # TreeLayout(name="collapse_heatmap_sample2", ns=new_collapse_heatmap("sample2_mean", 6)),
     
-    ### Default Text Layout
-    # TextAlign layout
-    TreeLayout(name='abundance', ns=text_layout('abundance', 6)),
-    # NodeStyle layout
+#     ### Default Text Layout
+#     # TextAlign layout
+#     TreeLayout(name='abundance', ns=text_layout('abundance', 10)),
+#     # NodeStyle layout
     
 
-    ### Bar plot of count
-    # LayoutBarplot(name="abundance", size_prop="abundance"),
+#     ### Bar plot of count
+#     # metadata_p__Thermoproteota.txt
+#     # LayoutBarplot(name="abundance", size_prop="abundance"),
     
-    ### taxa default ####
-    # TreeLayout(name='level1_kingdom', ns=collapse_kingdom()),
-    # TreeLayout(name='level2_phylum', ns=collapse_phylum()),
-    # TreeLayout(name='level3_class', ns=collapse_class()),
-    # TreeLayout(name='level4_order', ns=collapse_order()),
-    # TreeLayout(name='level5_family', ns=collapse_family()),
-    # TreeLayout(name='level6_genus', ns=collapse_genus()),
-    # TreeLayout(name='level7_species', ns=collapse_species()),
+#     ### taxa default ####
+#     # metadata_p__Thermoproteota*
+#     # TreeLayout(name='level1_kingdom', ns=collapse_kingdom()),
+#     # TreeLayout(name='level2_phylum', ns=collapse_phylum()),
+#     # TreeLayout(name='level3_class', ns=collapse_class()),
+#     # TreeLayout(name='level4_order', ns=collapse_order()),
+#     # TreeLayout(name='level5_family', ns=collapse_family()),
+#     # TreeLayout(name='level6_genus', ns=collapse_genus()),
+#     # TreeLayout(name='level7_species', ns=collapse_species()),
 
-    ### relative abundance ####
-    # TreeLayout(name="sample1",ns=heatmap_layout("sample1", 5)), 
-    # TreeLayout(name="sample2",ns=heatmap_layout("sample2", 6)), 
-    # TreeLayout(name="sample3",ns=heatmap_layout("sample3", 7)),
-    # TreeLayout(name="sample4",ns=heatmap_layout("sample4", 8)),
-    # TreeLayout(name="sample5",ns=heatmap_layout("sample5", 9)), 
-    
+#     ### relative abundance ####
+#     # metadata_p__Thermoproteota_relative.txt
+#     # TreeLayout(name="sample1",ns=heatmap_layout("sample1", 5)), 
+#     # TreeLayout(name="sample2",ns=heatmap_layout("sample2", 6)), 
+#     # TreeLayout(name="sample3",ns=heatmap_layout("sample3", 7)),
+#     # TreeLayout(name="sample4",ns=heatmap_layout("sample4", 8)),
+#     # TreeLayout(name="sample5",ns=heatmap_layout("sample5", 9)), 
     
 
-]
+# ]
 
 
 tree.explore(tree_name='example',layouts=layouts, port=5000)
