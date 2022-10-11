@@ -65,15 +65,14 @@ def cut_subspecies(taxa):
         return False
 
 
-def add_taxon(input_file):
-    headers, metadata, treenodes = parse_csv(input_file)
+def add_taxon(metadata, treenodes):
+    #headers, metadata, treenodes = parse_csv(input_file)
     gtdb_lineages = extract_lineage(treenodes)
     for m in metadata:
         m.append(gtdb_lineages[m[0]])
     return metadata
 
-def convert_taxa(metadata, level):
-    
+def convert_taxa(input_file, level):
     return
 
 # headers.append('Taxon')
@@ -83,4 +82,6 @@ def convert_taxa(metadata, level):
 #     m.append(gtdb_lineages[m[0]])
 #     sys.stdout.write('\t'.join(m)+'\n')
 
-print(add_taxon(input_file))
+headers, metadata, treenodes = parse_csv(input_file)
+print(treenodes)
+#print(add_taxon(metadata, treenodes))
