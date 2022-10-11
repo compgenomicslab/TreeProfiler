@@ -15,6 +15,16 @@ import csv
 
 input_file = sys.argv[1]
 
+levels = {
+            "d__":"kingdom",
+            "p__":"phylum",
+            "c__":"class",
+            "o__":"order",
+            "f__":"family",
+            "g__":"genus",
+            "s__":"species",
+        }
+
 # GTDB ids to species/order/genus/family/order/class/phylum/kingdom
 def parse_csv(input_file):
     metadata = []
@@ -45,18 +55,9 @@ def extract_lineage(treenodes):
     return gtdb_lineages
 
 def cut_subspecies(taxa):
-    levels = [  
-                "d__",
-                "p__",
-                "c__",
-                "o__",
-                "f__",
-                "g__",
-                "s__",
-            ]
     try:
         prefix = taxa[:3]
-        if prefix in levels:
+        if prefix in levels.keys():
             return True
         else:
             return False
@@ -71,6 +72,9 @@ def add_taxon(input_file):
         m.append(gtdb_lineages[m[0]])
     return metadata
 
+def convert_taxa(metadata, level):
+    
+    return
 
 # headers.append('Taxon')
 # # headers = ['ID', 'fraction_uncultivated_cultivated','abundance', 'lineage']
