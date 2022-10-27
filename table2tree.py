@@ -247,12 +247,12 @@ def main(args=[]):
 output_tree = main()
 
 
-# # write to pickle
-# with open(OUTPUTTREE+'.pickle', 'w') as f:
+# # # write to pickle
+# with open(OUTPUTTREE+'.ete', 'w') as f:
 #     f.write(b64pickle.dumps(output_tree, encoder='pickle', pack=False))
 
-# # read to pickle
-# with open(OUTPUTTREE+'.pickle', 'r') as f:
+# # read from pickle
+# with open(OUTPUTTREE+'.ete', 'r') as f:
 #     file_content = f.read()
 #     print(b64pickle.loads(file_content, encoder='pickle', unpack=False))
 

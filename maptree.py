@@ -3,7 +3,8 @@ from ete4.parser.newick import NewickError
 from ete4.smartview import TreeStyle, NodeStyle, TreeLayout
 from ete4.smartview  import RectFace, CircleFace, SeqMotifFace, TextFace, OutlineFace
 #from ete4.smartview.renderer.layouts.staple_layouts import LayoutBarplot
-from staple_layouts import LayoutBarplot
+from layouts import staple_layouts, taxon_layouts
+from layouts.taxon_layouts import *
 from collections import defaultdict
 import csv
 import sys
@@ -150,14 +151,15 @@ def get_calculation(tree, props):
     return tree
 
 # get config
-def get_config(props, num_col=[3,4,5]):
+def get_config(props, num_col=[]):
     config = {}
     #props = props[1:] # ignore first column which is leaf name
     for idx, prop in enumerate(props):
         if idx not in num_col and idx != 0:
             config[prop] = 0 #TextLayout
         elif idx in num_col:
-            config[prop] = 4
+            #config[prop] = 3 #barplot
+            config[prop] = 4 #heatmap
     return config
 #########################################run#############################################
 # load and clean tree which will clean the original internal nodes
@@ -170,7 +172,7 @@ tree = PhyloTree(clean_newick)
 if METADATA:
     tree, matrix = load_metadata_to_tree(tree, METADATA)
     props = list(matrix.keys())
-    layouts_config = get_config(props)
+    layouts_config = get_config(props, [1,2,3,4,5])
 
 # Taxonomic annotation
 if "Taxon" in layouts_config.keys():
@@ -295,7 +297,7 @@ def text_layout(prop, level, color='blue'):
 
 redgradient = color_gradient(0.95, 0.6, 10)
 
-from taxon_layouts import *
+
 
 #print(tree.search_nodes(name="s__EX4484-205 sp002255045"))
 # for n in tree.iter_leaves():
@@ -320,7 +322,8 @@ def get_layouts(config):
         # elif layout_name == "TaxonLayout":
         #     pass
         elif layout_name == "NumericLayout":
-            pass
+            layout = LayoutBarplot(name=prop, size_prop=prop)
+            
         elif layout_name == "HeatmapLayout":
             layout = TreeLayout(name=prop, ns=heatmap_layout(prop, level))
             level += 1
@@ -340,15 +343,15 @@ def get_layouts(config):
 
 layouts = get_layouts(layouts_config)
 
-# layouts = [
+layouts = [
 #     # TreeLayout(name="collapse_cutoff", ns=collapse_cutoff('random_fraction', 0.70)),
 #     #TreeLayout(name='level3_class', ns=new_collapse_class()),
 #     #TreeLayout(name="taxa_face", ns=taxa_rect_layout()),
     
     
 #     # collapse_heatmap
-#     # TreeLayout(name="collapse_heatmap_sample1", ns=new_collapse_heatmap("sample1_mean", 5)),
-#     # TreeLayout(name="collapse_heatmap_sample2", ns=new_collapse_heatmap("sample2_mean", 6)),
+    # TreeLayout(name="collapse_heatmap_sample1", ns=new_collapse_heatmap("sample1_mean", 5)),
+    # TreeLayout(name="collapse_heatmap_sample2", ns=new_collapse_heatmap("sample2_mean", 6)),
     
 #     ### Default Text Layout
 #     # TextAlign layout
@@ -372,14 +375,14 @@ layouts = get_layouts(layouts_config)
 
 #     ### relative abundance ####
 #     # metadata_p__Thermoproteota_relative.txt
-#     # TreeLayout(name="sample1",ns=heatmap_layout("sample1", 5)), 
-#     # TreeLayout(name="sample2",ns=heatmap_layout("sample2", 6)), 
-#     # TreeLayout(name="sample3",ns=heatmap_layout("sample3", 7)),
-#     # TreeLayout(name="sample4",ns=heatmap_layout("sample4", 8)),
-#     # TreeLayout(name="sample5",ns=heatmap_layout("sample5", 9)), 
+    # TreeLayout(name="sample1",ns=heatmap_layout("sample1", 5)), 
+    # TreeLayout(name="sample2",ns=heatmap_layout("sample2", 6)), 
+    # TreeLayout(name="sample3",ns=heatmap_layout("sample3", 7)),
+    # TreeLayout(name="sample4",ns=heatmap_layout("sample4", 8)),
+    # TreeLayout(name="sample5",ns=heatmap_layout("sample5", 9)), 
     
 
-# ]
+]
 
 
 tree.explore(tree_name='example',layouts=layouts, port=5000)
