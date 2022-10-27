@@ -121,7 +121,7 @@ def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field
 from collections import Counter,defaultdict
 import numpy as np
 
-def children_prop_array(node, prop):
+def children_prop_array(node, prop): # use tree.get_cache_content()
     array = [n.props.get(prop) for n in node.iter_leaves() if n.props.get(prop)] 
     return array
 

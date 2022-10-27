@@ -24,7 +24,6 @@ taxa_separator=';'
 rank_limit='species'
 
 
-
 short2levels = {
             "d__":"kingdom",
             "p__":"phylum",
