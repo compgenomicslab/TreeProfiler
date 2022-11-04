@@ -5,11 +5,13 @@ from ete4.parser.newick import NewickError
 from ete4 import Tree, PhyloTree
 from ete4 import GTDBTaxa
 from ete4 import NCBITaxa
-import b64pickle
 
+from argparse import ArgumentParser
+import argparse
 from collections import defaultdict
 from collections import Counter
 from scipy import stats
+import b64pickle
 import itertools
 import math
 import numpy as np
@@ -17,15 +19,122 @@ import csv
 import sys
 
 
-TREEFILE = sys.argv[1]
-METADATAFILE = sys.argv[2]
-OUTPUTTREE = sys.argv[3]
+__author__ = 'Ziqi DENG'
+__license__ = "GPL v2"
+__email__ = 'dengziqi1234@gmail.com'
+__version__ = '0.0.1'
+__date__ = '01-11-2022'
+__description__ = ('A program for profiling metadata on target '
+                    'tree and conduct summary analysis')
 
-def parse_csv(input_file):
+def read_args():
+    """
+    Parse the input parameters
+    Return the parsed arguments.
+    """
+    parser = ArgumentParser(description=
+        "metatreeprofiler.py (ver. "+__version__+
+        " of "+__date__+")." + __description__+ " Authors: "+
+        __author__+" ("+__email__+")",
+        formatter_class=argparse.RawTextHelpFormatter)
+
+    # input parameters group
+    group = parser.add_argument_group(title='input parameters',
+        description="Input parameters")
+    group.add_argument('-t', '--tree',
+        type=str,
+        required=False,
+        help="Input tree, .nw file, customized tree input")
+    group.add_argument('--taxatree',
+        type=str,
+        required=False,
+        help="<kingdom|phylum|class|order|family|genus|species|subspecies> reference tree from taxonomic database")
+    group.add_argument('--taxadb',
+        type=str,
+        #default='GTDB',
+        required=False,
+        help="<NCBI|GTDB> for taxonomic profiling or fetch taxatree default [GTDB]")    
+    group.add_argument('-d', '--metadata',
+        type=str,
+        required=True,
+        help="<metadata.csv> .csv, .tsv. mandatory input")
+    group.add_argument('--delimiter',
+        type=str,
+        default='\t',
+        required=False,
+        help="delimiter of metadata columns. default [tab]")
+    group.add_argument('--text_column',
+        type=str,
+        required=False,
+        help="<col1,col2> names of columns which need to be read as categorical data")
+    group.add_argument('--num_column',
+        type=str,
+        required=False,
+        help="<col1,col2> names of columns which need to be read as numerical data")
+    group.add_argument('--taxon_column',
+        type=str,
+        required=False,
+        help="<col1> name of columns which need to be read as taxon data")
+
+    group = parser.add_argument_group(title='Analysis arguments',
+        description="Analysis parameters")
+    group.add_argument('--rank_limit',
+        type=str,
+        required=False,
+        help="TAXONOMIC_LEVEL prune annotate tree by rank limit")
+    group.add_argument('--taxonomic_profile',
+        default=False,
+        action='store_true',
+        required=False,
+        help="TAXONOMIC_LEVEL prune annotate tree by rank limit")
+
+    group = parser.add_argument_group(title='Plot arguments',
+        description="Plot parameters")
+    group.add_argument('--TextLayouts',
+        type=str,
+        required=False,
+        help="<col1,col2> names of columns which need to be plot as Textlayouts")
+    group.add_argument('--RectangularLayouts',
+        type=str,
+        required=False,
+        help="<col1,col2> names of columns which need to be plot as Textlayouts")
+    group.add_argument('--HeatmapLayouts',
+        type=str,
+        required=False,
+        help="<col1,col2> names of columns which need to be read as HeatmapLayouts")
+    group.add_argument('--BarplotLayouts',
+        type=str,
+        required=False,
+        help="<col1,col2> names of columns which need to be read as BarplotLayouts")
+
+    group = parser.add_argument_group(title='Output arguments',
+        description="Output parameters")
+    group.add_argument('--interactive',
+        default=True,
+        action='store_false',
+        help="run interactive session")
+    group.add_argument('--plot',
+        type=str,
+        required=False,
+        help="output as pdf")
+    group.add_argument('-o', '--outtree',
+        type=str,
+        required=False,
+        help="output annotated tree")
+    group.add_argument('--outtsv',
+        type=str,
+        required=False,
+        help="output annotated tsv file")
+
+
+    args = parser.parse_args()
+    return args
+
+def parse_csv(input_file, delimiter='\t'):
     metadata = {}
     with open(input_file, 'r') as f:
        
-        reader = csv.DictReader(f, delimiter='\t')
+        reader = csv.DictReader(f, delimiter=delimiter)
         headers = reader.fieldnames
         
         node_header, node_props = headers[0], headers[1:]
@@ -184,28 +293,49 @@ def tree2table(tree, internal_node=True, props=[], outfile='tree2table.csv'):
 
     return 
 
-def main(args=[]):
-    col_format = ['num','num','num','num','num','str']
-    pos_map = defaultdict(list)
-    for pos, ele in enumerate(col_format):
-        pos_map[ele].append(pos)
+def main():
+    args = read_args()
+    print(args)
+    # parse csv to metadata table
+    if args.metadata:
+        metadata_dict, node_props = parse_csv(args.metadata, delimiter=args.delimiter)
 
-    if col_format:
-        str_column = pos_map['str']
-        numerical_column = pos_map['num']
-        
+    # parse tree
+    if args.tree:
+        tree = ete4_parse(args.tree)
+    elif args.taxa and args.taxadb:
+        tree = ''
 
-    metadata_dict, node_props = parse_csv(METADATAFILE)
+    if args.text_column:
+        text_column = args.text_column.split(',')
+    else:
+        text_column = []
+
+    if args.num_column:
+        num_column = args.num_column.split(',')
+    else:
+        num_column = []
+
+    # if COLFORMAT:
+    #     col_format = ['num','num','num','str','str','str']
+    #     #col_format = COLFORMAT.split(',')
+    #     pos_map = defaultdict(list)
+    #     for pos, ele in enumerate(col_format):
+    #         pos_map[ele].append(pos)
+
+    #     if col_format:
+    #         str_column = pos_map['str']
+    #         numerical_column = pos_map['num']        
+
+    # parse csv to metadata table
     
-    if str_column:
-        str_props =  [node_props[i] for i in str_column]
-    if numerical_column:
-        num_props =  [node_props[i] for i in numerical_column]
+        # if str_column:
+        #     str_props =  [node_props[i] for i in str_column]
+        # if numerical_column:
+        #     num_props =  [node_props[i] for i in numerical_column]
 
-    str_headers = []
-    num_headers = []
-
-    tree = ete4_parse(TREEFILE)
+    rest_column = list(set(node_props) - set(text_column) - set(num_column))
+    
     
     # load annotations to leaves
     annotated_tree = load_metadata_to_tree(tree, metadata_dict)
@@ -213,38 +343,50 @@ def main(args=[]):
     # merge annotations
     node2leaves = annotated_tree.get_cached_content()
     for node in annotated_tree.traverse("postorder"):
+        internal_props = {}
         if node.is_leaf():
             pass
         else:
-            if str_headers:
-                internal_props_text = merge_annotations(node2leaves[node], str_headers, dtype='str')
-            elif str_props:
-                internal_props_text = merge_annotations(node2leaves[node], str_props, dtype='str')
-            else:
-                internal_props_text = merge_annotations(node2leaves[node], node_props, dtype='str')
+            if text_column:
+                internal_props_text = merge_annotations(node2leaves[node], text_column, dtype='str')
+                internal_props.update(internal_props_text)
+            
+            if num_column:
+                internal_props_num = merge_annotations(node2leaves[node], num_column, dtype='num')
+                internal_props.update(internal_props_num)
 
-            if num_headers:
-                internal_props_num = merge_annotations(node2leaves[node], num_headers, dtype='num')
-            elif num_props:
-                internal_props_num = merge_annotations(node2leaves[node], num_props, dtype='num')
+            if rest_column:
+                internal_props_rest = merge_annotations(node2leaves[node], rest_column, dtype='str')
+                internal_props.update(internal_props_rest)
             
-            node.add_prop('leaves', len(node2leaves[node])) # load collapsed leaves as prop
-            
-            internal_props = {**internal_props_text, **internal_props_num}
+            #internal_props = {**internal_props_text, **internal_props_num, **internal_props_rest}
             for key,value in internal_props.items():
-                
                 node.add_prop(key, value)
     
-    # taxa annotations 
-    annotated_tree = annotate_taxa(annotated_tree, taxid_attr="name")
-
-    # collapse tree by rank
-    # annotated_tree = taxatree_prune(annotated_tree, rank_limit='subspecies')
+    ### Anslysis ###
+    # taxa annotations
+    if args.taxonomic_profile:
+        if not args.taxadb:
+            print('Please specify which taxa db using --taxadb <GTDB|NCBI>')
+            asdasds
+        else:
+            annotated_tree = annotate_taxa(annotated_tree, db=args.taxadb, taxid_attr="name")
+        # if args.taxon_column:
+        #     annotated_tree = annotate_taxa(annotated_tree, taxid_attr=taxon_column)
+        # else:
+        #     annotated_tree = annotate_taxa(annotated_tree, taxid_attr="name")
     
+    # collapse tree by rank
+    if args.rank_limit:
+        annotated_tree = taxatree_prune(annotated_tree, rank_limit=rank_limit)
+
+    annotated_tree.explore(tree_name='example',layouts=[], port=5000)
     return annotated_tree
 
+if __name__ == '__main__':
+    main()
 
-output_tree = main()
+#output_tree = main()
 
 
 # # # write to pickle
@@ -267,4 +409,4 @@ output_tree = main()
 
 
 # interactive explore
-output_tree.explore(tree_name='example',layouts=[], port=5000)
+#output_tree.explore(tree_name='example',layouts=[], port=5000)
