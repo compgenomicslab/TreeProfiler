@@ -58,11 +58,6 @@ def read_args():
         type=str,
         required=True,
         help="<metadata.csv> .csv, .tsv. mandatory input")
-    group.add_argument('--delimiter',
-        type=str,
-        default='\t',
-        required=False,
-        help="delimiter of metadata columns. default [tab]")
     group.add_argument('--text_column',
         type=str,
         required=False,
@@ -75,7 +70,11 @@ def read_args():
         type=str,
         required=False,
         help="<col1> name of columns which need to be read as taxon data")
-
+    group.add_argument('--taxon_delimiter',
+        type=str,
+        default=';',
+        required=False,
+        help="delimiter of taxa columns. default [;]")
     group = parser.add_argument_group(title='Analysis arguments',
         description="Analysis parameters")
     group.add_argument('--rank_limit',
@@ -86,7 +85,7 @@ def read_args():
         default=False,
         action='store_true',
         required=False,
-        help="TAXONOMIC_LEVEL prune annotate tree by rank limit")
+        help="taxonomic profiling tree")
 
     group = parser.add_argument_group(title='Plot arguments',
         description="Plot parameters")
@@ -168,13 +167,17 @@ def ete4_parse(newick):
 
     return tree
 
-def load_metadata_to_tree(tree, metadata_dict):
+def load_metadata_to_tree(tree, metadata_dict, taxon_column=None, taxon_delimiter=';'):
     for node, props in metadata_dict.items():
         hits = tree.search_nodes(name=node) # including internal nodes
         if hits:
             target_node = hits[0]
             for key,value in props.items():
-                target_node.add_prop(key, value)
+                if key == taxon_column:
+                    taxon_prop = value.split(taxon_delimiter)[-1]
+                    target_node.add_prop(key, taxon_prop)
+                else:
+                    target_node.add_prop(key, value)
         else:
             pass
     return tree
@@ -298,7 +301,7 @@ def main():
     print(args)
     # parse csv to metadata table
     if args.metadata:
-        metadata_dict, node_props = parse_csv(args.metadata, delimiter=args.delimiter)
+        metadata_dict, node_props = parse_csv(args.metadata)
 
     # parse tree
     if args.tree:
@@ -338,7 +341,10 @@ def main():
     
     
     # load annotations to leaves
-    annotated_tree = load_metadata_to_tree(tree, metadata_dict)
+    if args.taxon_column:
+        annotated_tree = load_metadata_to_tree(tree, metadata_dict, args.taxon_column, args.taxon_delimiter)
+    else:
+        annotated_tree = load_metadata_to_tree(tree, metadata_dict)
     
     # merge annotations
     node2leaves = annotated_tree.get_cached_content()
@@ -368,9 +374,11 @@ def main():
     if args.taxonomic_profile:
         if not args.taxadb:
             print('Please specify which taxa db using --taxadb <GTDB|NCBI>')
-            asdasds
         else:
-            annotated_tree = annotate_taxa(annotated_tree, db=args.taxadb, taxid_attr="name")
+            if args.taxon_column:
+                annotated_tree = annotate_taxa(annotated_tree, db=args.taxadb, taxid_attr=args.taxon_column)
+            else:
+                annotated_tree = annotate_taxa(annotated_tree, taxid_attr="name")
         # if args.taxon_column:
         #     annotated_tree = annotate_taxa(annotated_tree, taxid_attr=taxon_column)
         # else:
@@ -380,7 +388,18 @@ def main():
     if args.rank_limit:
         annotated_tree = taxatree_prune(annotated_tree, rank_limit=rank_limit)
 
-    annotated_tree.explore(tree_name='example',layouts=[], port=5000)
+    #### Layouts Arguments ####
+
+
+    #### Output #####
+    if not args.interactive:
+        if args.outtree:
+            annotated_tree.write(outfile=args.plot, format=1)
+        elif args.plot:
+            annotated_tree.explore(tree_name='example',layouts=[], port=5000)
+    else:
+        annotated_tree.explore(tree_name='example',layouts=[], port=5000)
+    
     return annotated_tree
 
 if __name__ == '__main__':
