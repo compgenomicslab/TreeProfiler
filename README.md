@@ -1,32 +1,61 @@
 # MetaTreeProfiler 
 
 ```
-metatreeprofiler.py <annotate|draw|plot> -t tree.nw -d metadata.csv
+metatreeprofiler.py <annotate|draw> -t tree.nw -d metadata.csv
 ```
 
 params:
 
     Input arguments
-    -t <tree.nw> .nw file, customized tree input
-    --taxa <kingdom|phylum|class|order|family|genus|species|subspecies> reference tree from taxonomic database
-    -r <NCBI|GTDB> default [GTDB]  
-    -d --data <metadata.csv> .csv, .tsv. mandatory input 
-    --sep seperator of metadata columns. default [tab]
-    --text_column col1,col2
-    --num_column col1,col2
-    --taxon_column col1
+    -t TREE, --tree TREE  Input tree, .nw file, customized tree input
+    --taxatree TAXATREE   <kingdom|phylum|class|order|family|genus|species|subspecies> reference tree from taxonomic database
+    --taxadb TAXADB       <NCBI|GTDB> for taxonomic profiling or fetch taxatree default [GTDB]
+    --taxonomic_profile   taxonomic profiling tree
 
-    Analysis arguments
-    --rank_limit TAXONOMIC_LEVEL prune annotate tree by rank limit
+    -d METADATA, --metadata METADATA
+                            <metadata.csv> .csv, .tsv. mandatory input
+    --text_column TEXT_COLUMN
+                            <col1,col2> names of columns which need to be read as categorical data
+    --num_column NUM_COLUMN
+                            <col1,col2> names of columns which need to be read as numerical data
+    --taxon_column TAXON_COLUMN
+                            <col1> name of columns which need to be read as taxon data
+    --taxon_delimiter TAXON_DELIMITER
+                            delimiter of taxa columns. default [;]
+
+
+    Collapse arguments:
+    --rank_limit RANK_LIMIT
+                            TAXONOMIC_LEVEL prune annotate tree by rank limit
+    --collapse condition
+    for numerical
+    --stats 
+    --min_value ''
+    --max_value
+
+    for categorical
+    --tag 
+
 
     Plot arguments
-    --Textlayouts col1,col2
-    --RectangularLayouts col1,col2
-    --HeatmapLayouts col1,col2
-    --BarplotLayouts col1,col2
 
+    --TextLayout TEXTLAYOUT
+                            <col1,col2> names of columns which need to be plot as Textlayouts
+    --LabelLayout LABELLAYOUT
+                            <col1,col2> names of columns which need to be plot as LabelLayout
+    --RectangularLayout RECTANGULARLAYOUT
+                            <col1,col2> names of columns which need to be plot as RectangularLayout
+    --HeatmapLayout HEATMAPLAYOUT
+                            <col1,col2> names of columns which need to be read as HeatmapLayout
+    --BarplotLayout BARPLOTLAYOUT
+                            <col1,col2> names of columns which need to be read as BarplotLayouts
+    --TaxonLayout 
+                            names of columns which need to be read as TaxonLayout
     
-    Output arguments
-    --interactive 
-    -o --outfile output file <annotate.nw>
-    --plot output picture
+    Output arguments:
+
+    --interactive         run interactive session
+    --plot PLOT           output as pdf
+    -o OUTTREE, --outtree OUTTREE
+                            output annotated tree
+    --outtsv OUTTSV       output annotated tsv file
