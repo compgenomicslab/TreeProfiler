@@ -51,6 +51,11 @@ def read_args():
         type=str,
         required=True,
         help="<metadata.csv> .csv, .tsv. mandatory input")
+    group.add_argument('--no_colnames',
+        default=True,
+        action='store_false',
+        required=False,
+        help="metadata table doesn't contain columns name")
     group.add_argument('--text_column',
         type=str,
         required=False,
@@ -154,13 +159,17 @@ def read_args():
     args = parser.parse_args()
     return args
 
-def parse_csv(input_file, delimiter='\t'):
+def parse_csv(input_file, delimiter='\t', with_colnames=True):
     metadata = {}
     with open(input_file, 'r') as f:
-       
-        reader = csv.DictReader(f, delimiter=delimiter)
-        headers = reader.fieldnames
-        
+        if with_colnames:
+            reader = csv.DictReader(f, delimiter=delimiter)
+            headers = reader.fieldnames
+        else:
+            fields_len = len(next(f).split(delimiter))
+            headers = ['col'+str(i) for i in range(fields_len)]
+            reader = csv.DictReader(f, delimiter=delimiter, fieldnames=headers)
+
         node_header, node_props = headers[0], headers[1:]
         
         for row in reader:
@@ -226,22 +235,7 @@ def merge_annotations(nodes, target_props, dtype='str'):
                 internal_props[add_suffix(target_prop, 'std')] = sv
             else:
                 internal_props[add_suffix(target_prop, 'std')] = 0
-        # try:
-        #     prop_array = np.array(children_prop_array(nodes, target_prop),dtype=np.float64)
-        #     n, (smin, smax), sm, sv, ss, sk = stats.describe(prop_array)
 
-        #     internal_props[add_suffix(target_prop, 'sum')] = np.sum(prop_array)
-        #     internal_props[add_suffix(target_prop, 'min')] = smin
-        #     internal_props[add_suffix(target_prop, 'max')] = smax
-        #     internal_props[add_suffix(target_prop, 'mean')] = sm
-        #     if math.isnan(sv) == False:
-        #         internal_props[add_suffix(target_prop, 'std')] = sv
-        #     else:
-        #         internal_props[add_suffix(target_prop, 'std')] = 0
-
-        # except ValueError: # for strings
-        #     prop_list = children_prop_array(nodes, target_prop)
-        #     internal_props[add_suffix(target_prop, 'counter')] = '||'.join([add_suffix(key, value, '--') for key, value in dict(Counter(prop_list)).items()])
     return internal_props
 
 def add_suffix(name, suffix, delimiter='_'):
@@ -336,7 +330,10 @@ def main():
     print(args)
     # parse csv to metadata table
     if args.metadata:
-        metadata_dict, node_props = parse_csv(args.metadata)
+        if args.no_colnames:
+            metadata_dict, node_props = parse_csv(args.metadata)
+        else:
+            metadata_dict, node_props = parse_csv(args.metadata, with_colnames=args.no_colnames)
 
     # parse tree
     if args.tree:
