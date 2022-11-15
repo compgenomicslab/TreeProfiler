@@ -5,6 +5,8 @@ from ete4.parser.newick import NewickError
 from ete4 import Tree, PhyloTree
 from ete4 import GTDBTaxa
 from ete4 import NCBITaxa
+from ete4.smartview import TreeStyle, NodeStyle, TreeLayout
+from layouts import text_layouts, taxon_layouts, staple_layouts, heatmap_layouts
 
 from argparse import ArgumentParser
 import argparse
@@ -29,6 +31,10 @@ __date__ = '01-11-2022'
 __description__ = ('A program for profiling metadata on target '
                     'tree and conduct summary analysis')
 
+
+#colours_50 = ["#E41A1C","#C72A35","#AB3A4E","#8F4A68","#735B81","#566B9B","#3A7BB4","#3A85A8","#3D8D96","#419584","#449D72","#48A460","#4CAD4E","#56A354","#629363","#6E8371","#7A7380","#87638F","#93539D","#A25392","#B35A77","#C4625D","#D46A42","#E57227","#F67A0D","#FF8904","#FF9E0C","#FFB314","#FFC81D","#FFDD25","#FFF12D","#F9F432","#EBD930","#DCBD2E","#CDA12C","#BF862B","#B06A29","#A9572E","#B65E46","#C3655F","#D06C78","#DE7390","#EB7AA9","#F581BE","#E585B8","#D689B1","#C78DAB","#B791A5","#A8959F","#999999"]
+paried_color = ["red", "darkblue", "darkgreen", "darkyellow", "violet", "mediumturquoise", "sienna", "lightCoral", "lightSkyBlue", "indigo", "tan", "coral", "olivedrab", "teal"]
+
 def read_args():
     """
     Parse the input parameters
@@ -52,8 +58,8 @@ def read_args():
         required=True,
         help="<metadata.csv> .csv, .tsv. mandatory input")
     group.add_argument('--no_colnames',
-        default=True,
-        action='store_false',
+        default=False,
+        action='store_true',
         required=False,
         help="metadata table doesn't contain columns name")
     group.add_argument('--text_column',
@@ -64,6 +70,10 @@ def read_args():
         type=str,
         required=False,
         help="<col1,col2> names of columns which need to be read as numerical data")
+    group.add_argument('--bool_column',
+        type=str,
+        required=False,
+        help="<col1,col2> names of columns which need to be read as boolean data")
     group.add_argument('--text_column_idx',
         type=str,
         required=False,
@@ -102,16 +112,26 @@ def read_args():
         type=str,
         required=False,
         help="TAXONOMIC_LEVEL prune annotate tree by rank limit")
-    group.add_argument('--collapse_by', 
+    group.add_argument('--collapsed_by', 
         type=str,
         required=False,
         help='target tree collapsed by customized conditions'
     )
     
-
     group = parser.add_argument_group(title='Plot arguments',
         description="Plot parameters")
-    group.add_argument('--TextLayout',
+    group.add_argument('--layout_type',
+        type=str,
+        required=False,
+        help="names of layouts that you want to plot"
+    )
+    group.add_argument('--column_names',
+        type=str,
+        required=False,
+        help="names of layouts that you want to plot"
+    )
+    
+    group.add_argument('--ColorbranchLayout',
         type=str,
         required=False,
         help="<col1,col2> names of columns which need to be plot as Textlayouts")
@@ -159,17 +179,16 @@ def read_args():
     args = parser.parse_args()
     return args
 
-def parse_csv(input_file, delimiter='\t', with_colnames=True):
+def parse_csv(input_file, delimiter='\t', no_colnames=False):
     metadata = {}
     with open(input_file, 'r') as f:
-        if with_colnames:
-            reader = csv.DictReader(f, delimiter=delimiter)
-            headers = reader.fieldnames
-        else:
+        if no_colnames:
             fields_len = len(next(f).split(delimiter))
             headers = ['col'+str(i) for i in range(fields_len)]
             reader = csv.DictReader(f, delimiter=delimiter, fieldnames=headers)
-
+        else:
+            reader = csv.DictReader(f, delimiter=delimiter)
+            headers = reader.fieldnames
         node_header, node_props = headers[0], headers[1:]
         
         for row in reader:
@@ -230,7 +249,7 @@ def merge_annotations(nodes, target_props, dtype='str'):
             internal_props[add_suffix(target_prop, 'sum')] = np.sum(prop_array)
             internal_props[add_suffix(target_prop, 'min')] = smin
             internal_props[add_suffix(target_prop, 'max')] = smax
-            internal_props[add_suffix(target_prop, 'mean')] = sm
+            internal_props[add_suffix(target_prop, 'avg')] = sm
             if math.isnan(sv) == False:
                 internal_props[add_suffix(target_prop, 'std')] = sv
             else:
@@ -313,6 +332,57 @@ def tree2table(tree, internal_node=True, props=[], outfile='tree2table.csv'):
 
     return 
 
+def get_layouts(argv_input, layout_name, level):
+    props = []
+    layouts = []
+    for i in argv_input.split(','):
+        if i[0] == '[' and i[-1] == ']':
+            column_start, column_end = get_range(i)
+            for j in range(column_start, column_end+1):
+                props.append(node_props[j-1])
+        else:
+            try:
+                i = int(i)
+                props.append(node_props[i-1])
+            except ValueError:
+                props.append(i)
+
+    for prop in props:
+        if layout_name == 'heatmap':
+            layout =  TreeLayout(name=prop+'_'+layout_name, ns=heatmap_layouts.heatmap_layout(prop, level))
+        
+        elif layout_name == 'barplot':
+            layout =  staple_layouts.LayoutBarplot(name=prop+'_'+layout_name, prop=prop, color_prop=paried_color[level], size_prop=prop, column=level)
+        
+        elif layout_name == 'label' or layout_name == 'rectangular' or layout_name == 'colorbranch':
+            colour_dict = {} # key = value, value = colour id
+            prop_values = list(set(children_prop_array(annotated_tree, prop)))
+            
+            for i in range(0, len(prop_values)):
+                if len(prop_values) <= 14:
+                    colour_dict[prop_values[i]] = paried_color[i]
+                else:
+                    colour_dict[prop_values[i]] = random_color(h=None)
+            
+            if layout_name == 'label':
+                layout = TreeLayout(name=prop+'_'+layout_name, ns=text_layouts.text_layout(prop, level, colour_dict))
+            
+            elif layout_name == 'rectangular':
+                layout = TreeLayout(name=prop+'_'+layout_name, ns=text_layouts.rectangular_layout(prop, level, colour_dict))
+            
+            elif layout_name == 'colorbranch':
+                layout = TreeLayout(name=prop+'_'+layout_name, ns=text_layouts.label_layout(prop, level, colour_dict))
+
+        layouts.append(layout)
+        level += 1
+    return layouts, level
+
+def get_range(input_range):
+    column_range = input_range[input_range.find("[")+1:input_range.find("]")]
+    column_start, column_end = [int(i) for i in column_range.split('-')]
+    #column_list_idx = [i for i in range(column_start, column_end+1)]
+    return column_start, column_end
+
 def random_color(h=None):
     """Generates a random color in RGB format."""
     if not h:
@@ -325,15 +395,17 @@ def _hls2hex(h, l, s):
     return '#%02x%02x%02x' %tuple(map(lambda x: int(x*255),
                                     colorsys.hls_to_rgb(h, l, s)))
 
+
 def main():
     args = read_args()
-    print(args)
+    global node_props, annotated_tree
     # parse csv to metadata table
     if args.metadata:
         if args.no_colnames:
-            metadata_dict, node_props = parse_csv(args.metadata)
+            metadata_dict, node_props = parse_csv(args.metadata, no_colnames=args.no_colnames)
         else:
-            metadata_dict, node_props = parse_csv(args.metadata, with_colnames=args.no_colnames)
+            metadata_dict, node_props = parse_csv(args.metadata)
+            
 
     # parse tree
     if args.tree:
@@ -352,24 +424,32 @@ def main():
         num_column = []
     
     if args.text_column_idx:
-        if '-' in args.text_column_idx:
-            text_column_start, text_column_end = [int(i) for i in args.text_column_idx.split('-')]
-            text_column_idx = [i for i in range(text_column_start, text_column_end+1)]
-        else:
-            text_column_idx = [int(i) for i in args.text_column_idx.split(',')]
+        text_column_idx = []
+        for i in args.text_column_idx.split(','):
+            if i[0] == '[' and i[-1] == ']':
+                text_column_start, text_column_end = get_range(i)
+                for j in range(text_column_start, text_column_start+1):
+                    text_column_idx.append(j)
+            else:
+                text_column_idx.append(int(i))
+
         text_column = [node_props[index-1] for index in text_column_idx]
 
     if args.num_column_idx:
-        if '-' in args.num_column_idx:
-            num_column_start, num_column_end = [int(i) for i in args.num_column_idx.split('-')]
-            num_column_idx = [i for i in range(num_column_start, num_column_end+1)]
-        else:
-            num_column_idx = [int(i) for i in args.num_column_idx.split(',')]
+        num_column_idx = []
+        for i in args.num_column_idx.split(','):
+            if i[0] == '[' and i[-1] == ']':
+                num_column_start, num_column_end = get_range(i)
+                for j in range(num_column_start, num_column_start+1):
+                    num_column_idx.append(j)
+            else:
+                num_column_idx.append(int(i))
+
         num_column = [node_props[index-1] for index in num_column_idx]
 
 
     rest_column = list(set(node_props) - set(text_column) - set(num_column))
-        
+    
     # load annotations to leaves
     if args.taxon_column:
         annotated_tree = load_metadata_to_tree(tree, metadata_dict, args.taxon_column, args.taxon_delimiter)
@@ -399,7 +479,7 @@ def main():
             for key,value in internal_props.items():
                 node.add_prop(key, value)
     
-    ### Anslysis settings###
+    
     # taxa annotations
     if args.taxonomic_profile:
         if not args.taxadb:
@@ -414,84 +494,47 @@ def main():
         # else:
         #     annotated_tree = annotate_taxa(annotated_tree, taxid_attr="name")
     
+    ### Anslysis settings###
+
     # collapse tree by rank
     if args.rank_limit:
         annotated_tree = taxatree_prune(annotated_tree, rank_limit=rank_limit)
 
+    # collapse tree by condition 
+    if args.collapsed_by:
+        print(args.collapsed_by)
+
     #### Layouts settings ####
-    
-    from ete4.smartview import TreeStyle, NodeStyle, TreeLayout
-    from layouts import text_layouts, taxon_layouts, staple_layouts, heatmap_layouts
-    #colours_50 = ["#E41A1C","#C72A35","#AB3A4E","#8F4A68","#735B81","#566B9B","#3A7BB4","#3A85A8","#3D8D96","#419584","#449D72","#48A460","#4CAD4E","#56A354","#629363","#6E8371","#7A7380","#87638F","#93539D","#A25392","#B35A77","#C4625D","#D46A42","#E57227","#F67A0D","#FF8904","#FF9E0C","#FFB314","#FFC81D","#FFDD25","#FFF12D","#F9F432","#EBD930","#DCBD2E","#CDA12C","#BF862B","#B06A29","#A9572E","#B65E46","#C3655F","#D06C78","#DE7390","#EB7AA9","#F581BE","#E585B8","#D689B1","#C78DAB","#B791A5","#A8959F","#999999"]
-    paried_color = ["red", "darkblue", "darkgreen", "darkyellow", "violet", "mediumturquoise", "sienna", "lightCoral", "lightSkyBlue", "indigo", "tan", "coral", "olivedrab", "teal"]
 
     layouts = []
     level = 2 # level 1 is the leaf name
-    
+
     if args.HeatmapLayout:
-        heatmap_props = args.HeatmapLayout.split(',')
-        for heatmap_prop in heatmap_props:
-            layout =  TreeLayout(name=heatmap_prop, ns=heatmap_layouts.heatmap_layout(heatmap_prop, level))
-            layouts.append(layout)
-            level += 1
+        heatmap_layouts, level = get_layouts(args.HeatmapLayout, 'heatmap', level)
+        layouts.extend(heatmap_layouts)
 
     if args.BarplotLayout:
-        bar_props = args.BarplotLayout.split(',')
-        for bar_prop in bar_props:
-            layout =  staple_layouts.LayoutBarplot(name=bar_prop, color_prop=paried_color[level], size_prop=bar_prop, column=level)
-            layouts.append(layout)
-            level += 1
+        barplot_layouts, level = get_layouts(args.BarplotLayout, 'barplot', level)
+        layouts.extend(barplot_layouts)
 
-    if args.TextLayout:
-        text_props = args.TextLayout.split(',')
-        for text_prop in text_props:
-            colour_dict = {} # key = value, value = colour id
-            prop_values = list(set(children_prop_array(annotated_tree, text_prop)))
-            
-            for i in range(0, len(prop_values)):
-                if len(prop_values) <= 14:
-                    colour_dict[prop_values[i]] = paried_color[i]
-                else:
-                    colour_dict[prop_values[i]] = random_color(h=None)
-            layout = TreeLayout(name=text_prop, ns=text_layouts.text_layout(text_prop, level, colour_dict))
-            layouts.append(layout)
-            level += 1
-
-    if args.LabelLayout:
-        label_props = args.LabelLayout.split(',')
-        for label_prop in label_props:
-            colour_dict = {} # key = value, value = colour id
-            prop_values = list(set(children_prop_array(annotated_tree, label_prop)))
-            
-            for i in range(0, len(prop_values)):
-                if len(prop_values) <= 14:
-                    colour_dict[prop_values[i]] = paried_color[i]
-                else:
-                    colour_dict[prop_values[i]] = random_color(h=None)
-            layout = TreeLayout(name=label_prop, ns=text_layouts.label_layout(label_prop, level, colour_dict))
-            layouts.append(layout)
-            level += 1
+    if args.ColorbranchLayout:
+        colorbranch_layouts, level = get_layouts(args.ColorbranchLayout, 'colorbranch', level)
+        layouts.extend(colorbranch_layouts)
 
     if args.RectangularLayout:
-        rect_props = args.RectangularLayout.split(',')
-        for rect_prop in rect_props:
-            colour_dict = {} # key = value, value = colour id
-            prop_values = list(set(children_prop_array(annotated_tree, rect_prop)))
-            
-            for i in range(0, len(prop_values)):
-                if len(prop_values) <= 14:
-                    colour_dict[prop_values[i]] = paried_color[i]
-                else:
-                    colour_dict[prop_values[i]] = random_color(h=None)
-            layout = TreeLayout(name=rect_prop, ns=text_layouts.rectangular_layout(rect_prop, level, colour_dict))
-            layouts.append(layout)
-            level += 1
-    
+        rectangular_layouts, level = get_layouts(args.RectangularLayout, 'rectangular', level)
+        layouts.extend(rectangular_layouts)
+        
+    if args.LabelLayout:
+        barplot_layouts, level = get_layouts(args.LabelLayout, 'label', level)
+        layouts.extend(barplot_layouts)
+
     if args.TaxonLayout:
         taxon_prop = args.TaxonLayout
         # taxa_layouts = [
         #     TreeLayout(name='level3_class', ns=taxon_layouts.class_layout()),
         # ]
+
 
         taxa_layouts = [
             TreeLayout(name='level1_kingdom', ns=taxon_layouts.collapse_kingdom()),

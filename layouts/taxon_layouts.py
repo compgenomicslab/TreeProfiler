@@ -1,8 +1,33 @@
 from ete4.smartview import TreeStyle, NodeStyle, TreeLayout
 from ete4.smartview  import RectFace, CircleFace, SeqMotifFace, TextFace, OutlineFace
 
+paried_color = ["red", "darkblue", "darkgreen", "darkyellow", "violet", "mediumturquoise", "sienna", "lightCoral", "lightSkyBlue", "indigo", "tan", "coral", "olivedrab", "teal"]
+
 #collapse in layout
 #kingdom, phylum, class, order, family, genus, species, subspecies
+# def get_level(node, level=0):
+#     if node.is_root():
+#         return level
+#     else:
+#         return get_level(node.up, level + 1)
+
+# def class_layout(nvals=None):
+    
+#     def layout_fn(node):
+#         count = 0
+#         if not node.is_root() and node.props.get('rank') == 'class':
+#             node.sm_style["hz_line_color"] = paried_color[count]
+#             node.sm_style["hz_line_width"] = 2
+            
+#             children = node.children
+#             if children:
+#                 for child in children:
+#                     if child:
+#                         child.sm_style["hz_line_color"] = paried_color[count]
+#         count += 1
+#     return layout_fn
+#     return
+
 
 def collapse_kingdom():
     def layout_fn(node):
