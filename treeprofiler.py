@@ -498,7 +498,7 @@ def main():
 
     # collapse tree by rank
     if args.rank_limit:
-        annotated_tree = taxatree_prune(annotated_tree, rank_limit=rank_limit)
+        annotated_tree = taxatree_prune(annotated_tree, rank_limit=args.rank_limit)
 
     # collapse tree by condition 
     if args.collapsed_by:

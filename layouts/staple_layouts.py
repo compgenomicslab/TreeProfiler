@@ -58,8 +58,11 @@ class LayoutPlot(TreeLayout):
             print(vals["size"][1:3])
 
     def get_size(self, node, prop):
-        minval, maxval = self.size_range
-        #minval, maxval = 0,1
+        if self.size_range != [0, 0]:
+            minval, maxval = self.size_range
+        else:
+            minval, maxval = 0,1
+
         return float(node.props.get(prop, 0)) / float(maxval) * self.width
 
 
@@ -89,7 +92,15 @@ class LayoutBarplot(LayoutPlot):
             face = RectFace(width, None, color=color, padding_x=self.padding_x)
             node.add_face(face, position=self.position, column=self.column,
                     collapsed_only=False)
-        if node.props.get(internal_prop):
+                    
+        elif node.is_leaf() and node.props.get(internal_prop):
+            width = self.get_size(node, internal_prop)
+            color = self.color_prop
+            face = RectFace(width, None, color=color, padding_x=self.padding_x)
+            node.add_face(face, position=self.position, column=self.column,
+                    collapsed_only=False)
+
+        elif node.props.get(internal_prop):
             width = self.get_size(node, internal_prop)
             color = self.color_prop
             face = RectFace(width, None, color=color, padding_x=self.padding_x)
