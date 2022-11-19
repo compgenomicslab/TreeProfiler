@@ -38,7 +38,17 @@ def heatmap_layout(prop, level, internal_rep='avg'):
             #face_name = TextFace("%.1f" % (relative_abundance*100), color=color)
             node.add_face(identF, column = level,  position = 'branch_right')
             #node.add_face(identF, column = level,  position = 'branch_right', collapsed_only=True)
-        
+
+        elif node.is_leaf() and node.props.get(internal_prop):
+            # heatmap
+            redgradient = color_gradient(0.95, 0.6, 10)
+            relative_abundance = float(node.props.get(internal_prop))
+            color_idx = int(relative_abundance*10)
+            color = redgradient[color_idx]
+            identF = RectFace(width=50,height=50,text="%.1f" % (relative_abundance*100), color=color, 
+            padding_x=1, padding_y=1)
+            node.add_face(identF, column = level+5,  position = 'branch_right')
+
         elif node.props.get(internal_prop):
             # heatmap
             redgradient = color_gradient(0.95, 0.6, 10)

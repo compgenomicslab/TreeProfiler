@@ -108,6 +108,10 @@ def read_args():
 
     group = parser.add_argument_group(title='Analysis arguments',
         description="Analysis parameters")
+    group.add_argument('--stat',
+        type=str,
+        required=False,
+        help="statistic calculation to perform for numerical data [all, sum, avg, max, min, std] ")  
     group.add_argument('--rank_limit',
         type=str,
         required=False,
@@ -120,17 +124,6 @@ def read_args():
     
     group = parser.add_argument_group(title='Plot arguments',
         description="Plot parameters")
-    group.add_argument('--layout_type',
-        type=str,
-        required=False,
-        help="names of layouts that you want to plot"
-    )
-    group.add_argument('--column_names',
-        type=str,
-        required=False,
-        help="names of layouts that you want to plot"
-    )
-    
     group.add_argument('--ColorbranchLayout',
         type=str,
         required=False,
@@ -181,6 +174,7 @@ def read_args():
 
 def parse_csv(input_file, delimiter='\t', no_colnames=False):
     metadata = {}
+    columns = defaultdict(list)
     with open(input_file, 'r') as f:
         if no_colnames:
             fields_len = len(next(f).split(delimiter))
@@ -195,8 +189,21 @@ def parse_csv(input_file, delimiter='\t', no_colnames=False):
             nodename = row[node_header]
             del row[node_header]
             metadata[nodename] = dict(row)
+            for (k,v) in row.items(): # go over each column name and value 
+                columns[k].append(v) # append the value into the appropriate list
+                                    # based on column name k
 
-    return metadata, node_props
+    return metadata, node_props, columns
+
+def parse_csv_to_column(metadata):
+    columns = defaultdict(list) # each value in each column is appended to a list
+    with open(metadata) as f:
+        reader = csv.DictReader(f, delimiter="\t") # read rows into a dictionary format
+        for row in reader: # read a row as {column1: value1, column2: value2,...}
+            for (k,v) in row.items(): # go over each column name and value 
+                columns[k].append(v) # append the value into the appropriate list
+                                    # based on column name k
+    return columns
 
 def ete4_parse(newick):
     try:
@@ -295,7 +302,7 @@ def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field
 
 def taxatree_prune(tree, rank_limit='subspecies'):
     rank_limit = rank_limit.lower()
-    
+
     ex = False
     while not ex:
         ex = True
@@ -335,6 +342,8 @@ def tree2table(tree, internal_node=True, props=[], outfile='tree2table.csv'):
 def get_layouts(argv_input, layout_name, level):
     props = []
     layouts = []
+
+    # identify range [1-5], index 1,2,3 and column names
     for i in argv_input.split(','):
         if i[0] == '[' and i[-1] == ']':
             column_start, column_end = get_range(i)
@@ -347,6 +356,7 @@ def get_layouts(argv_input, layout_name, level):
             except ValueError:
                 props.append(i)
 
+    # load layout for each prop
     for prop in props:
         if layout_name == 'heatmap':
             layout =  TreeLayout(name=prop+'_'+layout_name, ns=heatmap_layouts.heatmap_layout(prop, level))
@@ -356,10 +366,12 @@ def get_layouts(argv_input, layout_name, level):
         
         elif layout_name == 'label' or layout_name == 'rectangular' or layout_name == 'colorbranch':
             colour_dict = {} # key = value, value = colour id
-            prop_values = list(set(children_prop_array(annotated_tree, prop)))
-            
-            for i in range(0, len(prop_values)):
-                if len(prop_values) <= 14:
+            prop_values = list(set(columns[prop]))
+            #prop_values = list(set(children_prop_array(annotated_tree, prop)))
+            nvals = len(prop_values)
+
+            for i in range(0, nvals):
+                if nvals <= 14:
                     colour_dict[prop_values[i]] = paried_color[i]
                 else:
                     colour_dict[prop_values[i]] = random_color(h=None)
@@ -397,14 +409,14 @@ def _hls2hex(h, l, s):
 
 
 def main():
+    global annotated_tree, node_props, columns
     args = read_args()
-    global node_props, annotated_tree
     # parse csv to metadata table
     if args.metadata:
         if args.no_colnames:
-            metadata_dict, node_props = parse_csv(args.metadata, no_colnames=args.no_colnames)
+            metadata_dict, node_props, columns = parse_csv(args.metadata, no_colnames=args.no_colnames)
         else:
-            metadata_dict, node_props = parse_csv(args.metadata)
+            metadata_dict, node_props, columns = parse_csv(args.metadata)
             
 
     # parse tree
@@ -496,19 +508,22 @@ def main():
     
     ### Anslysis settings###
 
-    # collapse tree by rank
+    # prune tree by rank
     if args.rank_limit:
-        annotated_tree = taxatree_prune(annotated_tree, rank_limit=args.rank_limit)
+        annotated_tree= taxatree_prune(annotated_tree, rank_limit=args.rank_limit)
 
     # collapse tree by condition 
     if args.collapsed_by:
         print(args.collapsed_by)
+
+    # label tree by condition
 
     #### Layouts settings ####
 
     layouts = []
     level = 2 # level 1 is the leaf name
 
+    # numerical
     if args.HeatmapLayout:
         heatmap_layouts, level = get_layouts(args.HeatmapLayout, 'heatmap', level)
         layouts.extend(heatmap_layouts)
@@ -517,6 +532,9 @@ def main():
         barplot_layouts, level = get_layouts(args.BarplotLayout, 'barplot', level)
         layouts.extend(barplot_layouts)
 
+    # boolean 
+    
+    # categorical
     if args.ColorbranchLayout:
         colorbranch_layouts, level = get_layouts(args.ColorbranchLayout, 'colorbranch', level)
         layouts.extend(colorbranch_layouts)
@@ -526,9 +544,10 @@ def main():
         layouts.extend(rectangular_layouts)
         
     if args.LabelLayout:
-        barplot_layouts, level = get_layouts(args.LabelLayout, 'label', level)
-        layouts.extend(barplot_layouts)
+        label_layouts, level = get_layouts(args.LabelLayout, 'label', level)
+        layouts.extend(label_layouts)
 
+    # Taxa layouts
     if args.TaxonLayout:
         taxon_prop = args.TaxonLayout
         # taxa_layouts = [

@@ -86,13 +86,14 @@ class LayoutBarplot(LayoutPlot):
 
     def set_node_style(self, node):
         internal_prop = self.prop + '_' + self.internal_rep
+        
         if node.is_leaf() and node.props.get(self.prop):
             width = self.get_size(node, self.size_prop)
             color = self.color_prop
             face = RectFace(width, None, color=color, padding_x=self.padding_x)
             node.add_face(face, position=self.position, column=self.column,
                     collapsed_only=False)
-                    
+
         elif node.is_leaf() and node.props.get(internal_prop):
             width = self.get_size(node, internal_prop)
             color = self.color_prop
