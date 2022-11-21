@@ -6,7 +6,7 @@ from ete4 import Tree, PhyloTree
 from ete4 import GTDBTaxa
 from ete4 import NCBITaxa
 from ete4.smartview import TreeStyle, NodeStyle, TreeLayout
-from layouts import text_layouts, taxon_layouts, staple_layouts, heatmap_layouts
+from layouts import text_layouts, taxon_layouts, staple_layouts, heatmap_layouts, conditional_layouts
 
 from argparse import ArgumentParser
 import argparse
@@ -108,10 +108,23 @@ def read_args():
 
     group = parser.add_argument_group(title='Analysis arguments',
         description="Analysis parameters")
-    group.add_argument('--stat',
+    group.add_argument('--num_stat',
+        default='all',
         type=str,
         required=False,
-        help="statistic calculation to perform for numerical data [all, sum, avg, max, min, std] ")  
+        help="statistic calculation to perform for numerical data in internal nodes, [all, sum, avg, max, min, std] ")  
+    group.add_argument('--internal_plot_measure',
+        default='avg',
+        type=str,
+        required=False,
+        help="statistic measures to be shown in numerical layout for internal nodes, [default: avg]")  
+
+    group.add_argument('--text_stat',
+        default='raw',
+        type=str,
+        required=False,
+        help="statistic calculation to perform for categorical data in internal nodes, raw count or in percentage [raw, relative] ")  
+    
     group.add_argument('--rank_limit',
         type=str,
         required=False,
@@ -119,9 +132,28 @@ def read_args():
     group.add_argument('--collapsed_by', 
         type=str,
         required=False,
-        help='target tree collapsed by customized conditions'
-    )
+        help='target tree collapsed by customized conditions')
+    group.add_argument('--highlighted_by', 
+        type=str,
+        required=False,
+        help='target tree highlighted by customized conditions')
     
+    group = parser.add_argument_group(title='basic treelayout arguments',
+        description="treelayout parameters")
+    group.add_argument('--drawer',
+        type=str,
+        required=False,
+        help="Circular or Rectangular")
+    group.add_argument('--collapse_level',
+        type=str,
+        required=False,
+        help="default collapse level, default is 10") 
+    group.add_argument('--ultrametric',
+        default=False,
+        action='store_true',
+        required=False,
+        help="ultrametric tree")
+
     group = parser.add_argument_group(title='Plot arguments',
         description="Plot parameters")
     group.add_argument('--ColorbranchLayout',
@@ -136,6 +168,8 @@ def read_args():
         type=str,
         required=False,
         help="<col1,col2> names of columns which need to be plot as RectangularLayout")
+    
+    
     group.add_argument('--HeatmapLayout',
         type=str,
         required=False,
@@ -144,6 +178,8 @@ def read_args():
         type=str,
         required=False,
         help="<col1,col2> names of columns which need to be read as BarplotLayouts")
+    
+    
     group.add_argument('--TaxonLayout',
         type=str,
         required=False,
@@ -241,27 +277,77 @@ def load_metadata_to_tree(tree, metadata_dict, taxon_column=None, taxon_delimite
             pass
     return tree
 
-def merge_annotations(nodes, target_props, dtype='str'):
-    internal_props = {}
+# def merge_annotations(nodes, target_props, dtype='str'):
+#     internal_props = {}
 
+#     for target_prop in target_props:
+#         if dtype == 'str':
+#             prop_list = children_prop_array(nodes, target_prop)
+#             internal_props[add_suffix(target_prop, 'counter')] = '||'.join([add_suffix(key, value, '--') for key, value in dict(Counter(prop_list)).items()])
+            
+#         elif dtype == 'num':
+#             prop_array = np.array(children_prop_array(nodes, target_prop),dtype=np.float64)
+#             n, (smin, smax), sm, sv, ss, sk = stats.describe(prop_array)
+
+#             internal_props[add_suffix(target_prop, 'sum')] = np.sum(prop_array)
+#             internal_props[add_suffix(target_prop, 'min')] = smin
+#             internal_props[add_suffix(target_prop, 'max')] = smax
+#             internal_props[add_suffix(target_prop, 'avg')] = sm
+#             if math.isnan(sv) == False:
+#                 internal_props[add_suffix(target_prop, 'std')] = sv
+#             else:
+#                 internal_props[add_suffix(target_prop, 'std')] = 0
+
+#     return internal_props
+
+def merge_text_annotations(nodes, target_props, text_stat='raw'):
+    internal_props = {}
     for target_prop in target_props:
-        if dtype == 'str':
+        if text_stat == 'raw':
             prop_list = children_prop_array(nodes, target_prop)
             internal_props[add_suffix(target_prop, 'counter')] = '||'.join([add_suffix(key, value, '--') for key, value in dict(Counter(prop_list)).items()])
-            
-        elif dtype == 'num':
-            prop_array = np.array(children_prop_array(nodes, target_prop),dtype=np.float64)
-            n, (smin, smax), sm, sv, ss, sk = stats.describe(prop_array)
 
-            internal_props[add_suffix(target_prop, 'sum')] = np.sum(prop_array)
-            internal_props[add_suffix(target_prop, 'min')] = smin
-            internal_props[add_suffix(target_prop, 'max')] = smax
+        elif text_stat == 'relative':
+            prop_list = children_prop_array(nodes, target_prop)
+            internal_props[add_suffix(target_prop, 'counter')] = '||'.join([add_suffix(key, value, '--') for key, value in dict(Counter(prop_list)).items()])
+
+        else:
+            print('Invalid stat method')
+            break
+    return internal_props
+
+def merge_num_annotations(nodes, target_props, num_stat='all'):
+    internal_props = {}
+    for target_prop in target_props:
+        prop_array = np.array(children_prop_array(nodes, target_prop),dtype=np.float64)
+        n, (smin, smax), sm, sv, ss, sk = stats.describe(prop_array)
+
+        if num_stat == 'all':
             internal_props[add_suffix(target_prop, 'avg')] = sm
+            internal_props[add_suffix(target_prop, 'sum')] = np.sum(prop_array)
+            internal_props[add_suffix(target_prop, 'max')] = smax
+            internal_props[add_suffix(target_prop, 'min')] = smin
             if math.isnan(sv) == False:
                 internal_props[add_suffix(target_prop, 'std')] = sv
             else:
                 internal_props[add_suffix(target_prop, 'std')] = 0
-
+        
+        elif num_stat == 'avg':
+            internal_props[add_suffix(target_prop, 'avg')] = sm
+        elif num_stat == 'sum':
+            internal_props[add_suffix(target_prop, 'sum')] = np.sum(prop_array)
+        elif num_stat == 'max':
+            internal_props[add_suffix(target_prop, 'max')] = smax
+        elif num_stat == 'min':
+            internal_props[add_suffix(target_prop, 'min')] = smin
+        elif num_stat == 'std':
+            if math.isnan(sv) == False:
+                internal_props[add_suffix(target_prop, 'std')] = sv
+            else:
+                internal_props[add_suffix(target_prop, 'std')] = 0
+        else:
+            print('Invalid stat method')
+            break
     return internal_props
 
 def add_suffix(name, suffix, delimiter='_'):
@@ -339,7 +425,7 @@ def tree2table(tree, internal_node=True, props=[], outfile='tree2table.csv'):
 
     return 
 
-def get_layouts(argv_input, layout_name, level):
+def get_layouts(argv_input, layout_name, level, internal_rep):
     props = []
     layouts = []
 
@@ -358,12 +444,17 @@ def get_layouts(argv_input, layout_name, level):
 
     # load layout for each prop
     for prop in props:
+        # numerical layouts
         if layout_name == 'heatmap':
-            layout =  TreeLayout(name=prop+'_'+layout_name, ns=heatmap_layouts.heatmap_layout(prop, level))
+            layout =  TreeLayout(name=prop+'_'+layout_name, ns=heatmap_layouts.heatmap_layout(prop, level, internal_rep))
         
         elif layout_name == 'barplot':
-            layout =  staple_layouts.LayoutBarplot(name=prop+'_'+layout_name, prop=prop, color_prop=paried_color[level], size_prop=prop, column=level)
+            layout =  staple_layouts.LayoutBarplot(name=prop+'_'+layout_name, prop=prop, \
+                                    color_prop=paried_color[level], size_prop=prop, 
+                                    column=level, internal_rep=internal_rep
+                                    )
         
+        # categorical layouts
         elif layout_name == 'label' or layout_name == 'rectangular' or layout_name == 'colorbranch':
             colour_dict = {} # key = value, value = colour id
             prop_values = list(set(columns[prop]))
@@ -377,13 +468,13 @@ def get_layouts(argv_input, layout_name, level):
                     colour_dict[prop_values[i]] = random_color(h=None)
             
             if layout_name == 'label':
-                layout = TreeLayout(name=prop+'_'+layout_name, ns=text_layouts.text_layout(prop, level, colour_dict))
+                layout = TreeLayout(name=prop+'_'+layout_name, ns=text_layouts.text_layout(prop, level, colour_dict, internal_rep))
             
             elif layout_name == 'rectangular':
-                layout = TreeLayout(name=prop+'_'+layout_name, ns=text_layouts.rectangular_layout(prop, level, colour_dict))
+                layout = TreeLayout(name=prop+'_'+layout_name, ns=text_layouts.rectangular_layout(prop, level, colour_dict, internal_rep))
             
             elif layout_name == 'colorbranch':
-                layout = TreeLayout(name=prop+'_'+layout_name, ns=text_layouts.label_layout(prop, level, colour_dict))
+                layout = TreeLayout(name=prop+'_'+layout_name, ns=text_layouts.label_layout(prop, level, colour_dict, internal_rep))
 
         layouts.append(layout)
         level += 1
@@ -407,10 +498,21 @@ def _hls2hex(h, l, s):
     return '#%02x%02x%02x' %tuple(map(lambda x: int(x*255),
                                     colorsys.hls_to_rgb(h, l, s)))
 
+import re
+def to_code(string):
+    code = "(" + string + ")"
+    code = code.replace(",", ") and (") # ',' means and
+    code = code.replace(";", " or ") # ';' means or
+    code = code.replace("=", "==")
+    return code
 
 def main():
     global annotated_tree, node_props, columns
     args = read_args()
+
+    layouts = []
+    level = 2 # level 1 is the leaf name
+
     # parse csv to metadata table
     if args.metadata:
         if args.no_colnames:
@@ -468,6 +570,13 @@ def main():
     else:
         annotated_tree = load_metadata_to_tree(tree, metadata_dict)
     
+    # stat method
+    if args.text_stat:
+        text_stat = args.text_stat
+
+    if args.num_stat:
+        num_stat = args.num_stat
+
     # merge annotations
     node2leaves = annotated_tree.get_cached_content()
     for node in annotated_tree.traverse("postorder"):
@@ -476,21 +585,20 @@ def main():
             pass
         else:
             if text_column:
-                internal_props_text = merge_annotations(node2leaves[node], text_column, dtype='str')
+                internal_props_text = merge_text_annotations(node2leaves[node], text_column, text_stat=text_stat)
                 internal_props.update(internal_props_text)
             
             if num_column:
-                internal_props_num = merge_annotations(node2leaves[node], num_column, dtype='num')
+                internal_props_num = merge_num_annotations(node2leaves[node], num_column, num_stat=num_stat)
                 internal_props.update(internal_props_num)
 
             if rest_column:
-                internal_props_rest = merge_annotations(node2leaves[node], rest_column, dtype='str')
+                internal_props_rest = merge_text_annotations(node2leaves[node], rest_column, text_stat=text_stat)
                 internal_props.update(internal_props_rest)
             
             #internal_props = {**internal_props_text, **internal_props_num, **internal_props_rest}
             for key,value in internal_props.items():
                 node.add_prop(key, value)
-    
     
     # taxa annotations
     if args.taxonomic_profile:
@@ -513,38 +621,51 @@ def main():
         annotated_tree= taxatree_prune(annotated_tree, rank_limit=args.rank_limit)
 
     # collapse tree by condition 
-    if args.collapsed_by:
+    if args.collapsed_by: # need to be wrap with quotes
         print(args.collapsed_by)
 
-    # label tree by condition
+    # label node by condition
+    if args.highlighted_by: # need to be wrap with quotes
+        condition_strings = args.highlighted_by
 
+        prop2type = {'name':'str'} # start with leaf name
+        for prop in text_column+rest_column:
+            prop2type[prop] = 'str'
+        for prop in num_column:
+            prop2type[prop] = 'num'
+
+        s_layout = TreeLayout(name='highlighted', \
+                                ns=conditional_layouts.highlight_layout(condition_strings, prop2type = prop2type, level=level))
+        layouts.append(s_layout)
+        
     #### Layouts settings ####
-
-    layouts = []
-    level = 2 # level 1 is the leaf name
-
     # numerical
+    if args.num_stat != 'all':
+        internal_num_rep = args.num_stat
+    else:
+        internal_num_rep = args.internal_plot_measure
+
     if args.HeatmapLayout:
-        heatmap_layouts, level = get_layouts(args.HeatmapLayout, 'heatmap', level)
+        heatmap_layouts, level = get_layouts(args.HeatmapLayout, 'heatmap', level, internal_num_rep)
         layouts.extend(heatmap_layouts)
 
     if args.BarplotLayout:
-        barplot_layouts, level = get_layouts(args.BarplotLayout, 'barplot', level)
+        barplot_layouts, level = get_layouts(args.BarplotLayout, 'barplot', level, internal_num_rep)
         layouts.extend(barplot_layouts)
 
     # boolean 
     
     # categorical
     if args.ColorbranchLayout:
-        colorbranch_layouts, level = get_layouts(args.ColorbranchLayout, 'colorbranch', level)
+        colorbranch_layouts, level = get_layouts(args.ColorbranchLayout, 'colorbranch', level, 'counter')
         layouts.extend(colorbranch_layouts)
 
     if args.RectangularLayout:
-        rectangular_layouts, level = get_layouts(args.RectangularLayout, 'rectangular', level)
+        rectangular_layouts, level = get_layouts(args.RectangularLayout, 'rectangular', level, 'counter')
         layouts.extend(rectangular_layouts)
         
     if args.LabelLayout:
-        label_layouts, level = get_layouts(args.LabelLayout, 'label', level)
+        label_layouts, level = get_layouts(args.LabelLayout, 'label', level, 'counter')
         layouts.extend(label_layouts)
 
     # Taxa layouts
