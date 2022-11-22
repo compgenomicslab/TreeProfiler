@@ -33,7 +33,7 @@ __description__ = ('A program for profiling metadata on target '
 
 
 #colours_50 = ["#E41A1C","#C72A35","#AB3A4E","#8F4A68","#735B81","#566B9B","#3A7BB4","#3A85A8","#3D8D96","#419584","#449D72","#48A460","#4CAD4E","#56A354","#629363","#6E8371","#7A7380","#87638F","#93539D","#A25392","#B35A77","#C4625D","#D46A42","#E57227","#F67A0D","#FF8904","#FF9E0C","#FFB314","#FFC81D","#FFDD25","#FFF12D","#F9F432","#EBD930","#DCBD2E","#CDA12C","#BF862B","#B06A29","#A9572E","#B65E46","#C3655F","#D06C78","#DE7390","#EB7AA9","#F581BE","#E585B8","#D689B1","#C78DAB","#B791A5","#A8959F","#999999"]
-paried_color = ["red", "darkblue", "darkgreen", "darkyellow", "violet", "mediumturquoise", "sienna", "lightCoral", "lightSkyBlue", "indigo", "tan", "coral", "olivedrab", "teal"]
+paried_color = ["red", "darkblue", "lightgreen", "darkyellow", "violet", "mediumturquoise", "sienna", "lightCoral", "lightSkyBlue", "indigo", "tan", "coral", "olivedrab", "teal"]
 
 def read_args():
     """
@@ -82,6 +82,10 @@ def read_args():
         type=str,
         required=False,
         help="1,2,3 or 1-5 index columns which need to be read as numerical data")
+    group.add_argument('--bool_column_idx',
+        type=str,
+        required=False,
+        help="1,2,3 or 1-5 index columns which need to be read as boolean data")
     group.add_argument('--taxatree',
         type=str,
         required=False,
@@ -156,6 +160,15 @@ def read_args():
 
     group = parser.add_argument_group(title='Plot arguments',
         description="Plot parameters")
+    group.add_argument('--BinaryLayout',
+        type=str,
+        required=False,
+        help="<col1,col2> names of columns which need to be plot as BinaryLayout")
+    group.add_argument('--RevBinaryLayout',
+        type=str,
+        required=False,
+        help="<col1,col2> names of columns which need to be plot as RevBinaryLayout")
+
     group.add_argument('--ColorbranchLayout',
         type=str,
         required=False,
@@ -443,7 +456,7 @@ def get_layouts(argv_input, layout_name, level, internal_rep):
                 props.append(i)
 
     # load layout for each prop
-    for prop in props:
+    for idx, prop in enumerate(props):
         # numerical layouts
         if layout_name == 'heatmap':
             layout =  TreeLayout(name=prop+'_'+layout_name, ns=heatmap_layouts.heatmap_layout(prop, level, internal_rep))
@@ -455,7 +468,7 @@ def get_layouts(argv_input, layout_name, level, internal_rep):
                                     )
         
         # categorical layouts
-        elif layout_name == 'label' or layout_name == 'rectangular' or layout_name == 'colorbranch':
+        elif layout_name in ['label','rectangular', 'colorbranch']:
             colour_dict = {} # key = value, value = colour id
             prop_values = list(set(columns[prop]))
             #prop_values = list(set(children_prop_array(annotated_tree, prop)))
@@ -476,6 +489,20 @@ def get_layouts(argv_input, layout_name, level, internal_rep):
             elif layout_name == 'colorbranch':
                 layout = TreeLayout(name=prop+'_'+layout_name, ns=text_layouts.label_layout(prop, level, colour_dict, internal_rep))
 
+        elif layout_name in ['binary', 'revbinary']:
+            prop_colour_dict = {} # key = value, value = colour id
+            prop_values = list(set(columns[prop]))
+            nvals = len(prop_values)
+            for i in range(0, nvals):
+                prop_colour_dict[prop_values[i]] = paried_color[i]
+
+            color = random_color(h=None)
+            #color = random_color(h=None)
+            if layout_name == 'binary':
+                layout = TreeLayout(name=prop+'_'+layout_name, ns=conditional_layouts.boolean_layout(prop, level, color, prop_colour_dict, internal_rep))
+
+            elif layout_name == 'revbinary':
+                layout = TreeLayout(name=prop+'_'+layout_name, ns=conditional_layouts.boolean_layout(prop, level, color, prop_colour_dict ,internal_rep, reverse=True))
         layouts.append(layout)
         level += 1
     return layouts, level
@@ -497,14 +524,6 @@ def random_color(h=None):
 def _hls2hex(h, l, s):
     return '#%02x%02x%02x' %tuple(map(lambda x: int(x*255),
                                     colorsys.hls_to_rgb(h, l, s)))
-
-import re
-def to_code(string):
-    code = "(" + string + ")"
-    code = code.replace(",", ") and (") # ',' means and
-    code = code.replace(";", " or ") # ';' means or
-    code = code.replace("=", "==")
-    return code
 
 def main():
     global annotated_tree, node_props, columns
@@ -537,6 +556,11 @@ def main():
     else:
         num_column = []
     
+    if args.bool_column:
+        bool_column = args.bool_column.split(',')
+    else:
+        bool_column = []
+
     if args.text_column_idx:
         text_column_idx = []
         for i in args.text_column_idx.split(','):
@@ -561,8 +585,20 @@ def main():
 
         num_column = [node_props[index-1] for index in num_column_idx]
 
+    if args.bool_column_idx:
+        bool_column_idx = []
+        for i in args.bool_column_idx.split(','):
+            if i[0] == '[' and i[-1] == ']':
+                bool_column_start, bool_column_end = get_range(i)
+                for j in range(bool_column_start, bool_column_end+1):
+                    bool_column_idx.append(j)
+            else:
+                bool_column_idx.append(int(i))
 
-    rest_column = list(set(node_props) - set(text_column) - set(num_column))
+        bool_column_idx = [node_props[index-1] for index in bool_column_idx]
+
+
+    rest_column = list(set(node_props) - set(text_column) - set(num_column) - set(bool_column))
     
     # load annotations to leaves
     if args.taxon_column:
@@ -591,6 +627,10 @@ def main():
             if num_column:
                 internal_props_num = merge_num_annotations(node2leaves[node], num_column, num_stat=num_stat)
                 internal_props.update(internal_props_num)
+
+            if bool_column:
+                internal_props_bool = merge_text_annotations(node2leaves[node], text_column, text_stat=text_stat)
+                internal_props.update(internal_props_bool)
 
             if rest_column:
                 internal_props_rest = merge_text_annotations(node2leaves[node], rest_column, text_stat=text_stat)
@@ -666,6 +706,14 @@ def main():
         
     if args.LabelLayout:
         label_layouts, level = get_layouts(args.LabelLayout, 'label', level, 'counter')
+        layouts.extend(label_layouts)
+
+    if args.BinaryLayout:
+        label_layouts, level = get_layouts(args.BinaryLayout, 'binary', level, 'counter')
+        layouts.extend(label_layouts)
+
+    if args.RevBinaryLayout:
+        label_layouts, level = get_layouts(args.RevBinaryLayout, 'revbinary', level, 'counter')
         layouts.extend(label_layouts)
 
     # Taxa layouts
