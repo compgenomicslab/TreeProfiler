@@ -133,13 +133,20 @@ def read_args():
         type=str,
         required=False,
         help="TAXONOMIC_LEVEL prune annotate tree by rank limit")
+    group.add_argument('--pruned_by', 
+        type=str,
+        required=False,
+        action='append',
+        help='target tree pruned by customized conditions')
     group.add_argument('--collapsed_by', 
         type=str,
         required=False,
+        action='append',
         help='target tree collapsed by customized conditions')
     group.add_argument('--highlighted_by', 
         type=str,
         required=False,
+        action='append',
         help='target tree highlighted by customized conditions')
     
     group = parser.add_argument_group(title='basic treelayout arguments',
@@ -276,10 +283,16 @@ def ete4_parse(newick):
     return tree
 
 def load_metadata_to_tree(tree, metadata_dict, taxon_column=None, taxon_delimiter=';'):
+    name2leaf = {}
+    for leaf in tree.iter_leaves():
+        name2leaf[leaf.name] = leaf
+
     for node, props in metadata_dict.items():
-        hits = tree.search_nodes(name=node) # including internal nodes
-        if hits:
-            target_node = hits[0]
+        
+        #hits = tree.get_leaves_by_name(node)
+        #hits = tree.search_nodes(name=node) # including internal nodes
+        if node in name2leaf.keys():
+            target_node = name2leaf[node]
             for key,value in props.items():
                 if key == taxon_column:
                     taxon_prop = value.split(taxon_delimiter)[-1]
@@ -288,6 +301,21 @@ def load_metadata_to_tree(tree, metadata_dict, taxon_column=None, taxon_delimite
                     target_node.add_prop(key, value)
         else:
             pass
+        
+        # if hits:
+            
+        #     target_node = hits[0]
+        #     for key,value in props.items():
+        #         if key == taxon_column:
+        #             taxon_prop = value.split(taxon_delimiter)[-1]
+        #             target_node.add_prop(key, taxon_prop)
+        #         else:
+        #             target_node.add_prop(key, value)
+        # elif len(hits)>1:
+        #     print('repeat')
+        #     break
+        # else:
+        #     pass
     return tree
 
 # def merge_annotations(nodes, target_props, dtype='str'):
@@ -327,6 +355,7 @@ def merge_text_annotations(nodes, target_props, text_stat='raw'):
         else:
             print('Invalid stat method')
             break
+    
     return internal_props
 
 def merge_num_annotations(nodes, target_props, num_stat='all'):
@@ -389,9 +418,11 @@ def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field
     # tree.annotate_gtdb_taxa(taxid_attr='name')
     # assign internal node as sci_name
     for n in tree.traverse():
-        if not n.is_leaf(): 
-            nleaves = str(len(n))
-            n.add_prop("nleaves", nleaves)
+        # if not n.is_leaf(): 
+        #     nleaves = str(len(n))
+        #     n.add_prop("nleaves", nleaves)
+        # if n.is_leaf():
+        #     print(n.props.get("sci_name"))
         if n.name:
             pass
         else:
@@ -409,7 +440,40 @@ def taxatree_prune(tree, rank_limit='subspecies'):
             if n.props.get('rank') != rank_limit:
                 n.detach()
                 ex = False
+    return tree
 
+from utils import to_code, call
+def conditional_prune(tree, conditions_input, prop2type):
+    conditional_output = []
+    for line in conditions_input:
+        single_one = to_code(line)
+        conditional_output.append(single_one)
+
+    ex = False
+    while not ex:
+        ex = True
+        for n in tree.traverse():
+            final_call = False
+            for or_condition in conditional_output:
+                for condition in or_condition:
+                    op = condition[1]
+                    if op == 'in':
+                        value = condition[0]
+                        prop = condition[2]
+                    else:
+                        prop = condition[0]
+                        value = condition[2]
+                    datatype = prop2type[prop]
+                    final_call = call(n, prop, datatype, op, value)
+                    if final_call == False:
+                        break
+                    else:
+                        continue
+                if final_call:
+                    n.detach()
+                    ex = False
+                else:
+                    pass
     return tree
 
 def tree2table(tree, internal_node=True, props=[], outfile='tree2table.csv'):
@@ -457,8 +521,23 @@ def get_layouts(argv_input, layout_name, level, internal_rep):
 
     # load layout for each prop
     for idx, prop in enumerate(props):
+        if layout_name in ['binary', 'revbinary']:
+            prop_colour_dict = {} # key = value, value = colour id
+            prop_values = list(set(columns[prop]))
+            nvals = len(prop_values)
+            for i in range(0, nvals):
+                prop_colour_dict[prop_values[i]] = paried_color[i]
+
+            color = random_color(h=None)
+            #color = random_color(h=None)
+            if layout_name == 'binary':
+                layout = TreeLayout(name=prop+'_'+layout_name, ns=conditional_layouts.boolean_layout(prop, level, color, prop_colour_dict, internal_rep))
+
+            elif layout_name == 'revbinary':
+                layout = TreeLayout(name=prop+'_'+layout_name, ns=conditional_layouts.boolean_layout(prop, level, color, prop_colour_dict ,internal_rep, reverse=True))
+
         # numerical layouts
-        if layout_name == 'heatmap':
+        elif layout_name == 'heatmap':
             layout =  TreeLayout(name=prop+'_'+layout_name, ns=heatmap_layouts.heatmap_layout(prop, level, internal_rep))
         
         elif layout_name == 'barplot':
@@ -489,20 +568,7 @@ def get_layouts(argv_input, layout_name, level, internal_rep):
             elif layout_name == 'colorbranch':
                 layout = TreeLayout(name=prop+'_'+layout_name, ns=text_layouts.label_layout(prop, level, colour_dict, internal_rep))
 
-        elif layout_name in ['binary', 'revbinary']:
-            prop_colour_dict = {} # key = value, value = colour id
-            prop_values = list(set(columns[prop]))
-            nvals = len(prop_values)
-            for i in range(0, nvals):
-                prop_colour_dict[prop_values[i]] = paried_color[i]
-
-            color = random_color(h=None)
-            #color = random_color(h=None)
-            if layout_name == 'binary':
-                layout = TreeLayout(name=prop+'_'+layout_name, ns=conditional_layouts.boolean_layout(prop, level, color, prop_colour_dict, internal_rep))
-
-            elif layout_name == 'revbinary':
-                layout = TreeLayout(name=prop+'_'+layout_name, ns=conditional_layouts.boolean_layout(prop, level, color, prop_colour_dict ,internal_rep, reverse=True))
+        
         layouts.append(layout)
         level += 1
     return layouts, level
@@ -526,6 +592,7 @@ def _hls2hex(h, l, s):
                                     colorsys.hls_to_rgb(h, l, s)))
 
 def main():
+    import time
     global annotated_tree, node_props, columns
     args = read_args()
 
@@ -533,13 +600,18 @@ def main():
     level = 2 # level 1 is the leaf name
 
     # parse csv to metadata table
+    start = time.time()
+    
     if args.metadata:
         if args.no_colnames:
             metadata_dict, node_props, columns = parse_csv(args.metadata, no_colnames=args.no_colnames)
         else:
             metadata_dict, node_props, columns = parse_csv(args.metadata)
             
-
+    #code goes here
+    end = time.time()
+    print('Time for parse_csv to run: ', end - start)
+    
     # parse tree
     if args.tree:
         tree = ete4_parse(args.tree)
@@ -597,14 +669,20 @@ def main():
 
         bool_column_idx = [node_props[index-1] for index in bool_column_idx]
 
-
-    rest_column = list(set(node_props) - set(text_column) - set(num_column) - set(bool_column))
-    
     # load annotations to leaves
+    start = time.time()
+    
+    taxon_column = []
     if args.taxon_column:
+        taxon_column.append(args.taxon_column)
         annotated_tree = load_metadata_to_tree(tree, metadata_dict, args.taxon_column, args.taxon_delimiter)
     else:
         annotated_tree = load_metadata_to_tree(tree, metadata_dict)
+    
+    end = time.time()
+    print('Time for load_metadata_to_tree to run: ', end - start)
+    rest_column = []
+    #rest_column = list(set(node_props) - set(text_column) - set(num_column) - set(bool_column))
     
     # stat method
     if args.text_stat:
@@ -614,22 +692,25 @@ def main():
         num_stat = args.num_stat
 
     # merge annotations
+    start = time.time()
     node2leaves = annotated_tree.get_cached_content()
+    count = 0
     for node in annotated_tree.traverse("postorder"):
         internal_props = {}
         if node.is_leaf():
             pass
         else:
+            
             if text_column:
                 internal_props_text = merge_text_annotations(node2leaves[node], text_column, text_stat=text_stat)
                 internal_props.update(internal_props_text)
-            
+
             if num_column:
                 internal_props_num = merge_num_annotations(node2leaves[node], num_column, num_stat=num_stat)
                 internal_props.update(internal_props_num)
 
             if bool_column:
-                internal_props_bool = merge_text_annotations(node2leaves[node], text_column, text_stat=text_stat)
+                internal_props_bool = merge_text_annotations(node2leaves[node], bool_column, text_stat=text_stat)
                 internal_props.update(internal_props_bool)
 
             if rest_column:
@@ -637,10 +718,23 @@ def main():
                 internal_props.update(internal_props_rest)
             
             #internal_props = {**internal_props_text, **internal_props_num, **internal_props_rest}
+            #print(internal_props.items())
             for key,value in internal_props.items():
                 node.add_prop(key, value)
+
+    end = time.time()
+    print('Time for merge annotations to run: ', end - start)
     
+    prop2type = {'name':'str'} # start with leaf name
+    for prop in text_column+bool_column+rest_column:
+        prop2type[prop] = 'str'
+        prop2type[prop+'_counter'] = 'str'
+    for prop in num_column:
+        prop2type[prop] = 'num'
+        prop2type[prop+'_avg'] = 'num'
+
     # taxa annotations
+    start = time.time()
     if args.taxonomic_profile:
         if not args.taxadb:
             print('Please specify which taxa db using --taxadb <GTDB|NCBI>')
@@ -653,7 +747,8 @@ def main():
         #     annotated_tree = annotate_taxa(annotated_tree, taxid_attr=taxon_column)
         # else:
         #     annotated_tree = annotate_taxa(annotated_tree, taxid_attr="name")
-    
+    end = time.time()
+    print('Time for annotate_taxa to run: ', end - start)
     ### Anslysis settings###
 
     # prune tree by rank
@@ -661,22 +756,27 @@ def main():
         annotated_tree= taxatree_prune(annotated_tree, rank_limit=args.rank_limit)
 
     # collapse tree by condition 
+    if args.pruned_by: # need to be wrap with quotes
+        condition_strings = args.pruned_by
+        annotated_tree= conditional_prune(annotated_tree, condition_strings, prop2type)
+
+        
+
+    # collapse tree by condition 
     if args.collapsed_by: # need to be wrap with quotes
-        print(args.collapsed_by)
+        condition_strings = args.collapsed_by
+        for condition in condition_strings:
+            c_layout = TreeLayout(name=condition, \
+                                    ns=conditional_layouts.collapsed_by_layout(condition, prop2type = prop2type, level=level))
+            layouts.append(c_layout)
 
     # label node by condition
     if args.highlighted_by: # need to be wrap with quotes
         condition_strings = args.highlighted_by
-
-        prop2type = {'name':'str'} # start with leaf name
-        for prop in text_column+rest_column:
-            prop2type[prop] = 'str'
-        for prop in num_column:
-            prop2type[prop] = 'num'
-
-        s_layout = TreeLayout(name='highlighted', \
-                                ns=conditional_layouts.highlight_layout(condition_strings, prop2type = prop2type, level=level))
-        layouts.append(s_layout)
+        for condition in condition_strings:
+            s_layout = TreeLayout(name=condition, \
+                                    ns=conditional_layouts.highlight_layout(condition, prop2type = prop2type, level=level))
+            layouts.append(s_layout)
         
     #### Layouts settings ####
     # numerical
