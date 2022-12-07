@@ -5,29 +5,72 @@ paried_color = ["red", "darkblue", "darkgreen", "darkyellow", "violet", "mediumt
 
 #collapse in layout
 #kingdom, phylum, class, order, family, genus, species, subspecies
-# def get_level(node, level=0):
-#     if node.is_root():
-#         return level
-#     else:
-#         return get_level(node.up, level + 1)
+def get_level(node, level=0):
+    if node.is_root():
+        return level
+    else:
+        return get_level(node.up, level + 1)
 
-# def class_layout(nvals=None):
-    
-#     def layout_fn(node):
-#         count = 0
-#         if not node.is_root() and node.props.get('rank') == 'class':
-#             node.sm_style["hz_line_color"] = paried_color[count]
-#             node.sm_style["hz_line_width"] = 2
+
+def taxa_layout(rank, colour_dict=None):
+    def layout_fn(node):
+        if not node.is_root() and node.props.get('rank') == rank:
+            node.sm_style["bgcolor"] = colour_dict[node.props.get('sci_name')] # highligh clade
+
+            #print(node.props.get('sci_name'))
+            #node.sm_style["hz_line_color"] = paried_color[count]
+            # node.sm_style["hz_line_width"] = 2
             
-#             children = node.children
-#             if children:
-#                 for child in children:
-#                     if child:
-#                         child.sm_style["hz_line_color"] = paried_color[count]
-#         count += 1
-#     return layout_fn
-#     return
+            # children = node.children
+            # if children:
+            #     for child in children:
+            #         if child:
+            #             child.sm_style["hz_line_color"] = paried_color[count]
+            # count += 1
+    return layout_fn
+    return
+class TaxaRectangular(TreeLayout):
+    def __init__(self, name="Last common ancestor",
+            rect_width=15, column=0):
+        super().__init__(name, aligned_faces=True)
 
+        self.active = True
+
+        self.rect_width = rect_width
+        self.column = column
+
+    # def set_node_style(self, node):
+    #     if node.props.get('sci_name'):
+    #         lca = node.props.get('sci_name')
+    #         color = node.props.get('sci_name_color', 'lightgray')
+            
+    #         level = get_level(node, level=self.column)
+    #         lca_face = RectFace(self.rect_width, float('inf'), 
+    #                 color = color, 
+    #                 text = lca,
+    #                 fgcolor = "white",
+    #                 padding_x = 1, padding_y = 1)
+    #         lca_face.rotate_text = True
+    #         node.add_face(lca_face, position='aligned', column=level)
+    #         node.add_face(lca_face, position='aligned', column=level,
+    #             collapsed_only=True)
+
+    def set_node_style(self, node):
+        if node.props.get('sci_name'):
+            lca = node.props.get('sci_name')
+            color = node.props.get('sci_name_color', 'lightgray')
+            
+            level = get_level(node, level=self.column)
+            # lca_face = RectFace(self.rect_width, float('inf'), 
+            #         color = color, 
+            #         text = lca,
+            #         fgcolor = "white",
+            #         padding_x = 1, padding_y = 1)
+            lca_face = RectFace(self.rect_width, float('inf'), text = lca, color=color, padding_x=1, padding_y=1)
+            lca_face.rotate_text = True
+            node.add_face(lca_face, position='aligned', column=level)
+            node.add_face(lca_face, position='aligned', column=level,
+                collapsed_only=True)
 
 def collapse_kingdom():
     def layout_fn(node):

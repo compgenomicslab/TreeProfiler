@@ -62,7 +62,7 @@ def rectangular_layout(prop, level, colour_dict=None, internal_rep='counter'):
             if prop_text:
                 if colour_dict:
                     label_rect = RectFace(width=50,height=50, color=colour_dict[prop_text], padding_x=1, padding_y=1)
-                    node.add_face(label_rect, column = level,  position = 'branch_right')
+                    node.add_face(label_rect, column = level,  position = 'aligned')
         elif node.is_leaf() and node.props.get(internal_prop):
             piechart_face = get_piechartface(node, internal_prop, colour_dict)
             node.add_face(piechart_face, column = level, position = "branch_top")

@@ -123,7 +123,7 @@ def read_args():
         required=False,
         help="statistic measures to be shown in numerical layout for internal nodes, [default: avg]")  
 
-    group.add_argument('--text_stat',
+    group.add_argument('--counter_stat',
         default='raw',
         type=str,
         required=False,
@@ -210,6 +210,10 @@ def read_args():
     group.add_argument('--interactive',
         default=True,
         action='store_false',
+        help="run interactive session")
+    group.add_argument('--port',
+        type=str,
+        default=5000,
         help="run interactive session")
     group.add_argument('--plot',
         type=str,
@@ -340,23 +344,53 @@ def load_metadata_to_tree(tree, metadata_dict, taxon_column=None, taxon_delimite
 #                 internal_props[add_suffix(target_prop, 'std')] = 0
 
 #     return internal_props
-
-def merge_text_annotations(nodes, target_props, text_stat='raw'):
+def merge_text_annotations(nodes, target_props, counter_stat='raw'):
     internal_props = {}
     for target_prop in target_props:
-        if text_stat == 'raw':
+        if counter_stat == 'raw':
             prop_list = children_prop_array(nodes, target_prop)
-            internal_props[add_suffix(target_prop, 'counter')] = '||'.join([add_suffix(key, value, '--') for key, value in dict(Counter(prop_list)).items()])
+            internal_props[add_suffix(target_prop, 'counter')] = '||'.join([add_suffix(str(key), value, '--') for key, value in dict(Counter(prop_list)).items()])
 
-        elif text_stat == 'relative':
+        elif counter_stat == 'relative':
             prop_list = children_prop_array(nodes, target_prop)
-            internal_props[add_suffix(target_prop, 'counter')] = '||'.join([add_suffix(key, value, '--') for key, value in dict(Counter(prop_list)).items()])
+            counter_line = []
+            #print(dict(Counter(prop_list)))
+            total = sum(dict(Counter(prop_list)).values())
+            #print(total)
+            for key, value in dict(Counter(prop_list)).items():
+                #print(key, value)
+                rel_val = '{0:.2f}'.format(float(value)/total)
+                counter_line.append(add_suffix(key, rel_val, '--'))
+            internal_props[add_suffix(target_prop, 'counter')] = '||'.join(counter_line)
+            #internal_props[add_suffix(target_prop, 'counter')] = '||'.join([add_suffix(key, value, '--') for key, value in dict(Counter(prop_list)).items()])
 
         else:
             print('Invalid stat method')
             break
     
     return internal_props
+
+# def merge_bool_annotations(nodes, target_props, counter_stat='raw'):
+#     internal_props = {}
+#     for target_prop in target_props:
+#         if counter_stat == 'raw':
+#             prop_list = children_prop_array(nodes, target_prop)
+#             counter_line = []
+#             for key, value in dict(Counter(prop_list)).items():
+#                 counter_line.append(add_suffix(key, value, '--'))
+            
+#             internal_props[add_suffix(target_prop, 'counter')] = '||'.join(counter_line)
+#             # internal_props[add_suffix(target_prop, 'counter')] = '||'.join([add_suffix(str(key), value, '--') for key, value in dict(Counter(prop_list)).items()])
+
+#         # elif counter_stat == 'relative':
+#         #     prop_list = children_prop_array(nodes, target_prop)
+#         #     internal_props[add_suffix(target_prop, 'counter')] = '||'.join([add_suffix(key, value, '--') for key, value in dict(Counter(prop_list)).items()])
+
+#         else:
+#             print('Invalid stat method')
+#             break
+    
+#     return internal_props
 
 def merge_num_annotations(nodes, target_props, num_stat='all'):
     internal_props = {}
@@ -400,6 +434,7 @@ def children_prop_array(nodes, prop):
     return array
 
 def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field=0):
+    global rank2values
     # def return_spcode(leaf):
     #     try:
     #         return leaf.name.split(sp_delimiter)[sp_field]
@@ -417,17 +452,22 @@ def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field
 
     # tree.annotate_gtdb_taxa(taxid_attr='name')
     # assign internal node as sci_name
+    rank2values = defaultdict(list)
     for n in tree.traverse():
+        if n.props.get('rank'):
+            rank2values[n.props.get('rank')].append(n.props.get('sci_name',''))
+        
         # if not n.is_leaf(): 
         #     nleaves = str(len(n))
         #     n.add_prop("nleaves", nleaves)
         # if n.is_leaf():
         #     print(n.props.get("sci_name"))
+        
         if n.name:
             pass
         else:
             n.name = n.props.get("sci_name", "")
-
+    #print(rank2values)
     return tree
 
 def taxatree_prune(tree, rank_limit='subspecies'):
@@ -505,7 +545,7 @@ def tree2table(tree, internal_node=True, props=[], outfile='tree2table.csv'):
 def get_layouts(argv_input, layout_name, level, internal_rep):
     props = []
     layouts = []
-
+    
     # identify range [1-5], index 1,2,3 and column names
     for i in argv_input.split(','):
         if i[0] == '[' and i[-1] == ']':
@@ -527,7 +567,7 @@ def get_layouts(argv_input, layout_name, level, internal_rep):
             nvals = len(prop_values)
             for i in range(0, nvals):
                 prop_colour_dict[prop_values[i]] = paried_color[i]
-
+            
             color = random_color(h=None)
             #color = random_color(h=None)
             if layout_name == 'binary':
@@ -590,6 +630,9 @@ def random_color(h=None):
 def _hls2hex(h, l, s):
     return '#%02x%02x%02x' %tuple(map(lambda x: int(x*255),
                                     colorsys.hls_to_rgb(h, l, s)))
+
+def taxacolor(tree, rank):
+    return
 
 def main():
     import time
@@ -685,8 +728,8 @@ def main():
     #rest_column = list(set(node_props) - set(text_column) - set(num_column) - set(bool_column))
     
     # stat method
-    if args.text_stat:
-        text_stat = args.text_stat
+    if args.counter_stat:
+        counter_stat = args.counter_stat
 
     if args.num_stat:
         num_stat = args.num_stat
@@ -702,7 +745,7 @@ def main():
         else:
             
             if text_column:
-                internal_props_text = merge_text_annotations(node2leaves[node], text_column, text_stat=text_stat)
+                internal_props_text = merge_text_annotations(node2leaves[node], text_column, counter_stat=counter_stat)
                 internal_props.update(internal_props_text)
 
             if num_column:
@@ -710,11 +753,11 @@ def main():
                 internal_props.update(internal_props_num)
 
             if bool_column:
-                internal_props_bool = merge_text_annotations(node2leaves[node], bool_column, text_stat=text_stat)
+                internal_props_bool = merge_text_annotations(node2leaves[node], bool_column, counter_stat=counter_stat)
                 internal_props.update(internal_props_bool)
 
             if rest_column:
-                internal_props_rest = merge_text_annotations(node2leaves[node], rest_column, text_stat=text_stat)
+                internal_props_rest = merge_text_annotations(node2leaves[node], rest_column, counter_stat=counter_stat)
                 internal_props.update(internal_props_rest)
             
             #internal_props = {**internal_props_text, **internal_props_num, **internal_props_rest}
@@ -740,7 +783,7 @@ def main():
             print('Please specify which taxa db using --taxadb <GTDB|NCBI>')
         else:
             if args.taxon_column:
-                annotated_tree = annotate_taxa(annotated_tree, db=args.taxadb, taxid_attr=args.taxon_column)
+                annotated_tree = annotate_taxa(annotated_tree, db=args.taxadb, taxid_attr=args.taxon_column, sp_delimiter=args.taxon_delimiter)
             else:
                 annotated_tree = annotate_taxa(annotated_tree, db=args.taxadb, taxid_attr="name")
         # if args.taxon_column:
@@ -818,21 +861,40 @@ def main():
 
     # Taxa layouts
     if args.TaxonLayout:
+        taxa_layouts = [
+            taxon_layouts.TaxaRectangular(name='Taxa')
+        ]
+        
         taxon_prop = args.TaxonLayout
+        
+        for rank, value in rank2values.items():
+            colour_dict = {} 
+            nvals = len(value)
+            for i in range(0, nvals):
+                if nvals <= 14:
+                    colour_dict[value[i]] = paried_color[i]
+                else:
+                    colour_dict[value[i]] = random_color(h=None)
+            if rank =='class':
+                print(colour_dict)
+            layout = TreeLayout(name=rank, ns=taxon_layouts.taxa_layout(rank, colour_dict))
+            taxa_layouts.append(layout)
+        
         # taxa_layouts = [
-        #     TreeLayout(name='level3_class', ns=taxon_layouts.class_layout()),
+        #     taxon_layouts.TaxaRectangular(name='Taxa')
+        #     TreeLayout(name='outline_class', ns=taxon_layouts.class_layout())
         # ]
 
 
-        taxa_layouts = [
-            TreeLayout(name='level1_kingdom', ns=taxon_layouts.collapse_kingdom()),
-            TreeLayout(name='level2_phylum', ns=taxon_layouts.collapse_phylum()),
-            TreeLayout(name='level3_class', ns=taxon_layouts.collapse_class()),
-            TreeLayout(name='level4_order', ns=taxon_layouts.collapse_order()),
-            TreeLayout(name='level5_family', ns=taxon_layouts.collapse_family()),
-            TreeLayout(name='level6_genus', ns=taxon_layouts.collapse_genus()),
-            TreeLayout(name='level7_species', ns=taxon_layouts.collapse_species()),
-        ]
+        # taxa_layouts = [
+            # TreeLayout(name='level1_kingdom', ns=taxon_layouts.collapse_kingdom()),
+            # TreeLayout(name='level2_phylum', ns=taxon_layouts.collapse_phylum()),
+            # TreeLayout(name='level3_class', ns=taxon_layouts.collapse_class()),
+            # TreeLayout(name='level4_order', ns=taxon_layouts.collapse_order()),
+            # TreeLayout(name='level5_family', ns=taxon_layouts.collapse_family()),
+            # TreeLayout(name='level6_genus', ns=taxon_layouts.collapse_genus()),
+            # TreeLayout(name='level7_species', ns=taxon_layouts.collapse_species()),
+        # ]
 
 
         layouts = layouts + taxa_layouts
@@ -843,7 +905,7 @@ def main():
         elif args.plot:
             annotated_tree.explore(tree_name='example',layouts=[], port=5000)
     else:
-        annotated_tree.explore(tree_name='example',layouts=layouts, port=5000)
+        annotated_tree.explore(tree_name='example',layouts=layouts, port=args.port)
     
     return annotated_tree
 

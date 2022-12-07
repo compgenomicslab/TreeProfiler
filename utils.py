@@ -9,6 +9,26 @@ operator_dict = {
                 '>':operator.gt,
                 '>=':operator.ge,
                 }
+
+def counter_call(node, internal_prop, leaf_prop, datatype, operator_string, right_value):
+    if datatype == 'str':
+        counter_props = node.props.get(internal_prop)
+            
+        if counter_props:
+            counter_datas = counter_props.split('||')
+            for counter_data in counter_datas:
+                k, v = counter_data.split('--')
+                if k == leaf_prop:
+                    left_value = float(v)
+                    return operator_dict[operator_string](left_value, float(right_value))
+                else:
+                    pass
+        else:    
+            return False
+        
+    else:
+        return False
+
 def call(node, prop, datatype, operator_string, right_value):
     num_operators = [ '<', '<=', '>', '>=' ] 
     if datatype == 'str':

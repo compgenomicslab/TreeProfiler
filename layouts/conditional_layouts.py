@@ -1,7 +1,7 @@
 from ete4.smartview import TreeStyle, NodeStyle, TreeLayout, PieChartFace
 from ete4.smartview  import (RectFace, CircleFace, SeqMotifFace, TextFace, OutlineFace, \
                             SelectedFace, SelectedCircleFace, SelectedRectFace)
-from utils import to_code, call
+from utils import to_code, call, counter_call
 
 # branch thicken, background highlighted to purple
 def highlight_layout(conditions, level, prop2type={}, color='purple'):
@@ -9,15 +9,26 @@ def highlight_layout(conditions, level, prop2type={}, color='purple'):
     def layout_fn(node):
         final_call = False
         for condition in conditional_output:
+            #normal
+            
             op = condition[1]
             if op == 'in':
                 value = condition[0]
                 prop = condition[2]
+                datatype = prop2type[prop]
+                final_call = call(node, prop, datatype, op, value)
+
+            elif ':' in condition[0] :
+                internal_prop, leaf_prop = condition[0].split(':')
+                value = condition[2]
+                datatype = prop2type[internal_prop]
+                final_call = counter_call(node, internal_prop, leaf_prop, datatype, op, value)
             else:
                 prop = condition[0]
                 value = condition[2]
-            datatype = prop2type[prop]
-            final_call = call(node, prop, datatype, op, value)
+                datatype = prop2type[prop]
+                final_call = call(node, prop, datatype, op, value)
+            
             if final_call == False:
                 break
             else:
@@ -44,15 +55,26 @@ def collapsed_by_layout(conditions, level, prop2type={}, color='red'):
     def layout_fn(node):
         final_call = False
         for condition in conditional_output:
+            #normal
+            
             op = condition[1]
             if op == 'in':
                 value = condition[0]
                 prop = condition[2]
+                datatype = prop2type[prop]
+                final_call = call(node, prop, datatype, op, value)
+
+            elif ':' in condition[0] :
+                internal_prop, leaf_prop = condition[0].split(':')
+                value = condition[2]
+                datatype = prop2type[internal_prop]
+                final_call = counter_call(node, internal_prop, leaf_prop, datatype, op, value)
             else:
                 prop = condition[0]
                 value = condition[2]
-            datatype = prop2type[prop]
-            final_call = call(node, prop, datatype, op, value)
+                datatype = prop2type[prop]
+                final_call = call(node, prop, datatype, op, value)
+            
             if final_call == False:
                 break
             else:
@@ -71,6 +93,7 @@ def boolean_layout(prop, level, color, prop_colour_dict, internal_rep='counter',
     def layout_fn(node):
         if node.is_leaf() and node.props.get(prop):
             prop_text = node.props.get(prop)
+            
             if reverse:
                 if not bool(strtobool(prop_text)):
                     prop_face = CircleFace(radius=100, color=color, padding_x=1, padding_y=1)
@@ -80,10 +103,15 @@ def boolean_layout(prop, level, color, prop_colour_dict, internal_rep='counter',
                     node.add_face(prop_face, column=level, position = "branch_right")
             else:
                 if bool(strtobool(prop_text)):
-                    prop_face = CircleFace(radius=100, color=color, padding_x=1, padding_y=1)
+                    # lca_face = RectFace(15, float('inf'), 
+                    # color = color, 
+                    # #text = lca,
+                    # fgcolor = "white",
+                    # padding_x = 1, padding_y = 1)
+                    prop_face = CircleFace(radius=100, color=color)
                     node.add_face(prop_face, column=level, position = "branch_right")
                 else:
-                    prop_face = CircleFace(radius=100, color='white', padding_x=1, padding_y=1)
+                    prop_face = CircleFace(radius=100, color='white')
                     node.add_face(prop_face, column=level, position = "branch_right")
         elif node.is_leaf() and node.props.get(internal_prop):
             piechart_face = get_piechartface(node, internal_prop, prop_colour_dict)
@@ -91,8 +119,10 @@ def boolean_layout(prop, level, color, prop_colour_dict, internal_rep='counter',
             node.add_face(piechart_face, column = level+5, position = "branch_right", collapsed_only=True)
 
         elif node.props.get(internal_prop):
+            
             piechart_face = get_piechartface(node, internal_prop, prop_colour_dict)
             node.add_face(piechart_face, column = level, position = "branch_top")
+            node.add_face(piechart_face, column = level+5, position = "branch_right", collapsed_only=True)
     return layout_fn
     return     
 
