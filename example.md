@@ -8,3 +8,6 @@ python treeprofiler.py --tree ../claudia_tree/concatenate_pg3_faa_ft.nw --metada
 
 #Taxon 
 python treeprofiler.py -t demo/p__Thermoproteota.nw -d /home/deng/Projects/metatree_drawer/metatreedrawer/demo/metadata_p__Thermoproteota_relative_random.txt --taxonomic_profile --num_column sample1,sample2,sample3,sample4,sample5 --bool_column bool_type,bool_type2 --counter_stat relative --TaxonLayout name --port 5003 --HeatmapLayout [1-5] --collapsed_by 'bool_type2_counter:True>0.5'
+
+
+python treeprofiler.py -t demo/p__Thermoproteota.nw -d /home/deng/Projects/metatree_drawer/metatreedrawer/demo/metadata_p__Thermoproteota_relative_random.txt --taxonomic_profile --num_column sample1,sample2,sample3,sample4,sample5 --text_column random_type --bool_column bool_type,bool_type2 --TaxonLayout name --BinaryLayout bool_type,bool_type2 --BarplotLayout sample1,sample2

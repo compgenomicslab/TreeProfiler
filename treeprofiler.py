@@ -571,7 +571,8 @@ def get_layouts(argv_input, layout_name, level, internal_rep):
             color = random_color(h=None)
             #color = random_color(h=None)
             if layout_name == 'binary':
-                layout = TreeLayout(name=prop+'_'+layout_name, ns=conditional_layouts.boolean_layout(prop, level, color, prop_colour_dict, internal_rep))
+                layout = conditional_layouts.LayoutHumanOGs()
+                #layout = TreeLayout(name=prop+'_'+layout_name, ns=conditional_layouts.boolean_layout(prop, level, color, prop_colour_dict, internal_rep))
 
             elif layout_name == 'revbinary':
                 layout = TreeLayout(name=prop+'_'+layout_name, ns=conditional_layouts.boolean_layout(prop, level, color, prop_colour_dict ,internal_rep, reverse=True))
@@ -600,7 +601,8 @@ def get_layouts(argv_input, layout_name, level, internal_rep):
                     colour_dict[prop_values[i]] = random_color(h=None)
             
             if layout_name == 'label':
-                layout = TreeLayout(name=prop+'_'+layout_name, ns=text_layouts.text_layout(prop, level, colour_dict, internal_rep))
+                layout = text_layouts.LayoutHumanOGs()
+                #layout = TreeLayout(name=prop+'_'+layout_name, ns=text_layouts.text_layout(prop, level, colour_dict, internal_rep))
             
             elif layout_name == 'rectangular':
                 layout = TreeLayout(name=prop+'_'+layout_name, ns=text_layouts.rectangular_layout(prop, level, colour_dict, internal_rep))

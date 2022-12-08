@@ -3,9 +3,27 @@ from ete4.smartview  import RectFace, CircleFace, SeqMotifFace, TextFace, Outlin
 
 #paried_color = ["red", "darkblue", "darkgreen", "darkyellow", "violet", "mediumturquoise", "sienna", "lightCoral", "lightSkyBlue", "indigo", "tan", "coral", "olivedrab", "teal"]
 
+class LayoutHumanOGs(TreeLayout):
+    def __init__(self, name="Human OGs", human_orth_prop="random_type",
+                 column=5, color="#6b92d6"):
+        super().__init__(name)
+        self.aligned_faces = True
+        self.human_orth_prop = human_orth_prop
+        self.column = column
+        self.color = color
+
+    def set_node_style(self, node):
+        if node.is_leaf():
+            human_orth = node.props.get(self.human_orth_prop)
+            if human_orth:
+                human_orth = " ".join(human_orth.split('|'))
+                human_orth_face = RectFace(width=50,height=50, color=self.color)
+                node.add_face(human_orth_face, column=self.column, position="aligned")
+
 def text_layout(prop, level, colour_dict=None, internal_rep='counter'):
     internal_prop = prop+'_'+internal_rep
     def layout_fn(node):
+        
         if node.is_leaf() and node.props.get(prop):
             
             prop_text = node.props.get(prop)
@@ -14,18 +32,17 @@ def text_layout(prop, level, colour_dict=None, internal_rep='counter'):
                     prop_face = TextFace(prop_text, color=colour_dict[prop_text])
                 else:
                     prop_face = TextFace(prop_text, color='blue')
-            node.add_face(prop_face, column = level, position = "branch_right")
+            node.add_face(prop_face, column = 6, position = "aligned")
 
-        elif node.is_leaf() and node.props.get(internal_prop):
-            piechart_face = get_piechartface(node, internal_prop, colour_dict)
-            node.add_face(piechart_face, column = level, position = "branch_top")
-            node.add_face(piechart_face, column = level+5, position = "branch_right", collapsed_only=True)
+        # elif node.is_leaf() and node.props.get(internal_prop):
+        #     piechart_face = get_piechartface(node, internal_prop, colour_dict)
+        #     node.add_face(piechart_face, column = level, position = "branch_top")
+        #     node.add_face(piechart_face, column = level+5, position = "branch_right", collapsed_only=True)
 
-        elif node.props.get(internal_prop):
-            piechart_face = get_piechartface(node, internal_prop, colour_dict)
-            node.add_face(piechart_face, column = level, position = "branch_top")
-            node.add_face(piechart_face, column = level+5, position = "branch_right", collapsed_only=True)
-        
+        # elif node.props.get(internal_prop):
+        #     piechart_face = get_piechartface(node, internal_prop, colour_dict)
+        #     node.add_face(piechart_face, column = level, position = "branch_top")
+        #     node.add_face(piechart_face, column = level+5, position = "branch_right", collapsed_only=True)
     return layout_fn
     return
 

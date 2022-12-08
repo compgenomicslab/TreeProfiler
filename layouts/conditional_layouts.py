@@ -88,6 +88,24 @@ def collapsed_by_layout(conditions, level, prop2type={}, color='red'):
 
 # for boolean layouts
 from distutils.util import strtobool
+class LayoutHumanOGs(TreeLayout):
+    def __init__(self, name="Human OGs", human_orth_prop="bool_type",
+                 column=5, color="#6b92d6"):
+        super().__init__(name)
+        self.aligned_faces = True
+        self.human_orth_prop = human_orth_prop
+        self.column = column
+        self.color = color
+
+    def set_node_style(self, node):
+        if node.is_leaf():
+            human_orth = node.props.get(self.human_orth_prop)
+            
+            if bool(strtobool(human_orth)):
+                prop_face = CircleFace(radius=100, color=self.color)
+                #node.add_face(prop_face, column=level, position = "aligned")
+                node.add_face(prop_face, column=self.column, position="aligned")
+
 def boolean_layout(prop, level, color, prop_colour_dict, internal_rep='counter', reverse=False):
     internal_prop = prop+'_'+internal_rep
     def layout_fn(node):
@@ -109,10 +127,10 @@ def boolean_layout(prop, level, color, prop_colour_dict, internal_rep='counter',
                     # fgcolor = "white",
                     # padding_x = 1, padding_y = 1)
                     prop_face = CircleFace(radius=100, color=color)
-                    node.add_face(prop_face, column=level, position = "branch_right")
+                    node.add_face(prop_face, column=level, position = "aligned")
                 else:
                     prop_face = CircleFace(radius=100, color='white')
-                    node.add_face(prop_face, column=level, position = "branch_right")
+                    node.add_face(prop_face, column=level, position = "aligned")
         elif node.is_leaf() and node.props.get(internal_prop):
             piechart_face = get_piechartface(node, internal_prop, prop_colour_dict)
             node.add_face(piechart_face, column = level, position = "branch_top")
@@ -123,8 +141,10 @@ def boolean_layout(prop, level, color, prop_colour_dict, internal_rep='counter',
             piechart_face = get_piechartface(node, internal_prop, prop_colour_dict)
             node.add_face(piechart_face, column = level, position = "branch_top")
             node.add_face(piechart_face, column = level+5, position = "branch_right", collapsed_only=True)
+    
+    layout_fn.aligned_faces = True
     return layout_fn
-    return     
+
 
 def get_piechartface(node, prop, colour_dict=None):
     piechart_data = []
