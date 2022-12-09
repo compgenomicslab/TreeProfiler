@@ -11,24 +11,27 @@ def get_level(node, level=0):
     else:
         return get_level(node.up, level + 1)
 
+class TaxaClade(TreeLayout):
+    def __init__(self, name, level, rank, colour_dict):
+        super().__init__(name, aligned_faces=True)
 
-def taxa_layout(rank, colour_dict=None):
-    def layout_fn(node):
-        if not node.is_root() and node.props.get('rank') == rank:
-            node.sm_style["bgcolor"] = colour_dict[node.props.get('sci_name')] # highligh clade
+        self.activate = False
+        self.name = name
+        self.column = level
+        self.rank = rank
+        self.colour_dict = colour_dict
+    
+    def set_node_style(self, node):
+        if not node.is_root() and node.props.get('rank') == self.rank:
+            if node.props.get('sci_name'):
+                text_face = TextFace(node.props.get('sci_name'), color='black')
+                #face_name = OutlineFace(node.props.get('sci_name'), collapsing_height= float("inf"))
+                node.sm_style["bgcolor"] = self.colour_dict[node.props.get('sci_name')] # highligh clade
+                #node.sm_style["draw_descendants"] = False
+                node.add_face(text_face, column = self.column, position = "aligned")
+                node.add_face(text_face, column = self.column, position = "aligned", collapsed_only=True)
+                #node.add_face(face_name, column = 5, position = 'branch_right', collapsed_only=True)
 
-            #print(node.props.get('sci_name'))
-            #node.sm_style["hz_line_color"] = paried_color[count]
-            # node.sm_style["hz_line_width"] = 2
-            
-            # children = node.children
-            # if children:
-            #     for child in children:
-            #         if child:
-            #             child.sm_style["hz_line_color"] = paried_color[count]
-            # count += 1
-    return layout_fn
-    return
 class TaxaRectangular(TreeLayout):
     def __init__(self, name="Last common ancestor",
             rect_width=15, column=0):
@@ -38,22 +41,6 @@ class TaxaRectangular(TreeLayout):
 
         self.rect_width = rect_width
         self.column = column
-
-    # def set_node_style(self, node):
-    #     if node.props.get('sci_name'):
-    #         lca = node.props.get('sci_name')
-    #         color = node.props.get('sci_name_color', 'lightgray')
-            
-    #         level = get_level(node, level=self.column)
-    #         lca_face = RectFace(self.rect_width, float('inf'), 
-    #                 color = color, 
-    #                 text = lca,
-    #                 fgcolor = "white",
-    #                 padding_x = 1, padding_y = 1)
-    #         lca_face.rotate_text = True
-    #         node.add_face(lca_face, position='aligned', column=level)
-    #         node.add_face(lca_face, position='aligned', column=level,
-    #             collapsed_only=True)
 
     def set_node_style(self, node):
         if node.props.get('sci_name'):
@@ -71,6 +58,24 @@ class TaxaRectangular(TreeLayout):
             node.add_face(lca_face, position='aligned', column=level)
             node.add_face(lca_face, position='aligned', column=level,
                 collapsed_only=True)
+
+# def taxa_layout(rank, colour_dict=None):
+#     def layout_fn(node):
+#         if not node.is_root() and node.props.get('rank') == rank:
+#             node.sm_style["bgcolor"] = colour_dict[node.props.get('sci_name')] # highligh clade
+
+#             #print(node.props.get('sci_name'))
+#             #node.sm_style["hz_line_color"] = paried_color[count]
+#             # node.sm_style["hz_line_width"] = 2
+            
+#             # children = node.children
+#             # if children:
+#             #     for child in children:
+#             #         if child:
+#             #             child.sm_style["hz_line_color"] = paried_color[count]
+#             # count += 1
+#     return layout_fn
+#     return
 
 def collapse_kingdom():
     def layout_fn(node):

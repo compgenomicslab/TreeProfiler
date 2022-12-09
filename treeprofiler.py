@@ -467,7 +467,6 @@ def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field
             pass
         else:
             n.name = n.props.get("sci_name", "")
-    #print(rank2values)
     return tree
 
 def taxatree_prune(tree, rank_limit='subspecies'):
@@ -571,15 +570,15 @@ def get_layouts(argv_input, layout_name, level, internal_rep):
             color = random_color(h=None)
             #color = random_color(h=None)
             if layout_name == 'binary':
-                layout = conditional_layouts.LayoutHumanOGs()
+                layout = conditional_layouts.LayoutBinary(prop+'_'+layout_name, level, color, prop_colour_dict, prop, reverse=False)
                 #layout = TreeLayout(name=prop+'_'+layout_name, ns=conditional_layouts.boolean_layout(prop, level, color, prop_colour_dict, internal_rep))
 
             elif layout_name == 'revbinary':
-                layout = TreeLayout(name=prop+'_'+layout_name, ns=conditional_layouts.boolean_layout(prop, level, color, prop_colour_dict ,internal_rep, reverse=True))
+                layout = conditional_layouts.LayoutBinary(prop+'_'+layout_name, level, color, prop_colour_dict, prop, reverse=True)
 
         # numerical layouts
         elif layout_name == 'heatmap':
-            layout =  TreeLayout(name=prop+'_'+layout_name, ns=heatmap_layouts.heatmap_layout(prop, level, internal_rep))
+            layout =  staple_layouts.LayoutHeatmap(prop+'_'+layout_name, level, internal_rep, prop)
         
         elif layout_name == 'barplot':
             layout =  staple_layouts.LayoutBarplot(name=prop+'_'+layout_name, prop=prop, \
@@ -601,14 +600,14 @@ def get_layouts(argv_input, layout_name, level, internal_rep):
                     colour_dict[prop_values[i]] = random_color(h=None)
             
             if layout_name == 'label':
-                layout = text_layouts.LayoutHumanOGs()
+                layout = text_layouts.LayoutText(prop+'_'+layout_name, level, colour_dict, text_prop = prop)
                 #layout = TreeLayout(name=prop+'_'+layout_name, ns=text_layouts.text_layout(prop, level, colour_dict, internal_rep))
             
             elif layout_name == 'rectangular':
-                layout = TreeLayout(name=prop+'_'+layout_name, ns=text_layouts.rectangular_layout(prop, level, colour_dict, internal_rep))
+                layout = text_layouts.LayoutRect(prop+'_'+layout_name, level, colour_dict, text_prop = prop)
             
             elif layout_name == 'colorbranch':
-                layout = TreeLayout(name=prop+'_'+layout_name, ns=text_layouts.label_layout(prop, level, colour_dict, internal_rep))
+                layout = text_layouts.LayoutColorbranch(prop+'_'+layout_name, level, colour_dict, text_prop = prop)
 
         
         layouts.append(layout)
@@ -824,6 +823,46 @@ def main():
             layouts.append(s_layout)
         
     #### Layouts settings ####
+    # Taxa layouts
+    if args.TaxonLayout:
+        taxa_layouts = [
+            #taxon_layouts.TaxaRectangular(name='Taxa')
+        ]
+        
+        taxon_prop = args.TaxonLayout
+        
+        for rank, value in rank2values.items():
+            colour_dict = {} 
+            nvals = len(value)
+            for i in range(0, nvals):
+                if nvals <= 14:
+                    colour_dict[value[i]] = paried_color[i]
+                else:
+                    colour_dict[value[i]] = random_color(h=None)
+
+            layout = taxon_layouts.TaxaClade(name='TaxaClade_'+rank, level=level, rank = rank, colour_dict=colour_dict)
+            taxa_layouts.append(layout)
+        
+        # taxa_layouts = [
+        #     taxon_layouts.TaxaRectangular(name='Taxa')
+        #     TreeLayout(name='outline_class', ns=taxon_layouts.class_layout())
+        # ]
+
+
+        # taxa_layouts = [
+            # TreeLayout(name='level1_kingdom', ns=taxon_layouts.collapse_kingdom()),
+            # TreeLayout(name='level2_phylum', ns=taxon_layouts.collapse_phylum()),
+            # TreeLayout(name='level3_class', ns=taxon_layouts.collapse_class()),
+            # TreeLayout(name='level4_order', ns=taxon_layouts.collapse_order()),
+            # TreeLayout(name='level5_family', ns=taxon_layouts.collapse_family()),
+            # TreeLayout(name='level6_genus', ns=taxon_layouts.collapse_genus()),
+            # TreeLayout(name='level7_species', ns=taxon_layouts.collapse_species()),
+        # ]
+
+
+        layouts = layouts + taxa_layouts
+        level += 1
+
     # numerical
     if args.num_stat != 'all':
         internal_num_rep = args.num_stat
@@ -861,45 +900,7 @@ def main():
         label_layouts, level = get_layouts(args.RevBinaryLayout, 'revbinary', level, 'counter')
         layouts.extend(label_layouts)
 
-    # Taxa layouts
-    if args.TaxonLayout:
-        taxa_layouts = [
-            taxon_layouts.TaxaRectangular(name='Taxa')
-        ]
-        
-        taxon_prop = args.TaxonLayout
-        
-        for rank, value in rank2values.items():
-            colour_dict = {} 
-            nvals = len(value)
-            for i in range(0, nvals):
-                if nvals <= 14:
-                    colour_dict[value[i]] = paried_color[i]
-                else:
-                    colour_dict[value[i]] = random_color(h=None)
-            if rank =='class':
-                print(colour_dict)
-            layout = TreeLayout(name=rank, ns=taxon_layouts.taxa_layout(rank, colour_dict))
-            taxa_layouts.append(layout)
-        
-        # taxa_layouts = [
-        #     taxon_layouts.TaxaRectangular(name='Taxa')
-        #     TreeLayout(name='outline_class', ns=taxon_layouts.class_layout())
-        # ]
-
-
-        # taxa_layouts = [
-            # TreeLayout(name='level1_kingdom', ns=taxon_layouts.collapse_kingdom()),
-            # TreeLayout(name='level2_phylum', ns=taxon_layouts.collapse_phylum()),
-            # TreeLayout(name='level3_class', ns=taxon_layouts.collapse_class()),
-            # TreeLayout(name='level4_order', ns=taxon_layouts.collapse_order()),
-            # TreeLayout(name='level5_family', ns=taxon_layouts.collapse_family()),
-            # TreeLayout(name='level6_genus', ns=taxon_layouts.collapse_genus()),
-            # TreeLayout(name='level7_species', ns=taxon_layouts.collapse_species()),
-        # ]
-
-
-        layouts = layouts + taxa_layouts
+    
     #### Output #####
     if not args.interactive:
         if args.outtree:

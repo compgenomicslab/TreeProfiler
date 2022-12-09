@@ -1,10 +1,28 @@
 from ete4.smartview import TreeStyle, NodeStyle, TreeLayout
 from ete4.smartview  import RectFace, ScaleFace
+import colorsys
 
 
 
 __all__ = [ "LayoutBarplot" ]
 
+def color_gradient(hue, intensity, granularity):
+    min_lightness = 0.35 
+    max_lightness = 0.9
+    base_value = intensity
+
+    # each gradient must contain 100 lightly descendant colors
+    colors = []   
+    rgb2hex = lambda rgb: '#%02x%02x%02x' % rgb
+    l_factor = (max_lightness-min_lightness) / float(granularity)
+    l = min_lightness
+    while l <= max_lightness:
+        l += l_factor
+        rgb =  rgb2hex(tuple(map(lambda x: int(x*255), colorsys.hls_to_rgb(hue, l, base_value))))
+        colors.append(rgb)
+        
+    colors.append("#ffffff")
+    return list(reversed(colors))
 
 class LayoutPlot(TreeLayout):
     def __init__(self, name=None, prop=None, width=200, size_prop=None, color_prop=None, 
@@ -107,3 +125,48 @@ class LayoutBarplot(LayoutPlot):
             face = RectFace(width, None, color=color, padding_x=self.padding_x)
             node.add_face(face, position=self.position, column=self.column,
                     collapsed_only=True)
+
+class LayoutHeatmap(TreeLayout):
+    def __init__(self, name, level, internal_rep, prop):
+        super().__init__(name)
+        self.aligned_faces = True
+        self.num_prop = prop
+        self.column = level
+        #self.colour_dict = colour_dict
+        self.internal_prop = prop+'_'+internal_rep
+
+    def set_node_style(self, node):
+        if node.is_leaf() and node.props.get(self.num_prop):
+            # heatmap
+            redgradient = color_gradient(0.95, 0.6, 10)
+            relative_abundance = float(node.props.get(self.num_prop))
+            color_idx = int(relative_abundance*10)
+            color = redgradient[color_idx]
+            identF = RectFace(width=50,height=50,text="%.1f" % (relative_abundance*100), color=color, 
+            padding_x=1, padding_y=1)
+            node.add_face(identF, column = self.column,  position = 'aligned')
+            
+        elif node.is_leaf() and node.props.get(self.internal_prop):
+            # heatmap
+            redgradient = color_gradient(0.95, 0.6, 10)
+            relative_abundance = float(node.props.get(self.internal_prop))
+            color_idx = int(relative_abundance*10)
+            color = redgradient[color_idx]
+            identF = RectFace(width=50,height=50,text="%.1f" % (relative_abundance*100), color=color, 
+            padding_x=1, padding_y=1)
+            node.add_face(identF, column = self.column+2,  position = 'aligned')
+
+        elif node.props.get(self.internal_prop):
+            # heatmap
+            redgradient = color_gradient(0.95, 0.6, 10)
+            relative_abundance = float(node.props.get(self.internal_prop))
+            color_idx = int(relative_abundance*10)
+            color = redgradient[color_idx]
+
+            identF = RectFace(width=50,height=50,text="%.1f" % (relative_abundance*100), color=color, 
+            padding_x=1, padding_y=1)
+            #face_name = TextFace(node.props.get('name'), color="red")
+            #face_name = TextFace("%.1f" % (relative_abundance*100), color=color)
+            node.add_face(identF, column = self.column+2,  position = 'aligned', collapsed_only=True)
+
+    

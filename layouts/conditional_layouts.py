@@ -88,23 +88,43 @@ def collapsed_by_layout(conditions, level, prop2type={}, color='red'):
 
 # for boolean layouts
 from distutils.util import strtobool
-class LayoutHumanOGs(TreeLayout):
-    def __init__(self, name="Human OGs", human_orth_prop="bool_type",
-                 column=5, color="#6b92d6"):
+class LayoutBinary(TreeLayout):
+    def __init__(self, name, level, color, prop_colour_dict, bool_prop, reverse=False):
         super().__init__(name)
         self.aligned_faces = True
-        self.human_orth_prop = human_orth_prop
-        self.column = column
+        self.bool_prop = bool_prop
+        self.column = level
         self.color = color
+        self.prop_colour_dict = prop_colour_dict
+        self.internal_prop = bool_prop+'_counter'
+        self.reverse = reverse
 
     def set_node_style(self, node):
-        if node.is_leaf():
-            human_orth = node.props.get(self.human_orth_prop)
-            
-            if bool(strtobool(human_orth)):
-                prop_face = CircleFace(radius=100, color=self.color)
-                #node.add_face(prop_face, column=level, position = "aligned")
-                node.add_face(prop_face, column=self.column, position="aligned")
+        if node.is_leaf() and node.props.get(self.bool_prop):
+            prop_bool = node.props.get(self.bool_prop)
+            if self.reverse:
+                if not bool(strtobool(prop_bool)):
+                    prop_face = CircleFace(radius=200, color=self.color, padding_x=1, padding_y=1)
+                    node.add_face(prop_face, column=self.column, position = "aligned")
+                else:
+                    prop_face = CircleFace(radius=200, color='white', padding_x=1, padding_y=1)
+                    node.add_face(prop_face, column=self.column, position = "aligned")
+            else:
+                if bool(strtobool(prop_bool)):
+                    prop_face = CircleFace(radius=200, color=self.color, padding_x=1, padding_y=1)
+                    node.add_face(prop_face, column=self.column, position = "aligned")
+                else:
+                    prop_face = CircleFace(radius=200, color='white', padding_x=1, padding_y=1)
+                    node.add_face(prop_face, column=self.column, position = "aligned")
+        elif node.is_leaf() and node.props.get(self.internal_prop):
+            piechart_face = get_piechartface(node, self.internal_prop, self.prop_colour_dict)
+            node.add_face(piechart_face, column = self.column, position = "branch_top")
+            node.add_face(piechart_face, column = self.column+2, position = "aligned", collapsed_only=True)
+
+        elif node.props.get(self.internal_prop):
+            piechart_face = get_piechartface(node, self.internal_prop, self.prop_colour_dict)
+            node.add_face(piechart_face, column = self.column, position = "branch_top")
+            node.add_face(piechart_face, column = self.column+2, position = "aligned", collapsed_only=True)
 
 def boolean_layout(prop, level, color, prop_colour_dict, internal_rep='counter', reverse=False):
     internal_prop = prop+'_'+internal_rep
