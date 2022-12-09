@@ -842,12 +842,6 @@ def main():
 
             layout = taxon_layouts.TaxaClade(name='TaxaClade_'+rank, level=level, rank = rank, colour_dict=colour_dict)
             taxa_layouts.append(layout)
-        
-        # taxa_layouts = [
-        #     taxon_layouts.TaxaRectangular(name='Taxa')
-        #     TreeLayout(name='outline_class', ns=taxon_layouts.class_layout())
-        # ]
-
 
         # taxa_layouts = [
             # TreeLayout(name='level1_kingdom', ns=taxon_layouts.collapse_kingdom()),
