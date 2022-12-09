@@ -55,8 +55,13 @@ def read_args():
         help="Input tree, .nw file, customized tree input")
     group.add_argument('-d', '--metadata',
         type=str,
-        required=True,
+        required=False,
         help="<metadata.csv> .csv, .tsv. mandatory input")
+    group.add_argument('--annotated_tree',
+        default=False,
+        action='store_true',
+        required=False,
+        help="inputtree already annotated by treeprofileer")
     group.add_argument('--no_colnames',
         default=False,
         action='store_true',
@@ -562,7 +567,10 @@ def get_layouts(argv_input, layout_name, level, internal_rep):
     for idx, prop in enumerate(props):
         if layout_name in ['binary', 'revbinary']:
             prop_colour_dict = {} # key = value, value = colour id
-            prop_values = list(set(columns[prop]))
+            if columns:
+                prop_values = list(set(columns[prop]))
+            else:
+                prop_values = list(set(children_prop_array(annotated_tree, prop)))
             nvals = len(prop_values)
             for i in range(0, nvals):
                 prop_colour_dict[prop_values[i]] = paried_color[i]
@@ -589,8 +597,10 @@ def get_layouts(argv_input, layout_name, level, internal_rep):
         # categorical layouts
         elif layout_name in ['label','rectangular', 'colorbranch']:
             colour_dict = {} # key = value, value = colour id
-            prop_values = list(set(columns[prop]))
-            #prop_values = list(set(children_prop_array(annotated_tree, prop)))
+            if columns:
+                prop_values = list(set(columns[prop]))
+            else:
+                prop_values = list(set(children_prop_array(annotated_tree, prop)))
             nvals = len(prop_values)
 
             for i in range(0, nvals):
@@ -651,7 +661,8 @@ def main():
             metadata_dict, node_props, columns = parse_csv(args.metadata, no_colnames=args.no_colnames)
         else:
             metadata_dict, node_props, columns = parse_csv(args.metadata)
-            
+    else:
+        columns = {}
     #code goes here
     end = time.time()
     print('Time for parse_csv to run: ', end - start)
@@ -717,12 +728,15 @@ def main():
     start = time.time()
     
     taxon_column = []
-    if args.taxon_column:
-        taxon_column.append(args.taxon_column)
-        annotated_tree = load_metadata_to_tree(tree, metadata_dict, args.taxon_column, args.taxon_delimiter)
+    if not args.annotated_tree:
+        if args.taxon_column:
+            taxon_column.append(args.taxon_column)
+            annotated_tree = load_metadata_to_tree(tree, metadata_dict, args.taxon_column, args.taxon_delimiter)
+        else:
+            annotated_tree = load_metadata_to_tree(tree, metadata_dict)
     else:
-        annotated_tree = load_metadata_to_tree(tree, metadata_dict)
-    
+        annotated_tree = tree
+
     end = time.time()
     print('Time for load_metadata_to_tree to run: ', end - start)
     rest_column = []
@@ -896,9 +910,12 @@ def main():
 
     
     #### Output #####
+    if args.outtree:
+        annotated_tree.write(outfile=args.outtree, properties = [], format=1)
+
     if not args.interactive:
         if args.outtree:
-            annotated_tree.write(outfile=args.plot, format=1)
+            annotated_tree.write(outfile=args.outtree, format=1)
         elif args.plot:
             annotated_tree.explore(tree_name='example',layouts=[], port=5000)
     else:
