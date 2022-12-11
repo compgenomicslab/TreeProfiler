@@ -462,17 +462,12 @@ def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field
         if n.props.get('rank'):
             rank2values[n.props.get('rank')].append(n.props.get('sci_name',''))
         
-        # if not n.is_leaf(): 
-        #     nleaves = str(len(n))
-        #     n.add_prop("nleaves", nleaves)
-        # if n.is_leaf():
-        #     print(n.props.get("sci_name"))
-        
         if n.name:
             pass
         else:
             n.name = n.props.get("sci_name", "")
-    return tree
+    #print(rank2values)
+    return tree, rank2values
 
 def taxatree_prune(tree, rank_limit='subspecies'):
     rank_limit = rank_limit.lower()
@@ -642,9 +637,6 @@ def _hls2hex(h, l, s):
     return '#%02x%02x%02x' %tuple(map(lambda x: int(x*255),
                                     colorsys.hls_to_rgb(h, l, s)))
 
-def taxacolor(tree, rank):
-    return
-
 def main():
     import time
     global annotated_tree, node_props, columns
@@ -751,35 +743,37 @@ def main():
 
     # merge annotations
     start = time.time()
-    node2leaves = annotated_tree.get_cached_content()
-    count = 0
-    for node in annotated_tree.traverse("postorder"):
-        internal_props = {}
-        if node.is_leaf():
-            pass
-        else:
-            
-            if text_column:
-                internal_props_text = merge_text_annotations(node2leaves[node], text_column, counter_stat=counter_stat)
-                internal_props.update(internal_props_text)
+    if not args.annotated_tree:
+        node2leaves = annotated_tree.get_cached_content()
+        count = 0
+        for node in annotated_tree.traverse("postorder"):
+            internal_props = {}
+            if node.is_leaf():
+                pass
+            else:
+                
+                if text_column:
+                    internal_props_text = merge_text_annotations(node2leaves[node], text_column, counter_stat=counter_stat)
+                    internal_props.update(internal_props_text)
 
-            if num_column:
-                internal_props_num = merge_num_annotations(node2leaves[node], num_column, num_stat=num_stat)
-                internal_props.update(internal_props_num)
+                if num_column:
+                    internal_props_num = merge_num_annotations(node2leaves[node], num_column, num_stat=num_stat)
+                    internal_props.update(internal_props_num)
 
-            if bool_column:
-                internal_props_bool = merge_text_annotations(node2leaves[node], bool_column, counter_stat=counter_stat)
-                internal_props.update(internal_props_bool)
+                if bool_column:
+                    internal_props_bool = merge_text_annotations(node2leaves[node], bool_column, counter_stat=counter_stat)
+                    internal_props.update(internal_props_bool)
 
-            if rest_column:
-                internal_props_rest = merge_text_annotations(node2leaves[node], rest_column, counter_stat=counter_stat)
-                internal_props.update(internal_props_rest)
-            
-            #internal_props = {**internal_props_text, **internal_props_num, **internal_props_rest}
-            #print(internal_props.items())
-            for key,value in internal_props.items():
-                node.add_prop(key, value)
-
+                if rest_column:
+                    internal_props_rest = merge_text_annotations(node2leaves[node], rest_column, counter_stat=counter_stat)
+                    internal_props.update(internal_props_rest)
+                
+                #internal_props = {**internal_props_text, **internal_props_num, **internal_props_rest}
+                #print(internal_props.items())
+                for key,value in internal_props.items():
+                    node.add_prop(key, value)
+    else:
+        pass
     end = time.time()
     print('Time for merge annotations to run: ', end - start)
     
@@ -798,13 +792,15 @@ def main():
             print('Please specify which taxa db using --taxadb <GTDB|NCBI>')
         else:
             if args.taxon_column:
-                annotated_tree = annotate_taxa(annotated_tree, db=args.taxadb, taxid_attr=args.taxon_column, sp_delimiter=args.taxon_delimiter)
+                annotated_tree, rank2values = annotate_taxa(annotated_tree, db=args.taxadb, taxid_attr=args.taxon_column, sp_delimiter=args.taxon_delimiter)
             else:
-                annotated_tree = annotate_taxa(annotated_tree, db=args.taxadb, taxid_attr="name")
+                annotated_tree, rank2values = annotate_taxa(annotated_tree, db=args.taxadb, taxid_attr="name")
         # if args.taxon_column:
         #     annotated_tree = annotate_taxa(annotated_tree, taxid_attr=taxon_column)
         # else:
         #     annotated_tree = annotate_taxa(annotated_tree, taxid_attr="name")
+    else:
+        rank2values = {}
     end = time.time()
     print('Time for annotate_taxa to run: ', end - start)
     ### Anslysis settings###
@@ -844,7 +840,16 @@ def main():
         ]
         
         taxon_prop = args.TaxonLayout
-        
+
+        if not rank2values:
+            rank2values = defaultdict(list)
+            for n in tree.traverse():
+                if n.props.get('rank'):
+                    rank2values[n.props.get('rank')].append(n.props.get('sci_name',''))
+                
+        else:
+            pass
+
         for rank, value in rank2values.items():
             colour_dict = {} 
             nvals = len(value)
