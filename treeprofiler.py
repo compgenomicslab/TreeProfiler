@@ -213,13 +213,13 @@ def read_args():
     group = parser.add_argument_group(title='Output arguments',
         description="Output parameters")
     group.add_argument('--interactive',
-        default=True,
-        action='store_false',
+        default=False,
+        action='store_true',
         help="run interactive session")
     group.add_argument('--port',
         type=str,
         default=5000,
-        help="run interactive session")
+        help="run interactive session on custom port")
     group.add_argument('--plot',
         type=str,
         required=False,
@@ -784,6 +784,10 @@ def main():
     for prop in num_column:
         prop2type[prop] = 'num'
         prop2type[prop+'_avg'] = 'num'
+        prop2type[prop+'_sum'] = 'num'
+        prop2type[prop+'_max'] = 'num'
+        prop2type[prop+'_min'] = 'num'
+        prop2type[prop+'_std'] = 'num'
 
     # taxa annotations
     start = time.time()
@@ -917,14 +921,9 @@ def main():
     #### Output #####
     if args.outtree:
         annotated_tree.write(outfile=args.outtree, properties = [], format=1)
-
-    if not args.interactive:
-        if args.outtree:
-            annotated_tree.write(outfile=args.outtree, format=1)
-        elif args.plot:
-            annotated_tree.explore(tree_name='example',layouts=[], port=5000)
-    else:
+    if args.interactive:
         annotated_tree.explore(tree_name='example',layouts=layouts, port=args.port)
+        
     
     return annotated_tree
 
