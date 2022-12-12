@@ -70,27 +70,27 @@ def read_args():
     group.add_argument('--text_column',
         type=str,
         required=False,
-        help="<col1,col2> names of columns which need to be read as categorical data")
+        help="<col1,col2> names, column index or index range of columns which need to be read as categorical data")
     group.add_argument('--num_column',
         type=str,
         required=False,
-        help="<col1,col2> names of columns which need to be read as numerical data")
+        help="<col1,col2> names, column index or index range of columns which need to be read as numerical data")
     group.add_argument('--bool_column',
         type=str,
         required=False,
-        help="<col1,col2> names of columns which need to be read as boolean data")
+        help="<col1,col2> names, column index or index range of columns which need to be read as boolean data")
     group.add_argument('--text_column_idx',
         type=str,
         required=False,
-        help="1,2,3 or 1-5 index of columns which need to be read as categorical data")
+        help="1,2,3 or [1-5] index of columns which need to be read as categorical data")
     group.add_argument('--num_column_idx',
         type=str,
         required=False,
-        help="1,2,3 or 1-5 index columns which need to be read as numerical data")
+        help="1,2,3 or [1-5] index columns which need to be read as numerical data")
     group.add_argument('--bool_column_idx',
         type=str,
         required=False,
-        help="1,2,3 or 1-5 index columns which need to be read as boolean data")
+        help="1,2,3 or [1-5] index columns which need to be read as boolean data")
     group.add_argument('--taxatree',
         type=str,
         required=False,
@@ -175,40 +175,40 @@ def read_args():
     group.add_argument('--BinaryLayout',
         type=str,
         required=False,
-        help="<col1,col2> names of columns which need to be plot as BinaryLayout")
+        help="<col1,col2> names, column index or index range of columns which need to be plot as BinaryLayout")
     group.add_argument('--RevBinaryLayout',
         type=str,
         required=False,
-        help="<col1,col2> names of columns which need to be plot as RevBinaryLayout")
+        help="<col1,col2> names, column index or index range of columns which need to be plot as RevBinaryLayout")
 
     group.add_argument('--ColorbranchLayout',
         type=str,
         required=False,
-        help="<col1,col2> names of columns which need to be plot as Textlayouts")
+        help="<col1,col2> names, column index or index range of columns which need to be plot as Textlayouts")
     group.add_argument('--LabelLayout',
         type=str,
         required=False,
-        help="<col1,col2> names of columns which need to be plot as LabelLayout")
+        help="<col1,col2> names, column index or index range of columns which need to be plot as LabelLayout")
     group.add_argument('--RectangularLayout',
         type=str,
         required=False,
-        help="<col1,col2> names of columns which need to be plot as RectangularLayout")
+        help="<col1,col2> names, column index or index range of columns which need to be plot as RectangularLayout")
     
     
     group.add_argument('--HeatmapLayout',
         type=str,
         required=False,
-        help="<col1,col2> names of columns which need to be read as HeatmapLayout")
+        help="<col1,col2> names, column index or index range of columns which need to be read as HeatmapLayout")
     group.add_argument('--BarplotLayout',
         type=str,
         required=False,
-        help="<col1,col2> names of columns which need to be read as BarplotLayouts")
+        help="<col1,col2> names, column index or index range of columns which need to be read as BarplotLayouts")
     
     
     group.add_argument('--TaxonLayout',
         type=str,
         required=False,
-        help="<col1,col2> names of columns which need to be read as TaxonLayouts")
+        help="<col1,col2> names, column index or index range of columns which need to be read as TaxonLayouts")
 
     group = parser.add_argument_group(title='Output arguments',
         description="Output parameters")

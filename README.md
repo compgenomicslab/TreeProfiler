@@ -67,7 +67,7 @@ basic_example1.nw  basic_example1.tsv
 ```
 
 ## Maping metadata into tree
-### Simple map metadata into corresponding leaf nodes 
+### **Simple map metadata into corresponding leaf nodes** 
 treeprofiler will start local server which metadata will be mapped to corresponding leaf nodes
 ```
 python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --interactive
@@ -95,20 +95,20 @@ For categorical dataset, each internal node will count the selected feature of i
 python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_column random_type --interactive
 
 # label categorical data by column index, using --text_column_idx <idx>
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_column_idx 12 --interactive  
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_column_idx 6 --interactive  
 
 # label column index by range, "[star_idx-end_idx]"
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_column_idx [1-5] --interactive 
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_column_idx [1-6] --interactive 
 ```
 
 Categorical data will be process as counter in each internal node. Users can choose either counter is raw or relative count by using `--counter_stat`
 ```
 # raw count, example internal_node shown as: ```random_type_counter: medium--3||high--2```
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_column seed_ortholog,random_type --counter_stat raw --interactive
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_column random_type --counter_stat raw --interactive
 
 # relative count, example internal_node shown as: ```random_type_counter: medium--0.60||high--0.40```
  internal_node example shown as, random_type_counter: medium--3||high--2
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_column seed_ortholog,random_type --counter_stat relative --interactive
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_column random_type --counter_stat relative --interactive
 ```
 ### Mapping Boolean data
 For Boolean dataset, each internal node will count the selected feature(s) of its children nodes as counter as categorical, as shown as `_counter` of suffix feature name(s) of internal node. To label Boolean feature metadata, using following arguments
@@ -116,13 +116,13 @@ For Boolean dataset, each internal node will count the selected feature(s) of it
 
 ```
 # label boolean data by column name(s) in metadata (for multiple columns, seperate by ","), using --bool_column <header>
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --bool_column bool_type --interactive
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --bool_column bool_type,bool_type2 --interactive
 
 # label boolean data by column index, using --bool_column_idx <idx>
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --bool_column_idx 13 --interactive  
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --bool_column_idx 7,8 --interactive  
 
 # label column index by range, "[star_idx-end_idx]"
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --bool_column_idx [1-5] --interactive 
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --bool_column_idx [7-8] --interactive 
 ```
 
 Boolean counter stats follows rule as categorical data
@@ -141,13 +141,13 @@ For numerical dataset, each internal node will perform folwing descriptive stati
 To label numerical data
 ```
 # label numerical data by column name(s) in metadata (for multiple columns, seperate by ","), using --num_column <header>
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_column evalue,score --interactive
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_column sample1,sample2,sample3,sample4,sample5 --interactive
 
 # label numerical data by column index, using --num_column_idx <idx>
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_column_idx 2,3 --interactive  
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_column_idx 1,2,3,4,5 --interactive  
 
 # label column index by range, "[star_idx-end_idx]"
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_column_idx [2-3] --interactive 
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_column_idx [1-5] --interactive 
 ```
 
 By default, numerical feature will be calculated all the descriptive statistic, but users can choose specific one to be calculated by using `--num_stat [all, sum, avg, max, min, std] `
@@ -155,32 +155,104 @@ By default, numerical feature will be calculated all the descriptive statistic, 
 --num_stat NUM_STAT   statistic calculation to perform for numerical data in internal nodes, [all, sum, avg, max, min, std] 
 ```
 # by default
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_column evalue,score --num_stat all --interactive
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_column sample1 --num_stat all --interactive
 
 # only average calculation
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_column evalue,score --num_stat avg --interactive
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_column sample1 --num_stat avg --interactive
 ```
 
-### Mapping Taxon data
+### Taxonomic profiling
+If input metadada containcs taxon data, MetaTreeProfiler contains 
 
 ## Visualizing annotated tree with layouts
+MetaTreeProfiler provides a several of layout options for visualize features in metadata along with tree, depends on their datatype
+
+### Layouts for categorical data
+Users can add the following flag to activate layouts for categorical data
+```
+--ColorbranchLayout COLORBRANCHLAYOUT
+                            <col1,col2> names, column index or index range of columns which need to be plot as Textlayouts
+--LabelLayout LABELLAYOUT
+                        <col1,col2> names, column index or index range of columns which need to be plot as LabelLayout
+--RectangularLayout RECTANGULARLAYOUT
+                        <col1,col2> names, column index or index range of columns which need to be plot as RectangularLayout
+```
+
+example
+```
+## target column "random_type" in examples/basic_example1.tsv
+# List random_type feature as text in aligned panel using LabelLayout
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_column random_type --LabelLayout random_type --interactive
+
+# Label random_type feature on branch with different colors in aligned panel  using --ColorbranchLayout
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_column random_type --ColorbranchLayout random_type --interactive
+
+# Label random_type feature with retangular block in aligned panel using --RectangularLayout
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_column random_type --ColorbranchLayout random_type --interactive
+```
+### Layouts for boolean data
+Users can add the following flag to activate layouts for Boolean data
+```
+--BinaryLayout BINARYLAYOUT
+                        <col1,col2> names, column index or index range of columns which need to be plot as BinaryLayout, label shown only positive value
+--RevBinaryLayout REVBINARYLAYOUT
+                        <col1,col2> names, column index or index range of columns which need to be plot as RevBinaryLayout, label shown only negative value
+```
+
+```
+## target column "bool_type", "bool_type2" in examples/basic_example1.tsv
+# List postive bool_type feature in aligned panel using BinaryLayout
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --bool_column bool_type --BinaryLayout bool_type --interactive
+
+# List negative bool_type feature in aligned panel using BinaryLayout
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --bool_column bool_type --BinaryLayout bool_type --interactive
+
+# multiple columns seperated by ','
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --bool_column bool_type,bool_type2 --BinaryLayout bool_type,bool_type2  --interactive
+```
+
+### Layouts for Numerical data
+Users can add the following flag to activate layouts for Numerical data
+```
+--HeatmapLayout HEATMAPLAYOUT
+                        <col1,col2> names, column index or index range of columns which need to be read as HeatmapLayout
+--BarplotLayout BARPLOTLAYOUT
+                        <col1,col2> names, column index or index range of columns which need to be read as BarplotLayouts
+```
+```
+## target column 'sample[1-5]' feature in examples/basic_example1.tsv
+# visualize sample1 feature in Barplot
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_column sample1 --BarplotLayout sample1 --interactive
+
+# visualize sample1-sample5 in Heatmap
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_column_idx [1-5] --HeatmapLayout [1-5] --interactive 
+```
+
+### Visualizing annotated internal nodes
+If internal nodes are annotated, MetaTreeProfiler is also able to visualize annotated features automatically when layouts are activated
+
+### Internal nodes of categorical and boolean data
+As internal nodes of categorical and boolean data are annotated as counter, hence when activating layouts of categorical or boolean data, it generate pipechart of counter summary at the top of each internal node
+
+Internal nodes of numerical data are process descriptive statistic analysis by default, hence when users collapse any branch, BarplotLayout or HeatmapLayout will demonstrate representative value, `avg` by default
+### Internal nodes of numerical data
 
     --BinaryLayout BINARYLAYOUT
-                            <col1,col2> names of columns which need to be plot as BinaryLayout
+                            <col1,col2> names, column index or index range of columns which need to be plot as BinaryLayout
     --RevBinaryLayout REVBINARYLAYOUT
-                            <col1,col2> names of columns which need to be plot as RevBinaryLayout
+                            <col1,col2> names, column index or index range of columns which need to be plot as RevBinaryLayout
     --ColorbranchLayout COLORBRANCHLAYOUT
-                            <col1,col2> names of columns which need to be plot as Textlayouts
+                            <col1,col2> names, column index or index range of columns which need to be plot as Textlayouts
     --LabelLayout LABELLAYOUT
-                            <col1,col2> names of columns which need to be plot as LabelLayout
+                            <col1,col2> names, column index or index range of columns which need to be plot as LabelLayout
     --RectangularLayout RECTANGULARLAYOUT
-                            <col1,col2> names of columns which need to be plot as RectangularLayout
+                            <col1,col2> names, column index or index range of columns which need to be plot as RectangularLayout
     --HeatmapLayout HEATMAPLAYOUT
-                            <col1,col2> names of columns which need to be read as HeatmapLayout
+                            <col1,col2> names, column index or index range of columns which need to be read as HeatmapLayout
     --BarplotLayout BARPLOTLAYOUT
-                            <col1,col2> names of columns which need to be read as BarplotLayouts
+                            <col1,col2> names, column index or index range of columns which need to be read as BarplotLayouts
     --TaxonLayout TAXONLAYOUT
-                            <col1,col2> names of columns which need to be read as TaxonLayouts
+                            <col1,col2> names, column index or index range of columns which need to be read as TaxonLayouts
                             
 ## Conditional query in annotated tree
 
@@ -200,11 +272,11 @@ params:
     --annotated_tree      inputtree already annot                 ated by treeprofileer
     --no_colnames         metadata table doesn't contain columns name
     --text_column TEXT_COLUMN
-                            <col1,col2> names of columns which need to be read as categorical data
+                            <col1,col2> names, column index or index range of columns which need to be read as categorical data
     --num_column NUM_COLUMN
-                            <col1,col2> names of columns         which need to be read as numerical data
+                            <col1,col2> names, column index or index range of columns         which need to be read as numerical data
     --bool_column BOOL_COLUMN
-                            <col1,col2> names of columns which need to be read as boolean data
+                            <col1,col2> names, column index or index range of columns which need to be read as boolean data
     --text_column_idx TEXT_COLUMN_IDX
                             1,2,3 or 1-5 index of columns which need to be read as categorical data
     --num_column_idx NUM_COLUMN_IDX
@@ -248,21 +320,21 @@ params:
     Plot parameters
 
     --BinaryLayout BINARYLAYOUT
-                            <col1,col2> names of columns which need to be plot as BinaryLayout
+                            <col1,col2> names, column index or index range of columns which need to be plot as BinaryLayout
     --RevBinaryLayout REVBINARYLAYOUT
-                            <col1,col2> names of columns which need to be plot as RevBinaryLayout
+                            <col1,col2> names, column index or index range of columns which need to be plot as RevBinaryLayout
     --ColorbranchLayout COLORBRANCHLAYOUT
-                            <col1,col2> names of columns which need to be plot as Textlayouts
+                            <col1,col2> names, column index or index range of columns which need to be plot as Textlayouts
     --LabelLayout LABELLAYOUT
-                            <col1,col2> names of columns which need to be plot as LabelLayout
+                            <col1,col2> names, column index or index range of columns which need to be plot as LabelLayout
     --RectangularLayout RECTANGULARLAYOUT
-                            <col1,col2> names of columns which need to be plot as RectangularLayout
+                            <col1,col2> names, column index or index range of columns which need to be plot as RectangularLayout
     --HeatmapLayout HEATMAPLAYOUT
-                            <col1,col2> names of columns which need to be read as HeatmapLayout
+                            <col1,col2> names, column index or index range of columns which need to be read as HeatmapLayout
     --BarplotLayout BARPLOTLAYOUT
-                            <col1,col2> names of columns which need to be read as BarplotLayouts
+                            <col1,col2> names, column index or index range of columns which need to be read as BarplotLayouts
     --TaxonLayout TAXONLAYOUT
-                            <col1,col2> names of columns which need to be read as TaxonLayouts
+                            <col1,col2> names, column index or index range of columns which need to be read as TaxonLayouts
 
     Output arguments:
     Output parameters
