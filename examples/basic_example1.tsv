@@ -1,4 +1,4 @@
-FeatureID	sample1	sample2	sample3	sample4	sample5	random_type	bool_type	bool_type2
+#name	sample1	sample2	sample3	sample4	sample5	random_type	bool_type	bool_type2
 Phy003I7ZJ_CHICK	0.05	0.12	0.86	0.01	0.69	medium	1	TRUE
 Phy0054BO3_MELGA	0.64	0.67	0.51	0.29	0.14	medium	1	TRUE
 Phy00508FR_NIPNI	0.89	0.38	0.97	0.49	0.26	low	1	FALSE
