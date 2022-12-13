@@ -525,19 +525,23 @@ def conditional_prune(tree, conditions_input, prop2type):
 def tree2table(tree, internal_node=True, props=[], outfile='tree2table.csv'):
     node2leaves = {}
     leaf2annotations = {}
+    if not props:
+        leaf = tree.get_farthest_leaf()[0]
+        props = list(leaf.props)
+        
     with open(outfile, 'w', newline='') as csvfile:
         fieldnames = props
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames, delimiter='\t', extrasaction='ignore')
         writer.writeheader()
         for node in tree.traverse():
-            if internal_node:
+            if node.is_leaf():
                 output_row = dict(node.props)
                 for k, prop in output_row.items():
                     if type(prop) == list:
                         output_row[k] = '|'.join(str(v) for v in prop)
                 writer.writerow(output_row)
             else:
-                if node.is_leaf():
+                if internal_node:
                     output_row = dict(node.props)
                     for k, prop in output_row.items():
                         if type(prop) == list:
@@ -935,7 +939,9 @@ def main():
         annotated_tree.write(outfile=args.outtree, properties = [], format=1)
     if args.interactive:
         annotated_tree.explore(tree_name='example',layouts=layouts, port=args.port)
-        
+    if args.outtsv:
+        tree2table(annotated_tree, internal_node=True, outfile=args.outtsv)
+
     
     return annotated_tree
 

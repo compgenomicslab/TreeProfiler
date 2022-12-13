@@ -29,7 +29,7 @@ MetaTreeProfiler takes following file types as input
 
 ### basic usage
 
-Choose your input tree and corresponding metadata, MetaTreeProfiler will map all the metadata into related tree node, and visualize it on the local server browser in interactive interface.
+Choose your input tree and corresponding metadata, MetaTreeProfiler will map all the metadata into corresponding tree node, and visualize it on the local server browser in interactive interface.
 
 ```
 metatreeprofiler.py --tree tree.nw --metadata metadata.tsv --interactive
@@ -170,7 +170,27 @@ python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/bas
 if metadata doesn't contain column names, please add `--no_colnames` as flag. MetaTreeProfiler will automatically assign feature name by index order
 
 ### Taxonomic profiling
-If input metadada containcs taxon data, MetaTreeProfiler contains 
+If input metadada containcs taxon data, MetaTreeProfiler allows users to process taxonomic annotation with either GTDB or NCBI database.
+
+- `--taxadb`, `NCBI` or `GTDB`, choose the Taxonomic Database for annotation
+- `--taxon_column`, choose the column in metadata which representa taxon
+- `--taxonomic_profile`, activate taxonomic annotation
+- `--taxon_delimiter`, delimiter of taxa columns. default `.`
+- `--taxa_field`, field of taxa name after delimiter. default `0`
+
+#### Basic usage on GTDB
+Here we demonstrate with `examples/gtdb_example1.nw` and `examples/gtdb_example1.tsv`
+```
+# in case of gtdb_example1.tsv
+python treeprofiler.py --tree examples/gtdb_example1.nw --metadata examples/gtdb_example1.tsv --taxonomic_profile --taxon_column 0 --taxadb GTDB --interactive
+```
+
+#### Basic usage on NCBI
+For instance of `examples/spongilla_example.nw` and `examples/spongilla_example.tsv`, it contains accession ID such as `83887.comp22273_c0_seq2_m.43352`, hence using `--` 
+```
+python treeprofiler.py --tree examples/spongilla_example.nw --metadata examples/spongilla_example.tsv --taxonomic_profile --taxon_column name --taxon_delimiter .  --taxa_field 0 --taxadb NCBI --interactive
+```
+
 
 ## Visualizing annotated tree with layouts
 MetaTreeProfiler provides a several of layout options for visualize features in metadata along with tree, depends on their datatype
@@ -252,7 +272,7 @@ python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/bas
 ```
 
 ### Layouts for Taxonomic data
-
+Activate Taxonomic layout using `--TaxonLayout`
 
 
 ## Conditional query in annotated tree
