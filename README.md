@@ -86,7 +86,6 @@ python treeprofiler.py --tree examples/annotated_basic_example1.nw --metadata ex
 ### Map metadata into tree and profile tree internal nodes annotations and analysis
 At the above example, we only mapped metadata to leaf nodes, in this example, we will also profile **internal nodes** annotation and analysis of their children nodes.
 
-
 ### Mapping Categorical data
 For categorical dataset, each internal node will count the selected feature of its children nodes as counter, as shown as ```<feature_name>_counter``` in internal node. To label categorical feature metadata, using following arguments
 
@@ -102,6 +101,10 @@ python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/bas
 ```
 
 Categorical data will be process as counter in each internal node. Users can choose either counter is raw or relative count by using `--counter_stat`
+| internal_node properties  |      statistic method  | 
+|----------|-------------   |
+| `<feature name>`_counter  |      raw, relative    | 
+
 ```
 # raw count, example internal_node shown as: ```random_type_counter: medium--3||high--2```
 python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_column random_type --counter_stat raw --interactive
@@ -110,6 +113,8 @@ python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/bas
  internal_node example shown as, random_type_counter: medium--3||high--2
 python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_column random_type --counter_stat relative --interactive
 ```
+
+
 ### Mapping Boolean data
 For Boolean dataset, each internal node will count the selected feature(s) of its children nodes as counter as categorical, as shown as `_counter` of suffix feature name(s) of internal node. To label Boolean feature metadata, using following arguments
 
@@ -126,6 +131,7 @@ python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/bas
 ```
 
 Boolean counter stats follows rule as categorical data
+ 
 
 ### Mapping Numerical data
 For numerical dataset, each internal node will perform folwing descriptive statistic analysis of all of its children node of selected feature(s)
@@ -160,6 +166,8 @@ python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/bas
 # only average calculation
 python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_column sample1 --num_stat avg --interactive
 ```
+### Mapping metadata wihtout column names
+if metadata doesn't contain column names, please add `--no_colnames` as flag. MetaTreeProfiler will automatically assign feature name by index order
 
 ### Taxonomic profiling
 If input metadada containcs taxon data, MetaTreeProfiler contains 
@@ -231,35 +239,98 @@ python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/bas
 ### Visualizing annotated internal nodes
 If internal nodes are annotated, MetaTreeProfiler is also able to visualize annotated features automatically when layouts are activated
 
-### Internal nodes of categorical and boolean data
+#### Internal nodes of categorical and boolean data
 As internal nodes of categorical and boolean data are annotated as counter, hence when activating layouts of categorical or boolean data, it generate pipechart of counter summary at the top of each internal node
 
-Internal nodes of numerical data are process descriptive statistic analysis by default, hence when users collapse any branch, BarplotLayout or HeatmapLayout will demonstrate representative value, `avg` by default
-### Internal nodes of numerical data
+#### Internal nodes of numerical data
+Internal nodes of numerical data are process descriptive statistic analysis by default, hence when users collapse any branch, BarplotLayout or HeatmapLayout will demonstrate representative value, `avg` by default. representative value can be changed by using `--internal_plot_measure`
 
-    --BinaryLayout BINARYLAYOUT
-                            <col1,col2> names, column index or index range of columns which need to be plot as BinaryLayout
-    --RevBinaryLayout REVBINARYLAYOUT
-                            <col1,col2> names, column index or index range of columns which need to be plot as RevBinaryLayout
-    --ColorbranchLayout COLORBRANCHLAYOUT
-                            <col1,col2> names, column index or index range of columns which need to be plot as Textlayouts
-    --LabelLayout LABELLAYOUT
-                            <col1,col2> names, column index or index range of columns which need to be plot as LabelLayout
-    --RectangularLayout RECTANGULARLAYOUT
-                            <col1,col2> names, column index or index range of columns which need to be plot as RectangularLayout
-    --HeatmapLayout HEATMAPLAYOUT
-                            <col1,col2> names, column index or index range of columns which need to be read as HeatmapLayout
-    --BarplotLayout BARPLOTLAYOUT
-                            <col1,col2> names, column index or index range of columns which need to be read as BarplotLayouts
-    --TaxonLayout TAXONLAYOUT
-                            <col1,col2> names, column index or index range of columns which need to be read as TaxonLayouts
-                            
+example
+```
+# select max instead of avg as internal node ploting representative
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_column_idx [1-5] --HeatmapLayout [1-5] --internal_plot_measure max --interactive
+```
+
+### Layouts for Taxonomic data
+
+
+
 ## Conditional query in annotated tree
+MetaTreeProfiler allows users to perform conditional processs based on differet circumstances
+- `--pruned_by`, prune the annotated tree by conditions, and remove the branches which don't fit.
+- `--collapsed_by`, collapse tree branches whose nodes if the conditions
+- `--highlighted_by`, select tree nodes which fit the conditions
+- `--rank_limit`, prune the taxonomic annotated tree based on rank of classification.
 
 ### Query Syntax
-### pruned_by
-### collapsed_by
-### highlighted_by
+#### Basic Query
+All the conditional query shared the same syntax, a standard query consists the following 
+
+```
+--pruned_by|collapsed_by|highlighted_by "<left_value> <operator> <right_value>"
+```
+* left value, the property of leaf node or internal node
+* operators
+    *  `=`
+    * `!=`
+    * `>` 
+    * `>=`
+    * `<`
+    * `<=`
+    * `contains`
+* right value, custom value for the condition
+
+Example 
+```
+# select tree node whose name contains `FALPE` character
+...--highlighted_by "name contains FALPE"
+
+# select tree node whose sample1 feature > 0.50
+...--highlighted_by "sample1 > 0.50"
+```
+
+#### Query in internal nodes
+Query in internal nodes' properties is also available, in this case, `left_value` of query will be the internal node property, remember to add the proper suffixes such as `_avg`, `_max`,etc, for the numerical data or `_counter` for categorical and boolean data. 
+
+Example
+```
+# select tree internal node where sample1_avg feature > 0.50
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_column_idx [1-5] --HeatmapLayout [1-5] --highlighted_by "sample1_avg > 0.50"
+```
+
+Special syntax for internal node counter
+```
+# select tree internal nodes, where `low` relative counter < 0.30 in random_type_counter property
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_column random_type --counter_stat relative  --highlighted_by "random_type_counter:low < 0.30"
+```
+
+#### AND and OR conditions
+The syntax for the AND condition and OR condition in MetaTreeProfiler is:
+
+AND condition will be under one argument, syntax seperated by `,`, such as 
+```
+# select tree  node where sample1 feature > 0.50 AND sample2 < 0.2
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_column_idx [1-5] --HeatmapLayout [1-5]--highlighted_by "sample1>0.50,sample2<0.2"
+```
+
+OR condition will be used more than one arguments, such as
+```
+# select tree node where sample1 feature > 0.50 OR sample2 < 0.2
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_column_idx [1-5] --HeatmapLayout [1-5] --highlighted_by "sample1>0.50" --highlighted_by "sample2<0.2"
+```
+
+### conditional pruning based on taxonomic level
+Prune taxonomic annotated tree based on following taxonomic rank level,
+`kingdom`, `phylum`, `class`, `order`, `family`, `genus`, `species`, `subspecies` 
+```
+# prune tree by family
+... --rank_limit family
+```
+the above argument equals to 
+```
+... --pruned_by "rank=family"
+```
+
 
 params:
 

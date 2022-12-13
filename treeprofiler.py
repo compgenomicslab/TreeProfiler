@@ -109,6 +109,11 @@ def read_args():
         default=';',
         required=False,
         help="delimiter of taxa columns. default [;]")
+    group.add_argument('--taxa_field',
+        type=int,
+        default=0,
+        required=False,
+        help="field of taxa name after delimiter. default 0")
     group.add_argument('--taxonomic_profile',
         default=False,
         action='store_true',
@@ -204,11 +209,10 @@ def read_args():
         required=False,
         help="<col1,col2> names, column index or index range of columns which need to be read as BarplotLayouts")
     
-    
     group.add_argument('--TaxonLayout',
-        type=str,
-        required=False,
-        help="<col1,col2> names, column index or index range of columns which need to be read as TaxonLayouts")
+        default=False,
+        action='store_true',
+        help="activate TaxonLayout")
 
     group = parser.add_argument_group(title='Output arguments',
         description="Output parameters")
@@ -272,12 +276,12 @@ def parse_csv_to_column(metadata):
 
 def ete4_parse(newick):
     try:
-        tree = Tree(newick)
+        tree = PhyloTree(newick)
     except NewickError:
         try:
-            tree = Tree(newick, format=1)            
+            tree = PhyloTree(newick, format=1)            
         except NewickError:
-            tree = Tree(newick, format=1, quoted_node_names=True)
+            tree = PhyloTree(newick, format=1, quoted_node_names=True)
 
     # Correct 0-dist trees
     has_dist = False
@@ -440,11 +444,11 @@ def children_prop_array(nodes, prop):
 
 def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field=0):
     global rank2values
-    # def return_spcode(leaf):
-    #     try:
-    #         return leaf.name.split(sp_delimiter)[sp_field]
-    #     except IndexError:
-    #         return leaf.name
+    def return_spcode(leaf):
+        try:
+            return leaf.props.get(taxid_attr).split(sp_delimiter)[sp_field]
+        except IndexError:
+            return leaf.props.get(taxid_attr)
 
     if db == "GTDB":
         gtdb = GTDBTaxa()
@@ -452,13 +456,15 @@ def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field
     elif db == "NCBI":
         ncbi = NCBITaxa()
         # extract sp codes from leaf names
-        #tree.set_species_naming_function(return_spcode)
-        ncbi.annotate_tree(tree, taxid_attr=taxid_attr)
+        tree.set_species_naming_function(return_spcode)
+        ncbi.annotate_tree(tree, taxid_attr="species")
 
     # tree.annotate_gtdb_taxa(taxid_attr='name')
     # assign internal node as sci_name
     rank2values = defaultdict(list)
     for n in tree.traverse():
+        if db == 'NCBI':
+            n.del_prop('_speciesFunction')
         if n.props.get('rank'):
             rank2values[n.props.get('rank')].append(n.props.get('sci_name',''))
         
@@ -466,7 +472,8 @@ def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field
             pass
         else:
             n.name = n.props.get("sci_name", "")
-    #print(rank2values)
+    
+    
     return tree, rank2values
 
 def taxatree_prune(tree, rank_limit='subspecies'):
@@ -685,19 +692,18 @@ def main():
         for i in args.text_column_idx.split(','):
             if i[0] == '[' and i[-1] == ']':
                 text_column_start, text_column_end = get_range(i)
-                for j in range(text_column_start, text_column_start+1):
+                for j in range(text_column_start, text_column_end+1):
                     text_column_idx.append(j)
             else:
                 text_column_idx.append(int(i))
 
         text_column = [node_props[index-1] for index in text_column_idx]
-
     if args.num_column_idx:
         num_column_idx = []
         for i in args.num_column_idx.split(','):
             if i[0] == '[' and i[-1] == ']':
                 num_column_start, num_column_end = get_range(i)
-                for j in range(num_column_start, num_column_start+1):
+                for j in range(num_column_start, num_column_end+1):
                     num_column_idx.append(j)
             else:
                 num_column_idx.append(int(i))
@@ -795,10 +801,16 @@ def main():
         if not args.taxadb:
             print('Please specify which taxa db using --taxadb <GTDB|NCBI>')
         else:
-            if args.taxon_column:
-                annotated_tree, rank2values = annotate_taxa(annotated_tree, db=args.taxadb, taxid_attr=args.taxon_column, sp_delimiter=args.taxon_delimiter)
-            else:
-                annotated_tree, rank2values = annotate_taxa(annotated_tree, db=args.taxadb, taxid_attr="name")
+            if args.taxadb == 'GTDB':
+                if args.taxon_column:
+                    annotated_tree, rank2values = annotate_taxa(annotated_tree, db=args.taxadb, taxid_attr=args.taxon_column)
+                else:
+                    annotated_tree, rank2values = annotate_taxa(annotated_tree, db=args.taxadb, taxid_attr="name")
+            elif args.taxadb == 'NCBI':
+                if args.taxon_column:
+                    annotated_tree, rank2values = annotate_taxa(annotated_tree, db=args.taxadb, taxid_attr=args.taxon_column, sp_delimiter=args.taxon_delimiter, sp_field=args.taxa_field)
+                else:
+                    annotated_tree, rank2values = annotate_taxa(annotated_tree, db=args.taxadb, taxid_attr="name", sp_delimiter=args.taxon_delimiter, sp_field=args.taxa_field)
         # if args.taxon_column:
         #     annotated_tree = annotate_taxa(annotated_tree, taxid_attr=taxon_column)
         # else:
@@ -843,7 +855,7 @@ def main():
             #taxon_layouts.TaxaRectangular(name='Taxa')
         ]
         
-        taxon_prop = args.TaxonLayout
+        #taxon_prop = args.TaxonLayout
 
         if not rank2values:
             rank2values = defaultdict(list)
