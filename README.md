@@ -19,6 +19,14 @@ git branch checkout ete4
 pip install -e .
 ```
 
+Install MetaTreeProfiler
+```
+git clone https://github.com/dengzq1234/MetaTreeDrawer
+cd MetaTreeDrawer/
+# add treeprofiler to path
+export PATH=$PATH:$(pwd)
+```
+
 ### Input files
 MetaTreeProfiler takes following file types as input 
 
