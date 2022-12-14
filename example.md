@@ -14,3 +14,10 @@ python treeprofiler.py -t demo/p__Thermoproteota.nw -d /home/deng/Projects/metat
 
 #NCBI
 python treeprofiler.py --tree examples/spongilla_example.nw --taxonomic_profile --annotated_tree --taxadb NCBI --taxon_delimiter . --taxa_field 0 --TaxonLayout --interactive
+
+
+# progenome
+
+python treeprofiler.py --tree examples/progenome3.nw --metadata examples/progenome3.tsv --taxon_column GCF --taxonomic_profile --num_column GC,size --bool_column aquatic_habitat,host_associated,soil_habitat --BarplotLayout GC,size --TaxonLayout --BinaryLayout aquatic_habitat,host_associated,soil_habitat --interactive --outtree examples/progenome3_annotated.nw
+
+python treeprofiler.py --tree examples/progenome3_annotated.nw --metadata examples/progenome3.tsv --BarplotLayout GC,size --TaxonLayout --BinaryLayout aquatic_habitat,host_associated,soil_habitat --interactive

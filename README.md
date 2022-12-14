@@ -323,13 +323,13 @@ Query in internal nodes' properties is also available, in this case, `left_value
 Example
 ```
 # select tree internal node where sample1_avg feature > 0.50
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_column_idx [1-5] --HeatmapLayout [1-5] --highlighted_by "sample1_avg > 0.50"
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_column_idx [1-5] --HeatmapLayout [1-5] --highlighted_by "sample1_avg > 0.50" --interactive
 ```
 
 Special syntax for internal node counter
 ```
 # select tree internal nodes, where `low` relative counter < 0.30 in random_type_counter property
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_column random_type --counter_stat relative  --highlighted_by "random_type_counter:low < 0.30"
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_column random_type --counter_stat relative  --highlighted_by "random_type_counter:low < 0.30" --interactive
 ```
 
 #### AND and OR conditions
@@ -338,13 +338,13 @@ The syntax for the AND condition and OR condition in MetaTreeProfiler is:
 AND condition will be under one argument, syntax seperated by `,`, such as 
 ```
 # select tree  node where sample1 feature > 0.50 AND sample2 < 0.2
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_column_idx [1-5] --HeatmapLayout [1-5]--highlighted_by "sample1>0.50,sample2<0.2"
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_column_idx [1-5] --HeatmapLayout [1-5]--highlighted_by "sample1>0.50,sample2<0.2" --interactive
 ```
 
 OR condition will be used more than one arguments, such as
 ```
 # select tree node where sample1 feature > 0.50 OR sample2 < 0.2
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_column_idx [1-5] --HeatmapLayout [1-5] --highlighted_by "sample1>0.50" --highlighted_by "sample2<0.2"
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_column_idx [1-5] --HeatmapLayout [1-5] --highlighted_by "sample1>0.50" --highlighted_by "sample2<0.2" --interactive
 ```
 
 ### conditional pruning based on taxonomic level
