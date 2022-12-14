@@ -224,7 +224,7 @@ python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/bas
 python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_column random_type --ColorbranchLayout random_type --interactive
 
 # Label random_type feature with retangular block in aligned panel using --RectangularLayout
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_column random_type --ColorbranchLayout random_type --interactive
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_column random_type --RectangularLayout random_type --interactive
 ```
 ### Layouts for boolean data
 Users can add the following flag to activate layouts for Boolean data
