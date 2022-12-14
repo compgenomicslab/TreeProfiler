@@ -488,7 +488,7 @@ def taxatree_prune(tree, rank_limit='subspecies'):
                 ex = False
     return tree
 
-from utils import to_code, call
+from utils import to_code, call, counter_call
 def conditional_prune(tree, conditions_input, prop2type):
     conditional_output = []
     for line in conditions_input:
@@ -506,11 +506,20 @@ def conditional_prune(tree, conditions_input, prop2type):
                     if op == 'in':
                         value = condition[0]
                         prop = condition[2]
+                        datatype = prop2type[prop]
+                        final_call = call(n, prop, datatype, op, value)
+                    elif ":" in condition[0]:
+                        internal_prop, leaf_prop = condition[0].split(':')
+                        value = condition[2]
+                        datatype = prop2type[internal_prop]
+                        final_call = counter_call(n, internal_prop, leaf_prop, datatype, op, value)
                     else:
                         prop = condition[0]
                         value = condition[2]
-                    datatype = prop2type[prop]
-                    final_call = call(n, prop, datatype, op, value)
+                        prop = condition[0]
+                        value = condition[2]
+                        datatype = prop2type[prop]
+                        final_call = call(n, prop, datatype, op, value)
                     if final_call == False:
                         break
                     else:
@@ -582,10 +591,9 @@ def get_layouts(argv_input, layout_name, level, internal_rep):
                 prop_colour_dict[prop_values[i]] = paried_color[i]
             
             color = random_color(h=None)
-            #color = random_color(h=None)
+            
             if layout_name == 'binary':
                 layout = conditional_layouts.LayoutBinary(prop+'_'+layout_name, level, color, prop_colour_dict, prop, reverse=False)
-                #layout = TreeLayout(name=prop+'_'+layout_name, ns=conditional_layouts.boolean_layout(prop, level, color, prop_colour_dict, internal_rep))
 
             elif layout_name == 'revbinary':
                 layout = conditional_layouts.LayoutBinary(prop+'_'+layout_name, level, color, prop_colour_dict, prop, reverse=True)
