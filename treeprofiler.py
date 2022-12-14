@@ -499,36 +499,40 @@ def conditional_prune(tree, conditions_input, prop2type):
     while not ex:
         ex = True
         for n in tree.traverse():
-            final_call = False
-            for or_condition in conditional_output:
-                for condition in or_condition:
-                    op = condition[1]
-                    if op == 'in':
-                        value = condition[0]
-                        prop = condition[2]
-                        datatype = prop2type[prop]
-                        final_call = call(n, prop, datatype, op, value)
-                    elif ":" in condition[0]:
-                        internal_prop, leaf_prop = condition[0].split(':')
-                        value = condition[2]
-                        datatype = prop2type[internal_prop]
-                        final_call = counter_call(n, internal_prop, leaf_prop, datatype, op, value)
+            if not n.is_root():
+                final_call = False
+                for or_condition in conditional_output:
+                    for condition in or_condition:
+                        op = condition[1]
+                        if op == 'in':
+                            value = condition[0]
+                            prop = condition[2]
+                            datatype = prop2type[prop]
+                            final_call = call(n, prop, datatype, op, value)
+                        elif ":" in condition[0]:
+                            internal_prop, leaf_prop = condition[0].split(':')
+                            value = condition[2]
+                            datatype = prop2type[internal_prop]
+                            final_call = counter_call(n, internal_prop, leaf_prop, datatype, op, value)
+                        else:
+                            prop = condition[0]
+                            value = condition[2]
+                            prop = condition[0]
+                            value = condition[2]
+                            datatype = prop2type[prop]
+                            final_call = call(n, prop, datatype, op, value)
+                        if final_call == False:
+                            break
+                        else:
+                            continue
+                    if final_call:
+                        n.detach()
+                        ex = False
                     else:
-                        prop = condition[0]
-                        value = condition[2]
-                        prop = condition[0]
-                        value = condition[2]
-                        datatype = prop2type[prop]
-                        final_call = call(n, prop, datatype, op, value)
-                    if final_call == False:
-                        break
-                    else:
-                        continue
-                if final_call:
-                    n.detach()
-                    ex = False
-                else:
-                    pass
+                        pass
+            else:
+                if n.dist == 0: 
+                    n.dist = 1
     return tree
 
 def tree2table(tree, internal_node=True, props=[], outfile='tree2table.csv'):
