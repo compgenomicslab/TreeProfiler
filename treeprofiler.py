@@ -445,6 +445,7 @@ def children_prop_array(nodes, prop):
 def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field=0):
     global rank2values
     def return_spcode(leaf):
+        #print(leaf.props.get(taxid_attr).split(sp_delimiter)[sp_field])
         try:
             return leaf.props.get(taxid_attr).split(sp_delimiter)[sp_field]
         except IndexError:
@@ -465,7 +466,7 @@ def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field
     for n in tree.traverse():
         if db == 'NCBI':
             n.del_prop('_speciesFunction')
-        if n.props.get('rank'):
+        if n.props.get('rank') and n.props.get('rank') != 'Unknown':
             rank2values[n.props.get('rank')].append(n.props.get('sci_name',''))
         
         if n.name:
@@ -872,13 +873,12 @@ def main():
         ]
         
         #taxon_prop = args.TaxonLayout
-
         if not rank2values:
             rank2values = defaultdict(list)
             for n in tree.traverse():
-                if n.props.get('rank'):
+                if n.props.get('rank') and n.props.get('rank') != 'Unknown':
                     rank2values[n.props.get('rank')].append(n.props.get('sci_name',''))
-                
+
         else:
             pass
 
