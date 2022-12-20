@@ -1,9 +1,32 @@
 # MetaTreeProfiler Tutorial
+## Table of Contents
+1. [Introduction](#introduction)
+2. [Installation](#installation)
+3. [Mapping metadata into tree](#mapping-metadata-into-tree) 
+    1. [Simple mapping metadata into leaf nodes](#simple-mapping-metadata-into-leaf-nodes)
+    2. [Mapping Categorical data](#mapping-categorical-data)
+    3. [Mapping Boolean data](#mapping-boolean-data)
+    4. [Mapping Numerical data](#mapping-numerical-data)
+    5. [Mapping metadata without column names](#mapping-metadata-without-column-names)
+    6. [Taxonomic profiling](#taxonomic-profiling)
+        1. [Basic usage on GTDB](#basic-usage-on-GTDB)
+        2. [Basic usage on NCBI](#basic-usage-on-NCBI)
+4. [Visualizing annotated tree with layouts](#visualizing-annotated-tree-with-layouts)
+    1. [Layouts for categorical data](#layouts-for-categorical-data)
+    2. [Layouts for boolean data](#layouts-for-boolean-data)
+    3. [Layouts for numerical data](#layouts-for-numerical-data)
+    4. [Visualizing annotated internal nodes](#visualizing-annotated-internal-nodes)
+    5. [Layouts for Taxonomic data](#layouts-for-taxonomic-data)
+5. [Conditional query in annotated tree](#conditional-query-in-annotated-tree)
+    1. [Basic Query](#basic-query)
+    2. [Query in internal nodes](#query-in-internal-nodes)
+    3. [AND and OR conditions](#and-and-or-conditions)
+    4. [conditional pruning based on taxonomic level](#conditional-pruning-based-on-taxonomic-level)
 
-## Overview
+## Introduction
 MetaTreeProfiler is command-line tool for profiling metadata table into phylogenetic tree with descriptive analysis and output visualization
 
-## Installation & Basic Usage
+## Installation
 MetaTreeProfiler requires to install ete4 toolkit
 ```
 # install ete4 dependencies Cython
@@ -35,7 +58,7 @@ MetaTreeProfiler takes following file types as input
 | Tree     |      Newick    | 
 | Metadata |      TSV       |
 
-### basic usage
+### Basic usage
 
 Choose your input tree and corresponding metadata, MetaTreeProfiler will map all the metadata into corresponding tree node, and visualize it on the local server browser in interactive interface.
 
@@ -70,12 +93,15 @@ In this Tutorial we will use MetaTreeProfiler and demostrate basic usage with da
 ```
 cd examples/
 ls 
-basic_example1.nw  basic_example1.tsv
-
+basic_example1.nw   basic_example1.tsv
+gtdb_example1.nw    gtdb_example1.tsv        
+progenome3.nw   progenome3.tsv 
+spongilla_example.nw  spongilla_example.tsv
+progenome3_annotated.nw  spongilla_annotated.nw 
 ```
 
-## Maping metadata into tree
-### **Simple map metadata into corresponding leaf nodes** 
+## Mapping metadata into tree
+### **Simple mapping metadata into leaf nodes** 
 treeprofiler will start local server which metadata will be mapped to corresponding leaf nodes
 ```
 python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --interactive
@@ -91,7 +117,7 @@ re-run annotated tree by adding flag `--annotated_tree`
 python treeprofiler.py --tree examples/annotated_basic_example1.nw --metadata examples/basic_example1.tsv --annotated_tree --interactive
 ```
 
-### Map metadata into tree and profile tree internal nodes annotations and analysis
+### Mapping metadata into tree and profile tree internal nodes annotations and analysis
 At the above example, we only mapped metadata to leaf nodes, in this example, we will also profile **internal nodes** annotation and analysis of their children nodes.
 
 ### Mapping Categorical data
@@ -174,7 +200,7 @@ python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/bas
 # only average calculation
 python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_column sample1 --num_stat avg --interactive
 ```
-### Mapping metadata wihtout column names
+### Mapping metadata without column names
 if metadata doesn't contain column names, please add `--no_colnames` as flag. MetaTreeProfiler will automatically assign feature name by index order
 
 ### Taxonomic profiling
@@ -186,7 +212,7 @@ If input metadada containcs taxon data, MetaTreeProfiler allows users to process
 - `--taxon_delimiter`, delimiter of taxa columns. default `.`
 - `--taxa_field`, field of taxa name after delimiter. default `0`
 
-#### Basic usage on GTDB
+#### Basic usage on GTDB 
 Here we demonstrate with `examples/gtdb_example1.nw` and `examples/gtdb_example1.tsv`
 ```
 # in case of gtdb_example1.tsv
