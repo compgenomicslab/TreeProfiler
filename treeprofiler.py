@@ -366,7 +366,7 @@ def merge_text_annotations(nodes, target_props, counter_stat='raw'):
             #print(dict(Counter(prop_list)))
             total = sum(dict(Counter(prop_list)).values())
             #print(total)
-            for key, value in dict(Counter(prop_list)).items():
+            for key, value in sorted(dict(Counter(prop_list)).items()):
                 #print(key, value)
                 rel_val = '{0:.2f}'.format(float(value)/total)
                 counter_line.append(add_suffix(key, rel_val, '--'))
