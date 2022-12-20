@@ -358,7 +358,7 @@ def merge_text_annotations(nodes, target_props, counter_stat='raw'):
     for target_prop in target_props:
         if counter_stat == 'raw':
             prop_list = children_prop_array(nodes, target_prop)
-            internal_props[add_suffix(target_prop, 'counter')] = '||'.join([add_suffix(str(key), value, '--') for key, value in dict(Counter(prop_list)).items()])
+            internal_props[add_suffix(target_prop, 'counter')] = '||'.join([add_suffix(str(key), value, '--') for key, value in sorted(dict(Counter(prop_list)).items())])
 
         elif counter_stat == 'relative':
             prop_list = children_prop_array(nodes, target_prop)
