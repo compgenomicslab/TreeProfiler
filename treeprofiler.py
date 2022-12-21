@@ -947,10 +947,13 @@ def main():
 
     
     #### Output #####
+    from plot import main
     if args.outtree:
         annotated_tree.write(outfile=args.outtree, properties = [], format=1)
     if args.interactive:
         annotated_tree.explore(tree_name='example',layouts=layouts, port=args.port)
+    elif args.plot:
+        main(annotated_tree, layouts, args.port, args.plot)
     if args.outtsv:
         tree2table(annotated_tree, internal_node=True, outfile=args.outtsv)
 
