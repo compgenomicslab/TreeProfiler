@@ -405,6 +405,7 @@ def merge_num_annotations(nodes, target_props, num_stat='all'):
     internal_props = {}
     for target_prop in target_props:
         prop_array = np.array(children_prop_array(nodes, target_prop),dtype=np.float64)
+        prop_array = prop_array[~np.isnan(prop_array)] # remove nan data
         n, (smin, smax), sm, sv, ss, sk = stats.describe(prop_array)
 
         if num_stat == 'all':
@@ -433,6 +434,7 @@ def merge_num_annotations(nodes, target_props, num_stat='all'):
         else:
             print('Invalid stat method')
             break
+    #print(internal_props)
     return internal_props
 
 def add_suffix(name, suffix, delimiter='_'):

@@ -44,6 +44,12 @@ pip install -e .
 
 Install MetaTreeProfiler
 ```
+# install selenium via pip 
+pip install selenium
+# or conda
+conda install -c conda-forge selenium 
+
+# install MetaTreeProfiler
 git clone https://github.com/dengzq1234/MetaTreeDrawer
 cd MetaTreeDrawer/
 # add treeprofiler to path

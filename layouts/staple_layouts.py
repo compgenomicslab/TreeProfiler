@@ -140,10 +140,15 @@ class LayoutHeatmap(TreeLayout):
             # heatmap
             redgradient = color_gradient(0.95, 0.6, 10)
             relative_abundance = float(node.props.get(self.num_prop))
-            color_idx = int(relative_abundance*10)
-            color = redgradient[color_idx]
-            identF = RectFace(width=50,height=50,text="%.1f" % (relative_abundance*100), color=color, 
-            padding_x=1, padding_y=1)
+            try:
+                color_idx = int(relative_abundance*10)
+                color = redgradient[color_idx]
+                identF = RectFace(width=50,height=50,text="%.1f" % (relative_abundance*100), color=color, 
+                padding_x=1, padding_y=1)
+            except ValueError: # for miss data
+                color = redgradient[0]
+                identF = RectFace(width=50,height=50,text="NaN", color=color, 
+                padding_x=1, padding_y=1)
             node.add_face(identF, column = self.column,  position = 'aligned')
             
         elif node.is_leaf() and node.props.get(self.internal_prop):
