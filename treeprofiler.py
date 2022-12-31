@@ -257,6 +257,7 @@ def parse_csv(input_file, delimiter='\t', no_colnames=False):
         for row in reader:
             nodename = row[node_header]
             del row[node_header]
+            row = {k: 'NaN' if not v else v for k, v in row.items() } ## replace empty to NaN
             metadata[nodename] = dict(row)
             for (k,v) in row.items(): # go over each column name and value 
                 columns[k].append(v) # append the value into the appropriate list
@@ -264,15 +265,15 @@ def parse_csv(input_file, delimiter='\t', no_colnames=False):
 
     return metadata, node_props, columns
 
-def parse_csv_to_column(metadata):
-    columns = defaultdict(list) # each value in each column is appended to a list
-    with open(metadata) as f:
-        reader = csv.DictReader(f, delimiter="\t") # read rows into a dictionary format
-        for row in reader: # read a row as {column1: value1, column2: value2,...}
-            for (k,v) in row.items(): # go over each column name and value 
-                columns[k].append(v) # append the value into the appropriate list
-                                    # based on column name k
-    return columns
+# def parse_csv_to_column(metadata):
+#     columns = defaultdict(list) # each value in each column is appended to a list
+#     with open(metadata) as f:
+#         reader = csv.DictReader(f, delimiter="\t") # read rows into a dictionary format
+#         for row in reader: # read a row as {column1: value1, column2: value2,...}
+#             for (k,v) in row.items(): # go over each column name and value 
+#                 columns[k].append(v) # append the value into the appropriate list
+#                                     # based on column name k
+#     return columns
 
 def ete4_parse(newick):
     try:
@@ -301,7 +302,7 @@ def load_metadata_to_tree(tree, metadata_dict, taxon_column=None, taxon_delimite
         name2leaf[leaf.name] = leaf
 
     for node, props in metadata_dict.items():
-        
+        #print(props)
         #hits = tree.get_leaves_by_name(node)
         #hits = tree.search_nodes(name=node) # including internal nodes
         if node in name2leaf.keys():
@@ -406,33 +407,36 @@ def merge_num_annotations(nodes, target_props, num_stat='all'):
     for target_prop in target_props:
         prop_array = np.array(children_prop_array(nodes, target_prop),dtype=np.float64)
         prop_array = prop_array[~np.isnan(prop_array)] # remove nan data
-        n, (smin, smax), sm, sv, ss, sk = stats.describe(prop_array)
+        if prop_array.any():
+            n, (smin, smax), sm, sv, ss, sk = stats.describe(prop_array)
 
-        if num_stat == 'all':
-            internal_props[add_suffix(target_prop, 'avg')] = sm
-            internal_props[add_suffix(target_prop, 'sum')] = np.sum(prop_array)
-            internal_props[add_suffix(target_prop, 'max')] = smax
-            internal_props[add_suffix(target_prop, 'min')] = smin
-            if math.isnan(sv) == False:
-                internal_props[add_suffix(target_prop, 'std')] = sv
+            if num_stat == 'all':
+                internal_props[add_suffix(target_prop, 'avg')] = sm
+                internal_props[add_suffix(target_prop, 'sum')] = np.sum(prop_array)
+                internal_props[add_suffix(target_prop, 'max')] = smax
+                internal_props[add_suffix(target_prop, 'min')] = smin
+                if math.isnan(sv) == False:
+                    internal_props[add_suffix(target_prop, 'std')] = sv
+                else:
+                    internal_props[add_suffix(target_prop, 'std')] = 0
+            
+            elif num_stat == 'avg':
+                internal_props[add_suffix(target_prop, 'avg')] = sm
+            elif num_stat == 'sum':
+                internal_props[add_suffix(target_prop, 'sum')] = np.sum(prop_array)
+            elif num_stat == 'max':
+                internal_props[add_suffix(target_prop, 'max')] = smax
+            elif num_stat == 'min':
+                internal_props[add_suffix(target_prop, 'min')] = smin
+            elif num_stat == 'std':
+                if math.isnan(sv) == False:
+                    internal_props[add_suffix(target_prop, 'std')] = sv
+                else:
+                    internal_props[add_suffix(target_prop, 'std')] = 0
             else:
-                internal_props[add_suffix(target_prop, 'std')] = 0
-        
-        elif num_stat == 'avg':
-            internal_props[add_suffix(target_prop, 'avg')] = sm
-        elif num_stat == 'sum':
-            internal_props[add_suffix(target_prop, 'sum')] = np.sum(prop_array)
-        elif num_stat == 'max':
-            internal_props[add_suffix(target_prop, 'max')] = smax
-        elif num_stat == 'min':
-            internal_props[add_suffix(target_prop, 'min')] = smin
-        elif num_stat == 'std':
-            if math.isnan(sv) == False:
-                internal_props[add_suffix(target_prop, 'std')] = sv
-            else:
-                internal_props[add_suffix(target_prop, 'std')] = 0
+                print('Invalid stat method')
+                break
         else:
-            print('Invalid stat method')
             break
     #print(internal_props)
     return internal_props
