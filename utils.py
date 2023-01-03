@@ -1,6 +1,6 @@
 import re
 import operator
-
+import math
 operator_dict = {
                 '<':operator.lt,
                 '<=':operator.le,
@@ -9,6 +9,12 @@ operator_dict = {
                 '>':operator.gt,
                 '>=':operator.ge,
                 }
+
+def check_nan(value):
+    try:
+        return math.isnan (float(value))
+    except ValueError:
+        return False
 
 def counter_call(node, internal_prop, leaf_prop, datatype, operator_string, right_value):
     if datatype == 'str':

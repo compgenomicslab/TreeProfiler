@@ -302,7 +302,7 @@ def load_metadata_to_tree(tree, metadata_dict, taxon_column=None, taxon_delimite
         name2leaf[leaf.name] = leaf
 
     for node, props in metadata_dict.items():
-        #print(props)
+        
         #hits = tree.get_leaves_by_name(node)
         #hits = tree.search_nodes(name=node) # including internal nodes
         if node in name2leaf.keys():
@@ -888,7 +888,7 @@ def main():
         else:
             pass
 
-        for rank, value in rank2values.items():
+        for rank, value in sorted(rank2values.items()):
             colour_dict = {} 
             nvals = len(value)
             for i in range(0, nvals):
