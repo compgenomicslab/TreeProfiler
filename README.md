@@ -317,8 +317,8 @@ Activate Taxonomic layout using `--TaxonLayout`
 
 ## Conditional query in annotated tree
 MetaTreeProfiler allows users to perform conditional processs based on differet circumstances
-- `--pruned_by`, prune the annotated tree by conditions, and remove the branches which don't fit.
-- `--collapsed_by`, collapse tree branches whose nodes if the conditions
+- `--pruned_by`, prune the annotated tree by conditions, and remove the branches or clades which don't fit the condition.
+- `--collapsed_by`, collapse tree branches whose nodes if the conditions, mainly on internal nodes
 - `--highlighted_by`, select tree nodes which fit the conditions
 - `--rank_limit`, prune the taxonomic annotated tree based on rank of classification.
 
@@ -355,13 +355,13 @@ Query in internal nodes' properties is also available, in this case, `left_value
 Example
 ```
 # select tree internal node where sample1_avg feature > 0.50
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_column_idx [1-5] --HeatmapLayout [1-5] --highlighted_by "sample1_avg < 0.50" --interactive
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_column_idx [1-5] --HeatmapLayout [1-5] --collapsed_by "sample1_avg < 0.50" --interactive
 ```
 
 Syntax for internal node counter data
 ```
-# select tree internal nodes, where `low` relative counter < 0.30 in random_type_counter property
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_column random_type --counter_stat relative  --highlighted_by "random_type_counter:low < 0.30" --interactive
+# collapse tree internal nodes, where `low` relative counter < 0.30 in random_type_counter property
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_column random_type --counter_stat relative  --collapsed_by "random_type_counter:low < 0.30" --interactive
 ```
 
 #### AND and OR conditions
@@ -379,8 +379,6 @@ OR condition will be used more than one arguments
 python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_column_idx [1-5] --HeatmapLayout [1-5] --highlighted_by "sample1>0.50" --highlighted_by "sample2<0.2" --interactive
 ```
 
-
-
 ### conditional limit based on taxonomic level
 Prune taxonomic annotated tree based on following taxonomic rank level,
 `kingdom`, `phylum`, `class`, `order`, `family`, `genus`, `species`, `subspecies` 
@@ -390,4 +388,6 @@ python treeprofiler.py --tree examples/gtdb_example1.nw --metadata examples/gtdb
 ```
 
 ## Explore progenome data
-
+```
+python treeprofiler.py --tree examples/progenome3.nw --metadata examples/progenome3.tsv --taxonomic_profile --taxadb NCBI --taxon_delimiter . --taxa_field 0 --num_column GC,size --bool_column aquatic_habitat,host_associated,soil_habitat --BarplotLayout GC,size --TaxonLayout --BinaryLayout aquatic_habitat,host_associated,soil_habitat --interactive
+```
