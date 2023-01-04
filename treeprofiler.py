@@ -539,6 +539,7 @@ def conditional_prune(tree, conditions_input, prop2type):
                         else:
                             continue
                     if final_call:
+                        print('cut', n.name)
                         n.detach()
                         ex = False
                     else:
@@ -842,7 +843,17 @@ def main():
     print('Time for merge annotations to run: ', end - start)
     
     # output datatype of each property of each tree node including internal nodes
-    prop2type = {'name':'str'} # start with leaf name
+    prop2type = {
+        # start with leaf name
+        'name':'str',
+        # taxonomic features
+        'rank':'str',
+        'sci_name':'str',
+        'taxid':'str',
+        'lineage':'str',
+        'named_lineage':'str'
+        } 
+
     for prop in text_column+bool_column+rest_column:
         prop2type[prop] = 'str'
         prop2type[prop+'_counter'] = 'str'
@@ -853,7 +864,7 @@ def main():
         prop2type[prop+'_max'] = 'num'
         prop2type[prop+'_min'] = 'num'
         prop2type[prop+'_std'] = 'num'
-
+    
     # taxa annotations
     start = time.time()
     if args.taxonomic_profile:
@@ -886,12 +897,11 @@ def main():
         condition_strings = args.pruned_by
         annotated_tree= conditional_prune(annotated_tree, condition_strings, prop2type)
 
-
     # collapse tree by condition 
     if args.collapsed_by: # need to be wrap with quotes
         condition_strings = args.collapsed_by
         for condition in condition_strings:
-            c_layout = TreeLayout(name=condition, \
+            c_layout = TreeLayout(name='Collapsed_by_'+condition, \
                                     ns=conditional_layouts.collapsed_by_layout(condition, prop2type = prop2type, level=level))
             layouts.append(c_layout)
 
@@ -899,7 +909,7 @@ def main():
     if args.highlighted_by: # need to be wrap with quotes
         condition_strings = args.highlighted_by
         for condition in condition_strings:
-            s_layout = TreeLayout(name=condition, \
+            s_layout = TreeLayout(name='Highlighted_by_'+condition, \
                                     ns=conditional_layouts.highlight_layout(condition, prop2type = prop2type, level=level))
             layouts.append(s_layout)
         
