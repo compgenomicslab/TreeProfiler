@@ -633,7 +633,7 @@ def get_layouts(argv_input, layout_name, level, internal_rep):
                 layout = conditional_layouts.LayoutBinary(prop+'_'+layout_name, level, color, color_dict, prop, reverse=True)
             
             prop_color_dict[prop] = color_dict
-            
+
         # numerical layouts
         elif layout_name == 'heatmap':
             layout =  staple_layouts.LayoutHeatmap(prop+'_'+layout_name, level, internal_rep, prop)
@@ -853,6 +853,8 @@ def main():
     prop2type = {
         # start with leaf name
         'name':'str',
+        'dist':'num',
+        'support':'num',
         # taxonomic features
         'rank':'str',
         'sci_name':'str',
@@ -1009,7 +1011,8 @@ def main():
     if args.outtree:
         annotated_tree.write(outfile=args.outtree, properties = [], format=1)
     if args.interactive:
-        annotated_tree.explore(tree_name='example',layouts=layouts, port=args.port)
+        popup_prop_keys = list(prop2type.keys())
+        annotated_tree.explore(tree_name='example',layouts=layouts, port=args.port, popup_prop_keys=popup_prop_keys)
     elif args.plot:
         main(annotated_tree, layouts, args.port, args.plot)
     if args.outtsv:
