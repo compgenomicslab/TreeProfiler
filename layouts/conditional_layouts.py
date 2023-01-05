@@ -121,7 +121,7 @@ class LayoutBinary(TreeLayout):
                         prop_face = CircleFace(radius=200, color='white', padding_x=1, padding_y=1)
                         node.add_face(prop_face, column=self.column, position = "aligned")
             else:
-                prop_face = TextFace('NaN', color='black')
+                prop_face = TextFace('NaN', color='black') # show NaN when it's missing data
                 node.add_face(prop_face, column=self.column, position = "aligned")
         elif node.is_leaf() and node.props.get(self.internal_prop):
             piechart_face = get_piechartface(node, self.internal_prop, self.prop_colour_dict)

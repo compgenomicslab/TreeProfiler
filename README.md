@@ -388,6 +388,17 @@ python treeprofiler.py --tree examples/gtdb_example1.nw --metadata examples/gtdb
 ```
 
 ## Explore progenome data
+We store progenome v3 data in examples/ directory for exploration,
+
+A glance of metadata
 ```
-python treeprofiler.py --tree examples/progenome3.nw --metadata examples/progenome3.tsv --taxonomic_profile --taxadb NCBI --taxon_delimiter . --taxa_field 0 --num_column GC,size --bool_column aquatic_habitat,host_associated,soil_habitat --BarplotLayout GC,size --TaxonLayout --BinaryLayout aquatic_habitat,host_associated,soil_habitat --interactive
+head -2 examples/progenome3.tsv
+name    GC      GCA     aquatic_habitat host_associated size    soil_habitat    GCF
+2486577.SAMN10347832.GCA_004210275.1    40.8    GCA_004210275.1 0       1       1375759 0       RS_GCF_004210275.1
+2759495.SAMN15595193.GCA_014116815.1    34.3    GCA_014116815.1                 1928597         GB_GCA_014116815.1
+```
+
+Here we will conduct the profiling with one command line
+```
+python treeprofiler.py --tree examples/progenome3.nw --metadata examples/progenome3.tsv --taxonomic_profile --taxadb NCBI --taxon_delimiter . --taxa_field 0 --num_column GC,size --bool_column aquatic_habitat,host_associated,soil_habitat --BarplotLayout GC,size --TaxonLayout --BinaryLayout aquatic_habitat,host_associated,soil_habitat --interactive 
 ```

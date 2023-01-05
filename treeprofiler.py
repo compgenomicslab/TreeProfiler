@@ -539,7 +539,7 @@ def conditional_prune(tree, conditions_input, prop2type):
                         else:
                             continue
                     if final_call:
-                        print('cut', n.name)
+                        #print('cut', n.name)
                         n.detach()
                         ex = False
                     else:
@@ -633,15 +633,21 @@ def get_layouts(argv_input, layout_name, level, internal_rep):
                 layout = conditional_layouts.LayoutBinary(prop+'_'+layout_name, level, color, color_dict, prop, reverse=True)
             
             prop_color_dict[prop] = color_dict
+            
         # numerical layouts
         elif layout_name == 'heatmap':
             layout =  staple_layouts.LayoutHeatmap(prop+'_'+layout_name, level, internal_rep, prop)
         
         elif layout_name == 'barplot':
+            if prop in num_column:
+                size_prop = prop+'_'+internal_rep # using internal prop to set the range in case rank_limit cut all the leaves
+            else:
+                size_prop = prop
+
             layout =  staple_layouts.LayoutBarplot(name=prop+'_'+layout_name, prop=prop, \
-                                    color_prop=paried_color[level], size_prop=prop, 
-                                    column=level, internal_rep=internal_rep
-                                    )
+                                        color_prop=paried_color[level], size_prop=size_prop, 
+                                        column=level, internal_rep=internal_rep
+                                        )
             prop_color_dict[prop] = paried_color[level]
         # categorical layouts
         elif layout_name in ['label','rectangular', 'colorbranch']:
@@ -695,6 +701,7 @@ def _hls2hex(h, l, s):
 
 def main():
     import time
+    global text_column, num_column, bool_column
     global annotated_tree, node_props, columns
 
     # get params
@@ -888,14 +895,14 @@ def main():
     print('Time for annotate_taxa to run: ', end - start)
     ### Anslysis settings###
 
-    # prune tree by rank
-    if args.rank_limit:
-        annotated_tree= taxatree_prune(annotated_tree, rank_limit=args.rank_limit)
+    # # prune tree by rank
+    # if args.rank_limit:
+    #     annotated_tree= taxatree_prune(annotated_tree, rank_limit=args.rank_limit)
 
-    # prune tree by condition 
-    if args.pruned_by: # need to be wrap with quotes
-        condition_strings = args.pruned_by
-        annotated_tree= conditional_prune(annotated_tree, condition_strings, prop2type)
+    # # prune tree by condition 
+    # if args.pruned_by: # need to be wrap with quotes
+    #     condition_strings = args.pruned_by
+    #     annotated_tree= conditional_prune(annotated_tree, condition_strings, prop2type)
 
     # collapse tree by condition 
     if args.collapsed_by: # need to be wrap with quotes
@@ -912,7 +919,7 @@ def main():
             s_layout = TreeLayout(name='Highlighted_by_'+condition, \
                                     ns=conditional_layouts.highlight_layout(condition, prop2type = prop2type, level=level))
             layouts.append(s_layout)
-        
+    
     #### Layouts settings ####
     # Taxa layouts
     if args.TaxonLayout:
@@ -986,6 +993,15 @@ def main():
         label_layouts, level, color_dict = get_layouts(args.RevBinaryLayout, 'revbinary', level, 'counter')
         layouts.extend(label_layouts)
         total_color_dict.append(color_dict)
+
+    #### prune at the last step in case of lost leaves information
+    # prune tree by rank
+    if args.rank_limit:
+        annotated_tree= taxatree_prune(annotated_tree, rank_limit=args.rank_limit)
+    # prune tree by condition 
+    if args.pruned_by: # need to be wrap with quotes
+        condition_strings = args.pruned_by
+        annotated_tree= conditional_prune(annotated_tree, condition_strings, prop2type)
 
     #### Output #####
     if args.out_color_dict:
