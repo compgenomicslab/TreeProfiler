@@ -130,14 +130,14 @@ At the above example, we only mapped metadata to leaf nodes, in this example, we
 For categorical dataset, each internal node will count the selected feature of its children nodes as counter, as shown as ```<feature_name>_counter``` in internal node. To label categorical feature metadata, using following arguments
 
 ```
-# label categorical data by column name(s) in metadata (for multiple columns, seperate by ","), using --text_column <header>
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_column random_type --interactive
+# label categorical data by column name(s) in metadata (for multiple columns, seperate by ","), using --text_prop <header>
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_prop random_type --interactive
 
-# label categorical data by column index, using --text_column_idx <idx>
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_column_idx 6 --interactive  
+# label categorical data by column index, using --text_prop_idx <idx>
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_prop_idx 6 --interactive  
 
 # label column index by range, "[star_idx-end_idx]"
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_column_idx [1-6] --interactive 
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_prop_idx [1-6] --interactive 
 ```
 
 Categorical data will be process as counter in each internal node. Users can choose either counter is raw or relative count by using `--counter_stat`
@@ -147,11 +147,11 @@ Categorical data will be process as counter in each internal node. Users can cho
 
 ```
 # raw count, example internal_node shown as: ```random_type_counter: medium--3||high--2```
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_column random_type --counter_stat raw --interactive
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_prop random_type --counter_stat raw --interactive
 
 # relative count, example internal_node shown as: ```random_type_counter: medium--0.60||high--0.40```
  internal_node example shown as, random_type_counter: medium--3||high--2
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_column random_type --counter_stat relative --interactive
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_prop random_type --counter_stat relative --interactive
 ```
 
 
@@ -160,14 +160,14 @@ For Boolean dataset, each internal node will count the selected feature(s) of it
 
 
 ```
-# label boolean data by column name(s) in metadata (for multiple columns, seperate by ","), using --bool_column <header>
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --bool_column bool_type,bool_type2 --interactive
+# label boolean data by column name(s) in metadata (for multiple columns, seperate by ","), using --bool_prop <header>
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --bool_prop bool_type,bool_type2 --interactive
 
-# label boolean data by column index, using --bool_column_idx <idx>
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --bool_column_idx 7,8 --interactive  
+# label boolean data by column index, using --bool_prop_idx <idx>
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --bool_prop_idx 7,8 --interactive  
 
 # label column index by range, "[star_idx-end_idx]"
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --bool_column_idx [7-8] --interactive 
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --bool_prop_idx [7-8] --interactive 
 ```
 
 Boolean counter stats follows rule as categorical data
@@ -186,14 +186,14 @@ For numerical dataset, each internal node will perform folwing descriptive stati
 
 To label numerical data
 ```
-# label numerical data by column name(s) in metadata (for multiple columns, seperate by ","), using --num_column <header>
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_column sample1,sample2,sample3,sample4,sample5 --interactive
+# label numerical data by column name(s) in metadata (for multiple columns, seperate by ","), using --num_prop <header>
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_prop sample1,sample2,sample3,sample4,sample5 --interactive
 
-# label numerical data by column index, using --num_column_idx <idx>
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_column_idx 1,2,3,4,5 --interactive  
+# label numerical data by column index, using --num_prop_idx <idx>
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_prop_idx 1,2,3,4,5 --interactive  
 
 # label column index by range, "[star_idx-end_idx]"
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_column_idx [1-5] --interactive 
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_prop_idx [1-5] --interactive 
 ```
 
 By default, numerical feature will be calculated all the descriptive statistic, but users can choose specific one to be calculated by using `--num_stat [all, sum, avg, max, min, std] `
@@ -201,10 +201,10 @@ By default, numerical feature will be calculated all the descriptive statistic, 
 --num_stat NUM_STAT   statistic calculation to perform for numerical data in internal nodes, [all, sum, avg, max, min, std] 
 ```
 # by default
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_column sample1 --num_stat all --interactive
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_prop sample1 --num_stat all --interactive
 
 # only average calculation
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_column sample1 --num_stat avg --interactive
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_prop sample1 --num_stat avg --interactive
 ```
 ### Mapping metadata without column names
 if metadata doesn't contain column names, please add `--no_colnames` as flag. MetaTreeProfiler will automatically assign feature name by index order
@@ -250,13 +250,13 @@ example
 ```
 ## target column "random_type" in examples/basic_example1.tsv
 # List random_type feature as text in aligned panel using LabelLayout
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_column random_type --LabelLayout random_type --interactive
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_prop random_type --LabelLayout random_type --interactive
 
 # Label random_type feature on branch with different colors in aligned panel  using --ColorbranchLayout
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_column random_type --ColorbranchLayout random_type --interactive
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_prop random_type --ColorbranchLayout random_type --interactive
 
 # Label random_type feature with retangular block in aligned panel using --RectangularLayout
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_column random_type --RectangularLayout random_type --interactive
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_prop random_type --RectangularLayout random_type --interactive
 ```
 ### Layouts for boolean data
 Users can add the following flag to activate layouts for Boolean data
@@ -270,13 +270,13 @@ Users can add the following flag to activate layouts for Boolean data
 ```
 ## target column "bool_type", "bool_type2" in examples/basic_example1.tsv
 # List postive bool_type feature in aligned panel using BinaryLayout
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --bool_column bool_type --BinaryLayout bool_type --interactive
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --bool_prop bool_type --BinaryLayout bool_type --interactive
 
 # List negative bool_type feature in aligned panel using BinaryLayout
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --bool_column bool_type --BinaryLayout bool_type --interactive
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --bool_prop bool_type --BinaryLayout bool_type --interactive
 
 # multiple columns seperated by ','
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --bool_column bool_type,bool_type2 --BinaryLayout bool_type,bool_type2  --interactive
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --bool_prop bool_type,bool_type2 --BinaryLayout bool_type,bool_type2  --interactive
 ```
 
 ### Layouts for Numerical data
@@ -290,10 +290,10 @@ Users can add the following flag to activate layouts for Numerical data
 ```
 ## target column 'sample[1-5]' feature in examples/basic_example1.tsv
 # visualize sample1 feature in Barplot
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_column sample1 --BarplotLayout sample1 --interactive
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_prop sample1 --BarplotLayout sample1 --interactive
 
 # visualize sample1-sample5 in Heatmap
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_column_idx [1-5] --HeatmapLayout [1-5] --interactive 
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_prop_idx [1-5] --HeatmapLayout [1-5] --interactive 
 ```
 
 ### Visualizing annotated internal nodes
@@ -308,7 +308,7 @@ Internal nodes of numerical data are process descriptive statistic analysis by d
 example
 ```
 # select max instead of avg as internal node ploting representative
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_column_idx [1-5] --HeatmapLayout [1-5] --internal_plot_measure max --interactive
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_prop_idx [1-5] --HeatmapLayout [1-5] --internal_plot_measure max --interactive
 ```
 
 ### Layouts for Taxonomic data
@@ -355,13 +355,13 @@ Query in internal nodes' properties is also available, in this case, `left_value
 Example
 ```
 # select tree internal node where sample1_avg feature > 0.50
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_column_idx [1-5] --HeatmapLayout [1-5] --collapsed_by "sample1_avg < 0.50" --interactive
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_prop_idx [1-5] --HeatmapLayout [1-5] --collapsed_by "sample1_avg < 0.50" --interactive
 ```
 
 Syntax for internal node counter data
 ```
 # collapse tree internal nodes, where `low` relative counter < 0.30 in random_type_counter property
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_column random_type --counter_stat relative  --collapsed_by "random_type_counter:low < 0.30" --interactive
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_prop random_type --counter_stat relative  --collapsed_by "random_type_counter:low < 0.30" --interactive
 ```
 
 #### AND and OR conditions
@@ -370,13 +370,13 @@ The syntax for the AND condition and OR condition in MetaTreeProfiler is:
 AND condition will be under one argument, syntax seperated by `,`, such as 
 ```
 # select tree  node where sample1 feature > 0.50 AND sample2 < 0.2
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_column_idx [1-5] --HeatmapLayout [1-5]--highlighted_by "sample1>0.50,sample2<0.2" --interactive
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_prop_idx [1-5] --HeatmapLayout [1-5]--highlighted_by "sample1>0.50,sample2<0.2" --interactive
 ```
 
 OR condition will be used more than one arguments
 ```
 # select tree node where sample1 feature > 0.50 OR sample2 < 0.2
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_column_idx [1-5] --HeatmapLayout [1-5] --highlighted_by "sample1>0.50" --highlighted_by "sample2<0.2" --interactive
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_prop_idx [1-5] --HeatmapLayout [1-5] --highlighted_by "sample1>0.50" --highlighted_by "sample2<0.2" --interactive
 ```
 
 ### conditional limit based on taxonomic level
@@ -400,5 +400,5 @@ name    GC      GCA     aquatic_habitat host_associated size    soil_habitat    
 
 Here we will conduct the profiling with one command line
 ```
-python treeprofiler.py --tree examples/progenome3.nw --metadata examples/progenome3.tsv --taxonomic_profile --taxadb NCBI --taxon_delimiter . --taxa_field 0 --num_column GC,size --bool_column aquatic_habitat,host_associated,soil_habitat --BarplotLayout GC,size --TaxonLayout --BinaryLayout aquatic_habitat,host_associated,soil_habitat --interactive 
+python treeprofiler.py --tree examples/progenome3.nw --metadata examples/progenome3.tsv --taxonomic_profile --taxadb NCBI --taxon_delimiter . --taxa_field 0 --num_prop GC,size --bool_prop aquatic_habitat,host_associated,soil_habitat --BarplotLayout GC,size --TaxonLayout --BinaryLayout aquatic_habitat,host_associated,soil_habitat --interactive 
 ```

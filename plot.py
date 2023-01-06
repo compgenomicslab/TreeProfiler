@@ -14,7 +14,7 @@ def tree_session(tree, layouts, port):
                 show_branch_length=True, show_branch_support=True, port=port,
                 custom_api={}, custom_route={}) 
 
-def plot_tree(port):
+def snap_tree(port):
     url = 'http://127.0.0.1:{}/'.format(str(port))
 
     options = Options()
@@ -30,9 +30,9 @@ def plot_tree(port):
     time.sleep(0.5)
     driver.quit()
 
-def main(tree, layouts, port, plot_file):
+def plot(tree, layouts, port, plot_file):
     p1 = Process(target=tree_session, args=(tree, layouts, port,))
-    p2 = Process(target=plot_tree, args=(port,))
+    p2 = Process(target=snap_tree, args=(port,))
 
     p1.start()
     time.sleep(1)

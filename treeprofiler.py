@@ -7,7 +7,7 @@ from ete4 import GTDBTaxa
 from ete4 import NCBITaxa
 from ete4.smartview import TreeStyle, NodeStyle, TreeLayout
 from layouts import text_layouts, taxon_layouts, staple_layouts, heatmap_layouts, conditional_layouts
-from plot import main
+from plot import plot
 
 from argparse import ArgumentParser
 import argparse
@@ -68,27 +68,27 @@ def read_args():
         action='store_true',
         required=False,
         help="metadata table doesn't contain columns name")
-    group.add_argument('--text_column',
+    group.add_argument('--text_prop',
         type=str,
         required=False,
         help="<col1,col2> names, column index or index range of columns which need to be read as categorical data")
-    group.add_argument('--num_column',
+    group.add_argument('--num_prop',
         type=str,
         required=False,
         help="<col1,col2> names, column index or index range of columns which need to be read as numerical data")
-    group.add_argument('--bool_column',
+    group.add_argument('--bool_prop',
         type=str,
         required=False,
         help="<col1,col2> names, column index or index range of columns which need to be read as boolean data")
-    group.add_argument('--text_column_idx',
+    group.add_argument('--text_prop_idx',
         type=str,
         required=False,
         help="1,2,3 or [1-5] index of columns which need to be read as categorical data")
-    group.add_argument('--num_column_idx',
+    group.add_argument('--num_prop_idx',
         type=str,
         required=False,
         help="1,2,3 or [1-5] index columns which need to be read as numerical data")
-    group.add_argument('--bool_column_idx',
+    group.add_argument('--bool_prop_idx',
         type=str,
         required=False,
         help="1,2,3 or [1-5] index columns which need to be read as boolean data")
@@ -639,16 +639,18 @@ def get_layouts(argv_input, layout_name, level, internal_rep):
             layout =  staple_layouts.LayoutHeatmap(prop+'_'+layout_name, level, internal_rep, prop)
         
         elif layout_name == 'barplot':
-            if prop in num_column:
+            if prop in num_prop:
                 size_prop = prop+'_'+internal_rep # using internal prop to set the range in case rank_limit cut all the leaves
             else:
                 size_prop = prop
 
             layout =  staple_layouts.LayoutBarplot(name=prop+'_'+layout_name, prop=prop, \
-                                        color_prop=paried_color[level], size_prop=size_prop, 
+                                        color=paried_color[level], size_prop=size_prop, 
                                         column=level, internal_rep=internal_rep
                                         )
+
             prop_color_dict[prop] = paried_color[level]
+
         # categorical layouts
         elif layout_name in ['label','rectangular', 'colorbranch']:
             
@@ -701,7 +703,7 @@ def _hls2hex(h, l, s):
 
 def main():
     import time
-    global text_column, num_column, bool_column
+    global text_prop, num_prop, bool_prop
     global annotated_tree, node_props, columns
 
     # get params
@@ -734,56 +736,56 @@ def main():
     elif args.taxa and args.taxadb:
         tree = ''
 
-    if args.text_column:
-        text_column = args.text_column.split(',')
+    if args.text_prop:
+        text_prop = args.text_prop.split(',')
     else:
-        text_column = []
+        text_prop = []
 
-    if args.num_column:
-        num_column = args.num_column.split(',')
+    if args.num_prop:
+        num_prop = args.num_prop.split(',')
     else:
-        num_column = []
+        num_prop = []
     
-    if args.bool_column:
-        bool_column = args.bool_column.split(',')
+    if args.bool_prop:
+        bool_prop = args.bool_prop.split(',')
     else:
-        bool_column = []
+        bool_prop = []
 
-    if args.text_column_idx:
-        text_column_idx = []
-        for i in args.text_column_idx.split(','):
+    if args.text_prop_idx:
+        text_prop_idx = []
+        for i in args.text_prop_idx.split(','):
             if i[0] == '[' and i[-1] == ']':
-                text_column_start, text_column_end = get_range(i)
-                for j in range(text_column_start, text_column_end+1):
-                    text_column_idx.append(j)
+                text_prop_start, text_prop_end = get_range(i)
+                for j in range(text_prop_start, text_prop_end+1):
+                    text_prop_idx.append(j)
             else:
-                text_column_idx.append(int(i))
+                text_prop_idx.append(int(i))
 
-        text_column = [node_props[index-1] for index in text_column_idx]
+        text_prop = [node_props[index-1] for index in text_prop_idx]
     
-    if args.num_column_idx:
-        num_column_idx = []
-        for i in args.num_column_idx.split(','):
+    if args.num_prop_idx:
+        num_prop_idx = []
+        for i in args.num_prop_idx.split(','):
             if i[0] == '[' and i[-1] == ']':
-                num_column_start, num_column_end = get_range(i)
-                for j in range(num_column_start, num_column_end+1):
-                    num_column_idx.append(j)
+                num_prop_start, num_prop_end = get_range(i)
+                for j in range(num_prop_start, num_prop_end+1):
+                    num_prop_idx.append(j)
             else:
-                num_column_idx.append(int(i))
+                num_prop_idx.append(int(i))
 
-        num_column = [node_props[index-1] for index in num_column_idx]
+        num_prop = [node_props[index-1] for index in num_prop_idx]
 
-    if args.bool_column_idx:
-        bool_column_idx = []
-        for i in args.bool_column_idx.split(','):
+    if args.bool_prop_idx:
+        bool_prop_idx = []
+        for i in args.bool_prop_idx.split(','):
             if i[0] == '[' and i[-1] == ']':
-                bool_column_start, bool_column_end = get_range(i)
-                for j in range(bool_column_start, bool_column_end+1):
-                    bool_column_idx.append(j)
+                bool_prop_start, bool_prop_end = get_range(i)
+                for j in range(bool_prop_start, bool_prop_end+1):
+                    bool_prop_idx.append(j)
             else:
-                bool_column_idx.append(int(i))
+                bool_prop_idx.append(int(i))
 
-        bool_column_idx = [node_props[index-1] for index in bool_column_idx]
+        bool_prop_idx = [node_props[index-1] for index in bool_prop_idx]
 
     # load annotations to leaves
     start = time.time()
@@ -802,7 +804,7 @@ def main():
     end = time.time()
     print('Time for load_metadata_to_tree to run: ', end - start)
     rest_column = []
-    #rest_column = list(set(node_props) - set(text_column) - set(num_column) - set(bool_column))
+    #rest_column = list(set(node_props) - set(text_prop) - set(num_prop) - set(bool_prop))
     
     # stat method
     if args.counter_stat:
@@ -823,16 +825,16 @@ def main():
                 pass
             else:
                 
-                if text_column:
-                    internal_props_text = merge_text_annotations(node2leaves[node], text_column, counter_stat=counter_stat)
+                if text_prop:
+                    internal_props_text = merge_text_annotations(node2leaves[node], text_prop, counter_stat=counter_stat)
                     internal_props.update(internal_props_text)
 
-                if num_column:
-                    internal_props_num = merge_num_annotations(node2leaves[node], num_column, num_stat=num_stat)
+                if num_prop:
+                    internal_props_num = merge_num_annotations(node2leaves[node], num_prop, num_stat=num_stat)
                     internal_props.update(internal_props_num)
 
-                if bool_column:
-                    internal_props_bool = merge_text_annotations(node2leaves[node], bool_column, counter_stat=counter_stat)
+                if bool_prop:
+                    internal_props_bool = merge_text_annotations(node2leaves[node], bool_prop, counter_stat=counter_stat)
                     internal_props.update(internal_props_bool)
 
                 # deprecated
@@ -863,10 +865,10 @@ def main():
         'named_lineage':'str'
         } 
 
-    for prop in text_column+bool_column+rest_column:
+    for prop in text_prop+bool_prop+rest_column:
         prop2type[prop] = 'str'
         prop2type[prop+'_counter'] = 'str'
-    for prop in num_column:
+    for prop in num_prop:
         prop2type[prop] = 'num'
         prop2type[prop+'_avg'] = 'num'
         prop2type[prop+'_sum'] = 'num'
@@ -1014,7 +1016,7 @@ def main():
         popup_prop_keys = list(prop2type.keys())
         annotated_tree.explore(tree_name='example',layouts=layouts, port=args.port, popup_prop_keys=popup_prop_keys)
     elif args.plot:
-        main(annotated_tree, layouts, args.port, args.plot)
+        plot(annotated_tree, layouts, args.port, args.plot)
     if args.outtsv:
         tree2table(annotated_tree, internal_node=True, outfile=args.outtsv)
 
