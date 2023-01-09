@@ -627,16 +627,16 @@ def get_layouts(argv_input, layout_name, level, internal_rep):
             
             color = random_color(h=None)
             if layout_name == 'binary':
-                layout = conditional_layouts.LayoutBinary(prop+'_'+layout_name, level, color, color_dict, prop, reverse=False)
+                layout = conditional_layouts.LayoutBinary('Binary_'+prop, level, color, color_dict, prop, reverse=False)
 
             elif layout_name == 'revbinary':
-                layout = conditional_layouts.LayoutBinary(prop+'_'+layout_name, level, color, color_dict, prop, reverse=True)
+                layout = conditional_layouts.LayoutBinary('ReverseBinary_'+prop, level, color, color_dict, prop, reverse=True)
             
             prop_color_dict[prop] = color_dict
 
         # numerical layouts
         elif layout_name == 'heatmap':
-            layout =  staple_layouts.LayoutHeatmap(prop+'_'+layout_name, level, internal_rep, prop)
+            layout =  staple_layouts.LayoutHeatmap('Heatmap_'+prop, level, internal_rep, prop)
         
         elif layout_name == 'barplot':
             if prop in num_prop:
@@ -644,7 +644,7 @@ def get_layouts(argv_input, layout_name, level, internal_rep):
             else:
                 size_prop = prop
 
-            layout =  staple_layouts.LayoutBarplot(name=prop+'_'+layout_name, prop=prop, \
+            layout =  staple_layouts.LayoutBarplot(name='Barplot_'+prop, prop=prop, \
                                         color=paried_color[level], size_prop=size_prop, 
                                         column=level, internal_rep=internal_rep
                                         )
@@ -667,19 +667,18 @@ def get_layouts(argv_input, layout_name, level, internal_rep):
                     color_dict[prop_values[i]] = random_color(h=None)
             
             if layout_name == 'label':
-                layout = text_layouts.LayoutText(prop+'_'+layout_name, level, color_dict, text_prop = prop)
+                layout = text_layouts.LayoutText('Label_'+prop, level, color_dict, text_prop = prop)
                 #layout = TreeLayout(name=prop+'_'+layout_name, ns=text_layouts.text_layout(prop, level, color_dict, internal_rep))
             
             elif layout_name == 'rectangular':
-                layout = text_layouts.LayoutRect(prop+'_'+layout_name, level, color_dict, text_prop = prop)
+                layout = text_layouts.LayoutRect('Rectangular_'+prop, level, color_dict, text_prop = prop)
             
             elif layout_name == 'colorbranch':
-                layout = text_layouts.LayoutColorbranch(prop+'_'+layout_name, level, color_dict, text_prop = prop)
+                layout = text_layouts.LayoutColorbranch('Colorbranch_'+prop, level, color_dict, text_prop = prop)
             
             prop_color_dict[prop] = color_dict
         layouts.append(layout)
         level += 1
-        
         
     return layouts, level, prop_color_dict
 

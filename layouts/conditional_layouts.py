@@ -91,7 +91,7 @@ from distutils.util import strtobool
 from utils import check_nan
 
 class LayoutBinary(TreeLayout):
-    def __init__(self, name, level, color, prop_colour_dict, bool_prop, reverse=False):
+    def __init__(self, name, level, color, prop_colour_dict, bool_prop, reverse=False, radius=100, padding_x=5, padding_y=1):
         super().__init__(name)
         self.aligned_faces = True
         self.bool_prop = bool_prop
@@ -100,6 +100,9 @@ class LayoutBinary(TreeLayout):
         self.prop_colour_dict = prop_colour_dict
         self.internal_prop = bool_prop+'_counter'
         self.reverse = reverse
+        self.radius = radius
+        self.padding_x = padding_x
+        self.padding_y = padding_y
 
     def set_node_style(self, node):
         if node.is_leaf() and node.props.get(self.bool_prop):
@@ -108,69 +111,69 @@ class LayoutBinary(TreeLayout):
                 str2bool = strtobool(prop_bool)
                 if self.reverse:
                     if not bool(str2bool):
-                        prop_face = CircleFace(radius=200, color=self.color, padding_x=1, padding_y=1)
+                        prop_face = CircleFace(radius=self.radius, color=self.color, padding_x=self.padding_x, padding_y=self.padding_y)
                         node.add_face(prop_face, column=self.column, position = "aligned")
                     else:
-                        prop_face = CircleFace(radius=200, color='white', padding_x=1, padding_y=1)
+                        prop_face = CircleFace(radius=self.radius, color='white', padding_x=self.padding_x, padding_y=self.padding_y)
                         node.add_face(prop_face, column=self.column, position = "aligned")
                 else:
                     if bool(str2bool):
-                        prop_face = CircleFace(radius=200, color=self.color, padding_x=1, padding_y=1)
+                        prop_face = CircleFace(radius=self.radius, color=self.color, padding_x=self.padding_x, padding_y=self.padding_y)
                         node.add_face(prop_face, column=self.column, position = "aligned")
                     else:
-                        prop_face = CircleFace(radius=200, color='white', padding_x=1, padding_y=1)
+                        prop_face = CircleFace(radius=self.radius, color='white', padding_x=self.padding_x, padding_y=self.padding_y)
                         node.add_face(prop_face, column=self.column, position = "aligned")
-            else:
-                prop_face = TextFace('NaN', color='black') # show NaN when it's missing data
-                node.add_face(prop_face, column=self.column, position = "aligned")
+            # else:
+            #     prop_face = CircleFace(radius=self.radius, color='grey', padding_x=self.padding_x, padding_y=self.padding_y)
+            #     node.add_face(prop_face, column=self.column, position = "aligned")
         elif node.is_leaf() and node.props.get(self.internal_prop):
             piechart_face = get_piechartface(node, self.internal_prop, self.prop_colour_dict)
             node.add_face(piechart_face, column = self.column, position = "branch_top")
-            node.add_face(piechart_face, column = self.column+2, position = "aligned", collapsed_only=True)
+            node.add_face(piechart_face, column = self.column, position = "aligned", collapsed_only=False)
 
         elif node.props.get(self.internal_prop):
             piechart_face = get_piechartface(node, self.internal_prop, self.prop_colour_dict)
             node.add_face(piechart_face, column = self.column, position = "branch_top")
-            node.add_face(piechart_face, column = self.column+2, position = "aligned", collapsed_only=True)
+            node.add_face(piechart_face, column = self.column, position = "aligned", collapsed_only=True)
 
-def boolean_layout(prop, level, color, prop_colour_dict, internal_rep='counter', reverse=False):
-    internal_prop = prop+'_'+internal_rep
-    def layout_fn(node):
-        if node.is_leaf() and node.props.get(prop):
-            prop_text = node.props.get(prop)
+# def boolean_layout(prop, level, color, prop_colour_dict, internal_rep='counter', reverse=False):
+#     internal_prop = prop+'_'+internal_rep
+#     def layout_fn(node):
+#         if node.is_leaf() and node.props.get(prop):
+#             prop_text = node.props.get(prop)
             
-            if reverse:
-                if not bool(strtobool(prop_text)):
-                    prop_face = CircleFace(radius=100, color=color, padding_x=1, padding_y=1)
-                    node.add_face(prop_face, column=level, position = "branch_right")
-                else:
-                    prop_face = CircleFace(radius=100, color='white', padding_x=1, padding_y=1)
-                    node.add_face(prop_face, column=level, position = "branch_right")
-            else:
-                if bool(strtobool(prop_text)):
-                    # lca_face = RectFace(15, float('inf'), 
-                    # color = color, 
-                    # #text = lca,
-                    # fgcolor = "white",
-                    # padding_x = 1, padding_y = 1)
-                    prop_face = CircleFace(radius=100, color=color)
-                    node.add_face(prop_face, column=level, position = "aligned")
-                else:
-                    prop_face = CircleFace(radius=100, color='white')
-                    node.add_face(prop_face, column=level, position = "aligned")
-        elif node.is_leaf() and node.props.get(internal_prop):
-            piechart_face = get_piechartface(node, internal_prop, prop_colour_dict)
-            node.add_face(piechart_face, column = level, position = "branch_top")
-            node.add_face(piechart_face, column = level+5, position = "branch_right", collapsed_only=True)
+#             if reverse:
+#                 if not bool(strtobool(prop_text)):
+#                     prop_face = CircleFace(radius=100, color=color, padding_x=self.padding_x, padding_y=1)
+#                     node.add_face(prop_face, column=level, position = "branch_right")
+#                 else:
+#                     prop_face = CircleFace(radius=100, color='white', padding_x=self.padding_x, padding_y=1)
+#                     node.add_face(prop_face, column=level, position = "branch_right")
+#             else:
+#                 if bool(strtobool(prop_text)):
+#                     # lca_face = RectFace(15, float('inf'), 
+#                     # color = color, 
+#                     # #text = lca,
+#                     # fgcolor = "white",
+#                     # padding_x = 1, padding_y = 1)
+#                     prop_face = CircleFace(radius=100, color=color, padding_x=self.padding_x)
+#                     node.add_face(prop_face, column=level, position = "aligned")
+#                 else:
+#                     prop_face = CircleFace(radius=100, color='white', padding_x=self.padding_x)
+#                     node.add_face(prop_face, column=level, position = "aligned")
 
-        elif node.props.get(internal_prop):
-            
-            piechart_face = get_piechartface(node, internal_prop, prop_colour_dict)
-            node.add_face(piechart_face, column = level, position = "branch_top")
-            node.add_face(piechart_face, column = level+5, position = "branch_right", collapsed_only=True)
+#         elif node.is_leaf() and node.props.get(internal_prop):
+#             piechart_face = get_piechartface(node, internal_prop, prop_colour_dict)
+#             node.add_face(piechart_face, column = level, position = "branch_top")
+#             node.add_face(piechart_face, column = level+5, position = "branch_right", collapsed_only=True)
+
+#         elif node.props.get(internal_prop):
+#             piechart_face = get_piechartface(node, internal_prop, prop_colour_dict)
+#             node.add_face(piechart_face, column = level, position = "branch_top")
+#             node.add_face(piechart_face, column = level+5, position = "branch_right", collapsed_only=True)
     
-    layout_fn.aligned_faces = True
-    return layout_fn
+#     layout_fn.aligned_faces = True
+#     return layout_fn
 
 
 def get_piechartface(node, prop, colour_dict=None):
@@ -181,7 +184,7 @@ def get_piechartface(node, prop, colour_dict=None):
         piechart_data.append([k,float(v),colour_dict[k],None])
 
     if piechart_data:
-        piechart_face = PieChartFace(radius=50, data=piechart_data)
+        piechart_face = PieChartFace(radius=50, data=piechart_data, padding_x=5)
         return piechart_face
     else:
         return None

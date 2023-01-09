@@ -24,12 +24,12 @@ class TaxaClade(TreeLayout):
     def set_node_style(self, node):
         if not node.is_root() and node.props.get('rank') == self.rank:
             if node.props.get('sci_name'):
-                text_face = TextFace(node.props.get('sci_name'), color='black')
+                #text_face = TextFace(node.props.get('sci_name'), color='black')
                 #face_name = OutlineFace(node.props.get('sci_name'), collapsing_height= float("inf"))
                 node.sm_style["bgcolor"] = self.color_dict[node.props.get('sci_name')] # highligh clade
                 #node.sm_style["draw_descendants"] = False
-                node.add_face(text_face, column = self.column, position = "aligned")
-                node.add_face(text_face, column = self.column, position = "aligned", collapsed_only=True)
+                #node.add_face(text_face, column = self.column, position = "aligned")
+                #node.add_face(text_face, column = self.column, position = "aligned", collapsed_only=True)
                 #node.add_face(face_name, column = 5, position = 'branch_right', collapsed_only=True)
 
 class TaxaRectangular(TreeLayout):

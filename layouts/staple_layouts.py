@@ -182,8 +182,8 @@ class LayoutBarplot(LayoutPlot):
         
         if node.is_leaf() and node.props.get(self.prop):
             width = self.get_size(node, self.prop)
-            color = self.get_color(node)
-            #color = self.color
+            #color = self.get_color(node)
+            color = self.color
             tooltip = ""
             if node.name:
                 tooltip += f'<b>{node.name}</b><br>'

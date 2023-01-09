@@ -28,7 +28,7 @@ class LayoutText(TreeLayout):
         elif node.is_leaf() and node.props.get(self.internal_prop):
             piechart_face = get_piechartface(node, self.internal_prop, self.colour_dict)
             node.add_face(piechart_face, column = self.column, position = "branch_top")
-            node.add_face(piechart_face, column = self.column+2, position = "aligned", collapsed_only=True)
+            node.add_face(piechart_face, column = self.column+2, position = "aligned", collapsed_only=False)
 
         elif node.props.get(self.internal_prop):
             piechart_face = get_piechartface(node, self.internal_prop, self.colour_dict)
@@ -55,7 +55,7 @@ class LayoutColorbranch(TreeLayout):
         elif node.is_leaf() and node.props.get(self.internal_prop):
             piechart_face = get_piechartface(node, self.internal_prop, self.colour_dict)
             node.add_face(piechart_face, column = self.column, position = "branch_top")
-            node.add_face(piechart_face, column = self.column+2, position = "aligned", collapsed_only=True)
+            node.add_face(piechart_face, column = self.column+2, position = "aligned", collapsed_only=False)
 
         elif node.props.get(self.internal_prop):
             piechart_face = get_piechartface(node, self.internal_prop, self.colour_dict)
@@ -85,7 +85,7 @@ class LayoutRect(TreeLayout):
         elif node.is_leaf() and node.props.get(self.internal_prop):
             piechart_face = get_piechartface(node, self.internal_prop, self.colour_dict)
             node.add_face(piechart_face, column = self.column, position = "branch_top")
-            node.add_face(piechart_face, column = self.column+2, position = "aligned", collapsed_only=True)
+            node.add_face(piechart_face, column = self.column+2, position = "aligned", collapsed_only=False)
 
         elif node.props.get(self.internal_prop):
             piechart_face = get_piechartface(node, self.internal_prop, self.colour_dict)
@@ -93,76 +93,76 @@ class LayoutRect(TreeLayout):
             node.add_face(piechart_face, column = self.column+2, position = "aligned", collapsed_only=True)
 
 
-def text_layout(prop, level, colour_dict=None, internal_rep='counter'):
-    internal_prop = prop+'_'+internal_rep
-    def layout_fn(node):
+# def text_layout(prop, level, colour_dict=None, internal_rep='counter'):
+#     internal_prop = prop+'_'+internal_rep
+#     def layout_fn(node):
         
-        if node.is_leaf() and node.props.get(prop):
+#         if node.is_leaf() and node.props.get(prop):
             
-            prop_text = node.props.get(prop)
-            if prop_text:
-                if colour_dict:
-                    prop_face = TextFace(prop_text, color=colour_dict[prop_text])
-                else:
-                    prop_face = TextFace(prop_text, color='blue')
-            node.add_face(prop_face, column = 6, position = "aligned")
+#             prop_text = node.props.get(prop)
+#             if prop_text:
+#                 if colour_dict:
+#                     prop_face = TextFace(prop_text, color=colour_dict[prop_text])
+#                 else:
+#                     prop_face = TextFace(prop_text, color='blue')
+#             node.add_face(prop_face, column = 6, position = "aligned")
 
-        elif node.is_leaf() and node.props.get(internal_prop):
-            piechart_face = get_piechartface(node, internal_prop, colour_dict)
-            node.add_face(piechart_face, column = level, position = "branch_top")
-            node.add_face(piechart_face, column = level+5, position = "branch_right", collapsed_only=True)
+#         elif node.is_leaf() and node.props.get(internal_prop):
+#             piechart_face = get_piechartface(node, internal_prop, colour_dict)
+#             node.add_face(piechart_face, column = level, position = "branch_top")
+#             node.add_face(piechart_face, column = level+5, position = "branch_right", collapsed_only=True)
 
-        elif node.props.get(internal_prop):
-            piechart_face = get_piechartface(node, internal_prop, colour_dict)
-            node.add_face(piechart_face, column = level, position = "branch_top")
-            node.add_face(piechart_face, column = level+5, position = "branch_right", collapsed_only=True)
-    return layout_fn
-    return
+#         elif node.props.get(internal_prop):
+#             piechart_face = get_piechartface(node, internal_prop, colour_dict)
+#             node.add_face(piechart_face, column = level, position = "branch_top")
+#             node.add_face(piechart_face, column = level+5, position = "branch_right", collapsed_only=True)
+#     return layout_fn
+#     return
 
-def label_layout(prop, level, colour_dict=None):
-    def layout_fn(node):
-        if node.is_leaf() and node.props.get(prop):
-            prop_text = node.props.get(prop)
-            if prop_text:
-                if colour_dict:
-                    node.sm_style["hz_line_color"] = colour_dict[prop_text]
-                    node.sm_style["hz_line_width"] = 2
-                    # while (node):
-                    #     node = node.up
-                    #     if node:
-                    #         node.sm_style["hz_line_color"] = colour_dict[prop_text]
-                    #         node.sm_style["hz_line_width"] = 2
-            #node.sm_style["bgcolor"] = 'black' # highligh clade
-        elif node.is_leaf() and node.props.get(internal_prop):
-            piechart_face = get_piechartface(node, internal_prop, colour_dict)
-            node.add_face(piechart_face, column = level, position = "branch_top")
-            node.add_face(piechart_face, column = level+5, position = "branch_right", collapsed_only=True)
+# def label_layout(prop, level, colour_dict=None):
+#     def layout_fn(node):
+#         if node.is_leaf() and node.props.get(prop):
+#             prop_text = node.props.get(prop)
+#             if prop_text:
+#                 if colour_dict:
+#                     node.sm_style["hz_line_color"] = colour_dict[prop_text]
+#                     node.sm_style["hz_line_width"] = 2
+#                     # while (node):
+#                     #     node = node.up
+#                     #     if node:
+#                     #         node.sm_style["hz_line_color"] = colour_dict[prop_text]
+#                     #         node.sm_style["hz_line_width"] = 2
+#             #node.sm_style["bgcolor"] = 'black' # highligh clade
+#         elif node.is_leaf() and node.props.get(internal_prop):
+#             piechart_face = get_piechartface(node, internal_prop, colour_dict)
+#             node.add_face(piechart_face, column = level, position = "branch_top")
+#             node.add_face(piechart_face, column = level+5, position = "branch_right", collapsed_only=True)
 
-        elif node.props.get(internal_prop):
-            piechart_face = get_piechartface(node, internal_prop, colour_dict)
-            node.add_face(piechart_face, column = level, position = "branch_top")
-    return layout_fn
-    return
+#         elif node.props.get(internal_prop):
+#             piechart_face = get_piechartface(node, internal_prop, colour_dict)
+#             node.add_face(piechart_face, column = level, position = "branch_top")
+#     return layout_fn
+#     return
 
-def rectangular_layout(prop, level, colour_dict=None, internal_rep='counter'):
-    internal_prop = prop+'_'+internal_rep
-    def layout_fn(node):
-        if node.is_leaf() and node.props.get(prop):
-            prop_text = node.props.get(prop)
-            if prop_text:
-                if colour_dict:
-                    label_rect = RectFace(width=50,height=50, color=colour_dict[prop_text], padding_x=1, padding_y=1)
-                    node.add_face(label_rect, column = level,  position = 'aligned')
-        elif node.is_leaf() and node.props.get(internal_prop):
-            piechart_face = get_piechartface(node, internal_prop, colour_dict)
-            node.add_face(piechart_face, column = level, position = "branch_top")
-            node.add_face(piechart_face, column = level+5, position = "branch_right", collapsed_only=True)
+# def rectangular_layout(prop, level, colour_dict=None, internal_rep='counter'):
+#     internal_prop = prop+'_'+internal_rep
+#     def layout_fn(node):
+#         if node.is_leaf() and node.props.get(prop):
+#             prop_text = node.props.get(prop)
+#             if prop_text:
+#                 if colour_dict:
+#                     label_rect = RectFace(width=50,height=50, color=colour_dict[prop_text], padding_x=1, padding_y=1)
+#                     node.add_face(label_rect, column = level,  position = 'aligned')
+#         elif node.is_leaf() and node.props.get(internal_prop):
+#             piechart_face = get_piechartface(node, internal_prop, colour_dict)
+#             node.add_face(piechart_face, column = level, position = "branch_top")
+#             node.add_face(piechart_face, column = level+5, position = "branch_right", collapsed_only=True)
             
-        elif node.props.get(internal_prop):
-            piechart_face = get_piechartface(node, internal_prop, colour_dict)
-            node.add_face(piechart_face, column = level, position = "branch_top")
-    return layout_fn
-    return
+#         elif node.props.get(internal_prop):
+#             piechart_face = get_piechartface(node, internal_prop, colour_dict)
+#             node.add_face(piechart_face, column = level, position = "branch_top")
+#     return layout_fn
+#     return
 
 def get_piechartface(node, prop, colour_dict=None):
     piechart_data = []
