@@ -962,6 +962,16 @@ def main():
         internal_num_rep = args.internal_plot_measure
 
     # get layouts
+    if args.BinaryLayout:
+        label_layouts, level, color_dict = get_layouts(args.BinaryLayout, 'binary', level, 'counter')
+        layouts.extend(label_layouts)
+        total_color_dict.append(color_dict)
+
+    if args.RevBinaryLayout:
+        label_layouts, level, color_dict = get_layouts(args.RevBinaryLayout, 'revbinary', level, 'counter')
+        layouts.extend(label_layouts)
+        total_color_dict.append(color_dict)
+        
     if args.HeatmapLayout:
         heatmap_layouts, level, _ = get_layouts(args.HeatmapLayout, 'heatmap', level, internal_num_rep)
         layouts.extend(heatmap_layouts)
@@ -987,15 +997,7 @@ def main():
         layouts.extend(label_layouts)
         total_color_dict.append(color_dict)
 
-    if args.BinaryLayout:
-        label_layouts, level, color_dict = get_layouts(args.BinaryLayout, 'binary', level, 'counter')
-        layouts.extend(label_layouts)
-        total_color_dict.append(color_dict)
-
-    if args.RevBinaryLayout:
-        label_layouts, level, color_dict = get_layouts(args.RevBinaryLayout, 'revbinary', level, 'counter')
-        layouts.extend(label_layouts)
-        total_color_dict.append(color_dict)
+    
 
     #### prune at the last step in case of lost leaves information
     # prune tree by rank
