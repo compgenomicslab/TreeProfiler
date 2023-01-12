@@ -139,7 +139,10 @@ class LayoutBinary(TreeLayout):
             node.add_face(piechart_face, column = self.column, position = "aligned", collapsed_only=False)
 
         elif node.props.get(self.internal_prop):
-            piechart_face = get_piechartface(node, self.internal_prop, self.prop_colour_dict, self.radius)
+            if node.is_root():
+                piechart_face = get_piechartface(node, self.internal_prop, self.prop_colour_dict, self.radius*0.15)
+            else:
+                piechart_face = get_piechartface(node, self.internal_prop, self.prop_colour_dict, self.radius)
             node.add_face(piechart_face, column = self.column, position = "branch_top")
             node.add_face(piechart_face, column = self.column, position = "aligned", collapsed_only=True)
 

@@ -300,8 +300,9 @@ def ete4_parse(newick):
 
     return tree
 
-def load_metadata_to_tree(tree, metadata_dict, taxon_column=None, taxon_delimiter=';'):
+def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, taxon_delimiter=';'):
     name2leaf = {}
+    #print(prop2type)
     # preload all leaves to save time instead of search in tree
     for leaf in tree.iter_leaves():
         name2leaf[leaf.name] = leaf
@@ -317,6 +318,8 @@ def load_metadata_to_tree(tree, metadata_dict, taxon_column=None, taxon_delimite
                 if key == taxon_column:
                     taxon_prop = value.split(taxon_delimiter)[-1]
                     target_node.add_prop(key, taxon_prop)
+                elif key in prop2type and prop2type[key]=='num':
+                    target_node.add_prop(key, float(value))
                 else:
                     target_node.add_prop(key, value)
         else:
@@ -721,9 +724,10 @@ def main():
             metadata_dict, node_props, columns = parse_csv(args.metadata, no_colnames=args.no_colnames)
         else:
             metadata_dict, node_props, columns = parse_csv(args.metadata)
-    else:
+    else: # annotated_tree
         columns = {}
-
+        
+        
     #code goes here
     end = time.time()
     print('Time for parse_csv to run: ', end - start)
@@ -786,6 +790,34 @@ def main():
 
         bool_prop = [node_props[index-1] for index in bool_prop_idx]
 
+    rest_prop = []
+    #rest_prop = list(set(node_props) - set(text_prop) - set(num_prop) - set(bool_prop))
+    
+    # output datatype of each property of each tree node including internal nodes
+    prop2type = {
+        # start with leaf name
+        'name':'str',
+        'dist':'num',
+        'support':'num',
+        # taxonomic features
+        'rank':'str',
+        'sci_name':'str',
+        'taxid':'str',
+        'lineage':'str',
+        'named_lineage':'str'
+        } 
+
+    for prop in text_prop+bool_prop:
+        prop2type[prop] = 'str'
+        prop2type[prop+'_counter'] = 'str'
+    for prop in num_prop:
+        prop2type[prop] = 'num'
+        prop2type[prop+'_avg'] = 'num'
+        prop2type[prop+'_sum'] = 'num'
+        prop2type[prop+'_max'] = 'num'
+        prop2type[prop+'_min'] = 'num'
+        prop2type[prop+'_std'] = 'num'
+    
     # load annotations to leaves
     start = time.time()
     
@@ -794,16 +826,14 @@ def main():
     if not args.annotated_tree:
         if args.taxon_column: # to identify taxon column as taxa property from metadata
             taxon_column.append(args.taxon_column)
-            annotated_tree = load_metadata_to_tree(tree, metadata_dict, args.taxon_column, args.taxon_delimiter)
+            annotated_tree = load_metadata_to_tree(tree, metadata_dict, prop2type=prop2type, taxon_column=args.taxon_column, taxon_delimiter=args.taxon_delimiter)
         else:
-            annotated_tree = load_metadata_to_tree(tree, metadata_dict)
+            annotated_tree = load_metadata_to_tree(tree, metadata_dict, prop2type=prop2type)
     else:
         annotated_tree = tree
 
     end = time.time()
     print('Time for load_metadata_to_tree to run: ', end - start)
-    rest_column = []
-    #rest_column = list(set(node_props) - set(text_prop) - set(num_prop) - set(bool_prop))
     
     # stat method
     if args.counter_stat:
@@ -837,9 +867,9 @@ def main():
                     internal_props.update(internal_props_bool)
 
                 # deprecated
-                if rest_column:
-                    internal_props_rest = merge_text_annotations(node2leaves[node], rest_column, counter_stat=counter_stat)
-                    internal_props.update(internal_props_rest)
+                # if rest_column:
+                #     internal_props_rest = merge_text_annotations(node2leaves[node], rest_column, counter_stat=counter_stat)
+                #     internal_props.update(internal_props_rest)
                 
                 #internal_props = {**internal_props_text, **internal_props_num, **internal_props_rest}
                 #print(internal_props.items())
@@ -850,30 +880,6 @@ def main():
     end = time.time()
     print('Time for merge annotations to run: ', end - start)
     
-    # output datatype of each property of each tree node including internal nodes
-    prop2type = {
-        # start with leaf name
-        'name':'str',
-        'dist':'num',
-        'support':'num',
-        # taxonomic features
-        'rank':'str',
-        'sci_name':'str',
-        'taxid':'str',
-        'lineage':'str',
-        'named_lineage':'str'
-        } 
-
-    for prop in text_prop+bool_prop+rest_column:
-        prop2type[prop] = 'str'
-        prop2type[prop+'_counter'] = 'str'
-    for prop in num_prop:
-        prop2type[prop] = 'num'
-        prop2type[prop+'_avg'] = 'num'
-        prop2type[prop+'_sum'] = 'num'
-        prop2type[prop+'_max'] = 'num'
-        prop2type[prop+'_min'] = 'num'
-        prop2type[prop+'_std'] = 'num'
     
     # taxa annotations
     start = time.time()
