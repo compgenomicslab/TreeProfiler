@@ -203,7 +203,7 @@ class LayoutBarplot(LayoutPlot):
             if node.name:
                 tooltip += f'<b>{node.name}</b><br>'
             if self.size_prop:
-                tooltip += f'<br>{self.prop}: {node.props.get(self.internal_prop)}<br>'
+                tooltip += f'<br>{self.prop}: {node.props.get(internal_prop)}<br>'
             if self.color_prop:
                 tooltip += f'<br>{self.color_prop}: {color}<br>'
             face = RectFace(width, None, color=color, 
