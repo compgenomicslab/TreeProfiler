@@ -784,7 +784,7 @@ def main():
             else:
                 bool_prop_idx.append(int(i))
 
-        bool_prop_idx = [node_props[index-1] for index in bool_prop_idx]
+        bool_prop = [node_props[index-1] for index in bool_prop_idx]
 
     # load annotations to leaves
     start = time.time()
