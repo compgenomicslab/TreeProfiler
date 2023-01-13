@@ -1037,7 +1037,6 @@ def main():
             popup_prop_keys = list(set(list(annotated_tree.props.keys())+list(annotated_tree.get_farthest_leaf()[0].props.keys())))
         else:
             popup_prop_keys = list(prop2type.keys())
-        print(popup_prop_keys)
         annotated_tree.explore(tree_name='example',layouts=layouts, port=args.port, popup_prop_keys=popup_prop_keys)
     elif args.plot:
         plot(annotated_tree, layouts, args.port, args.plot)
