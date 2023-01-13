@@ -63,6 +63,11 @@ def read_args():
         action='store_true',
         required=False,
         help="inputtree already annotated by treeprofileer")
+    group.add_argument('--tree_type',
+        type=str,
+        default='newick',
+        required=False,
+        help="statistic calculation to perform for numerical data in internal nodes, [newick, ete]")
     group.add_argument('--no_colnames',
         default=False,
         action='store_true',
@@ -302,7 +307,6 @@ def ete4_parse(newick):
 
 def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, taxon_delimiter=';'):
     name2leaf = {}
-    #print(prop2type)
     # preload all leaves to save time instead of search in tree
     for leaf in tree.iter_leaves():
         name2leaf[leaf.name] = leaf
@@ -734,7 +738,13 @@ def main():
     
     # parse input tree
     if args.tree:
-        tree = ete4_parse(args.tree)
+        if args.tree_type == 'newick':
+            tree = ete4_parse(args.tree)
+        elif args.tree_type == 'ete':
+            with open(args.tree, 'r') as f:
+                file_content = f.read()
+                tree = b64pickle.loads(file_content, encoder='pickle', unpack=False)
+        
     # if refer tree from taxadb, input tree will be ignored
     elif args.taxa and args.taxadb:
         tree = ''
@@ -830,6 +840,9 @@ def main():
         else:
             annotated_tree = load_metadata_to_tree(tree, metadata_dict, prop2type=prop2type)
     else:
+        # with open(args.annotated_tree, 'r') as f:
+        #     file_content = f.read()
+        #     annotated_tree = b64pickle.loads(file_content, encoder='pickle', unpack=False)
         annotated_tree = tree
 
     end = time.time()
@@ -1016,9 +1029,15 @@ def main():
     if args.out_color_dict:
         wrtie_color(total_color_dict)
     if args.outtree:
+        with open(args.outtree+'.ete', 'w') as f:
+            f.write(b64pickle.dumps(annotated_tree, encoder='pickle', pack=False))
         annotated_tree.write(outfile=args.outtree, properties = [], format=1)
     if args.interactive:
-        popup_prop_keys = list(prop2type.keys())
+        if args.tree_type == 'ete' and args.annotated_tree:
+            popup_prop_keys = list(set(list(annotated_tree.props.keys())+list(annotated_tree.get_farthest_leaf()[0].props.keys())))
+        else:
+            popup_prop_keys = list(prop2type.keys())
+        print(popup_prop_keys)
         annotated_tree.explore(tree_name='example',layouts=layouts, port=args.port, popup_prop_keys=popup_prop_keys)
     elif args.plot:
         plot(annotated_tree, layouts, args.port, args.plot)
