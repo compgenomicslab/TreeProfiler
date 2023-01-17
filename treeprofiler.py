@@ -632,9 +632,9 @@ def get_layouts(argv_input, layout_name, level, internal_rep):
         if layout_name in ['binary', 'revbinary']:
             
             if columns:
-                prop_values = list(set(columns[prop]))
+                prop_values = sorted(list(set(columns[prop])))
             else:
-                prop_values = list(set(children_prop_array(annotated_tree, prop)))
+                prop_values = sorted(list(set(children_prop_array(annotated_tree, prop))))
             nvals = len(prop_values)
             for i in range(0, nvals):
                 color_dict[prop_values[i]] = paried_color[i]

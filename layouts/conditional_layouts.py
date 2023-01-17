@@ -132,7 +132,7 @@ class LayoutBinary(TreeLayout):
                         node.add_face(prop_face, column=self.column, position = "aligned")
             else:
                 #prop_face = CircleFace(radius=self.radius, color='grey', padding_x=self.padding_x, padding_y=self.padding_y)
-                prop_face = TextFace('NaN', max_fsize=15, padding_x=1)
+                prop_face = TextFace('NaN', max_fsize=12, padding_x=1)
                 node.add_face(prop_face, column=self.column, position = "aligned")
         elif node.is_leaf() and node.props.get(self.internal_prop):
             piechart_face = get_piechartface(node, self.internal_prop, self.prop_colour_dict, self.radius)
