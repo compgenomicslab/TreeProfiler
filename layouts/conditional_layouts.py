@@ -92,7 +92,7 @@ from distutils.util import strtobool
 from utils import check_nan
 
 class LayoutBinary(TreeLayout):
-    def __init__(self, name, level, color, prop_colour_dict, bool_prop, reverse=False, radius=200, padding_x=5, padding_y=1):
+    def __init__(self, name, level, color, prop_colour_dict, bool_prop, reverse=False, radius=200, padding_x=1, padding_y=1):
         super().__init__(name)
         self.aligned_faces = True
         self.bool_prop = bool_prop
@@ -130,9 +130,10 @@ class LayoutBinary(TreeLayout):
                     else:
                         prop_face = CircleFace(radius=self.radius, color='white', padding_x=self.padding_x, padding_y=self.padding_y)
                         node.add_face(prop_face, column=self.column, position = "aligned")
-            # else:
-            #     prop_face = CircleFace(radius=self.radius, color='grey', padding_x=self.padding_x, padding_y=self.padding_y)
-            #     node.add_face(prop_face, column=self.column, position = "aligned")
+            else:
+                #prop_face = CircleFace(radius=self.radius, color='grey', padding_x=self.padding_x, padding_y=self.padding_y)
+                prop_face = TextFace('NaN', max_fsize=15, padding_x=1)
+                node.add_face(prop_face, column=self.column, position = "aligned")
         elif node.is_leaf() and node.props.get(self.internal_prop):
             piechart_face = get_piechartface(node, self.internal_prop, self.prop_colour_dict, self.radius)
             node.add_face(piechart_face, column = self.column, position = "branch_top")

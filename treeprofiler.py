@@ -1076,27 +1076,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-#output_tree = main()
-
-# # # write to pickle
-# with open(OUTPUTTREE+'.ete', 'w') as f:
-#     f.write(b64pickle.dumps(output_tree, encoder='pickle', pack=False))
-
-# # read from pickle
-# with open(OUTPUTTREE+'.ete', 'r') as f:
-#     file_content = f.read()
-#     print(b64pickle.loads(file_content, encoder='pickle', unpack=False))
-
-# write to newick tree
-#output_tree.write(outfile=OUTPUTTREE, properties=[], format=1)
-
-# write to tsv file
-# fieldnames = [
-#     'name', 'support', 'dist',  'leaves', 'sample1_sum', 'sample1_min', 'sample1_max', 'sample1_mean', 'sample1_variance', 'sample2_sum', 'sample2_min', 'sample2_max', 'sample2_mean', 'sample2_variance', 'sample3_sum', 'sample3_min', 'sample3_max', 'sample3_mean', 'sample3_variance', 'sample4_sum', 'sample4_min', 'sample4_max', 'sample4_mean', 'sample4_variance', 'sample5_sum', 'sample5_min', 'sample5_max', 'sample5_mean', 'sample5_variance', 'random_type_counter', 'taxid', 'sci_name', 'common_name', 'lineage', 'rank', 'named_lineage', 'nleaves', 'sample1', 'sample2', 'sample3', 'sample4','sample5','random_type' 
-# ]
-# tree2table(output_tree, internal_node=True, props=fieldnames)
-
-
-# interactive explore
-#output_tree.explore(tree_name='example',layouts=[], port=5000)
