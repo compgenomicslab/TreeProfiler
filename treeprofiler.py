@@ -327,7 +327,10 @@ def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, 
                     taxon_prop = value.split(taxon_delimiter)[-1]
                     target_node.add_prop(key, taxon_prop)
                 elif key in prop2type and prop2type[key]=='num':
-                    target_node.add_prop(key, float(value))
+                    if math.isnan(float(value)):
+                        target_node.add_prop(key, value)
+                    else:
+                        target_node.add_prop(key, float(value))  
                 else:
                     target_node.add_prop(key, value)
         else:
@@ -1062,7 +1065,6 @@ def main():
         else:
             # all the metadata to the leaves, no internal
             popup_prop_keys = list(prop2type.keys())
-
         annotated_tree.explore(tree_name='example',layouts=layouts, port=args.port, popup_prop_keys=sorted(popup_prop_keys))
     elif args.plot:
         plot(annotated_tree, layouts, args.port, args.plot)
