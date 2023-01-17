@@ -1048,11 +1048,21 @@ def main():
     if args.interactive:
         if args.annotated_tree:
             if args.tree_type == 'ete':
-                popup_prop_keys = list(set(list(annotated_tree.props.keys())+list(annotated_tree.get_farthest_leaf()[0].props.keys())))
+                # exisiting props in internal node
+                existing_internal_props = list(annotated_tree.props.keys())
+                # exisiting props in leaf node
+                existing_leaf_props = list(annotated_tree.get_farthest_leaf()[0].props.keys()) 
+                popup_prop_keys = list(set(existing_internal_props+existing_leaf_props))
             elif args.tree_type == 'newick':
-                popup_prop_keys = list(set(list(annotated_tree.props.keys())+list(annotated_tree.get_farthest_leaf()[0].props.keys())))
+                # props which add in the arguments
+                required_internal_props = list(prop2type.keys()) 
+                # exisiting prop in leaf node
+                existing_leaf_props = list(annotated_tree.get_farthest_leaf()[0].props.keys()) 
+                popup_prop_keys = list(set(required_internal_props + existing_leaf_props))
         else:
+            # all the metadata to the leaves, no internal
             popup_prop_keys = list(prop2type.keys())
+
         annotated_tree.explore(tree_name='example',layouts=layouts, port=args.port, popup_prop_keys=sorted(popup_prop_keys))
     elif args.plot:
         plot(annotated_tree, layouts, args.port, args.plot)
