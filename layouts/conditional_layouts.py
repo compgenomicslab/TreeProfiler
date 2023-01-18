@@ -1,6 +1,6 @@
 from ete4.smartview import TreeStyle, NodeStyle, TreeLayout, PieChartFace
 from ete4.smartview  import (RectFace, CircleFace, SeqMotifFace, TextFace, OutlineFace, \
-                            SelectedFace, SelectedCircleFace, SelectedRectFace)
+                            SelectedFace, SelectedCircleFace, SelectedRectFace, LegendFace)
 from layouts.general_layouts import get_piechartface
 from utils import to_code, call, counter_call
 
@@ -109,7 +109,6 @@ class LayoutBinary(TreeLayout):
     #     super().set_tree_style(tree, tree_style)
     #     text = TextFace(self.name, max_fsize=11, padding_x=1)
     #     tree_style.aligned_panel_header.add_face(text, column=self.column)
-
 
     def set_node_style(self, node):
         if node.is_leaf() and node.props.get(self.bool_prop):

@@ -1,5 +1,5 @@
 from ete4.smartview import TreeStyle, NodeStyle, TreeLayout
-from ete4.smartview  import RectFace, CircleFace, SeqMotifFace, TextFace, OutlineFace
+from ete4.smartview  import RectFace, CircleFace, SeqMotifFace, TextFace, OutlineFace, LegendFace
 
 paried_color = ["red", "darkblue", "darkgreen", "darkyellow", "violet", "mediumturquoise", "sienna", "lightCoral", "lightSkyBlue", "indigo", "tan", "coral", "olivedrab", "teal"]
 

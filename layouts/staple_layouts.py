@@ -2,7 +2,7 @@ import matplotlib as mpl
 import numpy as np
 
 from ete4.smartview import TreeStyle, NodeStyle, TreeLayout
-from ete4.smartview  import TextFace, RectFace, ScaleFace
+from ete4.smartview  import TextFace, RectFace, ScaleFace, LegendFace
 from ete4.treeview.svg_colors import random_color
 
 import colorsys

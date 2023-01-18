@@ -1029,7 +1029,7 @@ def main():
         label_layouts, level, color_dict = get_layouts(args.RevBinaryLayout, 'revbinary', level, 'counter')
         layouts.extend(label_layouts)
         total_color_dict.append(color_dict)
-    print(total_color_dict)
+    #print(total_color_dict)
     #### prune at the last step in case of lost leaves information
     # prune tree by rank
     if args.rank_limit:
