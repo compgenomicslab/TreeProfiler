@@ -1,6 +1,6 @@
 from ete4.smartview import TreeStyle, NodeStyle, TreeLayout, PieChartFace
 
-def get_piechartface(node, prop, colour_dict=None, radius=200):
+def get_piechartface(node, prop, colour_dict=None, radius=20):
     piechart_data = []
     counter_props = node.props.get(prop).split('||')
     for counter_prop in counter_props:

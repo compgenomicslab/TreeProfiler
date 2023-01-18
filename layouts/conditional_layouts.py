@@ -114,26 +114,35 @@ class LayoutBinary(TreeLayout):
     def set_node_style(self, node):
         if node.is_leaf() and node.props.get(self.bool_prop):
             prop_bool = node.props.get(self.bool_prop)
+            
             if not check_nan(prop_bool):
                 str2bool = strtobool(prop_bool)
+                tooltip = ""
+                if node.name:
+                    tooltip += f'<b>{node.name}</b><br>'
+                if self.bool_prop:
+                    tooltip += f'<br>{self.bool_prop}: {node.props.get(self.bool_prop)}<br>'
+
                 if self.reverse:
                     if not bool(str2bool):
-                        prop_face = CircleFace(radius=self.radius, color=self.color, padding_x=self.padding_x, padding_y=self.padding_y)
+                        prop_face = CircleFace(radius=self.radius, color=self.color, \
+                            padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
                         node.add_face(prop_face, column=self.column, position = "aligned")
                     else:
-                        prop_face = CircleFace(radius=self.radius, color='white', padding_x=self.padding_x, padding_y=self.padding_y)
+                        prop_face = CircleFace(radius=self.radius, color='white', padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
                         node.add_face(prop_face, column=self.column, position = "aligned")
                 else:
                     if bool(str2bool):
-                        prop_face = CircleFace(radius=self.radius, color=self.color, padding_x=self.padding_x, padding_y=self.padding_y)
+                        prop_face = CircleFace(radius=self.radius, color=self.color, padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
                         node.add_face(prop_face, column=self.column, position = "aligned")
                     else:
-                        prop_face = CircleFace(radius=self.radius, color='white', padding_x=self.padding_x, padding_y=self.padding_y)
+                        prop_face = CircleFace(radius=self.radius, color='white', padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
                         node.add_face(prop_face, column=self.column, position = "aligned")
             else:
                 #prop_face = CircleFace(radius=self.radius, color='grey', padding_x=self.padding_x, padding_y=self.padding_y)
                 prop_face = TextFace('NaN', max_fsize=12, padding_x=1)
                 node.add_face(prop_face, column=self.column, position = "aligned")
+        
         elif node.is_leaf() and node.props.get(self.internal_prop):
             piechart_face = get_piechartface(node, self.internal_prop, self.prop_colour_dict, self.radius)
             node.add_face(piechart_face, column = self.column, position = "branch_top")

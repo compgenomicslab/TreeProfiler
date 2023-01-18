@@ -636,7 +636,8 @@ def get_layouts(argv_input, layout_name, level, internal_rep):
             else:
                 prop_values = sorted(list(set(children_prop_array(annotated_tree, prop))))
             nvals = len(prop_values)
-            for i in range(0, nvals):
+
+            for i in range(0, nvals): # only positive, negative, NaN, three options
                 color_dict[prop_values[i]] = paried_color[i]
             
             color = random_color(h=None)
@@ -645,8 +646,9 @@ def get_layouts(argv_input, layout_name, level, internal_rep):
 
             elif layout_name == 'revbinary':
                 layout = conditional_layouts.LayoutBinary('ReverseBinary_'+prop, level, color, color_dict, prop, reverse=True)
-            
-            prop_color_dict[prop] = color_dict
+            internal_prop = prop + '_' + internal_rep
+            prop_color_dict[internal_prop] = color_dict
+            prop_color_dict[prop] = color
 
         # numerical layouts
         elif layout_name == 'heatmap':
@@ -669,9 +671,9 @@ def get_layouts(argv_input, layout_name, level, internal_rep):
         elif layout_name in ['label','rectangular', 'colorbranch']:
             
             if columns:
-                prop_values = list(set(columns[prop]))
+                prop_values =  sorted(list(set(columns[prop])))
             else:
-                prop_values = list(set(children_prop_array(annotated_tree, prop)))
+                prop_values = sorted(list(set(children_prop_array(annotated_tree, prop))))
             nvals = len(prop_values)
 
             for i in range(0, nvals):
@@ -1027,7 +1029,7 @@ def main():
         label_layouts, level, color_dict = get_layouts(args.RevBinaryLayout, 'revbinary', level, 'counter')
         layouts.extend(label_layouts)
         total_color_dict.append(color_dict)
-
+    print(total_color_dict)
     #### prune at the last step in case of lost leaves information
     # prune tree by rank
     if args.rank_limit:
