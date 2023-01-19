@@ -12,7 +12,7 @@ def get_piechartface(node, prop, colour_dict=None, radius=20, tooltip=None):
         if node.name:
             tooltip += f'<b>{node.name}</b><br>'
         if prop:
-            tooltip += f'<br>{prop}: { piechart_data}<br>' # {counter_props}
+            tooltip += f'<br>{prop}: {piechart_data}<br>' # {counter_props}
             
         piechart_face = PieChartFace(radius=radius, data=piechart_data, padding_x=5, tooltip=tooltip)
         return piechart_face

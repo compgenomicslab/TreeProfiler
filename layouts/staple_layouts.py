@@ -174,7 +174,14 @@ class LayoutBarplot(LayoutPlot):
             text = TextFace(self.name, max_fsize=11, padding_x=self.padding_x)
             tree_style.aligned_panel_header.add_face(scale, column=self.column)
             tree_style.aligned_panel_header.add_face(text, column=self.column)
-
+        
+        if self.legend:
+            colormap = { self.prop: self.color
+                        }
+            tree_style.add_legend(title=self.prop,
+                                    variable='discrete',
+                                    colormap=colormap
+                                    )
     def set_node_style(self, node):
         internal_prop = self.prop + '_' + self.internal_rep
         # width = self.get_size(node)

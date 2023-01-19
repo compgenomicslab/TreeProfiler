@@ -12,7 +12,7 @@ def get_level(node, level=0):
         return get_level(node.up, level + 1)
 
 class TaxaClade(TreeLayout):
-    def __init__(self, name, level, rank, color_dict):
+    def __init__(self, name, level, rank, color_dict, legend=True):
         super().__init__(name, aligned_faces=True)
 
         self.activate = False
@@ -20,7 +20,17 @@ class TaxaClade(TreeLayout):
         self.column = level
         self.rank = rank
         self.color_dict = color_dict
-    
+        self.legend = legend
+
+    def set_tree_style(self, tree, tree_style):
+        super().set_tree_style(tree, tree_style)
+        if self.legend:
+            if self.color_dict:
+                tree_style.add_legend(title=self.rank,
+                                    variable='discrete',
+                                    colormap=self.color_dict,
+                                    )
+
     def set_node_style(self, node):
         if not node.is_root() and node.props.get('rank') == self.rank:
             if node.props.get('sci_name'):

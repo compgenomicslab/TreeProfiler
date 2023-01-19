@@ -92,7 +92,7 @@ from distutils.util import strtobool
 from utils import check_nan
 
 class LayoutBinary(TreeLayout):
-    def __init__(self, name, level, color, prop_colour_dict, bool_prop, reverse=False, radius=200, padding_x=1, padding_y=1):
+    def __init__(self, name, level, color, prop_colour_dict, bool_prop, reverse=False, radius=200, padding_x=1, padding_y=1, legend=True):
         super().__init__(name)
         self.aligned_faces = True
         self.bool_prop = bool_prop
@@ -104,11 +104,25 @@ class LayoutBinary(TreeLayout):
         self.radius = radius
         self.padding_x = padding_x
         self.padding_y = padding_y
+        self.legend = legend
 
     # def set_tree_style(self, tree, tree_style):
     #     super().set_tree_style(tree, tree_style)
     #     text = TextFace(self.name, max_fsize=11, padding_x=1)
     #     tree_style.aligned_panel_header.add_face(text, column=self.column)
+    def set_tree_style(self, tree, tree_style):
+        super().set_tree_style(tree, tree_style)
+        if self.legend:
+            if self.prop_colour_dict:
+                tree_style.add_legend(title=self.bool_prop,
+                                    variable='discrete',
+                                    colormap={self.bool_prop:self.color}
+                                    )
+                tree_style.add_legend(title=self.internal_prop,
+                                    variable='discrete',
+                                    colormap=self.prop_colour_dict
+                                    )
+                
 
     def set_node_style(self, node):
         if node.is_leaf() and node.props.get(self.bool_prop):

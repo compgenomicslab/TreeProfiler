@@ -5,18 +5,27 @@ from layouts.general_layouts import get_piechartface
 #paried_color = ["red", "darkblue", "darkgreen", "darkyellow", "violet", "mediumturquoise", "sienna", "lightCoral", "lightSkyBlue", "indigo", "tan", "coral", "olivedrab", "teal"]
 
 class LayoutText(TreeLayout):
-    def __init__(self, name, column, color_dict, text_prop):
+    def __init__(self, name, column, color_dict, text_prop, legend=True):
         super().__init__(name)
         self.aligned_faces = True
         self.text_prop = text_prop
         self.column = column
         self.color_dict = color_dict
         self.internal_prop = text_prop+'_counter'
+        self.legend = legend
 
     # def set_tree_style(self, tree, tree_style):
     #     super().set_tree_style(tree, tree_style)
     #     text = TextFace(self.name, max_fsize=11, padding_x=2)
     #     tree_style.aligned_panel_header.add_face(text, column=self.column)
+    def set_tree_style(self, tree, tree_style):
+        super().set_tree_style(tree, tree_style)
+        if self.legend:
+            if self.color_dict:
+                tree_style.add_legend(title=self.text_prop,
+                                    variable='discrete',
+                                    colormap=self.color_dict
+                                    )
 
     def set_node_style(self, node):
         if node.is_leaf() and node.props.get(self.text_prop):
@@ -42,13 +51,23 @@ class LayoutText(TreeLayout):
             node.add_face(piechart_face, column = self.column, position = "aligned", collapsed_only=True)
 
 class LayoutColorbranch(TreeLayout):
-    def __init__(self, name, column, color_dict, text_prop):
+    def __init__(self, name, column, color_dict, text_prop, legend=True):
         super().__init__(name)
         self.aligned_faces = True
         self.text_prop = text_prop
         self.column = column
         self.color_dict = color_dict
         self.internal_prop = text_prop+'_counter'
+        self.legend = legend
+
+    def set_tree_style(self, tree, tree_style):
+        super().set_tree_style(tree, tree_style)
+        if self.legend:
+            if self.color_dict:
+                tree_style.add_legend(title=self.text_prop,
+                                    variable='discrete',
+                                    colormap=self.color_dict
+                                    )
 
     def set_node_style(self, node):
         if node.is_leaf() and node.props.get(self.text_prop):
@@ -69,19 +88,28 @@ class LayoutColorbranch(TreeLayout):
             node.add_face(piechart_face, column = self.column, position = "aligned", collapsed_only=True)
 
 class LayoutRect(TreeLayout):
-    def __init__(self, name, column, color_dict, text_prop):
+    def __init__(self, name, column, color_dict, text_prop, legend=True):
         super().__init__(name)
         self.aligned_faces = True
         self.text_prop = text_prop
         self.column = column
         self.color_dict = color_dict
         self.internal_prop = text_prop+'_counter'
+        self.legend = legend
 
     # def set_tree_style(self, tree, tree_style):
     #     super().set_tree_style(tree, tree_style)
     #     text = TextFace(self.name, max_fsize=11, padding_x=1)
     #     tree_style.aligned_panel_header.add_face(text, column=self.column)
-
+    def set_tree_style(self, tree, tree_style):
+        super().set_tree_style(tree, tree_style)
+        if self.legend:
+            if self.color_dict:
+                tree_style.add_legend(title=self.text_prop,
+                                    variable='discrete',
+                                    colormap=self.color_dict
+                                    )
+                                    
     def set_node_style(self, node):
         if node.is_leaf() and node.props.get(self.text_prop):
             prop_text = node.props.get(self.text_prop)
