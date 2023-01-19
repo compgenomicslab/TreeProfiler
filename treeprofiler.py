@@ -655,7 +655,7 @@ def get_layouts(argv_input, layout_name, level, internal_rep):
             layout =  staple_layouts.LayoutHeatmap('Heatmap_'+prop, level, internal_rep, prop)
         
         elif layout_name == 'barplot':
-            if prop in num_prop:
+            if prop2type[prop] == 'num':
                 size_prop = prop+'_'+internal_rep # using internal prop to set the range in case rank_limit cut all the leaves
             else:
                 size_prop = prop
@@ -718,6 +718,7 @@ def _hls2hex(h, l, s):
 
 def main():
     import time
+    global prop2type
     global text_prop, num_prop, bool_prop
     global annotated_tree, node_props, columns
 
@@ -854,6 +855,8 @@ def main():
         else:
             annotated_tree = load_metadata_to_tree(tree, metadata_dict, prop2type=prop2type)
     else:
+        # if args.tree_type == 'newick':
+            
         # with open(args.annotated_tree, 'r') as f:
         #     file_content = f.read()
         #     annotated_tree = b64pickle.loads(file_content, encoder='pickle', unpack=False)
@@ -932,8 +935,8 @@ def main():
     ### Anslysis settings###
 
     # # prune tree by rank
-    # if args.rank_limit:
-    #     annotated_tree= taxatree_prune(annotated_tree, rank_limit=args.rank_limit)
+    if args.rank_limit:
+        annotated_tree= taxatree_prune(annotated_tree, rank_limit=args.rank_limit)
 
     # # prune tree by condition 
     # if args.pruned_by: # need to be wrap with quotes
@@ -1030,10 +1033,10 @@ def main():
         layouts.extend(label_layouts)
         total_color_dict.append(color_dict)
     #print(total_color_dict)
-    #### prune at the last step in case of lost leaves information
+    #### prune at the last step in case of losing leaves information
     # prune tree by rank
-    if args.rank_limit:
-        annotated_tree= taxatree_prune(annotated_tree, rank_limit=args.rank_limit)
+    # if args.rank_limit:
+    #     annotated_tree= taxatree_prune(annotated_tree, rank_limit=args.rank_limit)
     # prune tree by condition 
     if args.pruned_by: # need to be wrap with quotes
         condition_strings = args.pruned_by
