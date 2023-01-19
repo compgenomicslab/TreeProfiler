@@ -704,6 +704,18 @@ def get_range(input_range):
     #column_list_idx = [i for i in range(column_start, column_end+1)]
     return column_start, column_end
 
+import numbers
+
+def get_prop2type(node):
+    output = {}
+    prop2value = node.props
+    for prop, value in prop2value.items():
+        if isinstance(value, numbers.Number):
+            output[prop] = 'num'
+        else:
+            output[prop] = 'str'
+    return output
+
 def random_color(h=None):
     """Generates a random color in RGB format."""
     if not h:
@@ -812,25 +824,25 @@ def main():
         bool_prop = [node_props[index-1] for index in bool_prop_idx]
 
     #rest_prop = []
-    rest_prop = list(set(node_props) - set(text_prop) - set(num_prop) - set(bool_prop))
+    prop2type = {# start with leaf name
+            'name':'str',
+            'dist':'num',
+            'support':'num',
+            # taxonomic features
+            'rank':'str',
+            'sci_name':'str',
+            'taxid':'str',
+            'lineage':'str',
+            'named_lineage':'str'
+            }
     
+    rest_prop = list(set(node_props) - set(text_prop) - set(num_prop) - set(bool_prop))
+        
     # output datatype of each property of each tree node including internal nodes
-    prop2type = {
-        # start with leaf name
-        'name':'str',
-        'dist':'num',
-        'support':'num',
-        # taxonomic features
-        'rank':'str',
-        'sci_name':'str',
-        'taxid':'str',
-        'lineage':'str',
-        'named_lineage':'str'
-        } 
-
     for prop in text_prop+bool_prop:
         prop2type[prop] = 'str'
         prop2type[prop+'_counter'] = 'str'
+
     for prop in num_prop:
         prop2type[prop] = 'num'
         prop2type[prop+'_avg'] = 'num'
@@ -838,10 +850,33 @@ def main():
         prop2type[prop+'_max'] = 'num'
         prop2type[prop+'_min'] = 'num'
         prop2type[prop+'_std'] = 'num'
+
     for prop in rest_prop:
         prop2type[prop] = 'str'
-        
     
+    ### decide popup keys
+    if args.annotated_tree:
+        if args.tree_type == 'ete':
+            leaf_prop2type = get_prop2type(tree.get_farthest_leaf()[0])
+            internal_node_prop2type = get_prop2type(tree)
+            prop2type.update(leaf_prop2type)
+            prop2type.update(internal_node_prop2type)
+            
+            # exisiting props in internal node
+            existing_internal_props = list(tree.props.keys())
+            # exisiting props in leaf node
+            existing_leaf_props = list(tree.get_farthest_leaf()[0].props.keys()) 
+            popup_prop_keys = list(set(existing_internal_props+existing_leaf_props))
+        elif args.tree_type == 'newick':
+            # props which add in the arguments
+            required_internal_props = list(prop2type.keys()) 
+            # exisiting prop in leaf node
+            existing_leaf_props = list(tree.get_farthest_leaf()[0].props.keys()) 
+            popup_prop_keys = list(set(required_internal_props + existing_leaf_props))
+    else:
+        # all the metadata to the leaves, no internal
+        popup_prop_keys = list(prop2type.keys())
+        
 
     # load annotations to leaves
     start = time.time()
@@ -1054,22 +1089,6 @@ def main():
         annotated_tree.write(outfile=args.outtree, properties = [], format=1)
 
     if args.interactive:
-        if args.annotated_tree:
-            if args.tree_type == 'ete':
-                # exisiting props in internal node
-                existing_internal_props = list(annotated_tree.props.keys())
-                # exisiting props in leaf node
-                existing_leaf_props = list(annotated_tree.get_farthest_leaf()[0].props.keys()) 
-                popup_prop_keys = list(set(existing_internal_props+existing_leaf_props))
-            elif args.tree_type == 'newick':
-                # props which add in the arguments
-                required_internal_props = list(prop2type.keys()) 
-                # exisiting prop in leaf node
-                existing_leaf_props = list(annotated_tree.get_farthest_leaf()[0].props.keys()) 
-                popup_prop_keys = list(set(required_internal_props + existing_leaf_props))
-        else:
-            # all the metadata to the leaves, no internal
-            popup_prop_keys = list(prop2type.keys())
         annotated_tree.explore(tree_name='example',layouts=layouts, port=args.port, popup_prop_keys=sorted(popup_prop_keys))
     elif args.plot:
         plot(annotated_tree, layouts, args.port, args.plot)
