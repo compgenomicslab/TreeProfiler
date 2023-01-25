@@ -7,7 +7,7 @@ from ete4 import GTDBTaxa
 from ete4 import NCBITaxa
 from ete4.smartview import TreeStyle, NodeStyle, TreeLayout
 from layouts import text_layouts, taxon_layouts, staple_layouts, conditional_layouts
-from plot import plot
+from tree_plot import plot
 
 from argparse import ArgumentParser
 import argparse
@@ -46,7 +46,7 @@ def read_args():
         " of "+__date__+")." + __description__+ " Authors: "+
         __author__+" ("+__email__+")",
         formatter_class=argparse.RawTextHelpFormatter)
-
+    
     # input parameters group
     group = parser.add_argument_group(title='input parameters',
         description="Input parameters")
