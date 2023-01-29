@@ -69,10 +69,11 @@ def tree_annotate(args):
             with open(args.tree, 'r') as f:
                 file_content = f.read()
                 tree = b64pickle.loads(file_content, encoder='pickle', unpack=False)
-        
     # if refer tree from taxadb, input tree will be ignored
-    elif args.taxa and args.taxadb:
+    elif args.taxatree and args.taxadb:
         tree = ''
+    else:
+        sys.exit('empty input')
 
     if args.text_prop:
         text_prop = args.text_prop.split(',')
@@ -126,35 +127,44 @@ def tree_annotate(args):
         bool_prop = [node_props[index-1] for index in bool_prop_idx]
 
     #rest_prop = []
-    prop2type = {# start with leaf name
-            'name':'str',
-            'dist':'num',
-            'support':'num',
-            # taxonomic features
-            'rank':'str',
-            'sci_name':'str',
-            'taxid':'str',
-            'lineage':'str',
-            'named_lineage':'str'
-            }
+    if args.prop2type:
+        prop2type = {}
+        with open(args.prop2type, 'r') as f:
+            for line in f:
+                line = line.rstrip()
+                prop, value = line.split('\t')
+                prop2type[prop] = value
     
-    rest_prop = list(set(node_props) - set(text_prop) - set(num_prop) - set(bool_prop))
+    else:
+        prop2type = {# start with leaf name
+                'name':'str',
+                'dist':'num',
+                'support':'num',
+                # taxonomic features
+                'rank':'str',
+                'sci_name':'str',
+                'taxid':'str',
+                'lineage':'str',
+                'named_lineage':'str'
+                }
         
-    # output datatype of each property of each tree node including internal nodes
-    for prop in text_prop+bool_prop:
-        prop2type[prop] = 'str'
-        prop2type[prop+'_counter'] = 'str'
+        rest_prop = list(set(node_props) - set(text_prop) - set(num_prop) - set(bool_prop))
+            
+        # output datatype of each property of each tree node including internal nodes
+        for prop in text_prop+bool_prop:
+            prop2type[prop] = 'str'
+            prop2type[prop+'_counter'] = 'str'
 
-    for prop in num_prop:
-        prop2type[prop] = 'num'
-        prop2type[prop+'_avg'] = 'num'
-        prop2type[prop+'_sum'] = 'num'
-        prop2type[prop+'_max'] = 'num'
-        prop2type[prop+'_min'] = 'num'
-        prop2type[prop+'_std'] = 'num'
+        for prop in num_prop:
+            prop2type[prop] = 'num'
+            prop2type[prop+'_avg'] = 'num'
+            prop2type[prop+'_sum'] = 'num'
+            prop2type[prop+'_max'] = 'num'
+            prop2type[prop+'_min'] = 'num'
+            prop2type[prop+'_std'] = 'num'
 
-    for prop in rest_prop:
-        prop2type[prop] = 'str'
+        for prop in rest_prop:
+            prop2type[prop] = 'str'
     
     ### decide popup keys
     # if args.annotated_tree:
@@ -262,11 +272,20 @@ def tree_annotate(args):
 
     else:
         rank2values = {}
+    
     end = time.time()
     print('Time for annotate_taxa to run: ', end - start)
 
+    # prune tree by rank
+    if args.rank_limit:
+        annotated_tree = taxatree_prune(annotated_tree, rank_limit=args.rank_limit)
+    # prune tree by condition 
+    if args.pruned_by: # need to be wrap with quotes
+        condition_strings = args.pruned_by
+        annotated_tree = conditional_prune(annotated_tree, condition_strings, prop2type)
+
     # output tree
-    if args.out_color_dict:
+    if args.out_colordict:
         wrtie_color(total_color_dict)
     
     if args.ete4out:
@@ -274,14 +293,22 @@ def tree_annotate(args):
         with open(base+'_annotated.ete', 'w') as f:
             f.write(b64pickle.dumps(annotated_tree, encoder='pickle', pack=False))
     
-    if args.outtree:
-        annotated_tree.write(outfile=args.outtree, properties = [], format=1)
+    if args.outdir:
+        base=os.path.splitext(os.path.basename(args.tree))[0]
+        out_newick = base + '_annotated.nw'
+        out_prop2tpye = base + '_prop2type.txt'
+        out_ete = base+'_annotated.ete'
+
+        ### out newick
+        annotated_tree.write(outfile=out_newick, properties = [], format=1)
         ### output prop2type
-        base=os.path.splitext(os.path.basename(args.outtree))[0]
-        with open(base+'_prop2type.txt', "a") as f:
+        with open(base+'_prop2type.txt', "w") as f:
             #f.write(first_line + "\n")
             for key, value in prop2type.items():
                 f.write("{}\t{}\n".format(key, value))
+        ### out ete
+        with open(base+'_annotated.ete', 'w') as f:
+            f.write(b64pickle.dumps(annotated_tree, encoder='pickle', pack=False))
                 
     if args.outtsv:
         tree2table(annotated_tree, internal_node=True, outfile=args.outtsv)
@@ -519,9 +546,11 @@ def get_prop2type(node):
 
 ### visualize tree
 def tree_plot(args):
+    global prop2type, columns, tree
     node_props=[]
     columns = {}
-    
+    rank2values = {}
+
     total_color_dict = []
     layouts = []
     level = 2 # level 1 is the leaf name
@@ -664,18 +693,18 @@ def tree_plot(args):
         label_layouts, level, color_dict = get_layouts(args.RevBinaryLayout, 'revbinary', level, 'counter')
         layouts.extend(label_layouts)
         total_color_dict.append(color_dict)
-    #print(total_color_dict)
+    
     #### prune at the last step in case of losing leaves information
     # prune tree by rank
-    # if args.rank_limit:
-    #     annotated_tree= taxatree_prune(annotated_tree, rank_limit=args.rank_limit)
+    if args.rank_limit:
+        tree = taxatree_prune(tree, rank_limit=args.rank_limit)
     # prune tree by condition 
     if args.pruned_by: # need to be wrap with quotes
         condition_strings = args.pruned_by
-        tree= conditional_prune(tree, condition_strings, prop2type)
+        tree = conditional_prune(tree, condition_strings, prop2type)
 
     #### Output #####
-    if args.out_color_dict:
+    if args.out_colordict:
         wrtie_color(total_color_dict)
     
     if args.interactive:
@@ -817,7 +846,7 @@ def get_layouts(argv_input, layout_name, level, internal_rep):
             if columns:
                 prop_values = sorted(list(set(columns[prop])))
             else:
-                prop_values = sorted(list(set(children_prop_array(annotated_tree, prop))))
+                prop_values = sorted(list(set(children_prop_array(tree, prop))))
             nvals = len(prop_values)
 
             for i in range(0, nvals): # only positive, negative, NaN, three options
@@ -856,7 +885,7 @@ def get_layouts(argv_input, layout_name, level, internal_rep):
             if columns:
                 prop_values =  sorted(list(set(columns[prop])))
             else:
-                prop_values = sorted(list(set(children_prop_array(annotated_tree, prop))))
+                prop_values = sorted(list(set(children_prop_array(tree, prop))))
             nvals = len(prop_values)
 
             for i in range(0, nvals):
@@ -907,10 +936,10 @@ def populate_main_args(main_args_p):
         type=str,
         required=False,
         help="Input tree, .nw file, customized tree input")
-    group.add_argument('-d', '--metadata',
-        type=str,
-        required=False,
-        help="<metadata.csv> .csv, .tsv. mandatory input")
+    # group.add_argument('-d', '--metadata',
+    #     type=str,
+    #     required=False,
+    #     help="<metadata.csv> .csv, .tsv. mandatory input")
     group.add_argument('--annotated_tree',
         default=False,
         action='store_true',
@@ -921,6 +950,130 @@ def populate_main_args(main_args_p):
         default='newick',
         required=False,
         help="statistic calculation to perform for numerical data in internal nodes, [newick, ete]")
+    
+    group.add_argument('--prop2type',
+        type=str,
+        required=False,
+        help="config tsv file where determine the datatype of target properties, if your input tree type is .ete, it's note necessary")
+    
+    # group.add_argument('--no_colnames',
+    #     default=False,
+    #     action='store_true',
+    #     required=False,
+    #     help="metadata table doesn't contain columns name")
+    # group.add_argument('--text_prop',
+    #     type=str,
+    #     required=False,
+    #     help="<col1,col2> names, column index or index range of columns which need to be read as categorical data")
+    # group.add_argument('--num_prop',
+    #     type=str,
+    #     required=False,
+    #     help="<col1,col2> names, column index or index range of columns which need to be read as numerical data")
+    # group.add_argument('--bool_prop',
+    #     type=str,
+    #     required=False,
+    #     help="<col1,col2> names, column index or index range of columns which need to be read as boolean data")
+    # group.add_argument('--text_prop_idx',
+    #     type=str,
+    #     required=False,
+    #     help="1,2,3 or [1-5] index of columns which need to be read as categorical data")
+    # group.add_argument('--num_prop_idx',
+    #     type=str,
+    #     required=False,
+    #     help="1,2,3 or [1-5] index columns which need to be read as numerical data")
+    # group.add_argument('--bool_prop_idx',
+    #     type=str,
+    #     required=False,
+    #     help="1,2,3 or [1-5] index columns which need to be read as boolean data")
+    # group.add_argument('--taxatree',
+    #     type=str,
+    #     required=False,
+    #     help="<kingdom|phylum|class|order|family|genus|species|subspecies> reference tree from taxonomic database")
+    # group.add_argument('--taxadb',
+    #     type=str,
+    #     default='GTDB',
+    #     required=False,
+    #     help="<NCBI|GTDB> for taxonomic profiling or fetch taxatree default [GTDB]")    
+    # group.add_argument('--taxon_column',
+    #     type=str,
+    #     required=False,
+    #     help="<col1> name of columns which need to be read as taxon data")
+    # group.add_argument('--taxon_delimiter',
+    #     type=str,
+    #     default=';',
+    #     required=False,
+    #     help="delimiter of taxa columns. default [;]")
+    # group.add_argument('--taxa_field',
+    #     type=int,
+    #     default=0,
+    #     required=False,
+    #     help="field of taxa name after delimiter. default 0")
+    # group.add_argument('--taxonomic_profile',
+    #     default=False,
+    #     action='store_true',
+    #     required=False,
+    #     help="Determine if you need taxonomic profile on tree")
+
+    group = main_args_p.add_argument_group(title='Analysis arguments',
+        description="Analysis parameters")
+    group.add_argument('--num_stat',
+        default='all',
+        type=str,
+        required=False,
+        help="statistic calculation to perform for numerical data in internal nodes, [all, sum, avg, max, min, std] ")  
+    group.add_argument('--internal_plot_measure',
+        default='avg',
+        type=str,
+        required=False,
+        help="statistic measures to be shown in numerical layout for internal nodes, [default: avg]")  
+
+    group.add_argument('--counter_stat',
+        default='raw',
+        type=str,
+        required=False,
+        help="statistic calculation to perform for categorical data in internal nodes, raw count or in percentage [raw, relative] ")  
+    
+    group.add_argument('--rank_limit',
+        type=str,
+        required=False,
+        help="TAXONOMIC_LEVEL prune annotate tree by rank limit")
+    group.add_argument('--pruned_by', 
+        type=str,
+        required=False,
+        action='append',
+        help='target tree pruned by customized conditions')
+    
+    group.add_argument('--ete4out',
+        default=False,
+        action='store_true',
+        help="export intermediate tree in ete4")
+    group.add_argument('-o', '--outdir',
+        type=str,
+        required=False,
+        help="output annotated tree")
+    group.add_argument('--outtsv',
+        type=str,
+        required=False,
+        help="output annotated tsv file")
+    group.add_argument('--out_colordict',
+        action="store_true", 
+        required=False,
+        help="print color dictionary of each property")
+
+    #args = parser.parse_args()
+    #return args
+
+def populate_annotate_args(annotate_args_p):
+    group = annotate_args_p.add_argument_group(title='input parameters',
+        description="Input parameters")
+    # group.add_argument('-t', '--tree',
+    #     type=str,
+    #     required=False,
+    #     help="Input tree, .nw file, customized tree input")
+    group.add_argument('-d', '--metadata',
+        type=str,
+        required=False,
+        help="<metadata.csv> .csv, .tsv. mandatory input")
     
     group.add_argument('--no_colnames',
         default=False,
@@ -980,34 +1133,34 @@ def populate_main_args(main_args_p):
         required=False,
         help="Determine if you need taxonomic profile on tree")
 
-    group = main_args_p.add_argument_group(title='Analysis arguments',
-        description="Analysis parameters")
-    group.add_argument('--num_stat',
-        default='all',
-        type=str,
-        required=False,
-        help="statistic calculation to perform for numerical data in internal nodes, [all, sum, avg, max, min, std] ")  
-    group.add_argument('--internal_plot_measure',
-        default='avg',
-        type=str,
-        required=False,
-        help="statistic measures to be shown in numerical layout for internal nodes, [default: avg]")  
+    # group = annotate_args_p.add_argument_group(title='Analysis arguments',
+    #     description="Analysis parameters")
+    # group.add_argument('--num_stat',
+    #     default='all',
+    #     type=str,
+    #     required=False,
+    #     help="statistic calculation to perform for numerical data in internal nodes, [all, sum, avg, max, min, std] ")  
+    # group.add_argument('--internal_plot_measure',
+    #     default='avg',
+    #     type=str,
+    #     required=False,
+    #     help="statistic measures to be shown in numerical layout for internal nodes, [default: avg]")  
 
-    group.add_argument('--counter_stat',
-        default='raw',
-        type=str,
-        required=False,
-        help="statistic calculation to perform for categorical data in internal nodes, raw count or in percentage [raw, relative] ")  
+    # group.add_argument('--counter_stat',
+    #     default='raw',
+    #     type=str,
+    #     required=False,
+    #     help="statistic calculation to perform for categorical data in internal nodes, raw count or in percentage [raw, relative] ")  
     
-    group.add_argument('--rank_limit',
-        type=str,
-        required=False,
-        help="TAXONOMIC_LEVEL prune annotate tree by rank limit")
-    group.add_argument('--pruned_by', 
-        type=str,
-        required=False,
-        action='append',
-        help='target tree pruned by customized conditions')
+    
+def poplulate_plot_args(plot_args_p):
+    """
+    Parse the input parameters
+    Return the parsed arguments.
+    """
+    group = plot_args_p.add_argument_group(title='Plot arguments',
+        description="Plot parameters")
+    
     group.add_argument('--collapsed_by', 
         type=str,
         required=False,
@@ -1019,8 +1172,9 @@ def populate_main_args(main_args_p):
         action='append',
         help='target tree highlighted by customized conditions')
     
-    group = main_args_p.add_argument_group(title='basic treelayout arguments',
+    group = plot_args_p.add_argument_group(title='basic treelayout arguments',
         description="treelayout parameters")
+
     group.add_argument('--drawer',
         type=str,
         required=False,
@@ -1035,12 +1189,8 @@ def populate_main_args(main_args_p):
         required=False,
         help="ultrametric tree")
 
-    group = main_args_p.add_argument_group(title='Plot arguments',
-        description="Plot parameters")
-    group.add_argument('--prop2type',
-        type=str,
-        required=False,
-        help="config tsv file where determine the datatype of target properties, if your input tree type is .ete, it's note necessary")
+    group = plot_args_p.add_argument_group(title='Plot arguments',
+        description="Prop layout parameters")
     
     group.add_argument('--BinaryLayout',
         type=str,
@@ -1064,7 +1214,6 @@ def populate_main_args(main_args_p):
         required=False,
         help="<col1,col2> names, column index or index range of columns which need to be plot as RectangularLayout")
     
-    
     group.add_argument('--HeatmapLayout',
         type=str,
         required=False,
@@ -1079,7 +1228,7 @@ def populate_main_args(main_args_p):
         action='store_true',
         help="activate TaxonLayout")
 
-    group = main_args_p.add_argument_group(title='Output arguments',
+    group = plot_args_p.add_argument_group(title='Output arguments',
         description="Output parameters")
     group.add_argument('--interactive',
         default=False,
@@ -1093,34 +1242,14 @@ def populate_main_args(main_args_p):
         type=str,
         required=False,
         help="output as pdf")
-    group.add_argument('--ete4out',
-        default=False,
-        action='store_true',
-        help="export intermediate tree in ete4")
-    group.add_argument('-o', '--outtree',
-        type=str,
-        required=False,
-        help="output annotated tree")
-    group.add_argument('--outtsv',
-        type=str,
-        required=False,
-        help="output annotated tsv file")
-    group.add_argument('--out_color_dict',
-        action="store_true", 
-        required=False,
-        help="print color dictionary of each property")
-
-    #args = parser.parse_args()
-    #return args
-
 
 def main():
     _main(sys.argv)
 
 def _main(arguments):
-    global prop2type
-    global text_prop, num_prop, bool_prop
-    global annotated_tree, node_props, columns
+    # global prop2type
+    # global text_prop, num_prop, bool_prop
+    # global annotated_tree, node_props, columns
 
     # CREATE REUSABLE PARSER OPTIONS
     # main args
@@ -1132,8 +1261,6 @@ def _main(arguments):
         __author__+" ("+__email__+")",
         formatter_class=argparse.RawTextHelpFormatter, add_help=False)
 
-    #main_args_p = argparse.ArgumentParser(add_help=False)
-    
     populate_main_args(main_args_p)
 
     parser = argparse.ArgumentParser(description="this is tree profiler ",
@@ -1142,44 +1269,18 @@ def _main(arguments):
     ## - ANNOTATE - 
     annotate_args_p = subparser.add_parser('annotate', parents=[main_args_p],
                                             description='annotate tree')
+    populate_annotate_args(annotate_args_p)
     annotate_args_p.set_defaults(func=tree_annotate)
     
     ## - PLOT - 
     plot_args_p = subparser.add_parser('plot', parents=[main_args_p],
                                             description='annotate plot')
+    poplulate_plot_args(plot_args_p)
     plot_args_p.set_defaults(func=tree_plot)
 
     ## - RUN -
     args = parser.parse_args(arguments[1:])
     args.func(args)
-    sdfsdfd
     
-    
-    # prune tree by condition 
-    if args.pruned_by: # need to be wrap with quotes
-        condition_strings = args.pruned_by
-        annotated_tree= conditional_prune(annotated_tree, condition_strings, prop2type)
-
-    #### Output #####
-    if args.out_color_dict:
-        wrtie_color(total_color_dict)
-    
-    if args.ete4out:
-        with open('./annotated_tree.ete', 'w') as f:
-            f.write(b64pickle.dumps(annotated_tree, encoder='pickle', pack=False))
-    
-    if args.outtree:
-        annotated_tree.write(outfile=args.outtree, properties = [], format=1)
-
-    if args.interactive:
-        annotated_tree.explore(tree_name='example',layouts=layouts, port=args.port, popup_prop_keys=sorted(popup_prop_keys))
-    elif args.plot:
-        plot(annotated_tree, layouts, args.port, args.plot)
-    if args.outtsv:
-        tree2table(annotated_tree, internal_node=True, outfile=args.outtsv)
-
-    
-    return annotated_tree
-
 if __name__ == '__main__':
     main()

@@ -30,7 +30,7 @@ def snap_tree(port):
     time.sleep(0.5)
     driver.quit()
 
-def plot(tree, layouts, port, plot_file):
+def get_image(tree, layouts, port, plot_file):
     p1 = Process(target=tree_session, args=(tree, layouts, port,))
     p2 = Process(target=snap_tree, args=(port,))
 
