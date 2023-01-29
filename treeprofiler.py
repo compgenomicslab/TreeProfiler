@@ -285,8 +285,8 @@ def tree_annotate(args):
         annotated_tree = conditional_prune(annotated_tree, condition_strings, prop2type)
 
     # output tree
-    if args.out_colordict:
-        wrtie_color(total_color_dict)
+    # if args.out_colordict:
+    #     wrtie_color(total_color_dict)
     
     if args.ete4out:
         base=os.path.splitext(os.path.basename(args.tree))[0]
@@ -653,11 +653,12 @@ def tree_plot(args):
         total_color_dict.append(taxon_color_dict)
 
     # numerical representative mearsure 
-    if args.num_stat != 'all':
-        internal_num_rep = args.num_stat
-    else:
-        internal_num_rep = args.internal_plot_measure
+    # if args.num_stat != 'all':
+    #     internal_num_rep = args.num_stat
+    # else:
+    #     internal_num_rep = args.internal_plot_measure
 
+    internal_num_rep = args.internal_plot_measure
     # get layouts
     if args.HeatmapLayout:
         heatmap_layouts, level, _ = get_layouts(args.HeatmapLayout, 'heatmap', level, internal_num_rep)
@@ -707,11 +708,15 @@ def tree_plot(args):
     if args.out_colordict:
         wrtie_color(total_color_dict)
     
-    if args.interactive:
-        tree.explore(tree_name='example',layouts=layouts, port=args.port, popup_prop_keys=sorted(popup_prop_keys))
-    elif args.plot:
+    # if args.interactive:
+    #     tree.explore(tree_name='example',layouts=layouts, port=args.port, popup_prop_keys=sorted(popup_prop_keys))
+    # elif args.plot:
+    #     plot(tree, layouts, args.port, args.plot)
+    if args.plot:
         plot(tree, layouts, args.port, args.plot)
-
+    else:
+        tree.explore(tree_name='example',layouts=layouts, port=args.port, popup_prop_keys=sorted(popup_prop_keys))
+    
     return
 
 
@@ -930,21 +935,17 @@ def populate_main_args(main_args_p):
     Return the parsed arguments.
     """
     # input parameters group
-    group = main_args_p.add_argument_group(title='input parameters',
-        description="Input parameters")
+    group = main_args_p.add_argument_group(title='SOURCE TREE INPUT',
+        description="Source tree input parameters")
     group.add_argument('-t', '--tree',
         type=str,
         required=False,
         help="Input tree, .nw file, customized tree input")
-    # group.add_argument('-d', '--metadata',
-    #     type=str,
-    #     required=False,
-    #     help="<metadata.csv> .csv, .tsv. mandatory input")
     group.add_argument('--annotated_tree',
         default=False,
         action='store_true',
         required=False,
-        help="inputtree already annotated by treeprofiler")
+        help="input tree already annotated by treeprofiler")
     group.add_argument('--tree_type',
         type=str,
         default='newick',
@@ -956,83 +957,9 @@ def populate_main_args(main_args_p):
         required=False,
         help="config tsv file where determine the datatype of target properties, if your input tree type is .ete, it's note necessary")
     
-    # group.add_argument('--no_colnames',
-    #     default=False,
-    #     action='store_true',
-    #     required=False,
-    #     help="metadata table doesn't contain columns name")
-    # group.add_argument('--text_prop',
-    #     type=str,
-    #     required=False,
-    #     help="<col1,col2> names, column index or index range of columns which need to be read as categorical data")
-    # group.add_argument('--num_prop',
-    #     type=str,
-    #     required=False,
-    #     help="<col1,col2> names, column index or index range of columns which need to be read as numerical data")
-    # group.add_argument('--bool_prop',
-    #     type=str,
-    #     required=False,
-    #     help="<col1,col2> names, column index or index range of columns which need to be read as boolean data")
-    # group.add_argument('--text_prop_idx',
-    #     type=str,
-    #     required=False,
-    #     help="1,2,3 or [1-5] index of columns which need to be read as categorical data")
-    # group.add_argument('--num_prop_idx',
-    #     type=str,
-    #     required=False,
-    #     help="1,2,3 or [1-5] index columns which need to be read as numerical data")
-    # group.add_argument('--bool_prop_idx',
-    #     type=str,
-    #     required=False,
-    #     help="1,2,3 or [1-5] index columns which need to be read as boolean data")
-    # group.add_argument('--taxatree',
-    #     type=str,
-    #     required=False,
-    #     help="<kingdom|phylum|class|order|family|genus|species|subspecies> reference tree from taxonomic database")
-    # group.add_argument('--taxadb',
-    #     type=str,
-    #     default='GTDB',
-    #     required=False,
-    #     help="<NCBI|GTDB> for taxonomic profiling or fetch taxatree default [GTDB]")    
-    # group.add_argument('--taxon_column',
-    #     type=str,
-    #     required=False,
-    #     help="<col1> name of columns which need to be read as taxon data")
-    # group.add_argument('--taxon_delimiter',
-    #     type=str,
-    #     default=';',
-    #     required=False,
-    #     help="delimiter of taxa columns. default [;]")
-    # group.add_argument('--taxa_field',
-    #     type=int,
-    #     default=0,
-    #     required=False,
-    #     help="field of taxa name after delimiter. default 0")
-    # group.add_argument('--taxonomic_profile',
-    #     default=False,
-    #     action='store_true',
-    #     required=False,
-    #     help="Determine if you need taxonomic profile on tree")
+    group = main_args_p.add_argument_group(title='Pruning parameters',
+        description="Auto pruning parameters")
 
-    group = main_args_p.add_argument_group(title='Analysis arguments',
-        description="Analysis parameters")
-    group.add_argument('--num_stat',
-        default='all',
-        type=str,
-        required=False,
-        help="statistic calculation to perform for numerical data in internal nodes, [all, sum, avg, max, min, std] ")  
-    group.add_argument('--internal_plot_measure',
-        default='avg',
-        type=str,
-        required=False,
-        help="statistic measures to be shown in numerical layout for internal nodes, [default: avg]")  
-
-    group.add_argument('--counter_stat',
-        default='raw',
-        type=str,
-        required=False,
-        help="statistic calculation to perform for categorical data in internal nodes, raw count or in percentage [raw, relative] ")  
-    
     group.add_argument('--rank_limit',
         type=str,
         required=False,
@@ -1043,29 +970,31 @@ def populate_main_args(main_args_p):
         action='append',
         help='target tree pruned by customized conditions')
     
-    group.add_argument('--ete4out',
-        default=False,
-        action='store_true',
-        help="export intermediate tree in ete4")
-    group.add_argument('-o', '--outdir',
-        type=str,
-        required=False,
-        help="output annotated tree")
-    group.add_argument('--outtsv',
-        type=str,
-        required=False,
-        help="output annotated tsv file")
-    group.add_argument('--out_colordict',
-        action="store_true", 
-        required=False,
-        help="print color dictionary of each property")
+    # group = main_args_p.add_argument_group(title='OUTPUT options',
+    #     description="")
+    # group.add_argument('--ete4out',
+    #     default=False,
+    #     action='store_true',
+    #     help="export intermediate tree in ete4")
+    # group.add_argument('-o', '--outdir',
+    #     type=str,
+    #     required=False,
+    #     help="output annotated tree")
+    # group.add_argument('--outtsv',
+    #     type=str,
+    #     required=False,
+    #     help="output annotated tsv file")
+    # group.add_argument('--out_colordict',
+    #     action="store_true", 
+    #     required=False,
+    #     help="print color dictionary of each property")
 
     #args = parser.parse_args()
     #return args
 
 def populate_annotate_args(annotate_args_p):
-    group = annotate_args_p.add_argument_group(title='input parameters',
-        description="Input parameters")
+    group = annotate_args_p.add_argument_group(title='METADATA TABLE parameters',
+        description="Input parameters of METADATA")
     # group.add_argument('-t', '--tree',
     #     type=str,
     #     required=False,
@@ -1127,40 +1056,55 @@ def populate_annotate_args(annotate_args_p):
         default=0,
         required=False,
         help="field of taxa name after delimiter. default 0")
+    
+
+    group = annotate_args_p.add_argument_group(title='Annotation arguments',
+        description="Annotation parameters")
     group.add_argument('--taxonomic_profile',
         default=False,
         action='store_true',
         required=False,
-        help="Determine if you need taxonomic profile on tree")
-
-    # group = annotate_args_p.add_argument_group(title='Analysis arguments',
-    #     description="Analysis parameters")
-    # group.add_argument('--num_stat',
-    #     default='all',
-    #     type=str,
-    #     required=False,
-    #     help="statistic calculation to perform for numerical data in internal nodes, [all, sum, avg, max, min, std] ")  
-    # group.add_argument('--internal_plot_measure',
-    #     default='avg',
-    #     type=str,
-    #     required=False,
-    #     help="statistic measures to be shown in numerical layout for internal nodes, [default: avg]")  
-
-    # group.add_argument('--counter_stat',
-    #     default='raw',
-    #     type=str,
-    #     required=False,
-    #     help="statistic calculation to perform for categorical data in internal nodes, raw count or in percentage [raw, relative] ")  
+        help="Determine if you need taxonomic annotation on tree")
+    group.add_argument('--num_stat',
+        default='all',
+        type=str,
+        required=False,
+        help="statistic calculation to perform for numerical data in internal nodes, [all, sum, avg, max, min, std] ")  
+    group.add_argument('--counter_stat',
+        default='raw',
+        type=str,
+        required=False,
+        help="statistic calculation to perform for categorical data in internal nodes, raw count or in percentage [raw, relative] ")  
     
+    group = annotate_args_p.add_argument_group(title='OUTPUT options',
+        description="")
+    group.add_argument('--ete4out',
+        default=False,
+        action='store_true',
+        help="export intermediate tree in ete4")
+    group.add_argument('-o', '--outdir',
+        type=str,
+        required=False,
+        help="output annotated tree")
+    group.add_argument('--outtsv',
+        type=str,
+        required=False,
+        help="output annotated tsv file")
     
 def poplulate_plot_args(plot_args_p):
     """
     Parse the input parameters
     Return the parsed arguments.
     """
-    group = plot_args_p.add_argument_group(title='Plot arguments',
-        description="Plot parameters")
+    group = plot_args_p.add_argument_group(title='Conditional display arguments',
+        description="Conditional display  parameters")
     
+    group.add_argument('--internal_plot_measure',
+        default='avg',
+        type=str,
+        required=False,
+        help="statistic measures to be shown in numerical layout for internal nodes, [default: avg]")  
+
     group.add_argument('--collapsed_by', 
         type=str,
         required=False,
@@ -1171,8 +1115,8 @@ def poplulate_plot_args(plot_args_p):
         required=False,
         action='append',
         help='target tree highlighted by customized conditions')
-    
-    group = plot_args_p.add_argument_group(title='basic treelayout arguments',
+        
+    group = plot_args_p.add_argument_group(title='Basic treelayout arguments',
         description="treelayout parameters")
 
     group.add_argument('--drawer',
@@ -1189,7 +1133,7 @@ def poplulate_plot_args(plot_args_p):
         required=False,
         help="ultrametric tree")
 
-    group = plot_args_p.add_argument_group(title='Plot arguments',
+    group = plot_args_p.add_argument_group(title="Properties' layout arguments",
         description="Prop layout parameters")
     
     group.add_argument('--BinaryLayout',
@@ -1227,7 +1171,7 @@ def poplulate_plot_args(plot_args_p):
         default=False,
         action='store_true',
         help="activate TaxonLayout")
-
+    
     group = plot_args_p.add_argument_group(title='Output arguments',
         description="Output parameters")
     group.add_argument('--interactive',
@@ -1242,6 +1186,10 @@ def poplulate_plot_args(plot_args_p):
         type=str,
         required=False,
         help="output as pdf")
+    group.add_argument('--out_colordict',
+        action="store_true", 
+        required=False,
+        help="print color dictionary of each property")
 
 def main():
     _main(sys.argv)
