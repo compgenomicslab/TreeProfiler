@@ -300,14 +300,14 @@ def tree_annotate(args):
         out_ete = base+'_annotated.ete'
 
         ### out newick
-        annotated_tree.write(outfile=out_newick, properties = [], format=1)
+        annotated_tree.write(outfile=os.path.join(args.outdir, out_newick), properties = [], format=1)
         ### output prop2type
-        with open(base+'_prop2type.txt', "w") as f:
+        with open(os.path.join(args.outdir, base+'_prop2type.txt'), "w") as f:
             #f.write(first_line + "\n")
             for key, value in prop2type.items():
                 f.write("{}\t{}\n".format(key, value))
         ### out ete
-        with open(base+'_annotated.ete', 'w') as f:
+        with open(os.path.join(args.outdir, base+'_annotated.ete'), 'w') as f:
             f.write(b64pickle.dumps(annotated_tree, encoder='pickle', pack=False))
                 
     if args.outtsv:
@@ -872,7 +872,7 @@ def get_layouts(argv_input, layout_name, level, internal_rep):
             layout =  staple_layouts.LayoutHeatmap('Heatmap_'+prop, level, internal_rep, prop)
         
         elif layout_name == 'barplot':
-            if prop2type[prop] == 'num':
+            if prop in prop2type and prop2type[prop] == 'num':
                 size_prop = prop+'_'+internal_rep # using internal prop to set the range in case rank_limit cut all the leaves
             else:
                 size_prop = prop

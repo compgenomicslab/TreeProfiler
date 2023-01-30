@@ -102,6 +102,96 @@ progenome3_annotated.nw  spongilla_annotated.nw
 ```
 
 ## `annotate`, Mapping metadata into tree 
+```
+usage: treeprofiler.py annotate [-h] [-t TREE] [--annotated_tree] [--tree_type TREE_TYPE]
+                                [--prop2type PROP2TYPE] [--rank_limit RANK_LIMIT]
+                                [--pruned_by PRUNED_BY] [-d METADATA] [--no_colnames]
+                                [--text_prop TEXT_PROP] [--num_prop NUM_PROP]
+                                [--bool_prop BOOL_PROP] [--text_prop_idx TEXT_PROP_IDX]
+                                [--num_prop_idx NUM_PROP_IDX]
+                                [--bool_prop_idx BOOL_PROP_IDX] [--taxatree TAXATREE]
+                                [--taxadb TAXADB] [--taxon_column TAXON_COLUMN]
+                                [--taxon_delimiter TAXON_DELIMITER]
+                                [--taxa_field TAXA_FIELD] [--taxonomic_profile]
+                                [--num_stat NUM_STAT] [--counter_stat COUNTER_STAT]
+                                [--ete4out] [-o OUTDIR] [--outtsv OUTTSV]
+
+annotate tree
+
+optional arguments:
+  -h, --help            show this help message and exit
+
+SOURCE TREE INPUT:
+  Source tree input parameters
+
+  -t TREE, --tree TREE  Input tree, .nw file, customized tree input
+  --annotated_tree      input tree already annotated by treeprofiler
+  --tree_type TREE_TYPE
+                        statistic calculation to perform for numerical data in internal
+                        nodes, [newick, ete]
+  --prop2type PROP2TYPE
+                        config tsv file where determine the datatype of target properties,
+                        if your input tree type is .ete, it's note necessary
+
+Pruning parameters:
+  Auto pruning parameters
+
+  --rank_limit RANK_LIMIT
+                        TAXONOMIC_LEVEL prune annotate tree by rank limit
+  --pruned_by PRUNED_BY
+                        target tree pruned by customized conditions
+
+METADATA TABLE parameters:
+  Input parameters of METADATA
+
+  -d METADATA, --metadata METADATA
+                        <metadata.csv> .csv, .tsv. mandatory input
+  --no_colnames         metadata table doesn't contain columns name
+  --text_prop TEXT_PROP
+                        <col1,col2> names, column index or index range of columns which
+                        need to be read as categorical data
+  --num_prop NUM_PROP   <col1,col2> names, column index or index range of columns which
+                        need to be read as numerical data
+  --bool_prop BOOL_PROP
+                        <col1,col2> names, column index or index range of columns which
+                        need to be read as boolean data
+  --text_prop_idx TEXT_PROP_IDX
+                        1,2,3 or [1-5] index of columns which need to be read as
+                        categorical data
+  --num_prop_idx NUM_PROP_IDX
+                        1,2,3 or [1-5] index columns which need to be read as numerical
+                        data
+  --bool_prop_idx BOOL_PROP_IDX
+                        1,2,3 or [1-5] index columns which need to be read as boolean data
+  --taxatree TAXATREE   <kingdom|phylum|class|order|family|genus|species|subspecies>
+                        reference tree from taxonomic database
+  --taxadb TAXADB       <NCBI|GTDB> for taxonomic profiling or fetch taxatree default
+                        [GTDB]
+  --taxon_column TAXON_COLUMN
+                        <col1> name of columns which need to be read as taxon data
+  --taxon_delimiter TAXON_DELIMITER
+                        delimiter of taxa columns. default [;]
+  --taxa_field TAXA_FIELD
+                        field of taxa name after delimiter. default 0
+
+Annotation arguments:
+  Annotation parameters
+
+  --taxonomic_profile   Determine if you need taxonomic annotation on tree
+  --num_stat NUM_STAT   statistic calculation to perform for numerical data in internal
+                        nodes, [all, sum, avg, max, min, std]
+  --counter_stat COUNTER_STAT
+                        statistic calculation to perform for categorical data in internal
+                        nodes, raw count or in percentage [raw, relative]
+
+OUTPUT options:
+
+  --ete4out             export intermediate tree in ete4
+  -o OUTDIR, --outdir OUTDIR
+                        output annotated tree
+  --outtsv OUTTSV       output annotated tsv file
+
+```
 ### **Simple mapping metadata into leaf nodes** 
 treeprofiler will start local server which metadata will be mapped to corresponding leaf nodes
 ```
@@ -219,8 +309,106 @@ python treeprofiler.py annotate --tree examples/spongilla_example.nw --metadata 
 --outdir ./examples/
 ```
 
+### **Annotate tree format**
+treeprofiler annotate subcommand will generate 
+
 ## `plot`, visualizing annotated tree with layouts
 MetaTreeProfiler provides a several of layout options for visualize features in metadata along with tree, depends on their datatype
+```
+usage: treeprofiler.py plot [-h] [-t TREE] [--annotated_tree] [--tree_type TREE_TYPE]
+                            [--prop2type PROP2TYPE] [--rank_limit RANK_LIMIT]
+                            [--pruned_by PRUNED_BY]
+                            [--internal_plot_measure INTERNAL_PLOT_MEASURE]
+                            [--collapsed_by COLLAPSED_BY]
+                            [--highlighted_by HIGHLIGHTED_BY] [--drawer DRAWER]
+                            [--collapse_level COLLAPSE_LEVEL] [--ultrametric]
+                            [--BinaryLayout BINARYLAYOUT]
+                            [--RevBinaryLayout REVBINARYLAYOUT]
+                            [--ColorbranchLayout COLORBRANCHLAYOUT]
+                            [--LabelLayout LABELLAYOUT]
+                            [--RectangularLayout RECTANGULARLAYOUT]
+                            [--HeatmapLayout HEATMAPLAYOUT]
+                            [--BarplotLayout BARPLOTLAYOUT] [--TaxonLayout]
+                            [--interactive] [--port PORT] [--plot PLOT] [--out_colordict]
+
+annotate plot
+
+optional arguments:
+  -h, --help            show this help message and exit
+
+SOURCE TREE INPUT:
+  Source tree input parameters
+
+  -t TREE, --tree TREE  Input tree, .nw file, customized tree input
+  --annotated_tree      input tree already annotated by treeprofiler
+  --tree_type TREE_TYPE
+                        statistic calculation to perform for numerical data in internal
+                        nodes, [newick, ete]
+  --prop2type PROP2TYPE
+                        config tsv file where determine the datatype of target properties,
+                        if your input tree type is .ete, it's note necessary
+
+Pruning parameters:
+  Auto pruning parameters
+
+  --rank_limit RANK_LIMIT
+                        TAXONOMIC_LEVEL prune annotate tree by rank limit
+  --pruned_by PRUNED_BY
+                        target tree pruned by customized conditions
+
+Conditional display arguments:
+  Conditional display parameters
+
+  --internal_plot_measure INTERNAL_PLOT_MEASURE
+                        statistic measures to be shown in numerical layout for internal
+                        nodes, [default: avg]
+  --collapsed_by COLLAPSED_BY
+                        target tree collapsed by customized conditions
+  --highlighted_by HIGHLIGHTED_BY
+                        target tree highlighted by customized conditions
+
+Basic treelayout arguments:
+  treelayout parameters
+
+  --drawer DRAWER       Circular or Rectangular
+  --collapse_level COLLAPSE_LEVEL
+                        default collapse level, default is 10
+  --ultrametric         ultrametric tree
+
+Properties' layout arguments:
+  Prop layout parameters
+
+  --BinaryLayout BINARYLAYOUT
+                        <col1,col2> names, column index or index range of columns which
+                        need to be plot as BinaryLayout
+  --RevBinaryLayout REVBINARYLAYOUT
+                        <col1,col2> names, column index or index range of columns which
+                        need to be plot as RevBinaryLayout
+  --ColorbranchLayout COLORBRANCHLAYOUT
+                        <col1,col2> names, column index or index range of columns which
+                        need to be plot as Textlayouts
+  --LabelLayout LABELLAYOUT
+                        <col1,col2> names, column index or index range of columns which
+                        need to be plot as LabelLayout
+  --RectangularLayout RECTANGULARLAYOUT
+                        <col1,col2> names, column index or index range of columns which
+                        need to be plot as RectangularLayout
+  --HeatmapLayout HEATMAPLAYOUT
+                        <col1,col2> names, column index or index range of columns which
+                        need to be read as HeatmapLayout
+  --BarplotLayout BARPLOTLAYOUT
+                        <col1,col2> names, column index or index range of columns which
+                        need to be read as BarplotLayouts
+  --TaxonLayout         activate TaxonLayout
+
+Output arguments:
+  Output parameters
+
+  --interactive         run interactive session
+  --port PORT           run interactive session on custom port
+  --plot PLOT           output as pdf
+  --out_colordict       print color dictionary of each property
+```
 
 ### Layouts for categorical data
 Users can add the following flag to activate layouts for categorical data
@@ -311,15 +499,34 @@ python treeprofiler.py plot --tree examples/basic_example1_annotated.nw  --Heatm
 
 ### Layouts for Taxonomic data
 Activate Taxonomic layout using `--TaxonLayout`
+```
+## Annotate
+# GTDB
+python treeprofiler.py annotate --tree examples/gtdb_example1.nw --metadata examples/gtdb_example1.tsv --taxonomic_profile --taxon_column 0 --taxadb GTDB --outdir ./examples/
+
+# NCBI
+python treeprofiler.py annotate --tree examples/spongilla_example.nw --metadata examples/spongilla_example.tsv --taxonomic_profile --taxon_column name --taxon_delimiter .  --taxa_field 0 --taxadb NCBI 
+--outdir ./examples/
+
+
+## Visualize 
+python treeprofiler.py plot --tree examples/gtdb_example1_annotated.ete --tree_type ete --TaxonLayout
+
+```
 
 
 ## Conditional query in annotated tree
 MetaTreeProfiler allows users to perform conditional processs based on differet circumstances
 
-- `--collapsed_by`, collapse tree branches whose nodes if the conditions, mainly on internal nodes
-- `--highlighted_by`, select tree nodes which fit the conditions
-- `--pruned_by`, prune the annotated tree by conditions, and remove the branches or clades which don't fit the condition.
-- `--rank_limit`, prune the taxonomic annotated tree based on rank of classification.
+- Conditional pruning, conditional pruning works both `annotate` and `plot` subcommand
+    - `--pruned_by`, prune the annotated tree by conditions, and remove the branches or clades which don't fit the condition.
+    - `--rank_limit`, prune the taxonomic annotated tree based on rank of classification.
+
+- Conditional collapsing, conditional collapsing works in `plot` subcommand, allow users to collapsed tree internal nodes to clade under customized conditions
+    - `--collapsed_by`, collapse tree branches whose nodes if the conditions, mainly on internal nodes
+- Conditional highlight, conditional highlight works in `plot` subcommand, allow users to highlight tree nodes under customized conditions
+    - `--highlighted_by`, select tree nodes which fit the conditions
+
 
 ### Query Syntax
 #### Basic Query
@@ -341,11 +548,15 @@ All the conditional query shared the same syntax, a standard query consists the 
 
 Example 
 ```
+# Conditional pruning
+python treeprofiler.py plot --tree examples/basic_example1_annotated.ete --tree_type ete --pruned_by "name contains FALPE"
+
+# Conditional highlight
 # select tree node whose name contains `FALPE` character
-...--highlighted_by "name contains FALPE"
+python treeprofiler.py plot --tree examples/basic_example1_annotated.ete --tree_type ete --highlighted_by "name contains FALPE"
 
 # select tree node whose sample1 feature > 0.50
-...--highlighted_by "sample1 > 0.50"
+python treeprofiler.py plot --tree examples/basic_example1_annotated.ete --tree_type ete --highlighted_by "sample1 > 0.50"
 ```
 
 #### Query in internal nodes
@@ -353,14 +564,19 @@ Query in internal nodes' properties is also available, in this case, `left_value
 
 Example
 ```
+# annotate tree
+python treeprofiler.py annotate --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_prop_idx [1-5] --outdir examples/
 # select tree internal node where sample1_avg feature > 0.50
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_prop_idx [1-5] --HeatmapLayout [1-5] --collapsed_by "sample1_avg < 0.50" 
+python treeprofiler.py plot --tree examples/basic_example1_annotated.ete --tree_type ete --HeatmapLayout sample1 --collapsed_by "sample1_avg < 0.50" 
 ```
 
 Syntax for internal node counter data
 ```
-# collapse tree internal nodes, where `low` relative counter < 0.30 in random_type_counter property
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_prop random_type --counter_stat relative  --collapsed_by "random_type_counter:low < 0.30" 
+# annotate tree
+python treeprofiler.py annotate --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_prop random_type --counter_stat relative --outdir examples/
+
+# collapse tree internal nodes, where `low` relative counter < 0.35 in random_type_counter property
+python treeprofiler.py plot --tree examples/basic_example1_annotated.ete --tree_type ete  --collapsed_by "random_type_counter:low < 0.35"
 ```
 
 #### AND and OR conditions
@@ -368,22 +584,28 @@ The syntax for the AND condition and OR condition in MetaTreeProfiler is:
 
 AND condition will be under one argument, syntax seperated by `,`, such as 
 ```
+# annotate tree
+python treeprofiler.py annotate --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_prop_idx [1-5] --outdir examples/
+
 # select tree  node where sample1 feature > 0.50 AND sample2 < 0.2
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_prop_idx [1-5] --HeatmapLayout [1-5]--highlighted_by "sample1>0.50,sample2<0.2" 
+python treeprofiler.py plot --tree examples/basic_example1_annotated.ete --tree_type ete --HeatmapLayout sample1,sample2,sample3,sample4,sample5 --highlighted_by "sample1>0.50,sample2<0.2" 
 ```
 
 OR condition will be used more than one arguments
 ```
 # select tree node where sample1 feature > 0.50 OR sample2 < 0.2
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_prop_idx [1-5] --HeatmapLayout [1-5] --highlighted_by "sample1>0.50" --highlighted_by "sample2<0.2" 
+python treeprofiler.py plot --tree examples/basic_example1_annotated.ete --tree_type ete --HeatmapLayout sample1,sample2,sample3,sample4,sample5 --highlighted_by "sample1>0.50" --highlighted_by "sample2<0.2" 
 ```
 
 ### conditional limit based on taxonomic level
 Prune taxonomic annotated tree based on following taxonomic rank level,
 `kingdom`, `phylum`, `class`, `order`, `family`, `genus`, `species`, `subspecies` 
 ```
-# prune tree by family
-python treeprofiler.py --tree examples/gtdb_example1.nw --metadata examples/gtdb_example1.tsv --taxonomic_profile --rank_limit family --TaxonLayout  
+# prune tree in annotation, rank limit to family level
+python treeprofiler.py annotate --tree examples/gtdb_example1.nw --metadata examples/gtdb_example1.tsv --taxonomic_profile --taxon_column 0 --taxadb GTDB --outdir ./examples/
+
+# prune tree in visualization, rank limit to family level
+python treeprofiler.py plot --tree examples/gtdb_example1_annotated.ete --tree_type ete--rank_limit family --TaxonLayout  
 ```
 
 ## Explore progenome data
@@ -397,7 +619,11 @@ name    GC      GCA     aquatic_habitat host_associated size    soil_habitat    
 2759495.SAMN15595193.GCA_014116815.1    34.3    GCA_014116815.1                 1928597         GB_GCA_014116815.1
 ```
 
-Here we will conduct the profiling with one command line
+Here we will conduct the profiling with two command line
 ```
-python treeprofiler.py --tree examples/progenome3.nw --metadata examples/progenome3.tsv --taxonomic_profile --taxadb NCBI --taxon_delimiter . --taxa_field 0 --num_prop GC,size --bool_prop aquatic_habitat,host_associated,soil_habitat --BarplotLayout GC,size --TaxonLayout --BinaryLayout aquatic_habitat,host_associated,soil_habitat  
+python treeprofiler.py annotate --tree examples/progenome3.nw --metadata examples/progenome3.tsv --taxonomic_profile --taxadb NCBI --taxon_delimiter . --taxa_field 0 --num_prop GC,size --bool_prop aquatic_habitat,host_associated,soil_habitat 
+--outdir examples/
+
+python treeprofiler.py plot --tree examples/progenome3_annotated.ete --tree_type ete
+--BarplotLayout GC,size --TaxonLayout --BinaryLayout aquatic_habitat,host_associated,soil_habitat  
 ```
