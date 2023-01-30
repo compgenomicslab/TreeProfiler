@@ -65,31 +65,26 @@ MetaTreeProfiler takes following file types as input
 | Metadata |      TSV       |
 
 ### Basic usage
+MetaTreeProfiler has two main subcommand:
+ - annotate
+ - plot
 
-Choose your input tree and corresponding metadata, MetaTreeProfiler will map all the metadata into corresponding tree node, and visualize it on the local server browser in interactive interface.
+The first one `annotate` is used to annotate your input tree and corresponding metadata, MetaTreeProfiler will map all the metadata into corresponding tree node. In this step, annotated tree will be generated in newick and ete format
 
 ```
-metatreeprofiler.py --tree tree.nw --metadata metadata.tsv --interactive
-```
-
-### Output arguments
-
-#### Tree visuliaze interface 
-add flag `--interactive`
-```
-metatreeprofiler.py --tree tree.nw --metadata metadata.tsv --interactive
+treeprofiler.py annotate --tree tree.nw --metadata metadata.tsv --outdir ./
 ```
 
-#### Output as annotated tree 
-```
-metatreeprofiler.py --tree tree.nw --metadata metadata.tsv --outtree annotated_tree.nw
-```
+The second subcommand `plot` is used to visualize tree with associated metadata. By default, treeprofiler will launch an interactive session at localhost for user to explore input tree.
 
-#### Output as tsv file
 ```
-metatreeprofiler.py --tree tree.nw --metadata metadata.tsv --outtsv annotated_tree.tsv
+treeprofiler.py plot --tree tree_annotated.nw --tree_type newick 
 ```
+or
 
+```
+treeprofiler.py plot --tree tree_annotated.ete --tree_type ete 
+```
 
 
 # Using MetaTreeProfiler
@@ -106,22 +101,14 @@ spongilla_example.nw  spongilla_example.tsv
 progenome3_annotated.nw  spongilla_annotated.nw 
 ```
 
-## Mapping metadata into tree
+## `annotate`, Mapping metadata into tree 
 ### **Simple mapping metadata into leaf nodes** 
 treeprofiler will start local server which metadata will be mapped to corresponding leaf nodes
 ```
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --interactive
+python treeprofiler.py annotate --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --outdir ./examples/
 ```
 
-It's recommended to save the annotated tree as outtree for re-running MetaTreeProfiler much faster, using `--outtree` or `-o`
-
-```
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --outtree examples/annotated_basic_example1.nw
-```
-re-run annotated tree by adding flag `--annotated_tree`
-```
-python treeprofiler.py --tree examples/annotated_basic_example1.nw --metadata examples/basic_example1.tsv --annotated_tree --interactive
-```
+Annotated tree will be generated in newick and ete format, alongside with a config file where describes datatype of each properties
 
 ### Mapping metadata into tree and profile tree internal nodes annotations and analysis
 At the above example, we only mapped metadata to leaf nodes, in this example, we will also profile **internal nodes** annotation and analysis of their children nodes.
@@ -131,13 +118,13 @@ For categorical dataset, each internal node will count the selected feature of i
 
 ```
 # label categorical data by column name(s) in metadata (for multiple columns, seperate by ","), using --text_prop <header>
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_prop random_type --interactive
+python treeprofiler.py annotate --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_prop random_type --outdir ./examples/
 
 # label categorical data by column index, using --text_prop_idx <idx>
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_prop_idx 6 --interactive  
+python treeprofiler.py annotate --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_prop_idx 6 --outdir ./examples/
 
 # label column index by range, "[star_idx-end_idx]"
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_prop_idx [1-6] --interactive 
+python treeprofiler.py annotate --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_prop_idx [1-6] --outdir ./examples/
 ```
 
 Categorical data will be process as counter in each internal node. Users can choose either counter is raw or relative count by using `--counter_stat`
@@ -147,11 +134,11 @@ Categorical data will be process as counter in each internal node. Users can cho
 
 ```
 # raw count, example internal_node shown as: ```random_type_counter: medium--3||high--2```
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_prop random_type --counter_stat raw --interactive
+python treeprofiler.py annotate --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_prop random_type --counter_stat raw --outdir ./examples/
 
 # relative count, example internal_node shown as: ```random_type_counter: medium--0.60||high--0.40```
  internal_node example shown as, random_type_counter: medium--3||high--2
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_prop random_type --counter_stat relative --interactive
+python treeprofiler.py annotate --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_prop random_type --counter_stat relative --outdir ./examples/
 ```
 
 
@@ -161,13 +148,13 @@ For Boolean dataset, each internal node will count the selected feature(s) of it
 
 ```
 # label boolean data by column name(s) in metadata (for multiple columns, seperate by ","), using --bool_prop <header>
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --bool_prop bool_type,bool_type2 --interactive
+python treeprofiler.py annotate --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --bool_prop bool_type,bool_type2 --outdir ./examples/
 
 # label boolean data by column index, using --bool_prop_idx <idx>
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --bool_prop_idx 7,8 --interactive  
+python treeprofiler.py annotate --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --bool_prop_idx 7,8 --outdir ./examples/
 
 # label column index by range, "[star_idx-end_idx]"
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --bool_prop_idx [7-8] --interactive 
+python treeprofiler.py annotate --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --bool_prop_idx [7-8] --outdir ./examples/
 ```
 
 Boolean counter stats follows rule as categorical data
@@ -187,13 +174,13 @@ For numerical dataset, each internal node will perform folwing descriptive stati
 To label numerical data
 ```
 # label numerical data by column name(s) in metadata (for multiple columns, seperate by ","), using --num_prop <header>
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_prop sample1,sample2,sample3,sample4,sample5 --interactive
+python treeprofiler.py annotate --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_prop sample1,sample2,sample3,sample4,sample5 --outdir ./examples/
 
 # label numerical data by column index, using --num_prop_idx <idx>
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_prop_idx 1,2,3,4,5 --interactive  
+python treeprofiler.py annotate --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_prop_idx 1,2,3,4,5 --outdir ./examples/ 
 
 # label column index by range, "[star_idx-end_idx]"
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_prop_idx [1-5] --interactive 
+python treeprofiler.py annotate --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_prop_idx [1-5]  --outdir ./examples/
 ```
 
 By default, numerical feature will be calculated all the descriptive statistic, but users can choose specific one to be calculated by using `--num_stat [all, sum, avg, max, min, std] `
@@ -201,10 +188,10 @@ By default, numerical feature will be calculated all the descriptive statistic, 
 --num_stat NUM_STAT   statistic calculation to perform for numerical data in internal nodes, [all, sum, avg, max, min, std] 
 ```
 # by default
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_prop sample1 --num_stat all --interactive
+python treeprofiler.py annotate --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_prop sample1 --num_stat all --outdir ./examples/ 
 
 # only average calculation
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_prop sample1 --num_stat avg --interactive
+python treeprofiler.py annotate --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_prop sample1 --num_stat avg --outdir ./examples/ 
 ```
 ### Mapping metadata without column names
 if metadata doesn't contain column names, please add `--no_colnames` as flag. MetaTreeProfiler will automatically assign feature name by index order
@@ -222,17 +209,17 @@ If input metadada containcs taxon data, MetaTreeProfiler allows users to process
 Here we demonstrate with `examples/gtdb_example1.nw` and `examples/gtdb_example1.tsv`
 ```
 # in case of gtdb_example1.tsv
-python treeprofiler.py --tree examples/gtdb_example1.nw --metadata examples/gtdb_example1.tsv --taxonomic_profile --taxon_column 0 --taxadb GTDB --interactive
+python treeprofiler.py annotate --tree examples/gtdb_example1.nw --metadata examples/gtdb_example1.tsv --taxonomic_profile --taxon_column 0 --taxadb GTDB --outdir ./examples/
 ```
 
 #### Basic usage on NCBI
 For instance of `examples/spongilla_example.nw` and `examples/spongilla_example.tsv`, it contains accession ID such as `83887.comp22273_c0_seq2_m.43352`, hence using `--` 
 ```
-python treeprofiler.py --tree examples/spongilla_example.nw --metadata examples/spongilla_example.tsv --taxonomic_profile --taxon_column name --taxon_delimiter .  --taxa_field 0 --taxadb NCBI --interactive
+python treeprofiler.py annotate --tree examples/spongilla_example.nw --metadata examples/spongilla_example.tsv --taxonomic_profile --taxon_column name --taxon_delimiter .  --taxa_field 0 --taxadb NCBI 
+--outdir ./examples/
 ```
 
-
-## Visualizing annotated tree with layouts
+## `plot`, visualizing annotated tree with layouts
 MetaTreeProfiler provides a several of layout options for visualize features in metadata along with tree, depends on their datatype
 
 ### Layouts for categorical data
@@ -248,15 +235,18 @@ Users can add the following flag to activate layouts for categorical data
 
 example
 ```
+## annotate tree first
+python treeprofiler.py annotate --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_prop random_type --outdir ./examples/
+
 ## target column "random_type" in examples/basic_example1.tsv
 # List random_type feature as text in aligned panel using LabelLayout
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_prop random_type --LabelLayout random_type --interactive
+python treeprofiler.py plot --tree examples/basic_example1_annotated.nw --LabelLayout random_type 
 
 # Label random_type feature on branch with different colors in aligned panel  using --ColorbranchLayout
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_prop random_type --ColorbranchLayout random_type --interactive
+ppython treeprofiler.py plot --tree examples/basic_example1_annotated.nw  --ColorbranchLayout random_type 
 
 # Label random_type feature with retangular block in aligned panel using --RectangularLayout
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_prop random_type --RectangularLayout random_type --interactive
+python treeprofiler.py plot --tree examples/basic_example1_annotated.nw  --RectangularLayout random_type 
 ```
 ### Layouts for boolean data
 Users can add the following flag to activate layouts for Boolean data
@@ -268,15 +258,19 @@ Users can add the following flag to activate layouts for Boolean data
 ```
 
 ```
+## annotate tree first
+# multiple columns seperated by ','
+python treeprofiler.py annotate --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --bool_prop bool_type,bool_type2 --outdir ./examples/
+
 ## target column "bool_type", "bool_type2" in examples/basic_example1.tsv
 # List postive bool_type feature in aligned panel using BinaryLayout
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --bool_prop bool_type --BinaryLayout bool_type --interactive
+python treeprofiler.py plot --tree examples/basic_example1_annotated.nw  --BinaryLayout bool_type
 
 # List negative bool_type feature in aligned panel using BinaryLayout
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --bool_prop bool_type --BinaryLayout bool_type --interactive
+python treeprofiler.py plot --tree examples/basic_example1_annotated.nw  --RevBinaryLayout bool_type2
 
 # multiple columns seperated by ','
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --bool_prop bool_type,bool_type2 --BinaryLayout bool_type,bool_type2  --interactive
+python treeprofiler.py plot --tree examples/basic_example1_annotated.nw  --BinaryLayout bool_type,bool_type2  
 ```
 
 ### Layouts for Numerical data
@@ -288,12 +282,16 @@ Users can add the following flag to activate layouts for Numerical data
                         <col1,col2> names, column index or index range of columns which need to be read as BarplotLayouts
 ```
 ```
+## annotate tree first
+# multiple columns seperated by ','
+python treeprofiler.py annotate --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_prop_idx [1-5] --outdir ./examples/
+
 ## target column 'sample[1-5]' feature in examples/basic_example1.tsv
 # visualize sample1 feature in Barplot
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_prop sample1 --BarplotLayout sample1 --interactive
+python treeprofiler.py plot --tree examples/basic_example1_annotated.nw  --BarplotLayout sample1,sample2,sample3,sample4,sample5
 
 # visualize sample1-sample5 in Heatmap
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_prop_idx [1-5] --HeatmapLayout [1-5] --interactive 
+#python treeprofiler.py plot --tree examples/basic_example1.nw --metadata #examples/basic_example1.tsv --HeatmapLayout [1-5]  
 ```
 
 ### Visualizing annotated internal nodes
@@ -308,7 +306,7 @@ Internal nodes of numerical data are process descriptive statistic analysis by d
 example
 ```
 # select max instead of avg as internal node ploting representative
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_prop_idx [1-5] --HeatmapLayout [1-5] --internal_plot_measure max --interactive
+python treeprofiler.py plot --tree examples/basic_example1_annotated.nw  --HeatmapLayout sample1,sample2,sample3,sample4,sample5 --internal_plot_measure max 
 ```
 
 ### Layouts for Taxonomic data
@@ -317,9 +315,10 @@ Activate Taxonomic layout using `--TaxonLayout`
 
 ## Conditional query in annotated tree
 MetaTreeProfiler allows users to perform conditional processs based on differet circumstances
-- `--pruned_by`, prune the annotated tree by conditions, and remove the branches or clades which don't fit the condition.
+
 - `--collapsed_by`, collapse tree branches whose nodes if the conditions, mainly on internal nodes
 - `--highlighted_by`, select tree nodes which fit the conditions
+- `--pruned_by`, prune the annotated tree by conditions, and remove the branches or clades which don't fit the condition.
 - `--rank_limit`, prune the taxonomic annotated tree based on rank of classification.
 
 ### Query Syntax
@@ -355,13 +354,13 @@ Query in internal nodes' properties is also available, in this case, `left_value
 Example
 ```
 # select tree internal node where sample1_avg feature > 0.50
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_prop_idx [1-5] --HeatmapLayout [1-5] --collapsed_by "sample1_avg < 0.50" --interactive
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_prop_idx [1-5] --HeatmapLayout [1-5] --collapsed_by "sample1_avg < 0.50" 
 ```
 
 Syntax for internal node counter data
 ```
 # collapse tree internal nodes, where `low` relative counter < 0.30 in random_type_counter property
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_prop random_type --counter_stat relative  --collapsed_by "random_type_counter:low < 0.30" --interactive
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_prop random_type --counter_stat relative  --collapsed_by "random_type_counter:low < 0.30" 
 ```
 
 #### AND and OR conditions
@@ -370,13 +369,13 @@ The syntax for the AND condition and OR condition in MetaTreeProfiler is:
 AND condition will be under one argument, syntax seperated by `,`, such as 
 ```
 # select tree  node where sample1 feature > 0.50 AND sample2 < 0.2
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_prop_idx [1-5] --HeatmapLayout [1-5]--highlighted_by "sample1>0.50,sample2<0.2" --interactive
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_prop_idx [1-5] --HeatmapLayout [1-5]--highlighted_by "sample1>0.50,sample2<0.2" 
 ```
 
 OR condition will be used more than one arguments
 ```
 # select tree node where sample1 feature > 0.50 OR sample2 < 0.2
-python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_prop_idx [1-5] --HeatmapLayout [1-5] --highlighted_by "sample1>0.50" --highlighted_by "sample2<0.2" --interactive
+python treeprofiler.py --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_prop_idx [1-5] --HeatmapLayout [1-5] --highlighted_by "sample1>0.50" --highlighted_by "sample2<0.2" 
 ```
 
 ### conditional limit based on taxonomic level
@@ -384,7 +383,7 @@ Prune taxonomic annotated tree based on following taxonomic rank level,
 `kingdom`, `phylum`, `class`, `order`, `family`, `genus`, `species`, `subspecies` 
 ```
 # prune tree by family
-python treeprofiler.py --tree examples/gtdb_example1.nw --metadata examples/gtdb_example1.tsv --taxonomic_profile --rank_limit family --TaxonLayout  --interactive
+python treeprofiler.py --tree examples/gtdb_example1.nw --metadata examples/gtdb_example1.tsv --taxonomic_profile --rank_limit family --TaxonLayout  
 ```
 
 ## Explore progenome data
@@ -400,5 +399,5 @@ name    GC      GCA     aquatic_habitat host_associated size    soil_habitat    
 
 Here we will conduct the profiling with one command line
 ```
-python treeprofiler.py --tree examples/progenome3.nw --metadata examples/progenome3.tsv --taxonomic_profile --taxadb NCBI --taxon_delimiter . --taxa_field 0 --num_prop GC,size --bool_prop aquatic_habitat,host_associated,soil_habitat --BarplotLayout GC,size --TaxonLayout --BinaryLayout aquatic_habitat,host_associated,soil_habitat --interactive 
+python treeprofiler.py --tree examples/progenome3.nw --metadata examples/progenome3.tsv --taxonomic_profile --taxadb NCBI --taxon_delimiter . --taxa_field 0 --num_prop GC,size --bool_prop aquatic_habitat,host_associated,soil_habitat --BarplotLayout GC,size --TaxonLayout --BinaryLayout aquatic_habitat,host_associated,soil_habitat  
 ```
