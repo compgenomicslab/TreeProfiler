@@ -11,6 +11,7 @@
     6. [Taxonomic profiling](#taxonomic-profiling)
         1. [Basic usage on GTDB](#basic-usage-on-GTDB)
         2. [Basic usage on NCBI](#basic-usage-on-NCBI)
+    7. [Annotated tree format](#annotate-tree-format)
 4. [Visualizing annotated tree with layouts](#visualizing-annotated-tree-with-layouts)
     1. [Layouts for categorical data](#layouts-for-categorical-data)
     2. [Layouts for boolean data](#layouts-for-boolean-data)
@@ -321,7 +322,7 @@ In the following `plot` step, users can use either `.nw` or `.ete` by putting `-
  - newick file is more universal and be able to used in different other phylogenetic software although associated data of tree nodes will be considered as plain text, so if you use newick format, alongside with the prop2type config file which was generated before by adding `--prop2type <prop2type_file>`
 
  - ete format is a novel format developed to solve the situation we encounter in the previous step, annotated tree can be recover easily with all the annotated data without changing the data type. Besides, the ete format optimized the tree file size after mapped with its associated data. Hence it's very handy for programers in their own script. At this moment we can only view the ete format in treeprofiler, but we will make the ete format more universal to other phylogenetic software.
-  
+
 ## `plot`, visualizing annotated tree with layouts
 MetaTreeProfiler provides a several of layout options for visualize features in metadata along with tree, depends on their datatype
 ```
