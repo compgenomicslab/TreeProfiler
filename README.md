@@ -200,7 +200,7 @@ python treeprofiler.py annotate --tree examples/basic_example1.nw --metadata exa
 
 Annotated tree will be generated in newick and ete format, alongside with a config file where describes datatype of each properties
 
-### Mapping metadata into tree and profile tree internal nodes annotations and analysis
+### **Mapping metadata into tree and profile tree internal nodes annotations and analysis**
 At the above example, we only mapped metadata to leaf nodes, in this example, we will also profile **internal nodes** annotation and analysis of their children nodes.
 
 ### Mapping Categorical data
@@ -310,8 +310,18 @@ python treeprofiler.py annotate --tree examples/spongilla_example.nw --metadata 
 ```
 
 ### **Annotate tree format**
-treeprofiler annotate subcommand will generate 
+treeprofiler `annotate` subcommand will generate the following output file
 
+1) `<input_tree>` + *_annotated.nw*, newick format with annotated tree
+2) `<input_tree>` + *_annotated.ete*, ete format with annotated tree
+3) `<input_tree>` + *_annotated_prop2type.txt*, config file where store the datatype of each annotated properties
+
+In the following `plot` step, users can use either `.nw` or `.ete` by putting `--tree_type [newick, ete]` flag to identify. The difference between `.nw` and `.ete` format is 
+
+ - newick file is more universal and be able to used in different other phylogenetic software although associated data of tree nodes will be considered as plain text, so if you use newick format, alongside with the prop2type config file which was generated before by adding `--prop2type <prop2type_file>`
+
+ - ete format is a novel format developed to solve the situation we encounter in the previous step, annotated tree can be recover easily with all the annotated data without changing the data type. Besides, the ete format optimized the tree file size after mapped with its associated data. Hence it's very handy for programers in their own script. At this moment we can only view the ete format in treeprofiler, but we will make the ete format more universal to other phylogenetic software.
+  
 ## `plot`, visualizing annotated tree with layouts
 MetaTreeProfiler provides a several of layout options for visualize features in metadata along with tree, depends on their datatype
 ```
