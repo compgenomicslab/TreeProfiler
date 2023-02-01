@@ -622,7 +622,7 @@ def tree_plot(args):
     
     #### Layouts settings ####
     # Taxa layouts
-    if args.TaxonLayout:
+    if args.taxon_layout:
         taxon_color_dict = {}
         taxa_layouts = []
         
@@ -660,38 +660,38 @@ def tree_plot(args):
 
     internal_num_rep = args.internal_plot_measure
     # get layouts
-    if args.HeatmapLayout:
-        heatmap_layouts, level, _ = get_layouts(args.HeatmapLayout, 'heatmap', level, internal_num_rep)
+    if args.heatmap_layout:
+        heatmap_layouts, level, _ = get_layouts(args.heatmap_layout, 'heatmap', level, internal_num_rep)
         layouts.extend(heatmap_layouts)
 
-    if args.BarplotLayout:
-        barplot_layouts, level,color_dict = get_layouts(args.BarplotLayout, 'barplot', level, internal_num_rep)
+    if args.barplot_layout:
+        barplot_layouts, level,color_dict = get_layouts(args.barplot_layout, 'barplot', level, internal_num_rep)
         layouts.extend(barplot_layouts)
         total_color_dict.append(color_dict)
 
     # categorical and boolean 
-    if args.ColorbranchLayout:
-        colorbranch_layouts, level, color_dict = get_layouts(args.ColorbranchLayout, 'colorbranch', level, 'counter')
+    if args.colorbranch_layout:
+        colorbranch_layouts, level, color_dict = get_layouts(args.colorbranch_layout, 'colorbranch', level, 'counter')
         layouts.extend(colorbranch_layouts)
         total_color_dict.append(color_dict)
 
-    if args.RectangularLayout:
-        rectangular_layouts, level, color_dict = get_layouts(args.RectangularLayout, 'rectangular', level, 'counter')
+    if args.rectangular_layout:
+        rectangular_layouts, level, color_dict = get_layouts(args.rectangular_layout, 'rectangular', level, 'counter')
         layouts.extend(rectangular_layouts)
         total_color_dict.append(color_dict)
         
-    if args.LabelLayout:
-        label_layouts, level, color_dict = get_layouts(args.LabelLayout, 'label', level, 'counter')
+    if args.label_layout:
+        label_layouts, level, color_dict = get_layouts(args.label_layout, 'label', level, 'counter')
         layouts.extend(label_layouts)
         total_color_dict.append(color_dict)
 
-    if args.BinaryLayout:
-        label_layouts, level, color_dict = get_layouts(args.BinaryLayout, 'binary', level, 'counter')
+    if args.binary_layout:
+        label_layouts, level, color_dict = get_layouts(args.binary_layout, 'binary', level, 'counter')
         layouts.extend(label_layouts)
         total_color_dict.append(color_dict)
 
-    if args.RevBinaryLayout:
-        label_layouts, level, color_dict = get_layouts(args.RevBinaryLayout, 'revbinary', level, 'counter')
+    if args.revbinary_layout:
+        label_layouts, level, color_dict = get_layouts(args.revbinary_layout, 'revbinary', level, 'counter')
         layouts.extend(label_layouts)
         total_color_dict.append(color_dict)
     
@@ -713,7 +713,7 @@ def tree_plot(args):
     # elif args.plot:
     #     plot(tree, layouts, args.port, args.plot)
     if args.plot:
-        plot(tree, layouts, args.port, args.plot)
+        get_image(tree, layouts, args.port, args.plot)
     else:
         tree.explore(tree_name='example',layouts=layouts, port=args.port, popup_prop_keys=sorted(popup_prop_keys))
     
@@ -1136,41 +1136,41 @@ def poplulate_plot_args(plot_args_p):
     group = plot_args_p.add_argument_group(title="Properties' layout arguments",
         description="Prop layout parameters")
     
-    group.add_argument('--BinaryLayout',
+    group.add_argument('--binary_layout',
         type=str,
         required=False,
-        help="<col1,col2> names, column index or index range of columns which need to be plot as BinaryLayout")
-    group.add_argument('--RevBinaryLayout',
+        help="<col1,col2> names, column index or index range of columns which need to be plot as binary_layout")
+    group.add_argument('--revbinary_layout',
         type=str,
         required=False,
-        help="<col1,col2> names, column index or index range of columns which need to be plot as RevBinaryLayout")
+        help="<col1,col2> names, column index or index range of columns which need to be plot as revbinary_layout")
 
-    group.add_argument('--ColorbranchLayout',
+    group.add_argument('--colorbranch_layout',
         type=str,
         required=False,
         help="<col1,col2> names, column index or index range of columns which need to be plot as Textlayouts")
-    group.add_argument('--LabelLayout',
+    group.add_argument('--label_layout',
         type=str,
         required=False,
-        help="<col1,col2> names, column index or index range of columns which need to be plot as LabelLayout")
-    group.add_argument('--RectangularLayout',
+        help="<col1,col2> names, column index or index range of columns which need to be plot as label_layout")
+    group.add_argument('--rectangular_layout',
         type=str,
         required=False,
-        help="<col1,col2> names, column index or index range of columns which need to be plot as RectangularLayout")
+        help="<col1,col2> names, column index or index range of columns which need to be plot as rectangular_layout")
     
-    group.add_argument('--HeatmapLayout',
+    group.add_argument('--heatmap_layout',
         type=str,
         required=False,
-        help="<col1,col2> names, column index or index range of columns which need to be read as HeatmapLayout")
-    group.add_argument('--BarplotLayout',
+        help="<col1,col2> names, column index or index range of columns which need to be read as heatmap_layout")
+    group.add_argument('--barplot_layout',
         type=str,
         required=False,
-        help="<col1,col2> names, column index or index range of columns which need to be read as BarplotLayouts")
+        help="<col1,col2> names, column index or index range of columns which need to be read as barplot_layouts")
     
-    group.add_argument('--TaxonLayout',
+    group.add_argument('--taxon_layout',
         default=False,
         action='store_true',
-        help="activate TaxonLayout")
+        help="activate taxon_layout")
     
     group = plot_args_p.add_argument_group(title='Output arguments',
         description="Output parameters")

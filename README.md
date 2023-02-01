@@ -333,13 +333,13 @@ usage: treeprofiler.py plot [-h] [-t TREE] [--annotated_tree] [--tree_type TREE_
                             [--collapsed_by COLLAPSED_BY]
                             [--highlighted_by HIGHLIGHTED_BY] [--drawer DRAWER]
                             [--collapse_level COLLAPSE_LEVEL] [--ultrametric]
-                            [--BinaryLayout BINARYLAYOUT]
-                            [--RevBinaryLayout REVBINARYLAYOUT]
-                            [--ColorbranchLayout COLORBRANCHLAYOUT]
-                            [--LabelLayout LABELLAYOUT]
-                            [--RectangularLayout RECTANGULARLAYOUT]
-                            [--HeatmapLayout HEATMAPLAYOUT]
-                            [--BarplotLayout BARPLOTLAYOUT] [--TaxonLayout]
+                            [--binary_layout BINARYLAYOUT]
+                            [--revbinary_layout REVBINARYLAYOUT]
+                            [--colorbranch_layout COLORBRANCHLAYOUT]
+                            [--label_layout LABELLAYOUT]
+                            [--rectangular_layout RECTANGULARLAYOUT]
+                            [--heatmap_layout HEATMAPLAYOUT]
+                            [--barplot_layout BARPLOTLAYOUT] [--taxon_layout]
                             [--interactive] [--port PORT] [--plot PLOT] [--out_colordict]
 
 annotate plot
@@ -389,28 +389,28 @@ Basic treelayout arguments:
 Properties' layout arguments:
   Prop layout parameters
 
-  --BinaryLayout BINARYLAYOUT
+  --binary_layout BINARYLAYOUT
                         <col1,col2> names, column index or index range of columns which
-                        need to be plot as BinaryLayout
-  --RevBinaryLayout REVBINARYLAYOUT
+                        need to be plot as binary_layout
+  --revbinary_layout REVBINARYLAYOUT
                         <col1,col2> names, column index or index range of columns which
-                        need to be plot as RevBinaryLayout
-  --ColorbranchLayout COLORBRANCHLAYOUT
+                        need to be plot as revbinary_layout
+  --colorbranch_layout COLORBRANCHLAYOUT
                         <col1,col2> names, column index or index range of columns which
                         need to be plot as Textlayouts
-  --LabelLayout LABELLAYOUT
+  --label_layout LABELLAYOUT
                         <col1,col2> names, column index or index range of columns which
-                        need to be plot as LabelLayout
-  --RectangularLayout RECTANGULARLAYOUT
+                        need to be plot as label_layout
+  --rectangular_layout RECTANGULARLAYOUT
                         <col1,col2> names, column index or index range of columns which
-                        need to be plot as RectangularLayout
-  --HeatmapLayout HEATMAPLAYOUT
+                        need to be plot as rectangular_layout
+  --heatmap_layout HEATMAPLAYOUT
                         <col1,col2> names, column index or index range of columns which
-                        need to be read as HeatmapLayout
-  --BarplotLayout BARPLOTLAYOUT
+                        need to be read as heatmap_layout
+  --barplot_layout BARPLOTLAYOUT
                         <col1,col2> names, column index or index range of columns which
-                        need to be read as BarplotLayouts
-  --TaxonLayout         activate TaxonLayout
+                        need to be read as barplot_layouts
+  --taxon_layout         activate taxon_layout
 
 Output arguments:
   Output parameters
@@ -424,12 +424,12 @@ Output arguments:
 ### Layouts for categorical data
 Users can add the following flag to activate layouts for categorical data
 ```
---ColorbranchLayout COLORBRANCHLAYOUT
+--colorbranch_layout COLORBRANCHLAYOUT
                             <col1,col2> names, column index or index range of columns which need to be plot as Textlayouts
---LabelLayout LABELLAYOUT
-                        <col1,col2> names, column index or index range of columns which need to be plot as LabelLayout
---RectangularLayout RECTANGULARLAYOUT
-                        <col1,col2> names, column index or index range of columns which need to be plot as RectangularLayout
+--label_layout LABELLAYOUT
+                        <col1,col2> names, column index or index range of columns which need to be plot as label_layout
+--rectangular_layout RECTANGULARLAYOUT
+                        <col1,col2> names, column index or index range of columns which need to be plot as rectangular_layout
 ```
 
 example
@@ -438,22 +438,22 @@ example
 python treeprofiler.py annotate --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_prop random_type --outdir ./examples/
 
 ## target column "random_type" in examples/basic_example1.tsv
-# List random_type feature as text in aligned panel using LabelLayout
-python treeprofiler.py plot --tree examples/basic_example1_annotated.nw --LabelLayout random_type 
+# List random_type feature as text in aligned panel using label_layout
+python treeprofiler.py plot --tree examples/basic_example1_annotated.nw --label_layout random_type 
 
-# Label random_type feature on branch with different colors in aligned panel  using --ColorbranchLayout
-ppython treeprofiler.py plot --tree examples/basic_example1_annotated.nw  --ColorbranchLayout random_type 
+# Label random_type feature on branch with different colors in aligned panel  using --colorbranch_layout
+ppython treeprofiler.py plot --tree examples/basic_example1_annotated.nw  --colorbranch_layout random_type 
 
-# Label random_type feature with retangular block in aligned panel using --RectangularLayout
-python treeprofiler.py plot --tree examples/basic_example1_annotated.nw  --RectangularLayout random_type 
+# Label random_type feature with retangular block in aligned panel using --rectangular_layout
+python treeprofiler.py plot --tree examples/basic_example1_annotated.nw  --rectangular_layout random_type 
 ```
 ### Layouts for boolean data
 Users can add the following flag to activate layouts for Boolean data
 ```
---BinaryLayout BINARYLAYOUT
-                        <col1,col2> names, column index or index range of columns which need to be plot as BinaryLayout, label shown only positive value
---RevBinaryLayout REVBINARYLAYOUT
-                        <col1,col2> names, column index or index range of columns which need to be plot as RevBinaryLayout, label shown only negative value
+--binary_layout BINARYLAYOUT
+                        <col1,col2> names, column index or index range of columns which need to be plot as binary_layout, label shown only positive value
+--revbinary_layout REVBINARYLAYOUT
+                        <col1,col2> names, column index or index range of columns which need to be plot as revbinary_layout, label shown only negative value
 ```
 
 ```
@@ -462,23 +462,23 @@ Users can add the following flag to activate layouts for Boolean data
 python treeprofiler.py annotate --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --bool_prop bool_type,bool_type2 --outdir ./examples/
 
 ## target column "bool_type", "bool_type2" in examples/basic_example1.tsv
-# List postive bool_type feature in aligned panel using BinaryLayout
-python treeprofiler.py plot --tree examples/basic_example1_annotated.nw  --BinaryLayout bool_type
+# List postive bool_type feature in aligned panel using binary_layout
+python treeprofiler.py plot --tree examples/basic_example1_annotated.nw  --binary_layout bool_type
 
-# List negative bool_type feature in aligned panel using BinaryLayout
-python treeprofiler.py plot --tree examples/basic_example1_annotated.nw  --RevBinaryLayout bool_type2
+# List negative bool_type feature in aligned panel using binary_layout
+python treeprofiler.py plot --tree examples/basic_example1_annotated.nw  --revbinary_layout bool_type2
 
 # multiple columns seperated by ','
-python treeprofiler.py plot --tree examples/basic_example1_annotated.nw  --BinaryLayout bool_type,bool_type2  
+python treeprofiler.py plot --tree examples/basic_example1_annotated.nw  --binary_layout bool_type,bool_type2  
 ```
 
 ### Layouts for Numerical data
 Users can add the following flag to activate layouts for Numerical data
 ```
---HeatmapLayout HEATMAPLAYOUT
-                        <col1,col2> names, column index or index range of columns which need to be read as HeatmapLayout
---BarplotLayout BARPLOTLAYOUT
-                        <col1,col2> names, column index or index range of columns which need to be read as BarplotLayouts
+--heatmap_layout HEATMAPLAYOUT
+                        <col1,col2> names, column index or index range of columns which need to be read as heatmap_layout
+--barplot_layout BARPLOTLAYOUT
+                        <col1,col2> names, column index or index range of columns which need to be read as barplot_layouts
 ```
 ```
 ## annotate tree first
@@ -487,10 +487,10 @@ python treeprofiler.py annotate --tree examples/basic_example1.nw --metadata exa
 
 ## target column 'sample[1-5]' feature in examples/basic_example1.tsv
 # visualize sample1 feature in Barplot
-python treeprofiler.py plot --tree examples/basic_example1_annotated.nw  --BarplotLayout sample1,sample2,sample3,sample4,sample5
+python treeprofiler.py plot --tree examples/basic_example1_annotated.nw  --barplot_layout sample1,sample2,sample3,sample4,sample5
 
 # visualize sample1-sample5 in Heatmap
-#python treeprofiler.py plot --tree examples/basic_example1.nw --metadata #examples/basic_example1.tsv --HeatmapLayout [1-5]  
+#python treeprofiler.py plot --tree examples/basic_example1.nw --metadata #examples/basic_example1.tsv --heatmap_layout [1-5]  
 ```
 
 ### Visualizing annotated internal nodes
@@ -500,16 +500,16 @@ If internal nodes are annotated, MetaTreeProfiler is also able to visualize anno
 As internal nodes of categorical and boolean data are annotated as counter, hence when activating layouts of categorical or boolean data, it generate pipechart of counter summary at the top of each internal node
 
 #### Internal nodes of numerical data
-Internal nodes of numerical data are process descriptive statistic analysis by default, hence when users collapse any branch, BarplotLayout or HeatmapLayout will demonstrate representative value, `avg` by default. representative value can be changed by using `--internal_plot_measure`
+Internal nodes of numerical data are process descriptive statistic analysis by default, hence when users collapse any branch, barplot_layout or heatmap_layout will demonstrate representative value, `avg` by default. representative value can be changed by using `--internal_plot_measure`
 
 example
 ```
 # select max instead of avg as internal node ploting representative
-python treeprofiler.py plot --tree examples/basic_example1_annotated.nw  --HeatmapLayout sample1,sample2,sample3,sample4,sample5 --internal_plot_measure max 
+python treeprofiler.py plot --tree examples/basic_example1_annotated.nw  --heatmap_layout sample1,sample2,sample3,sample4,sample5 --internal_plot_measure max 
 ```
 
 ### Layouts for Taxonomic data
-Activate Taxonomic layout using `--TaxonLayout`
+Activate Taxonomic layout using `--taxon_layout`
 ```
 ## Annotate
 # GTDB
@@ -521,7 +521,7 @@ python treeprofiler.py annotate --tree examples/spongilla_example.nw --metadata 
 
 
 ## Visualize 
-python treeprofiler.py plot --tree examples/gtdb_example1_annotated.ete --tree_type ete --TaxonLayout
+python treeprofiler.py plot --tree examples/gtdb_example1_annotated.ete --tree_type ete --taxon_layout
 
 ```
 
@@ -578,7 +578,7 @@ Example
 # annotate tree
 python treeprofiler.py annotate --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_prop_idx [1-5] --outdir examples/
 # select tree internal node where sample1_avg feature > 0.50
-python treeprofiler.py plot --tree examples/basic_example1_annotated.ete --tree_type ete --HeatmapLayout sample1 --collapsed_by "sample1_avg < 0.50" 
+python treeprofiler.py plot --tree examples/basic_example1_annotated.ete --tree_type ete --heatmap_layout sample1 --collapsed_by "sample1_avg < 0.50" 
 ```
 
 Syntax for internal node counter data
@@ -587,7 +587,7 @@ Syntax for internal node counter data
 python treeprofiler.py annotate --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --text_prop random_type --counter_stat relative --outdir examples/
 
 # collapse tree internal nodes, where `low` relative counter < 0.35 in random_type_counter property
-python treeprofiler.py plot --tree examples/basic_example1_annotated.ete --tree_type ete  --collapsed_by "random_type_counter:low < 0.35"
+python treeprofiler.py plot --tree examples/basic_example1_annotated.ete --tree_type ete  --collapsed_by "random_type_counter:low > 0.35"
 ```
 
 #### AND and OR conditions
@@ -599,13 +599,13 @@ AND condition will be under one argument, syntax seperated by `,`, such as
 python treeprofiler.py annotate --tree examples/basic_example1.nw --metadata examples/basic_example1.tsv --num_prop_idx [1-5] --outdir examples/
 
 # select tree  node where sample1 feature > 0.50 AND sample2 < 0.2
-python treeprofiler.py plot --tree examples/basic_example1_annotated.ete --tree_type ete --HeatmapLayout sample1,sample2,sample3,sample4,sample5 --highlighted_by "sample1>0.50,sample2<0.2" 
+python treeprofiler.py plot --tree examples/basic_example1_annotated.ete --tree_type ete --heatmap_layout sample1,sample2,sample3,sample4,sample5 --highlighted_by "sample1>0.50,sample2<0.2" 
 ```
 
 OR condition will be used more than one arguments
 ```
 # select tree node where sample1 feature > 0.50 OR sample2 < 0.2
-python treeprofiler.py plot --tree examples/basic_example1_annotated.ete --tree_type ete --HeatmapLayout sample1,sample2,sample3,sample4,sample5 --highlighted_by "sample1>0.50" --highlighted_by "sample2<0.2" 
+python treeprofiler.py plot --tree examples/basic_example1_annotated.ete --tree_type ete --heatmap_layout sample1,sample2,sample3,sample4,sample5 --highlighted_by "sample1>0.50" --highlighted_by "sample2<0.2" 
 ```
 
 ### conditional limit based on taxonomic level
@@ -616,7 +616,7 @@ Prune taxonomic annotated tree based on following taxonomic rank level,
 python treeprofiler.py annotate --tree examples/gtdb_example1.nw --metadata examples/gtdb_example1.tsv --taxonomic_profile --taxon_column 0 --taxadb GTDB --outdir ./examples/
 
 # prune tree in visualization, rank limit to family level
-python treeprofiler.py plot --tree examples/gtdb_example1_annotated.ete --tree_type ete--rank_limit family --TaxonLayout  
+python treeprofiler.py plot --tree examples/gtdb_example1_annotated.ete --tree_type ete--rank_limit family --taxon_layout  
 ```
 
 ## Explore progenome data
@@ -636,5 +636,5 @@ python treeprofiler.py annotate --tree examples/progenome3.nw --metadata example
 --outdir examples/
 
 python treeprofiler.py plot --tree examples/progenome3_annotated.ete --tree_type ete
---BarplotLayout GC,size --TaxonLayout --BinaryLayout aquatic_habitat,host_associated,soil_habitat  
+--barplot_layout GC,size --taxon_layout --binary_layout aquatic_habitat,host_associated,soil_habitat  
 ```
