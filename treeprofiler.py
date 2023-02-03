@@ -370,31 +370,48 @@ def parse_csv(input_file, delimiter='\t', no_colnames=False):
     return metadata, node_props, columns
 
 def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, taxon_delimiter=';'):
-    name2leaf = {}
+    #name2leaf = {}
+    name2leaf = defaultdict(list)
     # preload all leaves to save time instead of search in tree
     for leaf in tree.iter_leaves():
-        name2leaf[leaf.name] = leaf
+        name2leaf[leaf.name].append(leaf)
 
     # load all metadata to leaf nodes
     for node, props in metadata_dict.items():
-
-        #hits = tree.get_leaves_by_name(node)
-        #hits = tree.search_nodes(name=node) # including internal nodes
         if node in name2leaf.keys():
-            target_node = name2leaf[node]
-            for key,value in props.items():
-                if key == taxon_column:
-                    taxon_prop = value.split(taxon_delimiter)[-1]
-                    target_node.add_prop(key, taxon_prop)
-                elif key in prop2type and prop2type[key]=='num':
-                    if math.isnan(float(value)):
-                        target_node.add_prop(key, value)
+            target_nodes = name2leaf[node]
+            for target_node in target_nodes:
+                for key,value in props.items():
+                    if key == taxon_column:
+                        taxon_prop = value.split(taxon_delimiter)[-1]
+                        target_node.add_prop(key, taxon_prop)
+                    elif key in prop2type and prop2type[key]=='num':
+                        if math.isnan(float(value)):
+                            target_node.add_prop(key, value)
+                        else:
+                            target_node.add_prop(key, float(value))  
                     else:
-                        target_node.add_prop(key, float(value))  
-                else:
-                    target_node.add_prop(key, value)
+                        target_node.add_prop(key, value)
         else:
             pass
+        
+        # hits = tree.get_leaves_by_name(node)
+        # if hits:
+        #     for target_node in hits:
+        #         for key,value in props.items():
+        #             if key == taxon_column:
+        #                 taxon_prop = value.split(taxon_delimiter)[-1]
+        #                 target_node.add_prop(key, taxon_prop)
+        #             elif key in prop2type and prop2type[key]=='num':
+        #                 if math.isnan(float(value)):
+        #                     target_node.add_prop(key, value)
+        #                 else:
+        #                     target_node.add_prop(key, float(value))  
+        #             else:
+        #                 target_node.add_prop(key, value)
+        # else:
+        #     pass
+        #hits = tree.search_nodes(name=node) # including internal nodes
 
     return tree
 
@@ -719,9 +736,10 @@ def tree_plot(args):
     
     return
 
-
+import re
 def taxatree_prune(tree, rank_limit='subspecies'):
     rank_limit = rank_limit.lower()
+    
 
     ex = False
     while not ex:
@@ -730,6 +748,8 @@ def taxatree_prune(tree, rank_limit='subspecies'):
             if n.props.get('rank') != rank_limit:
                 n.detach()
                 ex = False
+
+    #remove duplicate leaves
     return tree
 
 from utils import to_code, call, counter_call

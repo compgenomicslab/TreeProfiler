@@ -114,7 +114,11 @@ class LayoutBinary(TreeLayout):
         super().set_tree_style(tree, tree_style)
         if self.legend:
             if self.prop_colour_dict:
-                tree_style.add_legend(title=self.bool_prop,
+                if self.reverse:
+                    title = 'ReverseBinary ' + self.bool_prop
+                else:
+                    title = 'Binary ' + self.bool_prop
+                tree_style.add_legend(title=title,
                                     variable='discrete',
                                     colormap={self.bool_prop:self.color}
                                     )
