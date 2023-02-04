@@ -99,7 +99,6 @@ basic_example1.nw   basic_example1.tsv
 gtdb_example1.nw    gtdb_example1.tsv        
 progenome3.nw   progenome3.tsv 
 spongilla_example.nw  spongilla_example.tsv
-progenome3_annotated.nw  spongilla_annotated.nw 
 ```
 
 ## `annotate`, Mapping metadata into tree 
