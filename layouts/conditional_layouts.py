@@ -1,7 +1,7 @@
 from ete4.smartview import TreeStyle, NodeStyle, TreeLayout, PieChartFace
 from ete4.smartview  import (RectFace, CircleFace, SeqMotifFace, TextFace, OutlineFace, \
                             SelectedFace, SelectedCircleFace, SelectedRectFace, LegendFace)
-from layouts.general_layouts import get_piechartface
+from layouts.general_layouts import get_piechartface, get_heatmapface
 from utils import to_code, call, counter_call
 
 # branch thicken, background highlighted to purple
@@ -115,9 +115,9 @@ class LayoutBinary(TreeLayout):
         if self.legend:
             if self.prop_colour_dict:
                 if self.reverse:
-                    title = 'ReverseBinary ' + self.bool_prop
+                    title = 'ReverseBinary_' + self.bool_prop
                 else:
-                    title = 'Binary ' + self.bool_prop
+                    title = 'Binary_' + self.bool_prop
                 tree_style.add_legend(title=title,
                                     variable='discrete',
                                     colormap={self.bool_prop:self.color}
@@ -161,17 +161,19 @@ class LayoutBinary(TreeLayout):
                 node.add_face(prop_face, column=self.column, position = "aligned")
         
         elif node.is_leaf() and node.props.get(self.internal_prop):
-            piechart_face = get_piechartface(node, self.internal_prop, self.prop_colour_dict, self.radius)
-            node.add_face(piechart_face, column = self.column, position = "branch_top")
-            node.add_face(piechart_face, column = self.column, position = "aligned", collapsed_only=False)
+            # piechart_face = get_piechartface(node, self.internal_prop, self.prop_colour_dict, self.radius)
+            # node.add_face(piechart_face, column = self.column, position = "branch_top")
+            heatmapFace = get_heatmapface(node, self.internal_prop, self.color)
+            node.add_face(heatmapFace, column = self.column, position = "aligned", collapsed_only=False)
 
         elif node.props.get(self.internal_prop):
-            if node.is_root():
-                piechart_face = get_piechartface(node, self.internal_prop, self.prop_colour_dict, self.radius*0.15)
-            else:
-                piechart_face = get_piechartface(node, self.internal_prop, self.prop_colour_dict, self.radius)
-            node.add_face(piechart_face, column = self.column, position = "branch_top")
-            node.add_face(piechart_face, column = self.column, position = "aligned", collapsed_only=True)
+            # if node.is_root():
+            #     piechart_face = get_piechartface(node, self.internal_prop, self.prop_colour_dict, self.radius*0.15)
+            # else:
+            #     piechart_face = get_piechartface(node, self.internal_prop, self.prop_colour_dict, self.radius)
+            #node.add_face(piechart_face, column = self.column, position = "branch_top")
+            heatmapFace = get_heatmapface(node, self.internal_prop, self.color)
+            node.add_face(heatmapFace, column = self.column, position = "aligned", collapsed_only=True)
 
 
 # hightlighted as rectangular

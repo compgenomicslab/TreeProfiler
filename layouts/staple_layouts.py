@@ -29,13 +29,6 @@ def heatmap_gradient(hue, intensity, granularity):
     colors.append("#ffffff")
     return list(reversed(colors))
 
-def color_gradient(c1, c2, mix=0):
-    """ Fade (linear interpolate) from color c1 (at mix=0) to c2 (mix=1) """
-    # https://stackoverflow.com/questions/25668828/how-to-create-colour-gradient-in-python
-    c1 = np.array(mpl.colors.to_rgb(c1))
-    c2 = np.array(mpl.colors.to_rgb(c2))
-    return mpl.colors.to_hex((1-mix)*c1 + mix*c2)
-
 class LayoutPlot(TreeLayout):
     def __init__(self, name=None, prop=None, width=200, size_prop=None, 
             color_prop=None, color_gradient=None, color="red", colors=None,
@@ -280,7 +273,7 @@ class LayoutHeatmap(TreeLayout):
             
             identF = RectFace(width=50,height=50,text="%.1f" % (relative_abundance*100), color=color, 
             padding_x=1, padding_y=1)
-            node.add_face(identF, column = self.column+2,  position = 'aligned')
+            node.add_face(identF, column = self.column,  position = 'aligned')
 
         elif node.props.get(self.internal_prop):
             # heatmap
@@ -298,6 +291,6 @@ class LayoutHeatmap(TreeLayout):
             padding_x=1, padding_y=1, tooltip=tooltip)
             #face_name = TextFace(node.props.get('name'), color="red")
             #face_name = TextFace("%.1f" % (relative_abundance*100), color=color)
-            node.add_face(identF, column = self.column+2,  position = 'aligned', collapsed_only=True)
+            node.add_face(identF, column = self.column,  position = 'aligned', collapsed_only=True)
 
     
