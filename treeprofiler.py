@@ -662,8 +662,11 @@ def tree_plot(args):
                 else:
                     color_dict[value[i]] = random_color(h=None)
 
-            layout = taxon_layouts.TaxaClade(name='TaxaClade_'+rank, level=level, rank = rank, color_dict=color_dict)
-            taxa_layouts.append(layout)
+            taxa_layout = [
+                    taxon_layouts.TaxaClade(name='TaxaClade_'+rank, level=level, rank = rank, color_dict=color_dict),
+                    taxon_layouts.LayoutSciName(name = 'Taxa Scientific name')
+                ]
+            taxa_layouts.extend(taxa_layout)
             taxon_color_dict[rank] = color_dict
         layouts = layouts + taxa_layouts
         level += 1
@@ -741,6 +744,14 @@ def taxatree_prune(tree, rank_limit='subspecies'):
     rank_limit = rank_limit.lower()
     
 
+    # ex = False
+    # while not ex:
+    #     ex = True
+    #     for n in tree.iter_leaves():
+    #         if n.props.get('rank') != rank_limit:
+    #             n.detach()
+    #             ex = False
+    
     ex = False
     while not ex:
         ex = True
