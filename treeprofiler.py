@@ -741,9 +741,27 @@ def tree_plot(args):
 
 import re
 def taxatree_prune(tree, rank_limit='subspecies'):
+    lineage = [
+        'root',
+        'superkingdom', 
+        'phylum', 
+        'class', 
+        'order', 
+        'family', 
+        'genus', 
+        'species', 
+        'subspecies',
+        'no rank']
     rank_limit = rank_limit.lower()
     
-
+    for n in tree.traverse('preorder'):
+        if not n.is_root():
+            rank_idx = lineage.index(n.props.get('rank'))
+            limit_rank_idx = lineage.index(rank_limit)
+            if rank_idx > limit_rank_idx:
+                if len(n.get_children())>1:
+                    for child in n.get_children():
+                        child.detach()
     # ex = False
     # while not ex:
     #     ex = True
@@ -751,14 +769,6 @@ def taxatree_prune(tree, rank_limit='subspecies'):
     #         if n.props.get('rank') != rank_limit:
     #             n.detach()
     #             ex = False
-    
-    ex = False
-    while not ex:
-        ex = True
-        for n in tree.iter_leaves():
-            if n.props.get('rank') != rank_limit:
-                n.detach()
-                ex = False
 
     #remove duplicate leaves
     return tree
