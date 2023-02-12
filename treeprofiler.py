@@ -36,6 +36,7 @@ __description__ = ('A program for profiling metadata on target '
 
 #colors_50 = ["#E41A1C","#C72A35","#AB3A4E","#8F4A68","#735B81","#566B9B","#3A7BB4","#3A85A8","#3D8D96","#419584","#449D72","#48A460","#4CAD4E","#56A354","#629363","#6E8371","#7A7380","#87638F","#93539D","#A25392","#B35A77","#C4625D","#D46A42","#E57227","#F67A0D","#FF8904","#FF9E0C","#FFB314","#FFC81D","#FFDD25","#FFF12D","#F9F432","#EBD930","#DCBD2E","#CDA12C","#BF862B","#B06A29","#A9572E","#B65E46","#C3655F","#D06C78","#DE7390","#EB7AA9","#F581BE","#E585B8","#D689B1","#C78DAB","#B791A5","#A8959F","#999999"]
 paried_color = ["red", "darkblue", "lightgreen", "darkyellow", "violet", "mediumturquoise", "sienna", "lightCoral", "lightSkyBlue", "indigo", "tan", "coral", "olivedrab", "teal"]
+ranks = ['domain','superkingdom','kingdom','subkingdom','infrakingdom','superphylum','phylum','division','subphylum','subdivision','infradivision','superclass','class','subclass','infraclass','subterclass','parvclass','megacohort','supercohort','cohort','subcohort','infracohort','superorder','order','suborder','infraorder','parvorder','superfamily','family','subfamily','supertribe','tribe','subtribe','genus','subgenus','section','subsection','species group','series','species subgroup','species','infraspecies','subspecies','forma specialis','variety','varietas','subvariety','race','stirp','form','forma','morph','subform','biotype','isolate','pathogroup','serogroup','serotype','strain','aberration','clade','unspecified','no rank','unranked']
 
 ### annotate tree ####
 def tree_annotate(args):
@@ -279,6 +280,10 @@ def tree_annotate(args):
     # prune tree by rank
     if args.rank_limit:
         annotated_tree = taxatree_prune(annotated_tree, rank_limit=args.rank_limit)
+
+        if args.taxon_layout:
+            print(taxa_layouts)
+
     # prune tree by condition 
     if args.pruned_by: # need to be wrap with quotes
         condition_strings = args.pruned_by
@@ -653,7 +658,7 @@ def tree_plot(args):
             pass
         
         # assign color for each value of each rank
-        for rank, value in sorted(rank2values.items()):
+        for rank, value in sorted(rank2values.items(),):
             color_dict = {} 
             nvals = len(value)
             for i in range(0, nvals):
@@ -662,12 +667,10 @@ def tree_plot(args):
                 else:
                     color_dict[value[i]] = random_color(h=None)
 
-            taxa_layout = [
-                    taxon_layouts.TaxaClade(name='TaxaClade_'+rank, level=level, rank = rank, color_dict=color_dict),
-                    taxon_layouts.LayoutSciName(name = 'Taxa Scientific name')
-                ]
-            taxa_layouts.extend(taxa_layout)
+            taxa_layout = taxon_layouts.TaxaClade(name='TaxaClade_'+rank, level=level, rank = rank, color_dict=color_dict)
+            taxa_layouts.append(taxa_layout)
             taxon_color_dict[rank] = color_dict
+        taxa_layouts.append(taxon_layouts.LayoutSciName(name = 'Taxa Scientific name'))
         layouts = layouts + taxa_layouts
         level += 1
         total_color_dict.append(taxon_color_dict)
@@ -741,27 +744,20 @@ def tree_plot(args):
 
 import re
 def taxatree_prune(tree, rank_limit='subspecies'):
-    lineage = [
-        'root',
-        'superkingdom', 
-        'phylum', 
-        'class', 
-        'order', 
-        'family', 
-        'genus', 
-        'species', 
-        'subspecies',
-        'no rank']
     rank_limit = rank_limit.lower()
     
-    for n in tree.traverse('preorder'):
-        if not n.is_root():
-            rank_idx = lineage.index(n.props.get('rank'))
-            limit_rank_idx = lineage.index(rank_limit)
-            if rank_idx > limit_rank_idx:
-                if len(n.get_children())>1:
+    ex = False
+    while not ex:
+        ex = True
+        for n in tree.traverse('preorder'):
+            if not n.is_root():
+                rank_idx = ranks.index(n.props.get('rank'))
+                limit_rank_idx = ranks.index(rank_limit)
+                if rank_idx >= limit_rank_idx:
                     for child in n.get_children():
                         child.detach()
+                        ex = False
+                    
     # ex = False
     # while not ex:
     #     ex = True
@@ -770,7 +766,6 @@ def taxatree_prune(tree, rank_limit='subspecies'):
     #             n.detach()
     #             ex = False
 
-    #remove duplicate leaves
     return tree
 
 from utils import to_code, call, counter_call
