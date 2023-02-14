@@ -391,10 +391,15 @@ def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, 
                         taxon_prop = value.split(taxon_delimiter)[-1]
                         target_node.add_prop(key, taxon_prop)
                     elif key in prop2type and prop2type[key]=='num':
-                        if math.isnan(float(value)):
-                            target_node.add_prop(key, value)
-                        else:
-                            target_node.add_prop(key, float(value))  
+                        try:
+                            flot_value = float(value)
+                            if math.isnan(flot_value):
+                                target_node.add_prop(key, flot_value)
+                            else:
+                                target_node.add_prop(key, flot_value)
+                        except ValueError:
+                            target_node.add_prop(key, 'NaN')
+
                     else:
                         target_node.add_prop(key, value)
         else:
