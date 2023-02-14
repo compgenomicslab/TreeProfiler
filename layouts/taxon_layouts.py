@@ -1,5 +1,6 @@
 from ete4.smartview import TreeStyle, NodeStyle, TreeLayout
 from ete4.smartview  import RectFace, CircleFace, SeqMotifFace, TextFace, OutlineFace, LegendFace
+from collections import  OrderedDict
 
 paried_color = ["red", "darkblue", "darkgreen", "darkyellow", "violet", "mediumturquoise", "sienna", "lightCoral", "lightSkyBlue", "indigo", "tan", "coral", "olivedrab", "teal"]
 
@@ -10,6 +11,21 @@ def get_level(node, level=0):
         return level
     else:
         return get_level(node.up, level + 1)
+
+def summary(nodes):
+    "Return a list of names summarizing the given list of nodes"
+    return list(OrderedDict((first_name(node), None) for node in nodes).keys())
+
+def first_name(tree):
+    "Return the name of the first node that has a name"
+    
+    sci_names = []
+    for node in tree.traverse('preorder'):
+        if node.is_leaf():
+            sci_name = node.props.get('sci_name')
+            sci_names.append(sci_name)
+
+    return next(iter(sci_names))
 
 class TaxaClade(TreeLayout):
     def __init__(self, name, level, rank, color_dict, legend=True):
@@ -42,6 +58,42 @@ class TaxaClade(TreeLayout):
                 #node.add_face(text_face, column = self.column, position = "aligned", collapsed_only=True)
                 #node.add_face(face_name, column = 5, position = 'branch_right', collapsed_only=True)
 
+class LayoutSciName(TreeLayout):
+    def __init__(self, name="Scientific name"):
+        super().__init__(name, aligned_faces=True)
+
+    def set_node_style(self, node):
+        if node.is_leaf():
+           
+            sci_name = node.props.get('sci_name')
+            # prot_id = node.name.split('.', 1)[1]
+
+            prot_id = node.name
+
+            # if node.props.get('sci_name') in sciName2color.keys():
+            #     color = sciName2color[node.props.get('sci_name')]
+            # else:
+            #     color = 'black'
+            
+            color = 'Gray'
+            node.add_face(TextFace(sci_name, color = color, padding_x=2),
+                column=0, position="branch_right")
+
+            if len(prot_id) > 40:
+                prot_id = prot_id[0:37] + " ..."
+           
+            #node.add_face(TextFace(prot_id, color = 'Gray', padding_x=2), column = 2, position = "aligned")
+
+
+        else:
+            # Collapsed face
+            names = summary(node.children)
+            texts = names if len(names) < 6 else (names[:3] + ['...'] + names[-2:])
+            for i, text in enumerate(texts):
+                color = 'Gray'
+                node.add_face(TextFace(text, padding_x=2, color = color),
+                        position="branch_right", column=1, collapsed_only=True)
+                        
 class TaxaRectangular(TreeLayout):
     def __init__(self, name="Last common ancestor",
             rect_width=15, column=0):
