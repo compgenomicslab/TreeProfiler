@@ -141,6 +141,10 @@ def tree_annotate(args):
                 'name':'str',
                 'dist':'num',
                 'support':'num',
+                }
+        if args.taxonomic_profile:
+            prop2type.update(
+                {
                 # taxonomic features
                 'rank':'str',
                 'sci_name':'str',
@@ -148,6 +152,7 @@ def tree_annotate(args):
                 'lineage':'str',
                 'named_lineage':'str'
                 }
+            )
         
         rest_prop = list(set(node_props) - set(text_prop) - set(num_prop) - set(bool_prop))
             
@@ -303,6 +308,7 @@ def tree_annotate(args):
         out_newick = base + '_annotated.nw'
         out_prop2tpye = base + '_prop2type.txt'
         out_ete = base+'_annotated.ete'
+        out_tsv = base+'_annotated.tsv'
 
         ### out newick
         annotated_tree.write(outfile=os.path.join(args.outdir, out_newick), properties = [], format=1)
@@ -314,9 +320,12 @@ def tree_annotate(args):
         ### out ete
         with open(os.path.join(args.outdir, base+'_annotated.ete'), 'w') as f:
             f.write(b64pickle.dumps(annotated_tree, encoder='pickle', pack=False))
+        
+        ### out tsv
+        tree2table(annotated_tree, internal_node=True, props=popup_prop_keys, outfile=os.path.join(args.outdir, out_tsv))
                 
-    if args.outtsv:
-        tree2table(annotated_tree, internal_node=True, outfile=args.outtsv)
+    # if args.outtsv:
+    #     tree2table(annotated_tree, internal_node=True, outfile=args.outtsv)
     
     return 
 
@@ -829,25 +838,33 @@ def tree2table(tree, internal_node=True, props=[], outfile='tree2table.csv'):
         props = list(leaf.props)
         
     with open(outfile, 'w', newline='') as csvfile:
-        fieldnames = props
+        if '_speciesFunction' in props:
+            props.remove('_speciesFunction')
+        fieldnames = ['name', 'dist', 'support']
+        fieldnames.extend(x for x in sorted(props) if x not in fieldnames)
+        
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames, delimiter='\t', extrasaction='ignore')
         writer.writeheader()
         for node in tree.traverse():
-            if node.is_leaf():
-                output_row = dict(node.props)
-                for k, prop in output_row.items():
-                    if type(prop) == list:
-                        output_row[k] = '|'.join(str(v) for v in prop)
-                writer.writerow(output_row)
-            else:
-                if internal_node:
+            if node.name:
+                # if '_speciesFunction' in node.props:
+                #     node.del_prop('_speciesFunction')
+
+                if node.is_leaf():
                     output_row = dict(node.props)
                     for k, prop in output_row.items():
                         if type(prop) == list:
                             output_row[k] = '|'.join(str(v) for v in prop)
                     writer.writerow(output_row)
                 else:
-                    pass
+                    if internal_node:
+                        output_row = dict(node.props)
+                        for k, prop in output_row.items():
+                            if type(prop) == list:
+                                output_row[k] = '|'.join(str(v) for v in prop)
+                        writer.writerow(output_row)
+                    else:
+                        pass
     return 
 
 def wrtie_color(color_dict):
