@@ -171,7 +171,7 @@ class LayoutBarplot(LayoutPlot):
             scale = ScaleFace(width=self.width, scale_range=self.size_range, 
                     formatter='%.2f',
                     padding_x=self.padding_x, padding_y=2)
-            text = TextFace(self.prop, max_fsize=11, padding_x=self.padding_x)
+            text = TextFace(self.prop, max_fsize=11, padding_x=self.padding_x, rotation=315)
             tree_style.aligned_panel_header.add_face(scale, column=self.column)
             tree_style.aligned_panel_header.add_face(text, column=self.column)
         
@@ -250,11 +250,11 @@ class LayoutHeatmap(TreeLayout):
 
     def set_tree_style(self, tree, tree_style):
         super().set_tree_style(tree, tree_style)
-        text = TextFace(self.num_prop, max_fsize=11, padding_x=0)
+        text = TextFace(self.num_prop, min_fsize=5, max_fsize=10, padding_x=2, width=50, rotation=315)
         tree_style.aligned_panel_header.add_face(text, column=self.column)
 
         if self.legend:
-            colormap = { self.num_prop: self.max_color,
+            colormap = { self.num_prop: {self.max_color},
                         }
             tree_style.add_legend(title=self.num_prop,
                                     variable='continuous',

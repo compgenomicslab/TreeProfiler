@@ -112,6 +112,8 @@ class LayoutBinary(TreeLayout):
     #     tree_style.aligned_panel_header.add_face(text, column=self.column)
     def set_tree_style(self, tree, tree_style):
         super().set_tree_style(tree, tree_style)
+        text = TextFace(self.bool_prop, min_fsize=5, max_fsize=10, padding_x=2, width=50, rotation=315)
+        tree_style.aligned_panel_header.add_face(text, column=self.column)
         if self.legend:
             if self.prop_colour_dict:
                 if self.reverse:

@@ -977,6 +977,7 @@ def get_layouts(argv_input, layout_name, level, internal_rep):
             
             color = random_color(h=None)
             if layout_name == 'binary':
+                #print("here", color)
                 layout = conditional_layouts.LayoutBinary('Binary_'+prop, level, color, color_dict, prop, reverse=False)
 
             elif layout_name == 'revbinary':
