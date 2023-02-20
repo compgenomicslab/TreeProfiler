@@ -8,6 +8,7 @@ from ete4 import NCBITaxa
 from ete4.smartview import TreeStyle, NodeStyle, TreeLayout
 from layouts import text_layouts, taxon_layouts, staple_layouts, conditional_layouts
 from tree_plot import get_image
+#from utils import check_nan
 
 from argparse import ArgumentParser
 import argparse
@@ -43,6 +44,7 @@ def tree_annotate(args):
     total_color_dict = []
     layouts = []
     level = 2 # level 1 is the leaf name
+    prop2type = {}
 
     # parse csv to metadata table
     start = time.time()
@@ -50,9 +52,9 @@ def tree_annotate(args):
     if args.metadata:
         if args.no_colnames:
             # property key will be named col1, col2, col3, ... if without headers
-            metadata_dict, node_props, columns = parse_csv(args.metadata, no_colnames=args.no_colnames)
+            metadata_dict, node_props, columns, prop2type = parse_csv(args.metadata, no_colnames=args.no_colnames)
         else:
-            metadata_dict, node_props, columns = parse_csv(args.metadata)
+            metadata_dict, node_props, columns, prop2type = parse_csv(args.metadata)
     else: # annotated_tree
         node_props=[]
         columns = {}
@@ -137,40 +139,38 @@ def tree_annotate(args):
                 prop2type[prop] = value
     
     else:
-        prop2type = {# start with leaf name
-                'name':'str',
-                'dist':'num',
-                'support':'num',
-                }
-        if args.taxonomic_profile:
-            prop2type.update(
-                {
-                # taxonomic features
-                'rank':'str',
-                'sci_name':'str',
-                'taxid':'str',
-                'lineage':'str',
-                'named_lineage':'str'
-                }
-            )
-        
-        rest_prop = list(set(node_props) - set(text_prop) - set(num_prop) - set(bool_prop))
+        #rest_prop = list(set(node_props) - set(text_prop) - set(num_prop) - set(bool_prop))
             
         # output datatype of each property of each tree node including internal nodes
+        if prop2type:
+            for key, dtype in prop2type.items():
+                if key in text_prop+num_prop+bool_prop:
+                    pass
+                else:
+                    if dtype == np.str_:
+                        text_prop.append(key)
+                    if dtype == np.float64:
+                        num_prop.append(key)
+                    if dtype == np.bool_:
+                        bool_prop.append(key)
+        
         for prop in text_prop+bool_prop:
-            prop2type[prop] = 'str'
-            prop2type[prop+'_counter'] = 'str'
+            prop2type[prop] = np.str_
+            prop2type[prop+'_counter'] = np.str_
 
         for prop in num_prop:
-            prop2type[prop] = 'num'
-            prop2type[prop+'_avg'] = 'num'
-            prop2type[prop+'_sum'] = 'num'
-            prop2type[prop+'_max'] = 'num'
-            prop2type[prop+'_min'] = 'num'
-            prop2type[prop+'_std'] = 'num'
-
-        for prop in rest_prop:
-            prop2type[prop] = 'str'
+            prop2type[prop] = np.float64
+            prop2type[prop+'_avg'] = np.float64
+            prop2type[prop+'_sum'] = np.float64
+            prop2type[prop+'_max'] = np.float64
+            prop2type[prop+'_min'] = np.float64
+            prop2type[prop+'_std'] = np.float64
+        
+        prop2type.update({# start with leaf name
+                'name':np.str_,
+                'dist':np.float64,
+                'support':np.float64,
+                })
     
     ### decide popup keys
     # if args.annotated_tree:
@@ -194,7 +194,15 @@ def tree_annotate(args):
     # else:
     #     # all the metadata to the leaves, no internal
     #     popup_prop_keys = list(prop2type.keys())
-        
+    popup_prop_keys = list(prop2type.keys())
+    if args.taxonomic_profile:
+        popup_prop_keys.extend([
+            'rank',
+            'sci_name',
+            'taxid',
+            'lineage',
+            'named_lineage'
+        ])
 
     # load annotations to leaves
     start = time.time()
@@ -231,14 +239,17 @@ def tree_annotate(args):
             if node.is_leaf():
                 pass
             else:
-                
+                # text_prop = []
+                # bool_prop = []
+                # num_prop = ['gc_percentage']
                 if text_prop:
                     internal_props_text = merge_text_annotations(node2leaves[node], text_prop, counter_stat=counter_stat)
                     internal_props.update(internal_props_text)
 
                 if num_prop:
-                    internal_props_num = merge_num_annotations(node2leaves[node], num_prop, num_stat=num_stat)
-                    internal_props.update(internal_props_num)
+                    internal_props_num = merge_num_annotations(node2leaves[node], num_prop, num_stat=num_stat)                        
+                    if internal_props_num:
+                        internal_props.update(internal_props_num)
 
                 if bool_prop:
                     internal_props_bool = merge_text_annotations(node2leaves[node], bool_prop, counter_stat=counter_stat)
@@ -250,9 +261,11 @@ def tree_annotate(args):
                 #     internal_props.update(internal_props_rest)
                 
                 #internal_props = {**internal_props_text, **internal_props_num, **internal_props_rest}
-                #print(internal_props.items())
+                #print(internal_props.keys())
+
                 for key,value in internal_props.items():
                     node.add_prop(key, value)
+
     else:
         pass
     end = time.time()
@@ -275,7 +288,6 @@ def tree_annotate(args):
                     annotated_tree, rank2values = annotate_taxa(annotated_tree, db=args.taxadb, taxid_attr=args.taxon_column, sp_delimiter=args.taxon_delimiter, sp_field=args.taxa_field)
                 else:
                     annotated_tree, rank2values = annotate_taxa(annotated_tree, db=args.taxadb, taxid_attr="name", sp_delimiter=args.taxon_delimiter, sp_field=args.taxa_field)
-
     else:
         rank2values = {}
     
@@ -285,9 +297,6 @@ def tree_annotate(args):
     # prune tree by rank
     if args.rank_limit:
         annotated_tree = taxatree_prune(annotated_tree, rank_limit=args.rank_limit)
-
-        if args.taxon_layout:
-            print(taxa_layouts)
 
     # prune tree by condition 
     if args.pruned_by: # need to be wrap with quotes
@@ -362,6 +371,7 @@ def parse_csv(input_file, delimiter='\t', no_colnames=False):
     """
     metadata = {}
     columns = defaultdict(list)
+    prop2type = {}
     with open(input_file, 'r') as f:
         if no_colnames:
             fields_len = len(next(f).split(delimiter))
@@ -375,13 +385,43 @@ def parse_csv(input_file, delimiter='\t', no_colnames=False):
         for row in reader:
             nodename = row[node_header]
             del row[node_header]
-            row = {k: 'NaN' if not v else v for k, v in row.items() } ## replace empty to NaN
+            #row = {k: 'NaN' if (not v or v.lower() == 'none') else v for k, v in row.items() } ## replace empty to NaN
+            row = {k: 'NaN' if (not v or v.lower() == 'none') else v for k, v in row.items() } ## replace empty to NaN
             metadata[nodename] = dict(row)
             for (k,v) in row.items(): # go over each column name and value 
                 columns[k].append(v) # append the value into the appropriate list
                                     # based on column name k
+        
+    for prop in node_props:
+        dtype = infer_dtype(columns[prop])
+        prop2type[prop] = dtype # get_type_convert(dtype)
 
-    return metadata, node_props, columns
+    return metadata, node_props, columns, prop2type
+
+def get_type_convert(np_type):
+    """
+    convert np_type to python type
+    """
+    convert_type = type(np.zeros(1,np_type).tolist()[0])
+    return (np_type, convert_type)
+
+def convert_column_data(column, dtype):
+    try:
+        data = np.array(column).astype(dtype)
+        return dtype
+    except ValueError:
+        return None
+    #data.astype(np.float)
+
+def infer_dtype(column):
+    dtype_order = ['float64', 'bool', 'str']
+    for dtype in dtype_order:
+        dtype = np.dtype(dtype).type
+        result = convert_column_data(column, dtype)
+        if result is not None:
+            # Successful inference, exit from the loop
+            return result
+    return None
 
 def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, taxon_delimiter=';'):
     #name2leaf = {}
@@ -403,10 +443,10 @@ def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, 
                         try:
                             flot_value = float(value)
                             if math.isnan(flot_value):
-                                target_node.add_prop(key, flot_value)
+                                target_node.add_prop(key, 'NaN')
                             else:
                                 target_node.add_prop(key, flot_value)
-                        except ValueError:
+                        except (ValueError,TypeError):
                             target_node.add_prop(key, 'NaN')
 
                     else:
@@ -485,6 +525,7 @@ def merge_text_annotations(nodes, target_props, counter_stat='raw'):
 def merge_num_annotations(nodes, target_props, num_stat='all'):
     internal_props = {}
     for target_prop in target_props:
+        
         prop_array = np.array(children_prop_array(nodes, target_prop),dtype=np.float64)
         prop_array = prop_array[~np.isnan(prop_array)] # remove nan data
         if prop_array.any():
@@ -515,11 +556,15 @@ def merge_num_annotations(nodes, target_props, num_stat='all'):
                     internal_props[add_suffix(target_prop, 'std')] = 0
             else:
                 print('Invalid stat method')
-                break
+                pass
         else:
-            break
-    #print(internal_props)
-    return internal_props
+            pass
+            
+    if internal_props:
+        return internal_props
+    else:
+        return None
+    
 
 def add_suffix(name, suffix, delimiter='_'):
     return str(name) + delimiter + str(suffix)
@@ -623,23 +668,22 @@ def tree_plot(args):
                 'lineage':'str',
                 'named_lineage':'str'
                 }
-        if args.tree_type == 'ete':
-            leaf_prop2type = get_prop2type(tree.get_farthest_leaf()[0])
-            internal_node_prop2type = get_prop2type(tree)
-            prop2type.update(leaf_prop2type)
-            prop2type.update(internal_node_prop2type)
+        # if args.tree_type == 'ete':
+        #     leaf_prop2type = get_prop2type(tree.get_farthest_leaf()[0])
+        #     internal_node_prop2type = get_prop2type(tree)
+        #     prop2type.update(leaf_prop2type)
+        #     prop2type.update(internal_node_prop2type)
             
-            # exisiting props in internal node
-            existing_internal_props = list(tree.props.keys())
-            # exisiting props in leaf node
-            existing_leaf_props = list(tree.get_farthest_leaf()[0].props.keys()) 
-            popup_prop_keys = list(set(existing_internal_props+existing_leaf_props))
+        #     # exisiting props in internal node
+        #     existing_internal_props = list(tree.props.keys())
+        #     # exisiting props in leaf node
+        #     existing_leaf_props = list(tree.get_farthest_leaf()[0].props.keys()) 
+        #     popup_prop_keys = list(set(existing_internal_props+existing_leaf_props))
         
-        elif args.tree_type == 'newick':
-            popup_prop_keys = list(prop2type.keys()) 
-    
-    
-    
+        # elif args.tree_type == 'newick':
+        #     popup_prop_keys = list(prop2type.keys()) 
+
+    popup_prop_keys = list(prop2type.keys()) 
     # collapse tree by condition 
     if args.collapsed_by: # need to be wrap with quotes
         condition_strings = args.collapsed_by
@@ -698,7 +742,22 @@ def tree_plot(args):
     internal_num_rep = args.internal_plot_measure
     # get layouts
     if args.heatmap_layout:
-        heatmap_layouts, level, _ = get_layouts(args.heatmap_layout, 'heatmap', level, internal_num_rep)
+        props = []
+        for i in args.heatmap_layout.split(','):
+            props.append(i)
+
+        heatmap_layouts = []
+        for prop in props:
+            prop_values = np.array(list(set(children_prop_array(tree, prop)))).astype('float64')
+            prop_values = prop_values[~np.isnan(prop_values)]
+            prop_min, prop_max = prop_values.min(), prop_values.max()
+            layout =  staple_layouts.LayoutHeatmap('Heatmap_'+prop, level, internal_num_rep, prop, prop_max, prop_min)
+            heatmap_layouts.append(layout)
+            level += 1
+            popup_prop_keys.append(prop)
+            popup_prop_keys.append(prop+"_avg")
+
+        #heatmap_layouts, level, _ = staple_layouts.LayoutHeatmap('Heatmap_'+args.heatmap_layout, level, internal_num_rep, args.heatmap_layout)
         layouts.extend(heatmap_layouts)
 
     if args.barplot_layout:
