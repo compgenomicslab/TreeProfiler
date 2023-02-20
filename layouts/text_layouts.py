@@ -20,6 +20,9 @@ class LayoutText(TreeLayout):
     #     tree_style.aligned_panel_header.add_face(text, column=self.column)
     def set_tree_style(self, tree, tree_style):
         super().set_tree_style(tree, tree_style)
+        text = TextFace(self.text_prop, max_fsize=11, padding_x=0)
+        tree_style.aligned_panel_header.add_face(text, column=self.column)
+
         if self.legend:
             if self.color_dict:
                 tree_style.add_legend(title=self.text_prop,
@@ -103,6 +106,9 @@ class LayoutRect(TreeLayout):
     #     tree_style.aligned_panel_header.add_face(text, column=self.column)
     def set_tree_style(self, tree, tree_style):
         super().set_tree_style(tree, tree_style)
+        text = TextFace(self.text_prop, max_fsize=11, padding_x=0)
+        tree_style.aligned_panel_header.add_face(text, column=self.column)
+
         if self.legend:
             if self.color_dict:
                 tree_style.add_legend(title=self.text_prop,

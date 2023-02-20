@@ -171,7 +171,7 @@ class LayoutBarplot(LayoutPlot):
             scale = ScaleFace(width=self.width, scale_range=self.size_range, 
                     formatter='%.2f',
                     padding_x=self.padding_x, padding_y=2)
-            text = TextFace(self.name, max_fsize=11, padding_x=self.padding_x)
+            text = TextFace(self.prop, max_fsize=11, padding_x=self.padding_x)
             tree_style.aligned_panel_header.add_face(scale, column=self.column)
             tree_style.aligned_panel_header.add_face(text, column=self.column)
         
@@ -234,19 +234,38 @@ class LayoutBarplot(LayoutPlot):
                     collapsed_only=True)
 
 class LayoutHeatmap(TreeLayout):
-    def __init__(self, name, level, internal_rep, prop, maxval, minval):
+    def __init__(self, name=None, column=0, width=50, height=50, internal_rep=None, \
+        prop=None, maxval=100, minval=0, min_color="#ffffff", max_color="#ff0000",\
+        legend=True):
         super().__init__(name)
         self.aligned_faces = True
         self.num_prop = prop
-        self.column = level
+        self.column = column
         #self.colour_dict = colour_dict
+        self.min_color = min_color
+        self.max_color = max_color
         self.maxval = maxval
         self.minval = minval
         self.internal_prop = prop+'_'+internal_rep
 
+    def set_tree_style(self, tree, tree_style):
+        super().set_tree_style(tree, tree_style)
+        text = TextFace(self.num_prop, max_fsize=11, padding_x=0)
+        tree_style.aligned_panel_header.add_face(text, column=self.column)
+
+        if self.legend:
+            colormap = { self.num_prop: self.max_color,
+                        }
+            tree_style.add_legend(title=self.num_prop,
+                                    variable='continuous',
+                                    colormap=colormap,
+                                    value_range=[self.minval, self.maxval],
+                                    color_range=[self.min_color, self.max_color]
+                                    )
+
     def set_node_style(self, node):
-        c1 = "#ffffff"
-        c2 = "#ff0000"
+        c1 = self.min_color
+        c2 = self.max_color #red
         if node.is_leaf() and node.props.get(self.num_prop):
             # heatmap
             
@@ -301,8 +320,6 @@ class LayoutHeatmap(TreeLayout):
                 identF = RectFace(width=50,height=50,text="NaN", color=c1, 
                 padding_x=1, padding_y=1, tooltip=tooltip)
             node.add_face(identF, column = self.column,  position = 'aligned', collapsed_only=True)
-        else:
-            print(node.name)
             # identF = RectFace(width=50,height=50,text="NaN", color=c1, 
             #     padding_x=1, padding_y=1)
             # node.add_face(identF, column = self.column,  position = 'aligned', collapsed_only=True)
