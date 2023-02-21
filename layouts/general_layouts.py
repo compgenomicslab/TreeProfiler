@@ -54,7 +54,7 @@ def get_heatmapface(node, prop, color, tooltip=None):
     text = f"{positive} / {total}"
     # gradientFace = RectFace(width=100,height=50,text="%.1f" % (ratio*100), color=gradient_color, 
     #         padding_x=1, padding_y=1)
-    gradientFace = RectFace(width=100, height=50, 
+    gradientFace = RectFace(width=50, height=50, 
                             #text=text, 
                             color=gradient_color, 
                             padding_x=1, padding_y=1)

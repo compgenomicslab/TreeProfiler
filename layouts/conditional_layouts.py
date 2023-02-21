@@ -92,7 +92,7 @@ from distutils.util import strtobool
 from utils import check_nan
 
 class LayoutBinary(TreeLayout):
-    def __init__(self, name, level, color, prop_colour_dict, bool_prop, reverse=False, radius=200, padding_x=1, padding_y=1, legend=True):
+    def __init__(self, name, level, color, prop_colour_dict, bool_prop, reverse=False, radius=100, padding_x=1, padding_y=1, legend=True):
         super().__init__(name)
         self.aligned_faces = True
         self.bool_prop = bool_prop
@@ -124,10 +124,10 @@ class LayoutBinary(TreeLayout):
                                     variable='discrete',
                                     colormap={self.bool_prop:self.color}
                                     )
-                tree_style.add_legend(title=self.internal_prop,
-                                    variable='discrete',
-                                    colormap=self.prop_colour_dict
-                                    )
+                # tree_style.add_legend(title=self.internal_prop,
+                #                     variable='discrete',
+                #                     colormap=self.prop_colour_dict
+                #                     )
                 
 
     def set_node_style(self, node):
@@ -159,7 +159,7 @@ class LayoutBinary(TreeLayout):
                         node.add_face(prop_face, column=self.column, position = "aligned")
             else:
                 #prop_face = CircleFace(radius=self.radius, color='grey', padding_x=self.padding_x, padding_y=self.padding_y)
-                prop_face = TextFace('NaN', max_fsize=12, padding_x=1)
+                prop_face = TextFace('NaN', min_fsize=5, max_fsize=10, padding_x=2, width=50)
                 node.add_face(prop_face, column=self.column, position = "aligned")
         
         elif node.is_leaf() and node.props.get(self.internal_prop):

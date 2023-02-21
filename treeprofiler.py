@@ -239,9 +239,6 @@ def tree_annotate(args):
             if node.is_leaf():
                 pass
             else:
-                # text_prop = []
-                # bool_prop = []
-                # num_prop = ['gc_percentage']
                 if text_prop:
                     internal_props_text = merge_text_annotations(node2leaves[node], text_prop, counter_stat=counter_stat)
                     internal_props.update(internal_props_text)
@@ -439,7 +436,7 @@ def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, 
                     if key == taxon_column:
                         taxon_prop = value.split(taxon_delimiter)[-1]
                         target_node.add_prop(key, taxon_prop)
-                    elif key in prop2type and prop2type[key]=='num':
+                    elif key in prop2type and prop2type[key]==np.float64:
                         try:
                             flot_value = float(value)
                             if math.isnan(flot_value):
@@ -484,11 +481,11 @@ def merge_text_annotations(nodes, target_props, counter_stat='raw'):
         elif counter_stat == 'relative':
             prop_list = children_prop_array(nodes, target_prop)
             counter_line = []
-            #print(dict(Counter(prop_list)))
+
             total = sum(dict(Counter(prop_list)).values())
-            #print(total)
+
             for key, value in sorted(dict(Counter(prop_list)).items()):
-                #print(key, value)
+
                 rel_val = '{0:.2f}'.format(float(value)/total)
                 counter_line.append(add_suffix(key, rel_val, '--'))
             internal_props[add_suffix(target_prop, 'counter')] = '||'.join(counter_line)
@@ -668,20 +665,14 @@ def tree_plot(args):
                 'lineage':'str',
                 'named_lineage':'str'
                 }
-        # if args.tree_type == 'ete':
-        #     leaf_prop2type = get_prop2type(tree.get_farthest_leaf()[0])
-        #     internal_node_prop2type = get_prop2type(tree)
-        #     prop2type.update(leaf_prop2type)
-        #     prop2type.update(internal_node_prop2type)
+        if args.tree_type == 'ete':
+            leaf_prop2type = get_prop2type(tree.get_farthest_leaf()[0])
+            internal_node_prop2type = get_prop2type(tree)
+            prop2type.update(leaf_prop2type)
+            prop2type.update(internal_node_prop2type)
             
-        #     # exisiting props in internal node
-        #     existing_internal_props = list(tree.props.keys())
-        #     # exisiting props in leaf node
-        #     existing_leaf_props = list(tree.get_farthest_leaf()[0].props.keys()) 
-        #     popup_prop_keys = list(set(existing_internal_props+existing_leaf_props))
-        
-        # elif args.tree_type == 'newick':
-        #     popup_prop_keys = list(prop2type.keys()) 
+        elif args.tree_type == 'newick':
+            popup_prop_keys = list(prop2type.keys()) 
 
     popup_prop_keys = list(prop2type.keys()) 
     # collapse tree by condition 
@@ -756,15 +747,10 @@ def tree_plot(args):
             heatmap_layouts.append(layout)
             level += 1
             popup_prop_keys.append(prop)
-            popup_prop_keys.append(prop+"_avg")
+            popup_prop_keys.append(prop+"_"+internal_num_rep)
 
         #heatmap_layouts, level, _ = staple_layouts.LayoutHeatmap('Heatmap_'+args.heatmap_layout, level, internal_num_rep, args.heatmap_layout)
         layouts.extend(heatmap_layouts)
-
-    if args.barplot_layout:
-        barplot_layouts, level,color_dict = get_layouts(args.barplot_layout, 'barplot', level, internal_num_rep)
-        layouts.extend(barplot_layouts)
-        total_color_dict.append(color_dict)
 
     # categorical and boolean 
     if args.colorbranch_layout:
@@ -792,6 +778,38 @@ def tree_plot(args):
         layouts.extend(label_layouts)
         total_color_dict.append(color_dict)
     
+    if args.barplot_layout:
+        barplot_layouts, level,color_dict = get_layouts(args.barplot_layout, 'barplot', level, internal_num_rep)
+        layouts.extend(barplot_layouts)
+        total_color_dict.append(color_dict)
+
+        # props = []
+        # for i in args.barplot_layout.split(','):
+        #     props.append(i)
+        
+        # barplot_layouts = []
+        # for prop in props:
+        #     prop_values = np.array(list(set(children_prop_array(tree, prop)))).astype('float64')
+        #     prop_values = prop_values[~np.isnan(prop_values)]
+        #     minval, maxval = prop_values.min(), prop_values.max()
+            
+        #     if prop in prop2type and prop2type[prop] == 'num':
+        #         size_prop = prop+'_'+internal_num_rep # using internal prop to set the range in case rank_limit cut all the leaves
+        #     else:
+        #         size_prop = prop
+            
+        #     layout =  staple_layouts.LayoutBarplot(name='Barplot_'+prop, prop=prop, \
+        #                                 color=paried_color[level], size_prop=size_prop, 
+        #                                 column=level, internal_rep=internal_num_rep, maxval=maxval)
+
+        #     barplot_layouts.append(layout)
+        #     level += 1
+        #     popup_prop_keys.append(prop)
+        #     popup_prop_keys.append(prop+"_"+internal_num_rep)
+
+        # layouts.extend(barplot_layouts)
+
+
     #### prune at the last step in case of losing leaves information
     # prune tree by rank
     if args.rank_limit:
@@ -987,8 +1005,8 @@ def get_layouts(argv_input, layout_name, level, internal_rep):
             prop_color_dict[prop] = color
 
         # numerical layouts
-        elif layout_name == 'heatmap':
-            layout =  staple_layouts.LayoutHeatmap('Heatmap_'+prop, level, internal_rep, prop)
+        # elif layout_name == 'heatmap':
+        #     layout =  staple_layouts.LayoutHeatmap('Heatmap_'+prop, level, internal_rep, prop)
         
         elif layout_name == 'barplot':
             if prop in prop2type and prop2type[prop] == 'num':
@@ -1029,6 +1047,7 @@ def get_layouts(argv_input, layout_name, level, internal_rep):
                 layout = text_layouts.LayoutColorbranch('Colorbranch_'+prop, level, color_dict, text_prop = prop)
             
             prop_color_dict[prop] = color_dict
+        
         layouts.append(layout)
         level += 1
         

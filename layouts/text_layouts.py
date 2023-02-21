@@ -38,9 +38,9 @@ class LayoutText(TreeLayout):
                 # human_orth_face = RectFace(width=50,height=50, color=self.color)
                 # node.add_face(human_orth_face, column=self.column, position="aligned")
                 if self.color_dict:
-                    prop_face = TextFace(prop_text, color=self.color_dict[prop_text])
+                    prop_face = TextFace(prop_text, color=self.color_dict[prop_text],min_fsize=5, max_fsize=10, padding_x=2, width=50)
                 else:
-                    prop_face = TextFace(prop_text, color='blue')
+                    prop_face = TextFace(prop_text, color='blue',min_fsize=5, max_fsize=10, padding_x=2, width=50)
             node.add_face(prop_face, column=self.column, position="aligned")
             
         elif node.is_leaf() and node.props.get(self.internal_prop):
