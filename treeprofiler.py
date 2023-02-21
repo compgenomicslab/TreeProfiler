@@ -615,11 +615,18 @@ import numbers
 def get_prop2type(node):
     output = {}
     prop2value = node.props
+    if '_speciesFunction' in prop2value:
+        del prop2value['_speciesFunction']
+
     for prop, value in prop2value.items():
         if isinstance(value, numbers.Number):
-            output[prop] = 'num'
+            output[prop] = float
         else:
-            output[prop] = 'str'
+            output[prop] = str
+
+    # for prop, value in prop2value.items():
+    #     output[prop] = type(value)
+    
     return output
 
 ### visualize tree
@@ -655,16 +662,28 @@ def tree_plot(args):
 
     else:
         prop2type = {# start with leaf name
-                'name':'str',
-                'dist':'num',
-                'support':'num',
-                # taxonomic features
-                'rank':'str',
-                'sci_name':'str',
-                'taxid':'str',
-                'lineage':'str',
-                'named_lineage':'str'
+                'name':str,
+                'dist':float,
+                'support':float,
+                'rank': str,
+                'sci_name': str,
+                'taxid': str,
+                'lineage':str,
+                'named_lineage': str
                 }
+
+        # prop2type = {# start with leaf name
+        #         'name':'str',
+        #         'dist':'num',
+        #         'support':'num',
+        #         # taxonomic features
+        #         'rank':'str',
+        #         'sci_name':'str',
+        #         'taxid':'str',
+        #         'lineage':'str',
+        #         'named_lineage':'str'
+        #         }
+
         if args.tree_type == 'ete':
             leaf_prop2type = get_prop2type(tree.get_farthest_leaf()[0])
             internal_node_prop2type = get_prop2type(tree)
@@ -673,7 +692,7 @@ def tree_plot(args):
             
         elif args.tree_type == 'newick':
             popup_prop_keys = list(prop2type.keys()) 
-
+    
     popup_prop_keys = list(prop2type.keys()) 
     # collapse tree by condition 
     if args.collapsed_by: # need to be wrap with quotes
@@ -1009,7 +1028,7 @@ def get_layouts(argv_input, layout_name, level, internal_rep):
         #     layout =  staple_layouts.LayoutHeatmap('Heatmap_'+prop, level, internal_rep, prop)
         
         elif layout_name == 'barplot':
-            if prop in prop2type and prop2type[prop] == 'num':
+            if prop in prop2type and prop2type[prop] == float:
                 size_prop = prop+'_'+internal_rep # using internal prop to set the range in case rank_limit cut all the leaves
             else:
                 size_prop = prop

@@ -17,7 +17,7 @@ def check_nan(value):
         return False
 
 def counter_call(node, internal_prop, leaf_prop, datatype, operator_string, right_value):
-    if datatype == 'str':
+    if datatype == str:
         counter_props = node.props.get(internal_prop)
             
         if counter_props:
@@ -55,7 +55,7 @@ def call(node, prop, datatype, operator_string, right_value):
             if left_value:
                 return operator_dict[operator_string](left_value, right_value)
     
-    elif datatype == 'num':
+    elif datatype == float:
         left_value = node.props.get(prop)
         if left_value:
             return operator_dict[operator_string](float(left_value), float(right_value))
