@@ -37,7 +37,6 @@ __description__ = ('A program for profiling metadata on target '
 
 #colors_50 = ["#E41A1C","#C72A35","#AB3A4E","#8F4A68","#735B81","#566B9B","#3A7BB4","#3A85A8","#3D8D96","#419584","#449D72","#48A460","#4CAD4E","#56A354","#629363","#6E8371","#7A7380","#87638F","#93539D","#A25392","#B35A77","#C4625D","#D46A42","#E57227","#F67A0D","#FF8904","#FF9E0C","#FFB314","#FFC81D","#FFDD25","#FFF12D","#F9F432","#EBD930","#DCBD2E","#CDA12C","#BF862B","#B06A29","#A9572E","#B65E46","#C3655F","#D06C78","#DE7390","#EB7AA9","#F581BE","#E585B8","#D689B1","#C78DAB","#B791A5","#A8959F","#999999"]
 paried_color = ["red", "darkblue", "lightgreen", "violet", "mediumturquoise", "sienna", "lightCoral", "lightSkyBlue", "indigo", "tan", "coral", "olivedrab", "teal", "darkyellow"]
-ranks = ['clade','domain','superkingdom','kingdom','subkingdom','infrakingdom','superphylum','phylum','division','subphylum','subdivision','infradivision','superclass','class','subclass','infraclass','subterclass','parvclass','megacohort','supercohort','cohort','subcohort','infracohort','superorder','order','suborder','infraorder','parvorder','superfamily','family','subfamily','supertribe','tribe','subtribe','genus','subgenus','section','subsection','species group','series','species subgroup','species','infraspecies','subspecies','forma specialis','variety','varietas','subvariety','race','stirp','form','forma','morph','subform','biotype','isolate','pathogroup','serogroup','serotype','strain','aberration','unspecified','no rank','unranked','Unknown']
 
 ### annotate tree ####
 def tree_annotate(args):
@@ -787,6 +786,11 @@ def tree_plot(args):
         layouts.extend(label_layouts)
         total_color_dict.append(color_dict)
 
+    if args.barplot_layout:
+        barplot_layouts, level,color_dict = get_layouts(args.barplot_layout, 'barplot', level, internal_num_rep)
+        layouts.extend(barplot_layouts)
+        total_color_dict.append(color_dict)
+
     if args.binary_layout:
         label_layouts, level, color_dict = get_layouts(args.binary_layout, 'binary', level, 'counter')
         layouts.extend(label_layouts)
@@ -797,10 +801,7 @@ def tree_plot(args):
         layouts.extend(label_layouts)
         total_color_dict.append(color_dict)
     
-    if args.barplot_layout:
-        barplot_layouts, level,color_dict = get_layouts(args.barplot_layout, 'barplot', level, internal_num_rep)
-        layouts.extend(barplot_layouts)
-        total_color_dict.append(color_dict)
+    
 
         # props = []
         # for i in args.barplot_layout.split(','):
@@ -855,6 +856,9 @@ def tree_plot(args):
 
 import re
 def taxatree_prune(tree, rank_limit='subspecies'):
+    ranks = ['domain','superkingdom','kingdom','subkingdom','infrakingdom','superphylum','phylum','division','subphylum','subdivision','infradivision','superclass','class','subclass','infraclass','subterclass','parvclass','megacohort','supercohort','cohort','subcohort','infracohort','superorder','order','suborder','infraorder','parvorder','superfamily','family','subfamily','supertribe','tribe','subtribe','genus','subgenus','section','subsection','species group','series','species subgroup','species','infraspecies','subspecies','forma specialis','variety','varietas','subvariety','race','stirp','form','forma','morph','subform','biotype','isolate','pathogroup','serogroup','serotype','strain','aberration']
+    no_ranks = ['clade','unspecified','no rank','unranked','Unknown']
+    
     rank_limit = rank_limit.lower()
     
     ex = False
@@ -862,12 +866,14 @@ def taxatree_prune(tree, rank_limit='subspecies'):
         ex = True
         for n in tree.traverse('preorder'):
             if not n.is_root():
-                rank_idx = ranks.index(n.props.get('rank'))
-                limit_rank_idx = ranks.index(rank_limit)
-                if rank_idx >= limit_rank_idx:
-                    for child in n.get_children():
-                        child.detach()
-                        ex = False
+                rank_prop = n.props.get('rank')
+                if rank_prop in ranks: 
+                    rank_idx = ranks.index(rank_prop)
+                    limit_rank_idx = ranks.index(rank_limit)
+                    if rank_idx >= limit_rank_idx:
+                        for child in n.get_children():
+                            child.detach()
+                            ex = False
                     
     # ex = False
     # while not ex:
