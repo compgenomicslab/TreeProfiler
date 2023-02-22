@@ -234,7 +234,7 @@ class LayoutBarplot(LayoutPlot):
                     collapsed_only=True)
 
 class LayoutHeatmap(TreeLayout):
-    def __init__(self, name=None, column=0, width=50, height=50, internal_rep=None, \
+    def __init__(self, name=None, column=0, width=70, height=50, internal_rep=None, \
         prop=None, maxval=100, minval=0, min_color="#ffffff", max_color="#ff0000",\
         legend=True):
         super().__init__(name)
@@ -247,10 +247,12 @@ class LayoutHeatmap(TreeLayout):
         self.maxval = maxval
         self.minval = minval
         self.internal_prop = prop+'_'+internal_rep
+        self.width = width
+        self.height = height
 
     def set_tree_style(self, tree, tree_style):
         super().set_tree_style(tree, tree_style)
-        text = TextFace(self.num_prop, min_fsize=5, max_fsize=10, padding_x=2, width=70, rotation=315)
+        text = TextFace(self.num_prop, min_fsize=5, max_fsize=10, padding_x=2, width=self.width, rotation=315)
         tree_style.aligned_panel_header.add_face(text, column=self.column)
 
         if self.legend:
@@ -278,11 +280,11 @@ class LayoutHeatmap(TreeLayout):
             try:
                 ratio = float(node.props.get(self.num_prop)) / self.maxval
                 gradient_color = color_gradient(c1, c2, mix=ratio)
-                identF = RectFace(width=70,height=50,text="%.2f" % (float(node.props.get(self.num_prop))), color=gradient_color, 
+                identF = RectFace(width=self.width, height=self.height, text="%.2f" % (float(node.props.get(self.num_prop))), color=gradient_color, 
                     padding_x=1, padding_y=1, tooltip=tooltip)
                
             except ValueError: # for miss data
-                identF = RectFace(width=70,height=50,text="NaN", color=c1, 
+                identF = RectFace(width=self.width, height=self.height, text="NaN", color=c1, 
                 padding_x=1, padding_y=1, tooltip=tooltip)
 
             node.add_face(identF, column = self.column,  position = 'aligned')
@@ -297,10 +299,10 @@ class LayoutHeatmap(TreeLayout):
             try:
                 ratio = float(node.props.get(self.internal_prop)) / self.maxval
                 gradient_color = color_gradient(c1, c2, mix=ratio)
-                identF = RectFace(width=70,height=50,text="%.2f" % (float(node.props.get(self.internal_prop))), color=gradient_color, 
+                identF = RectFace(width=self.width, height=self.height, text="%.2f" % (float(node.props.get(self.internal_prop))), color=gradient_color, 
                     padding_x=1, padding_y=1, tooltip=tooltip)
             except ValueError: # for miss data
-                identF = RectFace(width=70,height=50,text="NaN", color=c1, 
+                identF = RectFace(width=self.width, height=self.height, text="NaN", color=c1, 
                 padding_x=1, padding_y=1, tooltip=tooltip)
             node.add_face(identF, column = self.column,  position = 'aligned')
 
@@ -314,10 +316,10 @@ class LayoutHeatmap(TreeLayout):
             try:
                 ratio = float(node.props.get(self.internal_prop)) / self.maxval
                 gradient_color = color_gradient(c1, c2, mix=ratio)
-                identF = RectFace(width=70,height=50,text="%.2f" % (float(node.props.get(self.internal_prop))), color=gradient_color, 
+                identF = RectFace(width=self.width, height=self.height, text="%.2f" % (float(node.props.get(self.internal_prop))), color=gradient_color, 
                     padding_x=1, padding_y=1, tooltip=tooltip)
             except ValueError: # for miss data
-                identF = RectFace(width=70,height=50,text="NaN", color=c1, 
+                identF = RectFace(width=self.width, height=self.height, text="NaN", color=c1, 
                 padding_x=1, padding_y=1, tooltip=tooltip)
             node.add_face(identF, column = self.column,  position = 'aligned', collapsed_only=True)
             # identF = RectFace(width=50,height=50,text="NaN", color=c1, 

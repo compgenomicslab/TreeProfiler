@@ -5,7 +5,7 @@ from layouts.general_layouts import get_piechartface
 #paried_color = ["red", "darkblue", "darkgreen", "darkyellow", "violet", "mediumturquoise", "sienna", "lightCoral", "lightSkyBlue", "indigo", "tan", "coral", "olivedrab", "teal"]
 
 class LayoutText(TreeLayout):
-    def __init__(self, name, column, color_dict, text_prop, legend=True):
+    def __init__(self, name, column, color_dict, text_prop, width=70, legend=True):
         super().__init__(name)
         self.aligned_faces = True
         self.text_prop = text_prop
@@ -13,6 +13,7 @@ class LayoutText(TreeLayout):
         self.color_dict = color_dict
         self.internal_prop = text_prop+'_counter'
         self.legend = legend
+        self.width = width
 
     # def set_tree_style(self, tree, tree_style):
     #     super().set_tree_style(tree, tree_style)
@@ -20,7 +21,7 @@ class LayoutText(TreeLayout):
     #     tree_style.aligned_panel_header.add_face(text, column=self.column)
     def set_tree_style(self, tree, tree_style):
         super().set_tree_style(tree, tree_style)
-        text = TextFace(self.text_prop, min_fsize=5, max_fsize=10, padding_x=2, width=70, rotation=315)
+        text = TextFace(self.text_prop, min_fsize=5, max_fsize=10, padding_x=2, width=self.width, rotation=315)
         tree_style.aligned_panel_header.add_face(text, column=self.column)
 
         if self.legend:
@@ -38,9 +39,9 @@ class LayoutText(TreeLayout):
                 # human_orth_face = RectFace(width=50,height=50, color=self.color)
                 # node.add_face(human_orth_face, column=self.column, position="aligned")
                 if self.color_dict:
-                    prop_face = TextFace(prop_text, color=self.color_dict[prop_text],min_fsize=5, max_fsize=10, padding_x=2, width=70)
+                    prop_face = TextFace(prop_text, color=self.color_dict[prop_text],min_fsize=5, max_fsize=10, padding_x=2, width=self.width )
                 else:
-                    prop_face = TextFace(prop_text, color='blue',min_fsize=5, max_fsize=10, padding_x=2, width=70)
+                    prop_face = TextFace(prop_text, color='blue',min_fsize=5, max_fsize=10, padding_x=2, width=self.width )
             node.add_face(prop_face, column=self.column, position="aligned")
             
         elif node.is_leaf() and node.props.get(self.internal_prop):
@@ -91,7 +92,7 @@ class LayoutColorbranch(TreeLayout):
             node.add_face(piechart_face, column = self.column, position = "aligned", collapsed_only=True)
 
 class LayoutRect(TreeLayout):
-    def __init__(self, name, column, color_dict, text_prop, legend=True):
+    def __init__(self, name, column, color_dict, text_prop, width=70, height=50, legend=True):
         super().__init__(name)
         self.aligned_faces = True
         self.text_prop = text_prop
@@ -99,6 +100,8 @@ class LayoutRect(TreeLayout):
         self.color_dict = color_dict
         self.internal_prop = text_prop+'_counter'
         self.legend = legend
+        self.width = width
+        self.height = height
 
     # def set_tree_style(self, tree, tree_style):
     #     super().set_tree_style(tree, tree_style)
@@ -106,7 +109,7 @@ class LayoutRect(TreeLayout):
     #     tree_style.aligned_panel_header.add_face(text, column=self.column)
     def set_tree_style(self, tree, tree_style):
         super().set_tree_style(tree, tree_style)
-        text = TextFace(self.text_prop, min_fsize=5, max_fsize=10, padding_x=2, width=70, rotation=315)
+        text = TextFace(self.text_prop, min_fsize=5, max_fsize=10, padding_x=2, width=self.width, rotation=315)
         tree_style.aligned_panel_header.add_face(text, column=self.column)
 
         if self.legend:
@@ -128,7 +131,7 @@ class LayoutRect(TreeLayout):
                 
                 if self.color_dict:
                     color = self.color_dict[str(prop_text)]
-                    prop_face = RectFace(width=70,height=50, color=color, \
+                    prop_face = RectFace(width=self.width, height=self.height, color=color, \
                         padding_x=1, padding_y=1, tooltip=tooltip)
                     node.add_face(prop_face, column=self.column, position="aligned")
             

@@ -33,7 +33,7 @@ def color_gradient(c1, c2, mix=0):
     c2 = np.array(mpl.colors.to_rgb(c2))
     return mpl.colors.to_hex((1-mix)*c1 + mix*c2)
 
-def get_heatmapface(node, prop, color, tooltip=None):
+def get_heatmapface(node, prop, color, tooltip=None, width=70, height=50):
     counter_props = node.props.get(prop).split('||')
     
     total = 0
@@ -54,8 +54,17 @@ def get_heatmapface(node, prop, color, tooltip=None):
     text = f"{positive} / {total}"
     # gradientFace = RectFace(width=100,height=50,text="%.1f" % (ratio*100), color=gradient_color, 
     #         padding_x=1, padding_y=1)
-    gradientFace = RectFace(width=70, height=50, 
+
+    if not tooltip:
+        if node.name:
+            tooltip = f'<b>{node.name}</b><br>'
+        else:
+            tooltip = ''
+        if prop:
+            tooltip += '<br>{}: {} / {} <br>'.format(prop, positive, total)
+
+    gradientFace = RectFace(width=width, height=height, 
                             #text=text, 
                             color=gradient_color, 
-                            padding_x=1, padding_y=1)
+                            padding_x=1, padding_y=1, tooltip=tooltip)
     return gradientFace
