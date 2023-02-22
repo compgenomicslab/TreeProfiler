@@ -111,9 +111,12 @@ class LayoutBinary(TreeLayout):
     #     super().set_tree_style(tree, tree_style)
     #     text = TextFace(self.name, max_fsize=11, padding_x=1)
     #     tree_style.aligned_panel_header.add_face(text, column=self.column)
+    def update_header_width(self):
+        return
+
     def set_tree_style(self, tree, tree_style):
         super().set_tree_style(tree, tree_style)
-        text = TextFace(self.bool_prop, min_fsize=5, max_fsize=10, padding_x=2, width=50, rotation=315)
+        text = TextFace(self.bool_prop, min_fsize=5, max_fsize=10, padding_x=2, width=70, rotation=315)
         tree_style.aligned_panel_header.add_face(text, column=self.column)
         if self.legend:
             if self.prop_colour_dict:
@@ -145,22 +148,26 @@ class LayoutBinary(TreeLayout):
 
                 if self.reverse:
                     if not bool(str2bool):
-                        prop_face = CircleFace(radius=self.radius, color=self.color, \
-                            padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
+                        
+                        #prop_face = CircleFace(radius=self.radius, color=self.color, padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
+                        prop_face = RectFace(width=70, height=50, color=self.color,  padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
                         node.add_face(prop_face, column=self.column, position = "aligned")
                     else:
-                        prop_face = CircleFace(radius=self.radius, color='white', padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
+                        #prop_face = CircleFace(radius=self.radius, color='white', padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
+                        prop_face = RectFace(width=70, height=50, color=self.color,  padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
                         node.add_face(prop_face, column=self.column, position = "aligned")
                 else:
                     if bool(str2bool):
-                        prop_face = CircleFace(radius=self.radius, color=self.color, padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
+                        #prop_face = CircleFace(radius=self.radius, color=self.color, padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
+                        prop_face = RectFace(width=70, height=50, color=self.color,  padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
                         node.add_face(prop_face, column=self.column, position = "aligned")
                     else:
-                        prop_face = CircleFace(radius=self.radius, color='white', padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
+                        #prop_face = CircleFace(radius=self.radius, color='white', padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
+                        prop_face = RectFace(width=70, height=50, color=self.color,  padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
                         node.add_face(prop_face, column=self.column, position = "aligned")
             else:
                 #prop_face = CircleFace(radius=self.radius, color='grey', padding_x=self.padding_x, padding_y=self.padding_y)
-                prop_face = TextFace('NaN', min_fsize=5, max_fsize=10, padding_x=2, width=50)
+                prop_face = TextFace('NaN', min_fsize=5, max_fsize=10, padding_x=2, width=70)
                 node.add_face(prop_face, column=self.column, position = "aligned")
         
         elif node.is_leaf() and node.props.get(self.internal_prop):
