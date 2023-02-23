@@ -670,6 +670,7 @@ def tree_plot(args):
                 'lineage':str,
                 'named_lineage': str
                 }
+        popup_prop_keys = list(prop2type.keys()) 
 
         # prop2type = {# start with leaf name
         #         'name':'str',
@@ -689,10 +690,10 @@ def tree_plot(args):
             prop2type.update(leaf_prop2type)
             prop2type.update(internal_node_prop2type)
             
-        elif args.tree_type == 'newick':
-            popup_prop_keys = list(prop2type.keys()) 
+        # elif args.tree_type == 'newick':
+        #     popup_prop_keys = list(prop2type.keys()) 
     
-    popup_prop_keys = list(prop2type.keys()) 
+    
     # collapse tree by condition 
     if args.collapsed_by: # need to be wrap with quotes
         condition_strings = args.collapsed_by
@@ -800,35 +801,6 @@ def tree_plot(args):
         label_layouts, level, color_dict = get_layouts(args.revbinary_layout, 'revbinary', level, 'counter')
         layouts.extend(label_layouts)
         total_color_dict.append(color_dict)
-    
-    
-
-        # props = []
-        # for i in args.barplot_layout.split(','):
-        #     props.append(i)
-        
-        # barplot_layouts = []
-        # for prop in props:
-        #     prop_values = np.array(list(set(children_prop_array(tree, prop)))).astype('float64')
-        #     prop_values = prop_values[~np.isnan(prop_values)]
-        #     minval, maxval = prop_values.min(), prop_values.max()
-            
-        #     if prop in prop2type and prop2type[prop] == 'num':
-        #         size_prop = prop+'_'+internal_num_rep # using internal prop to set the range in case rank_limit cut all the leaves
-        #     else:
-        #         size_prop = prop
-            
-        #     layout =  staple_layouts.LayoutBarplot(name='Barplot_'+prop, prop=prop, \
-        #                                 color=paried_color[level], size_prop=size_prop, 
-        #                                 column=level, internal_rep=internal_num_rep, maxval=maxval)
-
-        #     barplot_layouts.append(layout)
-        #     level += 1
-        #     popup_prop_keys.append(prop)
-        #     popup_prop_keys.append(prop+"_"+internal_num_rep)
-
-        # layouts.extend(barplot_layouts)
-
 
     #### prune at the last step in case of losing leaves information
     # prune tree by rank
