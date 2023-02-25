@@ -37,7 +37,7 @@ __description__ = ('A program for profiling metadata on target '
 
 #colors_50 = ["#E41A1C","#C72A35","#AB3A4E","#8F4A68","#735B81","#566B9B","#3A7BB4","#3A85A8","#3D8D96","#419584","#449D72","#48A460","#4CAD4E","#56A354","#629363","#6E8371","#7A7380","#87638F","#93539D","#A25392","#B35A77","#C4625D","#D46A42","#E57227","#F67A0D","#FF8904","#FF9E0C","#FFB314","#FFC81D","#FFDD25","#FFF12D","#F9F432","#EBD930","#DCBD2E","#CDA12C","#BF862B","#B06A29","#A9572E","#B65E46","#C3655F","#D06C78","#DE7390","#EB7AA9","#F581BE","#E585B8","#D689B1","#C78DAB","#B791A5","#A8959F","#999999"]
 paried_color = ["red", "darkblue", "lightgreen", "sienna", "lightCoral", "violet", "mediumturquoise",   "lightSkyBlue", "indigo", "tan", "coral", "olivedrab", "teal", "darkyellow"]
-#paried_color = ["red", "darkblue", "lightgreen", "#E41A1C","#C72A35","#AB3A4E","#8F4A68","#735B81","#566B9B","#3A7BB4","#3A85A8","#3D8D96","#419584","#449D72","#48A460","#4CAD4E","#56A354","#629363","#6E8371","#7A7380","#87638F","#93539D","#A25392","#B35A77","#C4625D","#D46A42","#E57227","#F67A0D","#FF8904","#FF9E0C","#FFB314","#FFC81D","#FFDD25","#FFF12D","#F9F432","#EBD930","#DCBD2E","#CDA12C","#BF862B","#B06A29","#A9572E","#B65E46","#C3655F","#D06C78","#DE7390","#EB7AA9","#F581BE","#E585B8","#D689B1","#C78DAB","#B791A5","#A8959F","#999999"]
+
 ### annotate tree ####
 def tree_annotate(args):
     total_color_dict = []
@@ -416,7 +416,7 @@ def parse_csv(input_file, delimiter='\t', no_colnames=False):
             del row[node_header]
             
             #row = {k: 'NaN' if (not v or v.lower() == 'none') else v for k, v in row.items() } ## replace empty to NaN
-            #row = {k: 'NaN' if (not v or v.lower() == 'none') else v for k, v in row.items() } ## replace empty to NaN
+            
             for k, v in row.items(): # replace missing value
                 if check_missing(v):
                     row[k] = 'NaN'
@@ -722,6 +722,10 @@ def get_prop2type(node):
     
     return output
 
+### emapper annotate tree
+def tree_emapper_annotate(args):
+    print("hi")
+    return 
 ### visualize tree
 def tree_plot(args):
     global prop2type, columns, tree
@@ -1315,7 +1319,11 @@ def populate_annotate_args(annotate_args_p):
         type=str,
         required=False,
         help="output annotated tsv file")
-    
+
+def populate_emapper_annotate_args(emapper_annotate_args_p):
+    group = emapper_annotate_args_p.add_argument_group(title='emapper annotate parameters',
+        description="Input parameters of emapper annotate ")
+
 def poplulate_plot_args(plot_args_p):
     """
     Parse the input parameters
@@ -1444,6 +1452,12 @@ def _main(arguments):
                                             description='annotate tree')
     populate_annotate_args(annotate_args_p)
     annotate_args_p.set_defaults(func=tree_annotate)
+
+    ## - EMAPPER ANNOTATE - 
+    emapper_annotate_args_p = subparser.add_parser('emapper-annotate', parents=[main_args_p],
+                                            description='annotate tree with eggnog mapper annotation data')
+    populate_emapper_annotate_args(emapper_annotate_args_p)
+    emapper_annotate_args_p.set_defaults(func=tree_emapper_annotate)
     
     ## - PLOT - 
     plot_args_p = subparser.add_parser('plot', parents=[main_args_p],
