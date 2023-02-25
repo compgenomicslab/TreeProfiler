@@ -8,10 +8,12 @@ from utils import to_code, call, counter_call
 from utils import check_nan
 
 def get_piechartface(node, prop, colour_dict=None, radius=40, tooltip=None):
+    pair_delimiter = "--"
+    item_seperator = "||"
     piechart_data = []
-    counter_props = node.props.get(prop).split('||')
+    counter_props = node.props.get(prop).split(item_seperator)
     for counter_prop in counter_props:
-        k, v = counter_prop.split('--')
+        k, v = counter_prop.split(pair_delimiter)
         piechart_data.append([k,float(v),colour_dict[k],None])
     
     if piechart_data:

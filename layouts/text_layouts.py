@@ -35,13 +35,14 @@ class LayoutText(TreeLayout):
         if node.is_leaf() and node.props.get(self.text_prop):
             prop_text = node.props.get(self.text_prop)
             if prop_text:
-                # human_orth = " ".join(human_orth.split('|'))
-                # human_orth_face = RectFace(width=50,height=50, color=self.color)
-                # node.add_face(human_orth_face, column=self.column, position="aligned")
-                if self.color_dict:
-                    prop_face = TextFace(prop_text, color=self.color_dict[prop_text],min_fsize=5, max_fsize=10, padding_x=2, width=self.width )
+                if type(prop_text) == list:
+                    prop_text = ",".join(prop_text)
                 else:
-                    prop_face = TextFace(prop_text, color='blue',min_fsize=5, max_fsize=10, padding_x=2, width=self.width )
+                    pass
+                if self.color_dict:
+                    prop_face = TextFace(prop_text, color=self.color_dict.get(prop_text, 'black'),min_fsize=5, max_fsize=10, padding_x=2, width=self.width )
+                else:
+                    prop_face = TextFace(prop_text, color='black',min_fsize=5, max_fsize=10, padding_x=2, width=self.width )
             node.add_face(prop_face, column=self.column, position="aligned")
             
         elif node.is_leaf() and node.props.get(self.internal_prop):
@@ -77,8 +78,12 @@ class LayoutColorbranch(TreeLayout):
         if node.is_leaf() and node.props.get(self.text_prop):
             prop_text = node.props.get(self.text_prop)
             if prop_text:
+                if type(prop_text) == list:
+                    prop_text = ",".join(prop_text)
+                else:
+                    pass
                 if self.color_dict:
-                    node.sm_style["hz_line_color"] = self.color_dict[prop_text]
+                    node.sm_style["hz_line_color"] = self.color_dict.get(prop_text,"")
                     node.sm_style["hz_line_width"] = 2
             
         elif node.is_leaf() and node.props.get(self.internal_prop):
@@ -123,14 +128,19 @@ class LayoutRect(TreeLayout):
         if node.is_leaf() and node.props.get(self.text_prop):
             prop_text = node.props.get(self.text_prop)
             if prop_text:
+                if type(prop_text) == list:
+                    prop_text = ",".join(prop_text)
+                else:
+                    pass
+
                 tooltip = ""
                 if node.name:
                     tooltip += f'<b>{node.name}</b><br>'
                 if self.text_prop:
-                    tooltip += f'<br>{self.text_prop}: {node.props.get(self.text_prop)}<br>'
+                    tooltip += f'<br>{self.text_prop}: {prop_text}<br>'
                 
                 if self.color_dict:
-                    color = self.color_dict[str(prop_text)]
+                    color = self.color_dict.get(str(prop_text),"")
                     prop_face = RectFace(width=self.width, height=self.height, color=color, \
                         padding_x=1, padding_y=1, tooltip=tooltip)
                     node.add_face(prop_face, column=self.column, position="aligned")

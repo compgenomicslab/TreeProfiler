@@ -17,13 +17,15 @@ def check_nan(value):
         return False
 
 def counter_call(node, internal_prop, leaf_prop, datatype, operator_string, right_value):
+    pair_delimiter = "--"
+    item_seperator = "||"
     if datatype == str:
         counter_props = node.props.get(internal_prop)
             
         if counter_props:
-            counter_datas = counter_props.split('||')
+            counter_datas = counter_props.split(item_seperator)
             for counter_data in counter_datas:
-                k, v = counter_data.split('--')
+                k, v = counter_data.split(pair_delimiter)
                 if k == leaf_prop:
                     left_value = float(v)
                     return operator_dict[operator_string](left_value, float(right_value))

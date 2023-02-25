@@ -36,8 +36,8 @@ __description__ = ('A program for profiling metadata on target '
 
 
 #colors_50 = ["#E41A1C","#C72A35","#AB3A4E","#8F4A68","#735B81","#566B9B","#3A7BB4","#3A85A8","#3D8D96","#419584","#449D72","#48A460","#4CAD4E","#56A354","#629363","#6E8371","#7A7380","#87638F","#93539D","#A25392","#B35A77","#C4625D","#D46A42","#E57227","#F67A0D","#FF8904","#FF9E0C","#FFB314","#FFC81D","#FFDD25","#FFF12D","#F9F432","#EBD930","#DCBD2E","#CDA12C","#BF862B","#B06A29","#A9572E","#B65E46","#C3655F","#D06C78","#DE7390","#EB7AA9","#F581BE","#E585B8","#D689B1","#C78DAB","#B791A5","#A8959F","#999999"]
-paried_color = ["red", "darkblue", "lightgreen", "violet", "mediumturquoise", "sienna", "lightCoral", "lightSkyBlue", "indigo", "tan", "coral", "olivedrab", "teal", "darkyellow"]
-
+paried_color = ["red", "darkblue", "lightgreen", "sienna", "lightCoral", "violet", "mediumturquoise",   "lightSkyBlue", "indigo", "tan", "coral", "olivedrab", "teal", "darkyellow"]
+#paried_color = ["red", "darkblue", "lightgreen", "#E41A1C","#C72A35","#AB3A4E","#8F4A68","#735B81","#566B9B","#3A7BB4","#3A85A8","#3D8D96","#419584","#449D72","#48A460","#4CAD4E","#56A354","#629363","#6E8371","#7A7380","#87638F","#93539D","#A25392","#B35A77","#C4625D","#D46A42","#E57227","#F67A0D","#FF8904","#FF9E0C","#FFB314","#FFC81D","#FFDD25","#FFF12D","#F9F432","#EBD930","#DCBD2E","#CDA12C","#BF862B","#B06A29","#A9572E","#B65E46","#C3655F","#D06C78","#DE7390","#EB7AA9","#F581BE","#E585B8","#D689B1","#C78DAB","#B791A5","#A8959F","#999999"]
 ### annotate tree ####
 def tree_annotate(args):
     total_color_dict = []
@@ -81,6 +81,11 @@ def tree_annotate(args):
         text_prop = args.text_prop.split(',')
     else:
         text_prop = []
+
+    if args.multiple_text_prop:
+        multiple_text_prop = args.multiple_text_prop.split(',')
+    else:
+        multiple_text_prop = []
 
     if args.num_prop:
         num_prop = args.num_prop.split(',')
@@ -138,23 +143,30 @@ def tree_annotate(args):
                 prop2type[prop] = value
     
     else:
-        #rest_prop = list(set(node_props) - set(text_prop) - set(num_prop) - set(bool_prop))
-            
         # output datatype of each property of each tree node including internal nodes
         if prop2type:
             for key, dtype in prop2type.items():
-                if key in text_prop+num_prop+bool_prop:
+                if key in text_prop+multiple_text_prop+num_prop+bool_prop:
                     pass
                 else:
                     if dtype == np.str_:
-                        text_prop.append(key)
+                        if key not in multiple_text_prop:
+                            text_prop.append(key)
+                        else:
+                            pass
                     if dtype == np.float64:
                         num_prop.append(key)
                     if dtype == np.bool_:
                         bool_prop.append(key)
         
+        # paramemters can over write the default
+        
         for prop in text_prop+bool_prop:
             prop2type[prop] = np.str_
+            prop2type[prop+'_counter'] = np.str_
+
+        for prop in multiple_text_prop:
+            prop2type[prop] = list
             prop2type[prop+'_counter'] = np.str_
 
         for prop in num_prop:
@@ -174,7 +186,10 @@ def tree_annotate(args):
     ### decide popup keys
     # if args.annotated_tree:
     if args.tree_type == 'ete':
-        leaf_prop2type = get_prop2type(tree.get_farthest_leaf()[0])
+        leafa, _, leafb, _ = tree._get_farthest_and_closest_leaves()
+        leaf_prop2type = get_prop2type(leafa)
+        leaf_prop2type.update(get_prop2type(leafb))
+        
         internal_node_prop2type = get_prop2type(tree)
         prop2type.update(leaf_prop2type)
         prop2type.update(internal_node_prop2type)
@@ -182,13 +197,14 @@ def tree_annotate(args):
         # exisiting props in internal node
         existing_internal_props = list(tree.props.keys())
         # exisiting props in leaf node
-        existing_leaf_props = list(tree.get_farthest_leaf()[0].props.keys()) 
+        existing_leaf_props = list(leaf_prop2type.keys()) 
         popup_prop_keys = list(set(existing_internal_props+existing_leaf_props))
     elif args.tree_type == 'newick':
+        leafa, _, leafb, _ = tree._get_farthest_and_closest_leaves()
         # props which add in the arguments
         required_internal_props = list(prop2type.keys()) 
         # exisiting prop in leaf node
-        existing_leaf_props = list(tree.get_farthest_leaf()[0].props.keys()) 
+        existing_leaf_props = list(leafa.props.keys()) + list(leafb.props.keys())
         popup_prop_keys = list(set(required_internal_props + existing_leaf_props))
     # else:
     #     # all the metadata to the leaves, no internal
@@ -229,6 +245,7 @@ def tree_annotate(args):
 
     # merge annotations depends on the column datatype
     start = time.time()
+    
     if not args.annotated_tree:
         #pre load node2leaves to save time
         node2leaves = annotated_tree.get_cached_content()
@@ -242,6 +259,10 @@ def tree_annotate(args):
                     internal_props_text = merge_text_annotations(node2leaves[node], text_prop, counter_stat=counter_stat)
                     internal_props.update(internal_props_text)
 
+                if multiple_text_prop:
+                    internal_props_multi = merge_multitext_annotations(node2leaves[node], multiple_text_prop, counter_stat=counter_stat)
+                    internal_props.update(internal_props_multi)
+
                 if num_prop:
                     internal_props_num = merge_num_annotations(node2leaves[node], num_prop, num_stat=num_stat)                        
                     if internal_props_num:
@@ -251,6 +272,7 @@ def tree_annotate(args):
                     internal_props_bool = merge_text_annotations(node2leaves[node], bool_prop, counter_stat=counter_stat)
                     internal_props.update(internal_props_bool)
 
+                
                 # deprecated
                 # if rest_column:
                 #     internal_props_rest = merge_text_annotations(node2leaves[node], rest_column, counter_stat=counter_stat)
@@ -356,6 +378,17 @@ def ete4_parse(newick):
 
     return tree
 
+def check_missing(input_string):
+    import re
+
+    pattern = r'^(?:\W+|none|None|null|NaN|)$'
+
+    if re.match(pattern, input_string):
+        #print("Input contains only non-alphanumeric characters, 'none', a missing value, or an empty value.")
+        return True
+    else:
+        return False
+    
 # 
 def parse_csv(input_file, delimiter='\t', no_colnames=False):
     """
@@ -381,8 +414,14 @@ def parse_csv(input_file, delimiter='\t', no_colnames=False):
         for row in reader:
             nodename = row[node_header]
             del row[node_header]
+            
             #row = {k: 'NaN' if (not v or v.lower() == 'none') else v for k, v in row.items() } ## replace empty to NaN
-            row = {k: 'NaN' if (not v or v.lower() == 'none') else v for k, v in row.items() } ## replace empty to NaN
+            #row = {k: 'NaN' if (not v or v.lower() == 'none') else v for k, v in row.items() } ## replace empty to NaN
+            for k, v in row.items(): # replace missing value
+                if check_missing(v):
+                    row[k] = 'NaN'
+                else:
+                    row[k] = v
             metadata[nodename] = dict(row)
             for (k,v) in row.items(): # go over each column name and value 
                 columns[k].append(v) # append the value into the appropriate list
@@ -421,6 +460,8 @@ def infer_dtype(column):
 
 def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, taxon_delimiter=';'):
     #name2leaf = {}
+    multi_text_seperator = ','
+
     name2leaf = defaultdict(list)
     # preload all leaves to save time instead of search in tree
     for leaf in tree.iter_leaves():
@@ -432,9 +473,11 @@ def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, 
             target_nodes = name2leaf[node]
             for target_node in target_nodes:
                 for key,value in props.items():
+                    # taxa
                     if key == taxon_column:
                         taxon_prop = value.split(taxon_delimiter)[-1]
                         target_node.add_prop(key, taxon_prop)
+                    # numerical
                     elif key in prop2type and prop2type[key]==np.float64:
                         try:
                             flot_value = float(value)
@@ -445,6 +488,10 @@ def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, 
                         except (ValueError,TypeError):
                             target_node.add_prop(key, 'NaN')
 
+                    # categorical
+                    elif key in prop2type and prop2type[key]==list:
+                        value_list = value.split(multi_text_seperator)
+                        target_node.add_prop(key, value_list)
                     else:
                         target_node.add_prop(key, value)
         else:
@@ -471,11 +518,14 @@ def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, 
     return tree
 
 def merge_text_annotations(nodes, target_props, counter_stat='raw'):
+    pair_seperator = "--"
+    item_seperator = "||"
+    
     internal_props = {}
     for target_prop in target_props:
         if counter_stat == 'raw':
             prop_list = children_prop_array(nodes, target_prop)
-            internal_props[add_suffix(target_prop, 'counter')] = '||'.join([add_suffix(str(key), value, '--') for key, value in sorted(dict(Counter(prop_list)).items())])
+            internal_props[add_suffix(target_prop, 'counter')] = item_seperator.join([add_suffix(str(key), value, pair_seperator) for key, value in sorted(dict(Counter(prop_list)).items())])
 
         elif counter_stat == 'relative':
             prop_list = children_prop_array(nodes, target_prop)
@@ -486,10 +536,51 @@ def merge_text_annotations(nodes, target_props, counter_stat='raw'):
             for key, value in sorted(dict(Counter(prop_list)).items()):
 
                 rel_val = '{0:.2f}'.format(float(value)/total)
-                counter_line.append(add_suffix(key, rel_val, '--'))
-            internal_props[add_suffix(target_prop, 'counter')] = '||'.join(counter_line)
+                counter_line.append(add_suffix(key, rel_val, pair_seperator))
+            internal_props[add_suffix(target_prop, 'counter')] = item_seperator.join(counter_line)
             #internal_props[add_suffix(target_prop, 'counter')] = '||'.join([add_suffix(key, value, '--') for key, value in dict(Counter(prop_list)).items()])
 
+        else:
+            print('Invalid stat method')
+            break
+    
+    return internal_props
+
+def merge_multitext_annotations(nodes, target_props, counter_stat='raw'):
+    #seperator of multiple text 'GO:0000003,GO:0000902,GO:0000904'
+    multi_text_seperator = ','
+    pair_seperator = "--"
+    item_seperator = "||"
+    
+    internal_props = {}
+    for target_prop in target_props:
+        if counter_stat == 'raw':
+            prop_list = children_prop_array(nodes, target_prop)
+            multi_prop_list = []
+            
+            for elements in prop_list:
+                for j in elements:
+                    multi_prop_list.append(j)
+            internal_props[add_suffix(target_prop, 'counter')] = item_seperator.join([add_suffix(str(key), value, pair_seperator) for key, value in sorted(dict(Counter(multi_prop_list)).items())])
+
+        elif counter_stat == 'relative':
+            prop_list = children_prop_array(nodes, target_prop)
+            multi_prop_list = []
+            
+            for elements in prop_list:
+                for j in elements:
+                    multi_prop_list.append(j)
+
+            counter_line = []
+
+            total = sum(dict(Counter(multi_prop_list)).values())
+
+            for key, value in sorted(dict(Counter(multi_prop_list)).items()):
+                rel_val = '{0:.2f}'.format(float(value)/total)
+                counter_line.append(add_suffix(key, rel_val, pair_seperator))
+            internal_props[add_suffix(target_prop, 'counter')] = item_seperator.join(counter_line)
+            #internal_props[add_suffix(target_prop, 'counter')] = '||'.join([add_suffix(key, value, '--') for key, value in dict(Counter(prop_list)).items()])
+            print(internal_props[add_suffix(target_prop, 'counter')])
         else:
             print('Invalid stat method')
             break
@@ -614,12 +705,15 @@ import numbers
 def get_prop2type(node):
     output = {}
     prop2value = node.props
+
     if '_speciesFunction' in prop2value:
         del prop2value['_speciesFunction']
-
+    
     for prop, value in prop2value.items():
         if isinstance(value, numbers.Number):
             output[prop] = float
+        elif type(value) == list:
+            output[prop] = list
         else:
             output[prop] = str
 
@@ -672,20 +766,11 @@ def tree_plot(args):
                 }
         popup_prop_keys = list(prop2type.keys()) 
 
-        # prop2type = {# start with leaf name
-        #         'name':'str',
-        #         'dist':'num',
-        #         'support':'num',
-        #         # taxonomic features
-        #         'rank':'str',
-        #         'sci_name':'str',
-        #         'taxid':'str',
-        #         'lineage':'str',
-        #         'named_lineage':'str'
-        #         }
-
         if args.tree_type == 'ete':
-            leaf_prop2type = get_prop2type(tree.get_farthest_leaf()[0])
+            leafa, _, leafb, _ = tree._get_farthest_and_closest_leaves()
+            leaf_prop2type = get_prop2type(leafa)
+            leaf_prop2type.update(get_prop2type(leafb))
+            
             internal_node_prop2type = get_prop2type(tree)
             prop2type.update(leaf_prop2type)
             prop2type.update(internal_node_prop2type)
@@ -773,17 +858,17 @@ def tree_plot(args):
 
     # categorical and boolean 
     if args.colorbranch_layout:
-        colorbranch_layouts, level, color_dict = get_layouts(args.colorbranch_layout, 'colorbranch', level, 'counter')
+        colorbranch_layouts, level, color_dict = get_layouts(args.colorbranch_layout, 'colorbranch', level, 'counter', prop2type=prop2type)
         layouts.extend(colorbranch_layouts)
         total_color_dict.append(color_dict)
 
     if args.rectangular_layout:
-        rectangular_layouts, level, color_dict = get_layouts(args.rectangular_layout, 'rectangular', level, 'counter')
+        rectangular_layouts, level, color_dict = get_layouts(args.rectangular_layout, 'rectangular', level, 'counter', prop2type=prop2type)
         layouts.extend(rectangular_layouts)
         total_color_dict.append(color_dict)
         
     if args.label_layout:
-        label_layouts, level, color_dict = get_layouts(args.label_layout, 'label', level, 'counter')
+        label_layouts, level, color_dict = get_layouts(args.label_layout, 'label', level, 'counter', prop2type=prop2type)
         layouts.extend(label_layouts)
         total_color_dict.append(color_dict)
 
@@ -958,7 +1043,7 @@ def wrtie_color(color_dict):
                     f.write('\n')
     return
 
-def get_layouts(argv_input, layout_name, level, internal_rep): 
+def get_layouts(argv_input, layout_name, level, internal_rep, prop2type=None): 
     props = []
     layouts = []
     prop_color_dict = {} # key = value, value = color id
@@ -1020,13 +1105,14 @@ def get_layouts(argv_input, layout_name, level, internal_rep):
 
         # categorical layouts
         elif layout_name in ['label','rectangular', 'colorbranch']:
-            
-            if columns:
-                prop_values =  sorted(list(set(columns[prop])))
+            if prop2type and prop2type[prop] == list:
+                leaf_values = list(map(list,set(map(tuple,children_prop_array(tree, prop)))))    
+                prop_values = [val for sublist in leaf_values for val in sublist]
             else:
                 prop_values = sorted(list(set(children_prop_array(tree, prop))))
-            nvals = len(prop_values)
-
+            
+            # normal text prop
+            nvals = len(prop_values)            
             for i in range(0, nvals):
                 if nvals <= 14:
                     color_dict[prop_values[i]] = paried_color[i]
@@ -1148,6 +1234,10 @@ def populate_annotate_args(annotate_args_p):
         type=str,
         required=False,
         help="<col1,col2> names, column index or index range of columns which need to be read as categorical data")
+    group.add_argument('--multiple_text_prop',
+        type=str,
+        required=False,
+        help="<col1,col2> names, column index or index range of columns which need to be read as categorical data which contains more than one value and seperate by ',' such as GO:0000003,GO:0000902,GO:0000904,GO:0003006")
     group.add_argument('--num_prop',
         type=str,
         required=False,
