@@ -731,7 +731,7 @@ def tree_plot(args):
 
     total_color_dict = []
     layouts = []
-    level = 2 # level 1 is the leaf name
+    level = 1 # level 1 is the leaf name
 
     #parse input tree
     if args.tree:
@@ -872,11 +872,6 @@ def tree_plot(args):
         layouts.extend(label_layouts)
         total_color_dict.append(color_dict)
 
-    if args.barplot_layout:
-        barplot_layouts, level,color_dict = get_layouts(args.barplot_layout, 'barplot', level, internal_num_rep)
-        layouts.extend(barplot_layouts)
-        total_color_dict.append(color_dict)
-
     if args.binary_layout:
         label_layouts, level, color_dict = get_layouts(args.binary_layout, 'binary', level, 'counter')
         layouts.extend(label_layouts)
@@ -885,6 +880,11 @@ def tree_plot(args):
     if args.revbinary_layout:
         label_layouts, level, color_dict = get_layouts(args.revbinary_layout, 'revbinary', level, 'counter')
         layouts.extend(label_layouts)
+        total_color_dict.append(color_dict)
+
+    if args.barplot_layout:
+        barplot_layouts, level,color_dict = get_layouts(args.barplot_layout, 'barplot', level, internal_num_rep, prop2type=prop2type)
+        layouts.extend(barplot_layouts)
         total_color_dict.append(color_dict)
 
     #### prune at the last step in case of losing leaves information
@@ -1089,7 +1089,7 @@ def get_layouts(argv_input, layout_name, level, internal_rep, prop2type=None):
         # numerical layouts
         # elif layout_name == 'heatmap':
         #     layout =  staple_layouts.LayoutHeatmap('Heatmap_'+prop, level, internal_rep, prop)
-        
+       
         elif layout_name == 'barplot':
             if prop in prop2type and prop2type[prop] == float:
                 size_prop = prop+'_'+internal_rep # using internal prop to set the range in case rank_limit cut all the leaves

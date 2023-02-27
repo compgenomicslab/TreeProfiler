@@ -37,6 +37,14 @@ def color_gradient(c1, c2, mix=0):
     c2 = np.array(mpl.colors.to_rgb(c2))
     return mpl.colors.to_hex((1-mix)*c1 + mix*c2)
 
+def swap_pos(pos, angle):
+    if abs(angle) >= pi / 2:
+        if pos == 'branch_top':
+            pos = 'branch_bottom'
+        elif pos == 'branch_bottom':
+            pos = 'branch_top'
+    return pos
+
 class LayoutPlot(TreeLayout):
     def __init__(self, name=None, prop=None, width=200, size_prop=None, 
             color_prop=None, color_gradient=None, color="red", colors=None,
@@ -193,8 +201,9 @@ class LayoutBarplot(LayoutPlot):
         
         if node.is_leaf() and node.props.get(self.prop):
             width = self.get_size(node, self.prop)
-            print(width)
-            print(self.scale_width, self.scale_range)
+            
+            
+            #print(self.scale_width, self.scale_range)
             #color = self.get_color(node)
             color = self.color
             tooltip = ""
@@ -255,10 +264,11 @@ class LayoutHeatmap(TreeLayout):
         self.internal_prop = prop+'_'+internal_rep
         self.width = width
         self.height = height
-
+        self.padding_x = 2
+        self.padding_y = 2
     def set_tree_style(self, tree, tree_style):
         super().set_tree_style(tree, tree_style)
-        text = TextFace(self.num_prop, min_fsize=5, max_fsize=10, padding_x=2, width=self.width, rotation=315)
+        text = TextFace(self.num_prop, min_fsize=5, max_fsize=10, padding_x=self.padding_x, width=self.width, rotation=315)
         tree_style.aligned_panel_header.add_face(text, column=self.column)
 
         if self.legend:
@@ -287,11 +297,11 @@ class LayoutHeatmap(TreeLayout):
                 ratio = float(node.props.get(self.num_prop)) / self.maxval
                 gradient_color = color_gradient(c1, c2, mix=ratio)
                 identF = RectFace(width=self.width, height=self.height, text="%.2f" % (float(node.props.get(self.num_prop))), color=gradient_color, 
-                    padding_x=1, padding_y=1, tooltip=tooltip)
+                    padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
                
             except ValueError: # for miss data
                 identF = RectFace(width=self.width, height=self.height, text="NaN", color=c1, 
-                padding_x=1, padding_y=1, tooltip=tooltip)
+                padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
 
             node.add_face(identF, column = self.column,  position = 'aligned')
         
@@ -306,10 +316,10 @@ class LayoutHeatmap(TreeLayout):
                 ratio = float(node.props.get(self.internal_prop)) / self.maxval
                 gradient_color = color_gradient(c1, c2, mix=ratio)
                 identF = RectFace(width=self.width, height=self.height, text="%.2f" % (float(node.props.get(self.internal_prop))), color=gradient_color, 
-                    padding_x=1, padding_y=1, tooltip=tooltip)
+                    padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
             except ValueError: # for miss data
                 identF = RectFace(width=self.width, height=self.height, text="NaN", color=c1, 
-                padding_x=1, padding_y=1, tooltip=tooltip)
+                padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
             node.add_face(identF, column = self.column,  position = 'aligned')
 
         elif node.props.get(self.internal_prop):
@@ -323,10 +333,10 @@ class LayoutHeatmap(TreeLayout):
                 ratio = float(node.props.get(self.internal_prop)) / self.maxval
                 gradient_color = color_gradient(c1, c2, mix=ratio)
                 identF = RectFace(width=self.width, height=self.height, text="%.2f" % (float(node.props.get(self.internal_prop))), color=gradient_color, 
-                    padding_x=1, padding_y=1, tooltip=tooltip)
+                    padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
             except ValueError: # for miss data
                 identF = RectFace(width=self.width, height=self.height, text="NaN", color=c1, 
-                padding_x=1, padding_y=1, tooltip=tooltip)
+                padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
             node.add_face(identF, column = self.column,  position = 'aligned', collapsed_only=True)
             # identF = RectFace(width=50,height=50,text="NaN", color=c1, 
             #     padding_x=1, padding_y=1)
