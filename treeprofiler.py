@@ -14,6 +14,7 @@ from argparse import ArgumentParser
 import argparse
 from collections import defaultdict
 from collections import Counter
+from itertools import islice
 from scipy import stats
 import colorsys
 import random
@@ -428,9 +429,11 @@ def parse_csv(input_file, delimiter='\t', no_colnames=False):
                                     # based on column name k
         
     for prop in node_props:
-        dtype = infer_dtype(columns[prop])
-        prop2type[prop] = dtype # get_type_convert(dtype)
-
+        if set(columns[prop])=={'NaN'}:
+            prop2type[prop] = np.str_
+        else:
+            dtype = infer_dtype(columns[prop])
+            prop2type[prop] = dtype # get_type_convert(dtype)
     return metadata, node_props, columns, prop2type
 
 def get_type_convert(np_type):
@@ -441,6 +444,7 @@ def get_type_convert(np_type):
     return (np_type, convert_type)
 
 def convert_column_data(column, dtype):
+    
     try:
         data = np.array(column).astype(dtype)
         return dtype
@@ -724,8 +728,213 @@ def get_prop2type(node):
 
 ### emapper annotate tree
 def tree_emapper_annotate(args):
-    print("hi")
+    print("start mapping emapper annotation")
+
+    #parse input tree
+    if args.tree:
+        if args.tree_type == 'newick':
+            tree = ete4_parse(args.tree)
+        elif args.tree_type == 'ete':
+            with open(args.tree, 'r') as f:
+                file_content = f.read()
+                tree = b64pickle.loads(file_content, encoder='pickle', unpack=False)
+    
+    # parse emapper annotation
+    if args.emapper_annotations:
+        metadata_dict, node_props, columns = parse_emapper_annotations(args.emapper_annotations)
+    else: # annotated_tree
+        node_props=[]
+        columns = {}
+    
+    if args.emapper_pfams:
+        pass
+    
+    if args.emapper_smart:
+        pass
+    
+    if args.seq:
+        pass
+    
+    prop2type = {
+        'name': np.str_,
+        'dist': np.float64,
+        'support': np.float64,
+        'seed_ortholog': np.str_,
+        'evalue': np.float64,
+        'score': np.float64,
+        'eggNOG_OGs': list,
+        'max_annot_lvl': np.str_,
+        'COG_category': np.str_,
+        'Description': np.str_,
+        'Preferred_name': np.str_,
+        'GOs': list,
+        'EC':np.str_,
+        'KEGG_ko': list,
+        'KEGG_Pathway': list,
+        'KEGG_Module': list,
+        'KEGG_Reaction':list,
+        'KEGG_rclass':list,
+        'BRITE':list,
+        'KEGG_TC':list,
+        'CAZy':list,
+        'BiGG_Reaction':list,
+        'PFAMs':list
+    }
+    
+    
+    popup_prop_keys = list(prop2type.keys())
+    if args.taxonomic_profile:
+        popup_prop_keys.extend([
+            'rank',
+            'sci_name',
+            'taxid',
+            'lineage',
+            'named_lineage'
+        ])
+        
+    # load metadata to leaf nodes
+    if args.taxon_column: # to identify taxon column as taxa property from metadata
+        taxon_column.append(args.taxon_column)
+        annotated_tree = load_metadata_to_tree(tree, metadata_dict, prop2type=prop2type, taxon_column=args.taxon_column, taxon_delimiter=args.taxon_delimiter)
+    else:
+        annotated_tree = load_metadata_to_tree(tree, metadata_dict, prop2type=prop2type)
+    
+    # merge annotations depends on the column datatype
+    start = time.time()
+    text_prop = ['seed_ortholog', 'max_annot_lvl', 'COG_category', 'EC', ]
+    num_prop = ['evalue', 'score']
+    multiple_text_prop = ['eggNOG_OGs', 'GOs', 'KEGG_ko', 'KEGG_Pathway', 
+                        'KEGG_Module', 'KEGG_Reaction', 'KEGG_rclass',
+                        'BRITE', 'KEGG_TC', 'CAZy', 'BiGG_Reaction'] # Pfams
+
+    counter_stat = 'raw'
+    num_stat = 'all'
+
+    #pre load node2leaves to save time
+    node2leaves = annotated_tree.get_cached_content()
+    count = 0
+    for node in annotated_tree.traverse("postorder"):
+        internal_props = {}
+        if node.is_leaf():
+            pass
+        else:
+            if text_prop:
+                internal_props_text = merge_text_annotations(node2leaves[node], text_prop, counter_stat=counter_stat)
+                internal_props.update(internal_props_text)
+            if multiple_text_prop:
+                internal_props_multi = merge_multitext_annotations(node2leaves[node], multiple_text_prop, counter_stat=counter_stat)
+                internal_props.update(internal_props_multi)
+
+            if num_prop:
+                internal_props_num = merge_num_annotations(node2leaves[node], num_prop, num_stat=num_stat)                        
+                if internal_props_num:
+                    internal_props.update(internal_props_num)
+
+            for key,value in internal_props.items():
+                node.add_prop(key, value)
+
+    end = time.time()
+    print('Time for merge annotations to run: ', end - start)
+
+    # taxa annotations
+    if args.taxonomic_profile:
+        if not args.taxadb:
+            print('Please specify which taxa db using --taxadb <GTDB|NCBI>')
+        else:
+            if args.taxadb == 'GTDB':
+                if args.taxon_column:
+                    annotated_tree, rank2values = annotate_taxa(annotated_tree, db=args.taxadb, taxid_attr=args.taxon_column)
+                else:
+                    annotated_tree, rank2values = annotate_taxa(annotated_tree, db=args.taxadb, taxid_attr="name")
+            elif args.taxadb == 'NCBI':
+                if args.taxon_column:
+                    annotated_tree, rank2values = annotate_taxa(annotated_tree, db=args.taxadb, taxid_attr=args.taxon_column, sp_delimiter=args.taxon_delimiter, sp_field=args.taxa_field)
+                else:
+                    annotated_tree, rank2values = annotate_taxa(annotated_tree, db=args.taxadb, taxid_attr="name", sp_delimiter=args.taxon_delimiter, sp_field=args.taxa_field)
+    else:
+        rank2values = {}
+
+    # prune tree by rank
+    if args.rank_limit:
+        annotated_tree = taxatree_prune(annotated_tree, rank_limit=args.rank_limit)
+
+    # prune tree by condition 
+    if args.pruned_by: # need to be wrap with quotes
+        condition_strings = args.pruned_by
+        annotated_tree = conditional_prune(annotated_tree, condition_strings, prop2type)
+
+    if args.outdir:
+        base=os.path.splitext(os.path.basename(args.tree))[0]
+        out_newick = base + '_annotated.nw'
+        out_prop2tpye = base + '_prop2type.txt'
+        out_ete = base+'_annotated.ete'
+        out_tsv = base+'_annotated.tsv'
+
+        ### out newick
+        annotated_tree.write(outfile=os.path.join(args.outdir, out_newick), properties = [], format=1)
+        ### output prop2type
+        with open(os.path.join(args.outdir, base+'_prop2type.txt'), "w") as f:
+            #f.write(first_line + "\n")
+            for key, value in prop2type.items():
+                f.write("{}\t{}\n".format(key, value))
+        ### out ete
+        with open(os.path.join(args.outdir, base+'_annotated.ete'), 'w') as f:
+            f.write(b64pickle.dumps(annotated_tree, encoder='pickle', pack=False))
+        
+        ### out tsv
+        tree2table(annotated_tree, internal_node=True, props=popup_prop_keys, outfile=os.path.join(args.outdir, out_tsv))
+                
     return 
+
+
+def parse_emapper_annotations(input_file, delimiter='\t', no_colnames=False):
+    """
+    Takes tsv table as input
+    Return 
+    metadata, as dictionary of dictionaries for each node's metadata
+    node_props, a list of property names(column names of metadata table)
+    columns, dictionary of property name and it's values
+    """
+    metadata = {}
+    columns = defaultdict(list)
+    prop2type = {}
+    headers = ["#query", "seed_ortholog", "evalue",	"score","eggNOG_OGs",
+            "max_annot_lvl","COG_category","Description","Preferred_name","GOs",
+            "EC","KEGG_ko","KEGG_Pathway",	"KEGG_Module", "KEGG_Reaction",	"KEGG_rclass",	
+            "BRITE", "KEGG_TC", "CAZy", "BiGG_Reaction", "PFAMs"]
+
+    lines_count = len(open(input_file).readlines())
+
+    with open(input_file, 'r') as f:
+        
+        if no_colnames:
+            reader = csv.DictReader(f, delimiter=delimiter, fieldnames=headers)
+        else:
+            lines_count = len(f.readlines())
+            
+            skip_header = 4
+            skip_footer = 3
+            f.seek(0) # using f twice
+            reader = csv.DictReader(islice(f,skip_header,lines_count-skip_footer), delimiter=delimiter)
+            
+        node_header, node_props = headers[0], headers[1:]
+        for row in reader:
+            nodename = row[node_header]
+            del row[node_header]
+            
+            for k, v in row.items(): # replace missing value
+                
+                if check_missing(v):
+                    row[k] = 'NaN'
+                else:
+                    row[k] = v
+            metadata[nodename] = dict(row)
+            for (k,v) in row.items(): # go over each column name and value 
+                columns[k].append(v) # append the value into the appropriate list
+                                    # based on column name k
+    
+    return metadata, node_props, columns
+
 ### visualize tree
 def tree_plot(args):
     global prop2type, columns, tree
@@ -891,6 +1100,9 @@ def tree_plot(args):
         layouts.extend(label_layouts)
         total_color_dict.append(color_dict)
 
+    if args.emapper_layout:
+        pass
+    
     #### prune at the last step in case of losing leaves information
     # prune tree by rank
     if args.rank_limit:
@@ -1323,6 +1535,55 @@ def populate_annotate_args(annotate_args_p):
 def populate_emapper_annotate_args(emapper_annotate_args_p):
     group = emapper_annotate_args_p.add_argument_group(title='emapper annotate parameters',
         description="Input parameters of emapper annotate ")
+    group.add_argument('--emapper_annotations',
+        type=str,
+        required=False,
+        help="out.emapper.annotations")
+    group.add_argument('--emapper_pfams',
+        type=str,
+        required=False,
+        help="out.emapper.pfams")
+    group.add_argument('--emapper_smart',
+        type=str,
+        required=False,
+        help="out.emapper.smart")
+    group.add_argument('--seq',
+        type=str,
+        required=False,
+        help="Sequence alignment, .fasta format")
+    group.add_argument('--taxadb',
+        type=str,
+        default='GTDB',
+        required=False,
+        help="<NCBI|GTDB> for taxonomic profiling or fetch taxatree default [GTDB]")    
+    group.add_argument('--taxon_column',
+        type=str,
+        required=False,
+        help="<col1> name of columns which need to be read as taxon data")
+    group.add_argument('--taxon_delimiter',
+        type=str,
+        default=';',
+        required=False,
+        help="delimiter of taxa columns. default [;]")
+    group.add_argument('--taxa_field',
+        type=int,
+        default=0,
+        required=False,
+        help="field of taxa name after delimiter. default 0")
+    
+    group.add_argument('--taxonomic_profile',
+        default=False,
+        action='store_true',
+        required=False,
+        help="Determine if you need taxonomic annotation on tree")
+    
+    group = emapper_annotate_args_p.add_argument_group(title='OUTPUT options',
+        description="")
+    group.add_argument('-o', '--outdir',
+        type=str,
+        required=False,
+        help="output annotated tree")
+    
 
 def poplulate_plot_args(plot_args_p):
     """
@@ -1404,6 +1665,11 @@ def poplulate_plot_args(plot_args_p):
         default=False,
         action='store_true',
         help="activate taxon_layout")
+    
+    group.add_argument('--emapper_layout',
+        default=False,
+        action='store_true',
+        help="activate emapper_layout")
     
     group = plot_args_p.add_argument_group(title='Output arguments',
         description="Output parameters")
