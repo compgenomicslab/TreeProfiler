@@ -39,7 +39,7 @@ def counter_call(node, internal_prop, leaf_prop, datatype, operator_string, righ
 
 def call(node, prop, datatype, operator_string, right_value):
     num_operators = [ '<', '<=', '>', '>=' ] 
-    if datatype == 'str':
+    if datatype == str:
         if operator_string in num_operators:
             return False
         elif operator_string == 'contains':

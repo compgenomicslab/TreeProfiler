@@ -150,38 +150,38 @@ def tree_annotate(args):
                 if key in text_prop+multiple_text_prop+num_prop+bool_prop:
                     pass
                 else:
-                    if dtype == np.str_:
+                    if dtype == str:
                         if key not in multiple_text_prop:
                             text_prop.append(key)
                         else:
                             pass
-                    if dtype == np.float64:
+                    if dtype == float:
                         num_prop.append(key)
-                    if dtype == np.bool_:
+                    if dtype == bool:
                         bool_prop.append(key)
         
         # paramemters can over write the default
         
         for prop in text_prop+bool_prop:
-            prop2type[prop] = np.str_
-            prop2type[prop+'_counter'] = np.str_
+            prop2type[prop] = str
+            prop2type[prop+'_counter'] = str
 
         for prop in multiple_text_prop:
             prop2type[prop] = list
-            prop2type[prop+'_counter'] = np.str_
+            prop2type[prop+'_counter'] = str
 
         for prop in num_prop:
-            prop2type[prop] = np.float64
-            prop2type[prop+'_avg'] = np.float64
-            prop2type[prop+'_sum'] = np.float64
-            prop2type[prop+'_max'] = np.float64
-            prop2type[prop+'_min'] = np.float64
-            prop2type[prop+'_std'] = np.float64
+            prop2type[prop] = float
+            prop2type[prop+'_avg'] = float
+            prop2type[prop+'_sum'] = float
+            prop2type[prop+'_max'] = float
+            prop2type[prop+'_min'] = float
+            prop2type[prop+'_std'] = float
         
         prop2type.update({# start with leaf name
-                'name':np.str_,
-                'dist':np.float64,
-                'support':np.float64,
+                'name':str,
+                'dist':float,
+                'support':float,
                 })
     
     ### decide popup keys
@@ -430,7 +430,8 @@ def parse_csv(input_file, delimiter='\t', no_colnames=False):
         
     for prop in node_props:
         if set(columns[prop])=={'NaN'}:
-            prop2type[prop] = np.str_
+            #prop2type[prop] = np.str_
+            prop2type[prop] = str
         else:
             dtype = infer_dtype(columns[prop])
             prop2type[prop] = dtype # get_type_convert(dtype)
@@ -443,23 +444,27 @@ def get_type_convert(np_type):
     convert_type = type(np.zeros(1,np_type).tolist()[0])
     return (np_type, convert_type)
 
-def convert_column_data(column, dtype):
-    
+def convert_column_data(column, np_dtype):
+    #np_dtype = np.dtype(dtype).type
     try:
-        data = np.array(column).astype(dtype)
-        return dtype
+        data = np.array(column).astype(np_dtype)
+        return np_dtype
     except ValueError:
         return None
     #data.astype(np.float)
 
 def infer_dtype(column):
-    dtype_order = ['float64', 'bool', 'str']
-    for dtype in dtype_order:
-        dtype = np.dtype(dtype).type
-        result = convert_column_data(column, dtype)
+    dtype_dict = {
+        float:np.float64,
+        bool:np.bool_,
+        str:np.str_
+        }
+    #dtype_order = ['float64', 'bool', 'str']
+    for dtype, np_dtype in dtype_dict.items():
+        result = convert_column_data(column, np_dtype)
         if result is not None:
             # Successful inference, exit from the loop
-            return result
+            return dtype
     return None
 
 def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, taxon_delimiter=';'):
@@ -756,19 +761,19 @@ def tree_emapper_annotate(args):
         pass
     
     prop2type = {
-        'name': np.str_,
-        'dist': np.float64,
-        'support': np.float64,
-        'seed_ortholog': np.str_,
-        'evalue': np.float64,
-        'score': np.float64,
+        'name': str,
+        'dist': float,
+        'support': float,
+        'seed_ortholog': str,
+        'evalue': float,
+        'score': float,
         'eggNOG_OGs': list,
-        'max_annot_lvl': np.str_,
-        'COG_category': np.str_,
-        'Description': np.str_,
-        'Preferred_name': np.str_,
+        'max_annot_lvl': str,
+        'COG_category': str,
+        'Description': str,
+        'Preferred_name': str,
         'GOs': list,
-        'EC':np.str_,
+        'EC':str,
         'KEGG_ko': list,
         'KEGG_Pathway': list,
         'KEGG_Module': list,
@@ -805,14 +810,13 @@ def tree_emapper_annotate(args):
     num_prop = ['evalue', 'score']
     multiple_text_prop = ['eggNOG_OGs', 'GOs', 'KEGG_ko', 'KEGG_Pathway', 
                         'KEGG_Module', 'KEGG_Reaction', 'KEGG_rclass',
-                        'BRITE', 'KEGG_TC', 'CAZy', 'BiGG_Reaction'] # Pfams
+                        'BRITE', 'KEGG_TC', 'CAZy', 'BiGG_Reaction', 'PFAMs'] # Pfams
 
     counter_stat = 'raw'
     num_stat = 'all'
 
     #pre load node2leaves to save time
     node2leaves = annotated_tree.get_cached_content()
-    count = 0
     for node in annotated_tree.traverse("postorder"):
         internal_props = {}
         if node.is_leaf():
@@ -883,7 +887,6 @@ def tree_emapper_annotate(args):
         
         ### out tsv
         tree2table(annotated_tree, internal_node=True, props=popup_prop_keys, outfile=os.path.join(args.outdir, out_tsv))
-                
     return 
 
 
@@ -1101,6 +1104,36 @@ def tree_plot(args):
         total_color_dict.append(color_dict)
 
     if args.emapper_layout:
+        text_prop = [
+            "seed_ortholog",
+            'eggNOG_OGs',
+            'max_annot_lvl',
+            'COG_category',
+            'Description',
+            'Preferred_name',
+            'GOs',
+            'EC',
+            'KEGG_ko',
+            'KEGG_Pathway',
+            'KEGG_Module',
+            'KEGG_Reaction',
+            'KEGG_rclass',
+            'BRITE',
+            'KEGG_TC',
+            'CAZy',
+            'BiGG_Reaction',
+            'PFAMs'
+            ]
+        label_layouts, level, _ = get_layouts(','.join(text_prop), 'label', level, 'counter', prop2type=prop2type)
+        layouts.extend(label_layouts)
+        
+        num_prop = [
+            'evalue',
+            'score'
+        ]
+        barplot_layouts, level, _ = get_layouts(','.join(num_prop), 'barplot', level, internal_num_rep, prop2type=prop2type)
+        layouts.extend(barplot_layouts)
+        
         pass
     
     #### prune at the last step in case of losing leaves information
@@ -1312,12 +1345,17 @@ def get_layouts(argv_input, layout_name, level, internal_rep, prop2type=None):
             else:
                 size_prop = prop
 
+            if level > len(paried_color):
+                barplot_color =  random_color(h=None)
+            else:
+                barplot_color = paried_color[level]
+            
             layout =  staple_layouts.LayoutBarplot(name='Barplot_'+prop, prop=prop, \
-                                        color=paried_color[level], size_prop=size_prop, 
+                                        color=barplot_color, size_prop=size_prop, 
                                         column=level, internal_rep=internal_rep
                                         )
 
-            prop_color_dict[prop] = paried_color[level]
+            prop_color_dict[prop] = barplot_color
 
         # categorical layouts
         elif layout_name in ['label','rectangular', 'colorbranch']:
@@ -1583,7 +1621,6 @@ def populate_emapper_annotate_args(emapper_annotate_args_p):
         type=str,
         required=False,
         help="output annotated tree")
-    
 
 def poplulate_plot_args(plot_args_p):
     """
