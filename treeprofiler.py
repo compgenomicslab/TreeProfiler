@@ -3,10 +3,13 @@
 
 from ete4.parser.newick import NewickError
 from ete4 import Tree, PhyloTree
+from ete4.coretype.seqgroup import SeqGroup
 from ete4 import GTDBTaxa
 from ete4 import NCBITaxa
 from ete4.smartview import TreeStyle, NodeStyle, TreeLayout
-from layouts import text_layouts, taxon_layouts, staple_layouts, conditional_layouts
+#from ete4.smartview  import SeqFace, SeqMotifFace, AlignmentFace
+from layouts import (text_layouts, taxon_layouts, staple_layouts, 
+                    conditional_layouts, seq_layouts)
 from tree_plot import get_image
 #from utils import check_nan
 
@@ -45,6 +48,7 @@ def tree_annotate(args):
     layouts = []
     level = 2 # level 1 is the leaf name
     prop2type = {}
+    metadata_dict = {}
 
     # parse csv to metadata table
     start = time.time()
@@ -734,7 +738,8 @@ def get_prop2type(node):
 ### emapper annotate tree
 def tree_emapper_annotate(args):
     print("start mapping emapper annotation")
-
+    prop2type = {}
+    metadata_dict = {}
     #parse input tree
     if args.tree:
         if args.tree_type == 'newick':
@@ -747,46 +752,49 @@ def tree_emapper_annotate(args):
     # parse emapper annotation
     if args.emapper_annotations:
         metadata_dict, node_props, columns = parse_emapper_annotations(args.emapper_annotations)
-    else: # annotated_tree
+        prop2type.update({
+            'name': str,
+            'dist': float,
+            'support': float,
+            'seed_ortholog': str,
+            'evalue': float,
+            'score': float,
+            'eggNOG_OGs': list,
+            'max_annot_lvl': str,
+            'COG_category': str,
+            'Description': str,
+            'Preferred_name': str,
+            'GOs': list,
+            'EC':str,
+            'KEGG_ko': list,
+            'KEGG_Pathway': list,
+            'KEGG_Module': list,
+            'KEGG_Reaction':list,
+            'KEGG_rclass':list,
+            'BRITE':list,
+            'KEGG_TC':list,
+            'CAZy':list,
+            'BiGG_Reaction':list,
+            'PFAMs':list
+        })
+    else: 
+        # annotated_tree
         node_props=[]
         columns = {}
     
     if args.emapper_pfams:
+        annot_tree_pfam_table(tree, args.emapper_pfams, args.seq)
         pass
     
     if args.emapper_smart:
         pass
     
     if args.seq:
+        #name2seq = parse_fasta(args.seq)
+        # for leaf in tree.iter_leaves():
+        #     leaf.add_prop('seq', name2seq.get(leaf.name,''))
         pass
-    
-    prop2type = {
-        'name': str,
-        'dist': float,
-        'support': float,
-        'seed_ortholog': str,
-        'evalue': float,
-        'score': float,
-        'eggNOG_OGs': list,
-        'max_annot_lvl': str,
-        'COG_category': str,
-        'Description': str,
-        'Preferred_name': str,
-        'GOs': list,
-        'EC':str,
-        'KEGG_ko': list,
-        'KEGG_Pathway': list,
-        'KEGG_Module': list,
-        'KEGG_Reaction':list,
-        'KEGG_rclass':list,
-        'BRITE':list,
-        'KEGG_TC':list,
-        'CAZy':list,
-        'BiGG_Reaction':list,
-        'PFAMs':list
-    }
-    
-    
+
     popup_prop_keys = list(prop2type.keys())
     if args.taxonomic_profile:
         popup_prop_keys.extend([
@@ -806,36 +814,37 @@ def tree_emapper_annotate(args):
     
     # merge annotations depends on the column datatype
     start = time.time()
-    text_prop = ['seed_ortholog', 'max_annot_lvl', 'COG_category', 'EC', ]
-    num_prop = ['evalue', 'score']
-    multiple_text_prop = ['eggNOG_OGs', 'GOs', 'KEGG_ko', 'KEGG_Pathway', 
-                        'KEGG_Module', 'KEGG_Reaction', 'KEGG_rclass',
-                        'BRITE', 'KEGG_TC', 'CAZy', 'BiGG_Reaction', 'PFAMs'] # Pfams
+    if args.emapper_annotations:
+        text_prop = ['seed_ortholog', 'max_annot_lvl', 'COG_category', 'EC', ]
+        num_prop = ['evalue', 'score']
+        multiple_text_prop = ['eggNOG_OGs', 'GOs', 'KEGG_ko', 'KEGG_Pathway', 
+                            'KEGG_Module', 'KEGG_Reaction', 'KEGG_rclass',
+                            'BRITE', 'KEGG_TC', 'CAZy', 'BiGG_Reaction', 'PFAMs'] # Pfams
 
-    counter_stat = 'raw'
-    num_stat = 'all'
+        counter_stat = 'raw'
+        num_stat = 'all'
 
-    #pre load node2leaves to save time
-    node2leaves = annotated_tree.get_cached_content()
-    for node in annotated_tree.traverse("postorder"):
-        internal_props = {}
-        if node.is_leaf():
-            pass
-        else:
-            if text_prop:
-                internal_props_text = merge_text_annotations(node2leaves[node], text_prop, counter_stat=counter_stat)
-                internal_props.update(internal_props_text)
-            if multiple_text_prop:
-                internal_props_multi = merge_multitext_annotations(node2leaves[node], multiple_text_prop, counter_stat=counter_stat)
-                internal_props.update(internal_props_multi)
+        #pre load node2leaves to save time
+        node2leaves = annotated_tree.get_cached_content()
+        for node in annotated_tree.traverse("postorder"):
+            internal_props = {}
+            if node.is_leaf():
+                pass
+            else:
+                if text_prop:
+                    internal_props_text = merge_text_annotations(node2leaves[node], text_prop, counter_stat=counter_stat)
+                    internal_props.update(internal_props_text)
+                if multiple_text_prop:
+                    internal_props_multi = merge_multitext_annotations(node2leaves[node], multiple_text_prop, counter_stat=counter_stat)
+                    internal_props.update(internal_props_multi)
 
-            if num_prop:
-                internal_props_num = merge_num_annotations(node2leaves[node], num_prop, num_stat=num_stat)                        
-                if internal_props_num:
-                    internal_props.update(internal_props_num)
+                if num_prop:
+                    internal_props_num = merge_num_annotations(node2leaves[node], num_prop, num_stat=num_stat)                        
+                    if internal_props_num:
+                        internal_props.update(internal_props_num)
 
-            for key,value in internal_props.items():
-                node.add_prop(key, value)
+                for key,value in internal_props.items():
+                    node.add_prop(key, value)
 
     end = time.time()
     print('Time for merge annotations to run: ', end - start)
@@ -937,6 +946,73 @@ def parse_emapper_annotations(input_file, delimiter='\t', no_colnames=False):
                                     # based on column name k
     
     return metadata, node_props, columns
+
+def parse_pfam_annotations(input_file, delimiter='\t', no_colnames=False):
+    return pfam
+
+def annot_tree_pfam_table(post_tree, pfam_table, alg_fasta):
+    fasta = SeqGroup(alg_fasta)
+    raw2alg = defaultdict(dict)
+    for num, (name, seq, _) in enumerate(fasta):
+        
+        p_raw = 1
+        for p_alg, (a) in enumerate(seq, 1):
+            if a != '-':
+                raw2alg[name][p_raw] = p_alg 
+                p_raw +=1
+    
+    seq2doms = defaultdict(list)
+    with open(pfam_table) as f_in:
+        for line in f_in:
+            if not line.startswith('#'):
+                info = line.strip().split('\t')
+                seq_name = info[0]
+                dom_name = info[1]
+                dom_start = int(info[7])
+                dom_end = int(info[8])
+
+                trans_dom_start = raw2alg[seq_name][dom_start]
+                trans_dom_end = raw2alg[seq_name][dom_end]
+
+                dom_info_string = '@'.join([dom_name, str(trans_dom_start), str(trans_dom_end)])
+                seq2doms[seq_name].append(dom_info_string)
+
+
+
+    for l in post_tree:
+        if l.name in seq2doms.keys():
+            domains = seq2doms[l.name]
+            domains_string = '|'.join(domains)
+            l.add_prop('dom_arq', domains_string)
+
+    for n in post_tree.traverse():
+        if not n.is_leaf():
+            random_seq_name = random.choice(n.get_leaf_names())
+            random_node = post_tree.search_nodes(name=random_seq_name)[0]
+            random_node_domains = random_node.props.get('dom_arq', 'none@none@none')
+            n.add_prop('dom_arq', random_node_domains)
+    
+    for n in post_tree.traverse():
+        print(n.name, n.props.get('dom_arq'))
+
+def parse_fasta(fastafile):
+    fasta_dict = {}
+    with open(fastafile,'r') as f:
+        head = ''
+        seq = ''
+        for line in f:
+            line = line.strip()
+            if line.startswith('>'):
+                if seq != '':
+                    fasta_dict[head] = seq
+                    seq = ''
+                    head = line[1:]
+                else:
+                    head = line[1:]
+            else:
+                seq += line
+    fasta_dict[head] = seq
+    return fasta_dict
 
 ### visualize tree
 def tree_plot(args):
@@ -1133,8 +1209,12 @@ def tree_plot(args):
         ]
         barplot_layouts, level, _ = get_layouts(','.join(num_prop), 'barplot', level, internal_num_rep, prop2type=prop2type)
         layouts.extend(barplot_layouts)
-        
-        pass
+    
+    if args.alignment_layout:
+        fasta_file = args.alignment_layout
+        aln_layout = seq_layouts.LayoutAlignment(name='Alignment_layout', alignment=fasta_file, column=level)
+        layouts.append(aln_layout)
+
     
     #### prune at the last step in case of losing leaves information
     # prune tree by rank
@@ -1478,7 +1558,6 @@ def populate_annotate_args(annotate_args_p):
         type=str,
         required=False,
         help="<metadata.csv> .csv, .tsv. mandatory input")
-    
     group.add_argument('--no_colnames',
         default=False,
         action='store_true',
@@ -1706,8 +1785,12 @@ def poplulate_plot_args(plot_args_p):
     group.add_argument('--emapper_layout',
         default=False,
         action='store_true',
-        help="activate emapper_layout")
-    
+        help="activate emapper_layout") 
+    group.add_argument('--alignment_layout',
+        type=str,
+        required=False,
+        help="provide alignment file as fasta format")
+
     group = plot_args_p.add_argument_group(title='Output arguments',
         description="Output parameters")
     group.add_argument('--interactive',
