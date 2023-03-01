@@ -1,7 +1,7 @@
 from ete4.coretype.seqgroup import SeqGroup
 from ete4.smartview import TreeLayout
 from ete4.smartview import AlignmentFace, SeqMotifFace, ScaleFace
-
+from ete4.smartview.renderer import draw_helpers
 
 __all__ = [ "LayoutAlignment" ]
 
@@ -66,3 +66,57 @@ def get_alnface(seq_prop, level):
             padding_x=0, padding_y=0)
             node.add_face(seq_face, position="aligned", column=level)
     return layout_fn
+
+class LayoutDomain(TreeLayout):
+    def __init__(self, prop, name,
+            column=10, colormap={},
+            min_fsize=4, max_fsize=15,
+            padding_x=5, padding_y=0):
+        super().__init__(name or "Domains layout")
+        self.prop = prop
+        self.column = column
+        self.aligned_faces = True
+        self.colormap = colormap
+        self.min_fsize = min_fsize
+        self.max_fsize = max_fsize
+        self.padding = draw_helpers.Padding(padding_x, padding_y)
+
+    def get_doms(self, node):
+        pair_delimiter = "@"
+        item_seperator = "||"
+        dom_list = []
+        if node.is_leaf():
+            dom_prop = node.props.get(self.prop, [])
+            #print(dom_prop)
+            if dom_prop:
+                
+                dom_list = [dom.split(pair_delimiter) for dom in dom_prop.split(item_seperator)]
+                #print(dom_list)
+                return dom_list
+            #return node.props.get(self.prop, [])
+        # else:
+        #     first_node = next(node.iter_leaves())
+        #     print("here", first_node.props.get(self.prop, []))
+        #     return first_node.props.get(self.prop, [])
+
+    def parse_doms(self, dom_list):
+        doms = []
+        for name, start, end in dom_list:
+            color = self.colormap.get(name, "lightgray")
+            dom = [int(start), int(end), "()", 
+                   None, None, color, color,
+                   "arial|30|black|%s" %(name)]
+            doms.append(dom)
+        return doms
+
+    def set_node_style(self, node):
+        dom_list = self.get_doms(node)
+        if dom_list:
+            doms = self.parse_doms(dom_list)
+            fake_seq = '-' * int(node.props.get("len_alg", 0))
+            if doms or fake_seq:
+                seqFace = SeqMotifFace(seq=fake_seq, motifs=doms, width=400,
+                        height=30)
+                node.add_face(seqFace, column=self.column, 
+                        position="aligned",
+                        collapsed_only=(not node.is_leaf()))

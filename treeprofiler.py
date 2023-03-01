@@ -782,11 +782,12 @@ def tree_emapper_annotate(args):
         node_props=[]
         columns = {}
     
-    if args.emapper_pfams:
-        annot_tree_pfam_table(tree, args.emapper_pfams, args.seq)
+    if args.emapper_pfam:
+        annot_tree_pfam_table(tree, args.emapper_pfam, args.seq)
         pass
     
     if args.emapper_smart:
+        annot_tree_smart_table(tree, args.emapper_smart, args.seq)
         pass
     
     if args.seq:
@@ -947,11 +948,13 @@ def parse_emapper_annotations(input_file, delimiter='\t', no_colnames=False):
     
     return metadata, node_props, columns
 
-def parse_pfam_annotations(input_file, delimiter='\t', no_colnames=False):
-    return pfam
+# def parse_pfam_annotations(input_file, delimiter='\t', no_colnames=False):
+#     return
 
 def annot_tree_pfam_table(post_tree, pfam_table, alg_fasta):
-    fasta = SeqGroup(alg_fasta)
+    pair_delimiter = "@"
+    item_seperator = "||"
+    fasta = SeqGroup(alg_fasta) # aligned_fasta
     raw2alg = defaultdict(dict)
     for num, (name, seq, _) in enumerate(fasta):
         
@@ -974,15 +977,13 @@ def annot_tree_pfam_table(post_tree, pfam_table, alg_fasta):
                 trans_dom_start = raw2alg[seq_name][dom_start]
                 trans_dom_end = raw2alg[seq_name][dom_end]
 
-                dom_info_string = '@'.join([dom_name, str(trans_dom_start), str(trans_dom_end)])
+                dom_info_string = pair_delimiter.join([dom_name, str(trans_dom_start), str(trans_dom_end)])
                 seq2doms[seq_name].append(dom_info_string)
-
-
 
     for l in post_tree:
         if l.name in seq2doms.keys():
             domains = seq2doms[l.name]
-            domains_string = '|'.join(domains)
+            domains_string = item_seperator.join(domains)
             l.add_prop('dom_arq', domains_string)
 
     for n in post_tree.traverse():
@@ -992,8 +993,54 @@ def annot_tree_pfam_table(post_tree, pfam_table, alg_fasta):
             random_node_domains = random_node.props.get('dom_arq', 'none@none@none')
             n.add_prop('dom_arq', random_node_domains)
     
+    # for n in post_tree.traverse():
+    #     print(n.name, n.props.get('dom_arq'))
+
+def annot_tree_smart_table(post_tree, smart_table, alg_fasta):
+    pair_delimiter = "@"
+    item_seperator = "||"
+    fasta = SeqGroup(alg_fasta) # aligned_fasta
+    raw2alg = defaultdict(dict)
+    for num, (name, seq, _) in enumerate(fasta):
+        
+        p_raw = 1
+        for p_alg, (a) in enumerate(seq, 1):
+            if a != '-':
+                raw2alg[name][p_raw] = p_alg 
+                p_raw +=1
+    
+    seq2doms = defaultdict(list)
+    with open(smart_table) as f_in:
+        for line in f_in:
+            if not line.startswith('#'):
+                info = line.strip().split('\t')
+                print(info)
+                seq_name = info[0]
+                dom_name = info[1]
+                dom_start = int(info[2])
+                dom_end = int(info[3])
+
+                trans_dom_start = raw2alg[seq_name][dom_start]
+                trans_dom_end = raw2alg[seq_name][dom_end]
+
+                dom_info_string = pair_delimiter.join([dom_name, str(trans_dom_start), str(trans_dom_end)])
+                seq2doms[seq_name].append(dom_info_string)
+
+    for l in post_tree:
+        if l.name in seq2doms.keys():
+            domains = seq2doms[l.name]
+            domains_string = item_seperator.join(domains)
+            l.add_prop('dom_arq', domains_string)
+
     for n in post_tree.traverse():
-        print(n.name, n.props.get('dom_arq'))
+        if not n.is_leaf():
+            random_seq_name = random.choice(n.get_leaf_names())
+            random_node = post_tree.search_nodes(name=random_seq_name)[0]
+            random_node_domains = random_node.props.get('dom_arq', 'none@none@none')
+            n.add_prop('dom_arq', random_node_domains)
+    
+    # for n in post_tree.traverse():
+    #     print(n.name, n.props.get('dom_arq'))
 
 def parse_fasta(fastafile):
     fasta_dict = {}
@@ -1215,7 +1262,13 @@ def tree_plot(args):
         aln_layout = seq_layouts.LayoutAlignment(name='Alignment_layout', alignment=fasta_file, column=level)
         layouts.append(aln_layout)
 
-    
+        
+    if args.domain_layout:
+        domain_layout = seq_layouts.LayoutDomain(name="Pfams_domain_layout", prop='dom_arq')
+        layouts.append(domain_layout)
+        
+
+
     #### prune at the last step in case of losing leaves information
     # prune tree by rank
     if args.rank_limit:
@@ -1656,7 +1709,7 @@ def populate_emapper_annotate_args(emapper_annotate_args_p):
         type=str,
         required=False,
         help="out.emapper.annotations")
-    group.add_argument('--emapper_pfams',
+    group.add_argument('--emapper_pfam',
         type=str,
         required=False,
         help="out.emapper.pfams")
@@ -1785,7 +1838,12 @@ def poplulate_plot_args(plot_args_p):
     group.add_argument('--emapper_layout',
         default=False,
         action='store_true',
-        help="activate emapper_layout") 
+        help="activate emapper_layout") #domain_layout
+    group.add_argument('--domain_layout',
+        default=False,
+        action='store_true',
+        help="activate domain_layout") #domain_layout
+
     group.add_argument('--alignment_layout',
         type=str,
         required=False,
