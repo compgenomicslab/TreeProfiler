@@ -53,7 +53,7 @@ def tree_annotate(args):
     # parse csv to metadata table
     start = time.time()
     
-    if args.metadata:
+    if args.metadata: # make a series aof metadatas
         if args.no_colnames:
             # property key will be named col1, col2, col3, ... if without headers
             metadata_dict, node_props, columns, prop2type = parse_csv(args.metadata, no_colnames=args.no_colnames)
