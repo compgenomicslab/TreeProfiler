@@ -1977,10 +1977,10 @@ def _main(arguments):
     annotate_args_p.set_defaults(func=tree_annotate)
 
     ## - EMAPPER ANNOTATE - 
-    emapper_annotate_args_p = subparser.add_parser('emapper-annotate', parents=[main_args_p],
-                                            description='annotate tree with eggnog mapper annotation data')
-    populate_emapper_annotate_args(emapper_annotate_args_p)
-    emapper_annotate_args_p.set_defaults(func=tree_emapper_annotate)
+    # emapper_annotate_args_p = subparser.add_parser('emapper-annotate', parents=[main_args_p],
+    #                                         description='annotate tree with eggnog mapper annotation data')
+    # populate_emapper_annotate_args(emapper_annotate_args_p)
+    # emapper_annotate_args_p.set_defaults(func=tree_emapper_annotate)
     
     ## - PLOT - 
     plot_args_p = subparser.add_parser('plot', parents=[main_args_p],
