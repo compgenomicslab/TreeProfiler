@@ -52,7 +52,7 @@ def tree_annotate(args):
 
     # parse csv to metadata table
     start = time.time()
-    
+    print("start parsing...")
     if args.metadata: # make a series aof metadatas
         if args.no_colnames:
             # property key will be named col1, col2, col3, ... if without headers
@@ -63,7 +63,40 @@ def tree_annotate(args):
         node_props=[]
         columns = {}
         
-        
+    if args.emapper_annotations:
+        emapper_metadata_dict, emapper_node_props, emapper_columns = parse_emapper_annotations(args.emapper_annotations)
+        metadata_dict.update(emapper_metadata_dict)
+        node_props.extend(emapper_node_props)
+        columns.update(emapper_columns)
+
+        prop2type.update({
+            'name': str,
+            'dist': float,
+            'support': float,
+            'seed_ortholog': str,
+            'evalue': float,
+            'score': float,
+            'eggNOG_OGs': list,
+            'max_annot_lvl': str,
+            'COG_category': str,
+            'Description': str,
+            'Preferred_name': str,
+            'GOs': list,
+            'EC':str,
+            'KEGG_ko': list,
+            'KEGG_Pathway': list,
+            'KEGG_Module': list,
+            'KEGG_Reaction':list,
+            'KEGG_rclass':list,
+            'BRITE':list,
+            'KEGG_TC':list,
+            'CAZy':list,
+            'BiGG_Reaction':list,
+            'PFAMs':list
+        })
+
+    
+
     #code goes here
     end = time.time()
     print('Time for parse_csv to run: ', end - start)
@@ -165,11 +198,26 @@ def tree_annotate(args):
                         bool_prop.append(key)
         
         # paramemters can over write the default
-        
+        if args.emapper_annotations:
+            text_prop.extend([
+                'seed_ortholog', 
+                'max_annot_lvl', 
+                'COG_category', 
+                'EC'
+            ])
+            num_prop.extend([
+                'evalue', 
+                'score'
+            ])
+            multiple_text_prop.extend([
+                'eggNOG_OGs', 'GOs', 'KEGG_ko', 'KEGG_Pathway', 
+                'KEGG_Module', 'KEGG_Reaction', 'KEGG_rclass',
+                'BRITE', 'KEGG_TC', 'CAZy', 'BiGG_Reaction', 'PFAMs'])
+
         for prop in text_prop+bool_prop:
             prop2type[prop] = str
             prop2type[prop+'_counter'] = str
-
+            
         for prop in multiple_text_prop:
             prop2type[prop] = list
             prop2type[prop+'_counter'] = str
@@ -227,8 +275,15 @@ def tree_annotate(args):
     # load annotations to leaves
     start = time.time()
     
-    taxon_column = []
+    # domain annotation before other annotation
+    if args.emapper_pfam:
+        annot_tree_pfam_table(tree, args.emapper_pfam, args.seq)
+    
+    if args.emapper_smart:
+        annot_tree_smart_table(tree, args.emapper_smart, args.seq)
+    
     # load all metadata to leaf nodes
+    taxon_column = []
     if not args.annotated_tree:
         if args.taxon_column: # to identify taxon column as taxa property from metadata
             taxon_column.append(args.taxon_column)
@@ -250,7 +305,7 @@ def tree_annotate(args):
 
     # merge annotations depends on the column datatype
     start = time.time()
-    
+
     if not args.annotated_tree:
         #pre load node2leaves to save time
         node2leaves = annotated_tree.get_cached_content()
@@ -448,6 +503,12 @@ def get_type_convert(np_type):
     convert_type = type(np.zeros(1,np_type).tolist()[0])
     return (np_type, convert_type)
 
+def get_comma_separated_values(lst):
+    for item in lst:
+        if isinstance(item, str) and any(',' in x for x in item.split()):
+            return True
+    return False
+
 def convert_column_data(column, np_dtype):
     #np_dtype = np.dtype(dtype).type
     try:
@@ -458,18 +519,21 @@ def convert_column_data(column, np_dtype):
     #data.astype(np.float)
 
 def infer_dtype(column):
-    dtype_dict = {
-        float:np.float64,
-        bool:np.bool_,
-        str:np.str_
-        }
-    #dtype_order = ['float64', 'bool', 'str']
-    for dtype, np_dtype in dtype_dict.items():
-        result = convert_column_data(column, np_dtype)
-        if result is not None:
-            # Successful inference, exit from the loop
-            return dtype
-    return None
+    if get_comma_separated_values(column):
+        return list
+    else:
+        dtype_dict = {
+            float:np.float64,
+            bool:np.bool_,
+            str:np.str_
+            }
+        #dtype_order = ['float64', 'bool', 'str']
+        for dtype, np_dtype in dtype_dict.items():
+            result = convert_column_data(column, np_dtype)
+            if result is not None:
+                # Successful inference, exit from the loop
+                return dtype
+        return None
 
 def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, taxon_delimiter=';'):
     #name2leaf = {}
@@ -593,7 +657,6 @@ def merge_multitext_annotations(nodes, target_props, counter_stat='raw'):
                 counter_line.append(add_suffix(key, rel_val, pair_seperator))
             internal_props[add_suffix(target_prop, 'counter')] = item_seperator.join(counter_line)
             #internal_props[add_suffix(target_prop, 'counter')] = '||'.join([add_suffix(key, value, '--') for key, value in dict(Counter(prop_list)).items()])
-            print(internal_props[add_suffix(target_prop, 'counter')])
         else:
             print('Invalid stat method')
             break
@@ -704,7 +767,6 @@ def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field
             pass
         else:
             n.name = n.props.get("sci_name", "")
-    
     return tree, rank2values
 
 def get_range(input_range):
@@ -1668,6 +1730,23 @@ def populate_annotate_args(annotate_args_p):
         required=False,
         help="field of taxa name after delimiter. default 0")
     
+    group.add_argument('--emapper_annotations',
+        type=str,
+        required=False,
+        help="out.emapper.annotations")
+    group.add_argument('--emapper_pfam',
+        type=str,
+        required=False,
+        help="out.emapper.pfams")
+    group.add_argument('--emapper_smart',
+        type=str,
+        required=False,
+        help="out.emapper.smart")
+    group.add_argument('--seq',
+        type=str,
+        required=False,
+        help="Sequence alignment, .fasta format")
+
 
     group = annotate_args_p.add_argument_group(title='Annotation arguments',
         description="Annotation parameters")
