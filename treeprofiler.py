@@ -1328,7 +1328,7 @@ def tree_plot(args):
 
         
     if args.domain_layout:
-        domain_layout = seq_layouts.LayoutDomain(name="Pfams_domain_layout", prop='dom_arq')
+        domain_layout = seq_layouts.LayoutDomain(name="Domain_layout", prop='dom_arq')
         layouts.append(domain_layout)
         
 
