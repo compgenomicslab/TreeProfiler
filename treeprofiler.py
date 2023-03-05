@@ -116,22 +116,22 @@ def tree_annotate(args):
         sys.exit('empty input')
 
     if args.text_prop:
-        text_prop = args.text_prop.split(',')
+        text_prop = args.text_prop
     else:
         text_prop = []
 
     if args.multiple_text_prop:
-        multiple_text_prop = args.multiple_text_prop.split(',')
+        multiple_text_prop = args.multiple_text_prop
     else:
         multiple_text_prop = []
 
     if args.num_prop:
-        num_prop = args.num_prop.split(',')
+        num_prop = args.num_prop
     else:
         num_prop = []
     
     if args.bool_prop:
-        bool_prop = args.bool_prop.split(',')
+        bool_prop = args.bool_prop
     else:
         bool_prop = []
 
@@ -450,7 +450,7 @@ def check_missing(input_string):
         return False
     
 # 
-def parse_csv(input_file, delimiter='\t', no_colnames=False):
+def parse_csv(input_files, delimiter='\t', no_colnames=False):
     """
     Takes tsv table as input
     Return 
@@ -461,39 +461,41 @@ def parse_csv(input_file, delimiter='\t', no_colnames=False):
     metadata = {}
     columns = defaultdict(list)
     prop2type = {}
-    with open(input_file, 'r') as f:
-        if no_colnames:
-            fields_len = len(next(f).split(delimiter))
-            headers = ['col'+str(i) for i in range(fields_len)]
-            reader = csv.DictReader(f, delimiter=delimiter, fieldnames=headers)
-        else:
-            reader = csv.DictReader(f, delimiter=delimiter)
-            headers = reader.fieldnames
-        node_header, node_props = headers[0], headers[1:]
-        
-        for row in reader:
-            nodename = row[node_header]
-            del row[node_header]
+    for input_file in input_files:
+        with open(input_file, 'r') as f:
+            if no_colnames:
+                fields_len = len(next(f).split(delimiter))
+                headers = ['col'+str(i) for i in range(fields_len)]
+                reader = csv.DictReader(f, delimiter=delimiter, fieldnames=headers)
+            else:
+                reader = csv.DictReader(f, delimiter=delimiter)
+                headers = reader.fieldnames
+            node_header, node_props = headers[0], headers[1:]
             
-            #row = {k: 'NaN' if (not v or v.lower() == 'none') else v for k, v in row.items() } ## replace empty to NaN
+            for row in reader:
+                nodename = row[node_header]
+                del row[node_header]
+                
+                #row = {k: 'NaN' if (not v or v.lower() == 'none') else v for k, v in row.items() } ## replace empty to NaN
+                
+                for k, v in row.items(): # replace missing value
+                    if check_missing(v):
+                        row[k] = 'NaN'
+                    else:
+                        row[k] = v
+                metadata[nodename] = dict(row)
+                for (k,v) in row.items(): # go over each column name and value 
+                    columns[k].append(v) # append the value into the appropriate list
+                                        # based on column name k
             
-            for k, v in row.items(): # replace missing value
-                if check_missing(v):
-                    row[k] = 'NaN'
-                else:
-                    row[k] = v
-            metadata[nodename] = dict(row)
-            for (k,v) in row.items(): # go over each column name and value 
-                columns[k].append(v) # append the value into the appropriate list
-                                    # based on column name k
-        
-    for prop in node_props:
-        if set(columns[prop])=={'NaN'}:
-            #prop2type[prop] = np.str_
-            prop2type[prop] = str
-        else:
-            dtype = infer_dtype(columns[prop])
-            prop2type[prop] = dtype # get_type_convert(dtype)
+        for prop in node_props:
+            if set(columns[prop])=={'NaN'}:
+                #prop2type[prop] = np.str_
+                prop2type[prop] = str
+            else:
+                dtype = infer_dtype(columns[prop])
+                prop2type[prop] = dtype # get_type_convert(dtype)
+
     return metadata, node_props, columns, prop2type
 
 def get_type_convert(np_type):
@@ -1487,13 +1489,13 @@ def wrtie_color(color_dict):
                     f.write('\n')
     return
 
-def get_layouts(argv_input, layout_name, level, internal_rep, prop2type=None): 
+def get_layouts(argv_inputs, layout_name, level, internal_rep, prop2type=None): 
     props = []
     layouts = []
     prop_color_dict = {} # key = value, value = color id
 
     # identify range [1-5], index 1,2,3 and column names
-    for i in argv_input.split(','):
+    for i in argv_inputs:
         if i[0] == '[' and i[-1] == ']':
             column_start, column_end = get_range(i)
             for j in range(column_start, column_end+1):
@@ -1670,30 +1672,30 @@ def populate_annotate_args(annotate_args_p):
     #     required=False,
     #     help="Input tree, .nw file, customized tree input")
     group.add_argument('-d', '--metadata',
-        type=str,
         required=False,
-        help="<metadata.csv> .csv, .tsv. mandatory input")
+        help="<metadata.csv> .csv, .tsv. mandatory input",
+        type=lambda s: [item for item in s.split(',')])
     group.add_argument('--no_colnames',
         default=False,
         action='store_true',
         required=False,
         help="metadata table doesn't contain columns name")
     group.add_argument('--text_prop',
-        type=str,
         required=False,
-        help="<col1,col2> names, column index or index range of columns which need to be read as categorical data")
+        help="<col1,col2> names, column index or index range of columns which need to be read as categorical data",
+        type=lambda s: [item for item in s.split(',')])
     group.add_argument('--multiple_text_prop',
-        type=str,
         required=False,
-        help="<col1,col2> names, column index or index range of columns which need to be read as categorical data which contains more than one value and seperate by ',' such as GO:0000003,GO:0000902,GO:0000904,GO:0003006")
+        help="<col1,col2> names, column index or index range of columns which need to be read as categorical data which contains more than one value and seperate by ',' such as GO:0000003,GO:0000902,GO:0000904,GO:0003006",
+        type=lambda s: [item for item in s.split(',')])
     group.add_argument('--num_prop',
-        type=str,
         required=False,
-        help="<col1,col2> names, column index or index range of columns which need to be read as numerical data")
+        help="<col1,col2> names, column index or index range of columns which need to be read as numerical data",
+        type=lambda s: [item for item in s.split(',')])
     group.add_argument('--bool_prop',
-        type=str,
         required=False,
-        help="<col1,col2> names, column index or index range of columns which need to be read as boolean data")
+        help="<col1,col2> names, column index or index range of columns which need to be read as boolean data",
+        type=lambda s: [item for item in s.split(',')])
     group.add_argument('--text_prop_idx',
         type=str,
         required=False,
@@ -1879,33 +1881,33 @@ def poplulate_plot_args(plot_args_p):
         description="Prop layout parameters")
     
     group.add_argument('--binary_layout',
-        type=str,
+        type=lambda s: [item for item in s.split(',')],
         required=False,
         help="<col1,col2> names, column index or index range of columns which need to be plot as binary_layout")
     group.add_argument('--revbinary_layout',
-        type=str,
+        type=lambda s: [item for item in s.split(',')],
         required=False,
         help="<col1,col2> names, column index or index range of columns which need to be plot as revbinary_layout")
 
     group.add_argument('--colorbranch_layout',
-        type=str,
+        type=lambda s: [item for item in s.split(',')],
         required=False,
         help="<col1,col2> names, column index or index range of columns which need to be plot as Textlayouts")
     group.add_argument('--label_layout',
-        type=str,
+        type=lambda s: [item for item in s.split(',')],
         required=False,
         help="<col1,col2> names, column index or index range of columns which need to be plot as label_layout")
     group.add_argument('--rectangular_layout',
-        type=str,
+        type=lambda s: [item for item in s.split(',')],
         required=False,
         help="<col1,col2> names, column index or index range of columns which need to be plot as rectangular_layout")
     
     group.add_argument('--heatmap_layout',
-        type=str,
+        type=lambda s: [item for item in s.split(',')],
         required=False,
         help="<col1,col2> names, column index or index range of columns which need to be read as heatmap_layout")
     group.add_argument('--barplot_layout',
-        type=str,
+        type=lambda s: [item for item in s.split(',')],
         required=False,
         help="<col1,col2> names, column index or index range of columns which need to be read as barplot_layouts")
     
