@@ -187,6 +187,8 @@ def tree_annotate(args):
                 if key in text_prop+multiple_text_prop+num_prop+bool_prop:
                     pass
                 else:
+                    if dtype == list:
+                        multiple_text_prop.append(key)
                     if dtype == str:
                         if key not in multiple_text_prop:
                             text_prop.append(key)
@@ -213,7 +215,7 @@ def tree_annotate(args):
                 'eggNOG_OGs', 'GOs', 'KEGG_ko', 'KEGG_Pathway', 
                 'KEGG_Module', 'KEGG_Reaction', 'KEGG_rclass',
                 'BRITE', 'KEGG_TC', 'CAZy', 'BiGG_Reaction', 'PFAMs'])
-
+        
         for prop in text_prop+bool_prop:
             prop2type[prop] = str
             prop2type[prop+'_counter'] = str
@@ -473,6 +475,7 @@ def parse_csv(input_files, delimiter='\t', no_colnames=False):
             node_header, node_props = headers[0], headers[1:]
             
             for row in reader:
+               
                 nodename = row[node_header]
                 del row[node_header]
                 
@@ -483,11 +486,23 @@ def parse_csv(input_files, delimiter='\t', no_colnames=False):
                         row[k] = 'NaN'
                     else:
                         row[k] = v
-                metadata[nodename] = dict(row)
-                for (k,v) in row.items(): # go over each column name and value 
-                    columns[k].append(v) # append the value into the appropriate list
+                
+                if nodename in metadata.keys():
+                    for prop, value in row.items():
+                        if prop in metadata[nodename]:
+                            exisiting_value = metadata[nodename][prop]
+                            new_value = ','.join([exisiting_value,value])
+                            metadata[nodename][prop] = new_value
+                            columns[prop].append(new_value)
+                        else:
+                            metadata[nodename][prop] = value
+                            columns[prop].append(value)
+                else:
+                    metadata[nodename] = dict(row)
+                    for (prop, value) in row.items(): # go over each column name and value             
+                        columns[prop].append(value) # append the value into the appropriate list
                                         # based on column name k
-            
+
         for prop in node_props:
             if set(columns[prop])=={'NaN'}:
                 #prop2type[prop] = np.str_
