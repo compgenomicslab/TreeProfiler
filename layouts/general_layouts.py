@@ -14,16 +14,16 @@ def get_piechartface(node, prop, colour_dict=None, radius=40, tooltip=None):
     counter_props = node.props.get(prop).split(item_seperator)
     for counter_prop in counter_props:
         k, v = counter_prop.split(pair_delimiter)
-        piechart_data.append([k,float(v),colour_dict[k],None])
-    
+        piechart_data.append([k,float(v),colour_dict.get(k,None),None])
+        
     if piechart_data:
         # tooltip = ""
         # if node.name:
         #     tooltip += f'<b>{node.name}</b><br>'
         # if prop:
         #     tooltip += f'<br>{prop}: {piechart_data}<br>' # {counter_props}
-            
         piechart_face = PieChartFace(radius=radius, data=piechart_data, padding_x=5, tooltip=tooltip)
+        
         return piechart_face
     else:
         return None

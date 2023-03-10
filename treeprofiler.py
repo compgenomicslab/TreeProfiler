@@ -9,7 +9,7 @@ from ete4 import NCBITaxa
 from ete4.smartview import TreeStyle, NodeStyle, TreeLayout
 #from ete4.smartview  import SeqFace, SeqMotifFace, AlignmentFace
 from layouts import (text_layouts, taxon_layouts, staple_layouts, 
-                    conditional_layouts, seq_layouts)
+                    conditional_layouts, seq_layouts, profile_layouts)
 from tree_plot import get_image
 #from utils import check_nan
 
@@ -534,6 +534,27 @@ def convert_column_data(column, np_dtype):
     except ValueError:
         return None
     #data.astype(np.float)
+
+def flatten(nasted_list):
+    """
+    input: nasted_list - this contain any number of nested lists.
+    ------------------------
+    output: list_of_lists - one list contain all the items.
+    """
+
+    list_of_lists = []
+    for item in nasted_list:
+        list_of_lists.extend(item)
+    return list_of_lists
+
+def multiple_text_profile(tree, profiling_prop):
+    all_gos = children_prop_array(tree, profiling_prop)
+    all_gos = flatten(all_gos)
+    
+    for go in all_gos:
+        for n in tree.iter_leaves():
+            print(n.props.get(profiling_prop))
+    return
 
 def infer_dtype(column):
     if get_comma_separated_values(column):
@@ -1326,14 +1347,14 @@ def tree_plot(args):
             'BiGG_Reaction',
             'PFAMs'
             ]
-        label_layouts, level, _ = get_layouts(','.join(text_prop), 'label', level, 'counter', prop2type=prop2type)
+        label_layouts, level, _ = get_layouts(text_prop, 'label', level, 'counter', prop2type=prop2type)
         layouts.extend(label_layouts)
         
         num_prop = [
             'evalue',
             'score'
         ]
-        barplot_layouts, level, _ = get_layouts(','.join(num_prop), 'barplot', level, internal_num_rep, prop2type=prop2type)
+        barplot_layouts, level, _ = get_layouts(num_prop, 'barplot', level, internal_num_rep, prop2type=prop2type)
         layouts.extend(barplot_layouts)
     
     if args.alignment_layout:
@@ -1341,12 +1362,44 @@ def tree_plot(args):
         aln_layout = seq_layouts.LayoutAlignment(name='Alignment_layout', alignment=fasta_file, column=level)
         layouts.append(aln_layout)
 
-        
     if args.domain_layout:
         domain_layout = seq_layouts.LayoutDomain(name="Domain_layout", prop='dom_arq')
         layouts.append(domain_layout)
-        
+    
+    if args.profiling_layout:
+        profiling_prop = args.profiling_layout[0]
+        all_values = list(set(flatten(children_prop_array(tree, profiling_prop))))
+        matrix = ''
+        for leaf in tree.iter_leaves():
+            matrix += '\n'+'>'+leaf.name+'\n'
+            if leaf.props.get(profiling_prop):
+                for val in all_values:
+                    if val in leaf.props.get(profiling_prop):
+                        matrix += 'Y'
+                    else:
+                        matrix += '-'
+            else:
+                matrix += '-'*len(all_values) +'\n'
 
+        profile_layout = profile_layouts.LayoutProfile(name=profiling_prop, 
+        alignment=matrix, profiles=all_values, column=level)
+        layouts.append(profile_layout)
+        popup_prop_keys.append(profiling_prop)
+    # if args.profiling_layout:
+    #     profiling_prop = args.profiling_layout[0]
+    #     all_gos = flatten(children_prop_array(tree, profiling_prop))
+    #     nvals = len(all_gos)
+    #     profiling_color_dict = {}            
+    #     for i in range(0, nvals):
+    #         profiling_color_dict[all_gos[i]] = random_color(h=None)
+
+    #     for go in all_gos:
+    #         layout = profile_layouts.LayoutProfile(name=go, level=level, prop_colour_dict=profiling_color_dict,
+    #                                             propfile_prop=profiling_prop,
+    #                                             target_value=go)
+    #         level +=1
+    #         layouts.append(layout)
+    
 
     #### prune at the last step in case of losing leaves information
     # prune tree by rank
@@ -1524,6 +1577,7 @@ def get_layouts(argv_inputs, layout_name, level, internal_rep, prop2type=None):
 
     # load layout for each prop
     for idx, prop in enumerate(props):
+        
         color_dict = {} # key = value, value = color id
         if layout_name in ['binary', 'revbinary']:
             
@@ -1903,7 +1957,6 @@ def poplulate_plot_args(plot_args_p):
         type=lambda s: [item for item in s.split(',')],
         required=False,
         help="<col1,col2> names, column index or index range of columns which need to be plot as revbinary_layout")
-
     group.add_argument('--colorbranch_layout',
         type=lambda s: [item for item in s.split(',')],
         required=False,
@@ -1916,7 +1969,6 @@ def poplulate_plot_args(plot_args_p):
         type=lambda s: [item for item in s.split(',')],
         required=False,
         help="<col1,col2> names, column index or index range of columns which need to be plot as rectangular_layout")
-    
     group.add_argument('--heatmap_layout',
         type=lambda s: [item for item in s.split(',')],
         required=False,
@@ -1925,12 +1977,10 @@ def poplulate_plot_args(plot_args_p):
         type=lambda s: [item for item in s.split(',')],
         required=False,
         help="<col1,col2> names, column index or index range of columns which need to be read as barplot_layouts")
-    
     group.add_argument('--taxon_layout',
         default=False,
         action='store_true',
         help="activate taxon_layout")
-    
     group.add_argument('--emapper_layout',
         default=False,
         action='store_true',
@@ -1939,11 +1989,14 @@ def poplulate_plot_args(plot_args_p):
         default=False,
         action='store_true',
         help="activate domain_layout") #domain_layout
-
     group.add_argument('--alignment_layout',
         type=str,
         required=False,
         help="provide alignment file as fasta format")
+    group.add_argument('--profiling_layout',
+        type=lambda s: [item for item in s.split(',')],
+        required=False,
+        help="<col1,col2> names, column index which need to be plot as profiling_layout for multiple values column")
 
     group = plot_args_p.add_argument_group(title='Output arguments',
         description="Output parameters")
