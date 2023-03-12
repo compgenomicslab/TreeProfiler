@@ -144,7 +144,7 @@ class LayoutRect(TreeLayout):
                 if self.color_dict:
                     color = self.color_dict.get(str(prop_text),"")
                     prop_face = RectFace(width=self.width, height=self.height, color=color, \
-                        padding_x=1, padding_y=1, tooltip=tooltip)
+                        padding_x=2, padding_y=1, tooltip=tooltip)
                     node.add_face(prop_face, column=self.column, position="aligned")
             
         elif node.is_leaf() and node.props.get(self.internal_prop):
