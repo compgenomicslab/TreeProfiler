@@ -1327,15 +1327,27 @@ def tree_plot(args):
         total_color_dict.append(color_dict)
 
     if args.emapper_layout:
-        text_prop = [
-            "seed_ortholog",
-            'eggNOG_OGs',
+        text_props = [
+            'seed_ortholog',
             'max_annot_lvl',
             'COG_category',
             'Description',
             'Preferred_name',
-            'GOs',
             'EC',
+            ]
+        label_layouts, level, _ = get_layouts(text_props, 'rectangular', level, 'counter', prop2type=prop2type)
+        layouts.extend(label_layouts)
+        
+        num_props = [
+            #'evalue',
+            'score'
+        ]
+        barplot_layouts, level, _ = get_layouts(num_props, 'barplot', level, internal_num_rep, prop2type=prop2type)
+        layouts.extend(barplot_layouts)
+        
+        multiple_text_props = [
+            'eggNOG_OGs',
+            'GOs',
             'KEGG_ko',
             'KEGG_Pathway',
             'KEGG_Module',
@@ -1346,17 +1358,29 @@ def tree_plot(args):
             'CAZy',
             'BiGG_Reaction',
             'PFAMs'
-            ]
-        label_layouts, level, _ = get_layouts(text_prop, 'label', level, 'counter', prop2type=prop2type)
-        layouts.extend(label_layouts)
-        
-        num_prop = [
-            'evalue',
-            'score'
         ]
-        barplot_layouts, level, _ = get_layouts(num_prop, 'barplot', level, internal_num_rep, prop2type=prop2type)
-        layouts.extend(barplot_layouts)
-    
+        for multiple_text_prop in multiple_text_props:
+            
+            all_values = sorted(list(set(flatten(children_prop_array(tree, multiple_text_prop)))))
+            matrix = ''
+            for leaf in tree.iter_leaves():
+                matrix += '\n'+'>'+leaf.name+'\n'
+                if leaf.props.get(multiple_text_prop):
+                    for val in all_values:
+                        if val in leaf.props.get(multiple_text_prop):
+                            matrix += 'Y'
+                        else:
+                            matrix += '-'
+                else:
+                    matrix += '-'*len(all_values) +'\n'
+
+            multiple_text_prop = profile_layouts.LayoutProfile(name=multiple_text_prop, 
+            alignment=matrix, profiles=all_values, column=level)
+            level += 1
+            layouts.append(multiple_text_prop)
+            
+
+        
     if args.alignment_layout:
         fasta_file = args.alignment_layout
         aln_layout = seq_layouts.LayoutAlignment(name='Alignment_layout', alignment=fasta_file, column=level)
@@ -1367,39 +1391,25 @@ def tree_plot(args):
         layouts.append(domain_layout)
     
     if args.profiling_layout:
-        profiling_prop = args.profiling_layout[0]
-        all_values = sorted(list(set(flatten(children_prop_array(tree, profiling_prop)))))
-        matrix = ''
-        for leaf in tree.iter_leaves():
-            matrix += '\n'+'>'+leaf.name+'\n'
-            if leaf.props.get(profiling_prop):
-                for val in all_values:
-                    if val in leaf.props.get(profiling_prop):
-                        matrix += 'Y'
-                    else:
-                        matrix += '-'
-            else:
-                matrix += '-'*len(all_values) +'\n'
+        profiling_props = args.profiling_layout
+        for profiling_prop in profiling_props:
+            all_values = sorted(list(set(flatten(children_prop_array(tree, profiling_prop)))))
+            matrix = ''
+            for leaf in tree.iter_leaves():
+                matrix += '\n'+'>'+leaf.name+'\n'
+                if leaf.props.get(profiling_prop):
+                    for val in all_values:
+                        if val in leaf.props.get(profiling_prop):
+                            matrix += 'Y'
+                        else:
+                            matrix += '-'
+                else:
+                    matrix += '-'*len(all_values) +'\n'
 
-        profile_layout = profile_layouts.LayoutProfile(name=profiling_prop, 
-        alignment=matrix, profiles=all_values, column=level)
-        layouts.append(profile_layout)
-        
-    # if args.profiling_layout:
-    #     profiling_prop = args.profiling_layout[0]
-    #     all_gos = flatten(children_prop_array(tree, profiling_prop))
-    #     nvals = len(all_gos)
-    #     profiling_color_dict = {}            
-    #     for i in range(0, nvals):
-    #         profiling_color_dict[all_gos[i]] = random_color(h=None)
-
-    #     for go in all_gos:
-    #         layout = profile_layouts.LayoutProfile(name=go, level=level, prop_colour_dict=profiling_color_dict,
-    #                                             propfile_prop=profiling_prop,
-    #                                             target_value=go)
-    #         level +=1
-    #         layouts.append(layout)
-    
+            profile_layout = profile_layouts.LayoutProfile(name=profiling_prop, 
+            alignment=matrix, profiles=all_values, column=level)
+            level += 1
+            layouts.append(profile_layout)
 
     #### prune at the last step in case of losing leaves information
     # prune tree by rank

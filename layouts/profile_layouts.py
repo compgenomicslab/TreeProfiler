@@ -1,7 +1,7 @@
 from ete4.smartview import TreeStyle, NodeStyle, TreeLayout, PieChartFace
 from ete4.smartview  import (RectFace, CircleFace, SeqMotifFace, TextFace, OutlineFace, \
                             SelectedFace, SelectedCircleFace, SelectedRectFace, LegendFace,
-                            SeqFace, Face, ScaleFace)
+                            SeqFace, Face, ScaleFace, AlignmentFace)
 from ete4.smartview.renderer.draw_helpers import *
 from ete4 import SeqGroup
 from layouts.general_layouts import get_piechartface, get_heatmapface
@@ -57,12 +57,17 @@ class LayoutProfile(TreeLayout):
             return self._get_seq(first_leaf)
     
     def set_node_style(self, node):
+        
         seq = self.get_seq(node)
         poswidth = self.width / (len(self.profiles)-1 ) 
         if seq:
-            seqFace = ProfileAlignmentFace(seq, seq_format=self.format, gap_format='-',
-            bgcolor='grey', width=self.width, height=self.height, poswidth=poswidth)
-            # seqFace = SeqFace(seq, seqtype='aa', draw_text=False, poswidth=poswidth)
+            seqFace = ProfileAlignmentFace(seq, gap_format='line', seqtype='aa', 
+            seq_format=self.format, width=self.width, height=self.height, 
+            poswidth=poswidth,
+            fgcolor='black', bgcolor='#bcc3d0', gapcolor='gray',
+            gap_linewidth=0.2,
+            max_fsize=12, ftype='sans-serif', 
+            padding_x=0, padding_y=0)
             node.add_face(seqFace, column=self.column, position='aligned', 
                     collapsed_only=(not node.is_leaf())) 
 
@@ -328,6 +333,7 @@ class ProfileAlignmentFace(Face):
         sm_end = self.seqlength - round(max(sm_x0 + w - viewport_end, 0) / posw)
 
         if too_small or self.seq_format == "[]":
+            
             for start, end in self.blocks:
                 if end >= sm_start and start <= sm_end:
                     bstart = max(sm_start, start)
@@ -335,16 +341,17 @@ class ProfileAlignmentFace(Face):
                     bx = x0 + bstart * posw
                     by, bh = get_height(bx, y)
                     box = Box(bx, by, (bend + 1 - bstart) * posw, bh)
+                    
                     yield [ "pixi-block", box ]
 
         else:
             seq = self.get_seq(sm_start, sm_end)
             sm_x = sm_x if drawer.TYPE == 'rect' else x0
             y, h = get_height(sm_x, y)
-            sm_box = Box(sm_x, y, posw * len(seq), h)
-
+            sm_box = Box(x0, y, posw * len(seq), h)
             if self.seq_format == 'compactseq' or posw * zx < self._min_fsize:
                 aa_type = "notext"
             else:
                 aa_type = "text"
             yield [ f'pixi-aa_{aa_type}', sm_box, seq ]
+            
