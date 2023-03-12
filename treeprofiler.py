@@ -1368,7 +1368,7 @@ def tree_plot(args):
     
     if args.profiling_layout:
         profiling_prop = args.profiling_layout[0]
-        all_values = list(set(flatten(children_prop_array(tree, profiling_prop))))
+        all_values = sorted(list(set(flatten(children_prop_array(tree, profiling_prop)))))
         matrix = ''
         for leaf in tree.iter_leaves():
             matrix += '\n'+'>'+leaf.name+'\n'
@@ -1384,7 +1384,7 @@ def tree_plot(args):
         profile_layout = profile_layouts.LayoutProfile(name=profiling_prop, 
         alignment=matrix, profiles=all_values, column=level)
         layouts.append(profile_layout)
-        popup_prop_keys.append(profiling_prop)
+        
     # if args.profiling_layout:
     #     profiling_prop = args.profiling_layout[0]
     #     all_gos = flatten(children_prop_array(tree, profiling_prop))

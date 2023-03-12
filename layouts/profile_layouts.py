@@ -60,9 +60,9 @@ class LayoutProfile(TreeLayout):
         seq = self.get_seq(node)
         poswidth = self.width / (len(self.profiles)-1 ) 
         if seq:
-            # seqFace = ProfileAlignmentFace(seq, seq_format=self.format, gap_format='-',
-            # bgcolor='grey', width=self.width, height=self.height)
-            seqFace = SeqFace(seq, seqtype='aa', draw_text=False, poswidth=poswidth)
+            seqFace = ProfileAlignmentFace(seq, seq_format=self.format, gap_format='-',
+            bgcolor='grey', width=self.width, height=self.height, poswidth=poswidth)
+            # seqFace = SeqFace(seq, seqtype='aa', draw_text=False, poswidth=poswidth)
             node.add_face(seqFace, column=self.column, position='aligned', 
                     collapsed_only=(not node.is_leaf())) 
 
@@ -196,7 +196,7 @@ class ProfileAlignmentFace(Face):
             width=None, height=None, # max height
             fgcolor='black', bgcolor='#bcc3d0', gapcolor='gray',
             gap_linewidth=0.2,
-            max_fsize=12, ftype='sans-serif',
+            max_fsize=12, ftype='sans-serif', poswidth=5,
             padding_x=0, padding_y=0):
 
         Face.__init__(self, padding_x=padding_x, padding_y=padding_y)
@@ -212,7 +212,7 @@ class ProfileAlignmentFace(Face):
         self.gap_linewidth = gap_linewidth
         self.compress_gaps = False
 
-        self.poswidth = 5
+        self.poswidth = poswidth
         self.w_scale = 1
         self.width = width    # sum of all regions' width if not provided
         self.height = height  # dynamically computed if not provided
