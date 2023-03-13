@@ -1377,12 +1377,14 @@ def tree_plot(args):
             'PFAMs'
         ]
         for multiple_text_prop in multiple_text_props:
-            if multiple_text_prop == 'GOs':
-                pass
-            elif multiple_text_prop == 'KEGG_ko':
-                pass
+            # if multiple_text_prop == 'GOs':
+            #     """
+            #     """
+            #     pass
+            # elif multiple_text_prop == 'KEGG_ko':
+            #     pass
+            # else:
             matrix, all_values = multiple2profile(tree, multiple_text_prop)
-
             multiple_text_prop_layout = profile_layouts.LayoutProfile(name=multiple_text_prop, 
             alignment=matrix, profiles=all_values, column=level)
             level += 1
