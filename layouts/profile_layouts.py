@@ -59,7 +59,12 @@ class LayoutProfile(TreeLayout):
     def set_node_style(self, node):
         
         seq = self.get_seq(node)
-        poswidth = self.width / (len(self.profiles)-1 ) 
+        
+        if len(self.profiles) > 1:
+            poswidth = self.width / (len(self.profiles)-1 )
+        else:
+            poswidth = self.width
+
         if seq:
             seqFace = ProfileAlignmentFace(seq, gap_format='line', seqtype='aa', 
             seq_format=self.format, width=self.width, height=self.height, 
@@ -153,7 +158,10 @@ class TextScaleFace(Face):
 
 
         #nticks = round((self.width * zx) / self.tick_width)
-        nticks = len(self.headers)-1
+        if len(self.headers) > 1:
+            nticks = len(self.headers)-1
+        else:
+            nticks = 1
         dx = self.width / nticks
         range_factor = (self.range[1] - self.range[0]) / self.width
 
@@ -163,7 +171,7 @@ class TextScaleFace(Face):
                 self.viewport_margin), 0) / dx)
         else:
             sm_start, sm_end = 0, nticks
-
+            
         for i in range(sm_start, sm_end + 1):
             
             x = x0 + i * dx + dx/2 
@@ -175,26 +183,28 @@ class TextScaleFace(Face):
                 text = self.formatter % number if self.formatter else str(number)
 
             #text = text.rstrip('0').rstrip('.') if '.' in text else text
-            text = self.headers[i]
-            self.compute_fsize(self.tick_width / len(text), dy, zx, zy)
-            text_style = {
-                'max_fsize': self._fsize,
-                'text_anchor': 'left', # left, middle or right
-                'ftype': f'{self.ftype}, sans-serif', # default sans-serif
-                }
+            try:
+                text = self.headers[i]
+                self.compute_fsize(self.tick_width / len(text), dy, zx, zy)
+                text_style = {
+                    'max_fsize': self._fsize,
+                    'text_anchor': 'left', # left, middle or right
+                    'ftype': f'{self.ftype}, sans-serif', # default sans-serif
+                    }
 
-            text_box = Box(x,
-                    y,
-                    # y + (dy - self._fsize / (zy * r)) / 2,
-                    dx, dy)
-            yield draw_text(text_box, text, style=text_style,rotation=270)
+                text_box = Box(x,
+                        y,
+                        # y + (dy - self._fsize / (zy * r)) / 2,
+                        dx, dy)
+                yield draw_text(text_box, text, style=text_style,rotation=270)
 
-            p1 = (x, y + dy - self.vt_line_height / zy)
-            p2 = (x, y + dy)
+                # p1 = (x, y + dy - self.vt_line_height / zy)
+                # p2 = (x, y + dy)
 
-            # yield draw_line(p1, p2, style={'stroke-width': self.line_width,
-            #                                'stroke': self.color})
-
+                # yield draw_line(p1, p2, style={'stroke-width': self.line_width,
+                #                                'stroke': self.color})
+            except IndexError:
+                break
 class ProfileAlignmentFace(Face):
     def __init__(self, seq, bg=None,
             gap_format='line', seqtype='aa', seq_format='[]',

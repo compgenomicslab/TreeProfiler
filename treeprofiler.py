@@ -544,7 +544,10 @@ def flatten(nasted_list):
 
     list_of_lists = []
     for item in nasted_list:
-        list_of_lists.extend(item)
+        if type(item) == list:
+            list_of_lists.extend(item)
+        else:
+            list_of_lists.extend(nasted_list)
     return list_of_lists
 
 def multiple_text_profile(tree, profiling_prop):
@@ -1161,6 +1164,20 @@ def parse_fasta(fastafile):
     fasta_dict[head] = seq
     return fasta_dict
 
+def multiple2profile(tree, profiling_prop):
+    all_values = sorted(list(set(flatten(children_prop_array(tree, profiling_prop)))))
+    matrix = ''
+    for leaf in tree.iter_leaves():
+        matrix += '\n'+'>'+leaf.name+'\n'
+        if leaf.props.get(profiling_prop):
+            for val in all_values:
+                if val != 'NaN' and val in leaf.props.get(profiling_prop):
+                    matrix += 'Y'
+                else:
+                    matrix += '-'
+        else:
+            matrix += '-'*len(all_values) +'\n'
+    return matrix, all_values
 ### visualize tree
 def tree_plot(args):
     global prop2type, columns, tree
@@ -1348,7 +1365,7 @@ def tree_plot(args):
         multiple_text_props = [
             'eggNOG_OGs',
             'GOs',
-            'KEGG_ko',
+            'KEGG_ko', 
             'KEGG_Pathway',
             'KEGG_Module',
             'KEGG_Reaction',
@@ -1360,24 +1377,16 @@ def tree_plot(args):
             'PFAMs'
         ]
         for multiple_text_prop in multiple_text_props:
-            
-            all_values = sorted(list(set(flatten(children_prop_array(tree, multiple_text_prop)))))
-            matrix = ''
-            for leaf in tree.iter_leaves():
-                matrix += '\n'+'>'+leaf.name+'\n'
-                if leaf.props.get(multiple_text_prop):
-                    for val in all_values:
-                        if val in leaf.props.get(multiple_text_prop):
-                            matrix += 'Y'
-                        else:
-                            matrix += '-'
-                else:
-                    matrix += '-'*len(all_values) +'\n'
+            if multiple_text_prop == 'GOs':
+                pass
+            elif multiple_text_prop == 'KEGG_ko':
+                pass
+            matrix, all_values = multiple2profile(tree, multiple_text_prop)
 
-            multiple_text_prop = profile_layouts.LayoutProfile(name=multiple_text_prop, 
+            multiple_text_prop_layout = profile_layouts.LayoutProfile(name=multiple_text_prop, 
             alignment=matrix, profiles=all_values, column=level)
             level += 1
-            layouts.append(multiple_text_prop)
+            layouts.append(multiple_text_prop_layout)
             
 
         
@@ -1393,19 +1402,7 @@ def tree_plot(args):
     if args.profiling_layout:
         profiling_props = args.profiling_layout
         for profiling_prop in profiling_props:
-            all_values = sorted(list(set(flatten(children_prop_array(tree, profiling_prop)))))
-            matrix = ''
-            for leaf in tree.iter_leaves():
-                matrix += '\n'+'>'+leaf.name+'\n'
-                if leaf.props.get(profiling_prop):
-                    for val in all_values:
-                        if val in leaf.props.get(profiling_prop):
-                            matrix += 'Y'
-                        else:
-                            matrix += '-'
-                else:
-                    matrix += '-'*len(all_values) +'\n'
-
+            matrix, all_values = multiple2profile(tree, profiling_prop)
             profile_layout = profile_layouts.LayoutProfile(name=profiling_prop, 
             alignment=matrix, profiles=all_values, column=level)
             level += 1
