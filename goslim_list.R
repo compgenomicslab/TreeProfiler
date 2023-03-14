@@ -7,13 +7,14 @@ library(GO.db)
 args <- commandArgs(trailingOnly = TRUE)
 
 gos_path = args[1]
+#text_input = args[1]
 fl <- "data/goslim_generic.obo"
 slim <- getOBOCollection(fl)
 
 mygos <- read.table(gos_path, sep = "\t", header = FALSE,
       row.names = NULL,
       col.names = c("e6_id", "go_list"),
-      colClasses = c("character", "character"))
+      colClasses = c("character", "character")) #text=text_input
 
 f_get_goslim <- function(e6_id, go_list) {
          # gos <- as.list(strsplit(go_list, split=",")) #, fixed=TRUE)# [[1]]

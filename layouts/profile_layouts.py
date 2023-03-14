@@ -4,8 +4,7 @@ from ete4.smartview  import (RectFace, CircleFace, SeqMotifFace, TextFace, Outli
                             SeqFace, Face, ScaleFace, AlignmentFace)
 from ete4.smartview.renderer.draw_helpers import *
 from ete4 import SeqGroup
-from layouts.general_layouts import get_piechartface, get_heatmapface
-
+from layouts.general_layouts import get_piechartface, get_heatmapface, color_gradient 
 from collections import OrderedDict, namedtuple
 import re
 
@@ -59,12 +58,10 @@ class LayoutProfile(TreeLayout):
     def set_node_style(self, node):
         
         seq = self.get_seq(node)
-        
         if len(self.profiles) > 1:
             poswidth = self.width / (len(self.profiles)-1 )
         else:
             poswidth = self.width
-
         if seq:
             seqFace = ProfileAlignmentFace(seq, gap_format='line', seqtype='aa', 
             seq_format=self.format, width=self.width, height=self.height, 
@@ -76,6 +73,39 @@ class LayoutProfile(TreeLayout):
             node.add_face(seqFace, column=self.column, position='aligned', 
                     collapsed_only=(not node.is_leaf())) 
 
+class LayoutGOslim(TreeLayout):
+    def __init__(self, name=None, column=1, color='red', go_propfile=[], goslim_prop=None, padding_x=2, padding_y=2, legend=True):
+        super().__init__(name)
+        self.aligned_faces = True
+        self.go_propfile = go_propfile
+        self.goslim_prop = goslim_prop
+        self.column = column
+        self.color = color
+        self.padding_x = padding_x
+        self.padding_y = padding_y
+        self.legend = legend
+        self.width = 70
+        self.height = 50
+
+    def set_tree_style(self, tree, tree_style):
+        super().set_tree_style(tree, tree_style)
+        header = f'{self.go_propfile[1]}({self.go_propfile[0]})'
+        text = TextFace(header, min_fsize=5, max_fsize=10, padding_x=self.padding_x, width=70, rotation=315)
+        tree_style.aligned_panel_header.add_face(text, column=self.column)
+    
+    def set_node_style(self, node):
+        entry, desc = self.go_propfile
+        if node.is_leaf() and node.props.get(self.goslim_prop):
+            goslims = node.props.get(self.goslim_prop)
+            if entry in goslims[0]:
+                index = goslims[0].index(entry)
+                relative_count = goslims[2][index]
+                c1 = 'white'
+                c2 = self.color
+                gradient_color = color_gradient(c1, c2, mix=relative_count)
+                prop_face = RectFace(width=self.width, height=self.height, color=gradient_color,  padding_x=self.padding_x, padding_y=self.padding_y)
+                node.add_face(prop_face, column=self.column, position = "aligned")
+                
 class TextScaleFace(Face):
     def __init__(self, name='', width=None, color='black',
             scale_range=(0, 0), headers=None, tick_width=100, line_width=1,
@@ -159,7 +189,7 @@ class TextScaleFace(Face):
 
         #nticks = round((self.width * zx) / self.tick_width)
         if len(self.headers) > 1:
-            nticks = len(self.headers)-1
+            nticks = len(self.headers)
         else:
             nticks = 1
         dx = self.width / nticks
@@ -173,7 +203,6 @@ class TextScaleFace(Face):
             sm_start, sm_end = 0, nticks
             
         for i in range(sm_start, sm_end + 1):
-            
             x = x0 + i * dx + dx/2 
             
             number = range_factor * i * dx
@@ -237,7 +266,6 @@ class ProfileAlignmentFace(Face):
             self.w_scale = self.width / total_width
         else:
             self.width = total_width
-
         self.bg = profilecolors
         # self.fgcolor = fgcolor
         # self.bgcolor = bgcolor
