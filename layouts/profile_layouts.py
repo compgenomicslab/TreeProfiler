@@ -11,9 +11,32 @@ import re
 Box = namedtuple('Box', 'x y dx dy')  # corner and size of a 2D shape
 
 profilecolors = {
-    'Y':'#E60A0A',
-    'N':'#FFFFFF',
-}
+    'A':"#C8C8C8" ,
+    'R':"#145AFF" ,
+    'N':"#00DCDC" ,
+    'D':"#E60A0A" ,
+    'C':"#E6E600" ,
+    'Q':"#00DCDC" ,
+    'E':"#E60A0A" ,
+    'G':"#EBEBEB" ,
+    'H':"#8282D2" ,
+    'I':"#0F820F" ,
+    'L':"#0F820F" ,
+    'K':"#145AFF" ,
+    'M':"#E6E600" ,
+    'F':"#3232AA" ,
+    'P':"#DC9682" ,
+    'S':"#FA9600" ,
+    'T':"#FA9600" ,
+    'W':"#B45AB4" ,
+    'Y':"#3232AA" ,
+    'V':"#0F820F" ,
+    'B':"#FF69B4" ,
+    'Z':"#FF69B4" ,
+    'X':"#BEA06E",
+    '.':"#FFFFFF",
+    '-':"#FFFFFF",
+    }
 
 class LayoutProfile(TreeLayout):
     def __init__(self, name="Profile",
@@ -98,13 +121,16 @@ class LayoutGOslim(TreeLayout):
         if node.is_leaf() and node.props.get(self.goslim_prop):
             goslims = node.props.get(self.goslim_prop)
             if entry in goslims[0]:
-                index = goslims[0].index(entry)
-                relative_count = goslims[2][index]
-                c1 = 'white'
-                c2 = self.color
-                gradient_color = color_gradient(c1, c2, mix=relative_count)
-                prop_face = RectFace(width=self.width, height=self.height, color=gradient_color,  padding_x=self.padding_x, padding_y=self.padding_y)
+                prop_face = RectFace(width=self.width, height=self.height, color=self.color,  padding_x=self.padding_x, padding_y=self.padding_y)
                 node.add_face(prop_face, column=self.column, position = "aligned")
+            # if entry in goslims[0]:
+            #     index = goslims[0].index(entry)
+            #     relative_count = goslims[2][index]
+            #     c1 = 'white'
+            #     c2 = self.color
+            #     gradient_color = color_gradient(c1, c2, mix=relative_count)
+            #     prop_face = RectFace(width=self.width, height=self.height, color=gradient_color,  padding_x=self.padding_x, padding_y=self.padding_y)
+            #     node.add_face(prop_face, column=self.column, position = "aligned")
                 
 class TextScaleFace(Face):
     def __init__(self, name='', width=None, color='black',

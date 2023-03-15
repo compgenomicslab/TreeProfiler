@@ -1164,8 +1164,52 @@ def parse_fasta(fastafile):
     fasta_dict[head] = seq
     return fasta_dict
 
+import subprocess
+def goslim_annotation(gos_input, relative=True):
+    output_dict = {}
+    all_golsims_dict = {}
+    goslim_script = os.path.join(os.path.dirname(__file__), 'goslim_list.R')
+    output = subprocess.check_output([goslim_script,gos_input])
+    #output_list = [line.split(' \t ') for line in output.decode('utf-8').split('\n') if line ]
+    for line in output.decode('utf-8').split('\n'):
+        if line:
+            name, entries, desc, count = line.split(' \t ')
+            if entries != '-':
+                entries = entries.split(',')
+                desc = desc.split('|') 
+                count = np.array(count.split('|')).astype(int)
+                if relative:
+                    count = [float(i)/sum(count) for i in count]
+            output_dict[name] = [entries, desc, count]
+            for i in range(len(entries)):
+                entry = entries[i]
+                single_desc = desc[i]
+                if entry not in all_golsims_dict:
+                    all_golsims_dict[entry] = single_desc
+    return output_dict, all_golsims_dict 
+
+# def goslim_annotation(gos_input):
+#     goslim_script = os.path.join(os.path.dirname(__file__), 'goslim_list.R')
+#     output = subprocess.check_output([goslim_script,gos_input])
+#     output = output.decode('utf-8').split('\n')
+#     output = list(filter(None, output))[0].split(' \t ')
+#     if output[1] != '-':
+#         return output
+#     else:
+#         return None
+
 def multiple2profile(tree, profiling_prop):
     all_values = sorted(list(set(flatten(children_prop_array(tree, profiling_prop)))))
+    aa = [
+        'A', 'R', 'N',
+        'D', 'C', 'Q',
+        'E', 'G', 'H',
+        'I', 'L', 'K',
+        'M', 'F', 'P',
+        'S', 'T', 'W',
+        'Y', 'V', 'B',
+        'Z', 'X'
+    ]
     matrix = ''
     for leaf in tree.iter_leaves():
         matrix += '\n'+'>'+leaf.name+'\n'
@@ -1178,6 +1222,7 @@ def multiple2profile(tree, profiling_prop):
         else:
             matrix += '-'*len(all_values) +'\n'
     return matrix, all_values
+
 ### visualize tree
 def tree_plot(args):
     global prop2type, columns, tree
@@ -1363,32 +1408,55 @@ def tree_plot(args):
         layouts.extend(barplot_layouts)
         
         multiple_text_props = [
-            'eggNOG_OGs',
-            'GOs',
-            'KEGG_ko', 
-            'KEGG_Pathway',
-            'KEGG_Module',
-            'KEGG_Reaction',
-            'KEGG_rclass',
-            'BRITE',
-            'KEGG_TC',
+            'eggNOG_OGs', #28PAR@1|root,2QVY3@2759|Eukaryota
+            'GOs', #GO:0000002,GO:0000003
+            'KEGG_ko', #ko:K04451,ko:K10148
+            'KEGG_Pathway', #ko01522,ko01524
+            'KEGG_Module', #M00118 
+            'KEGG_Reaction', #R00497
+            'KEGG_rclass', #RC00141
+
+            # cannot use kegg_get()
+            'BRITE', #ko00000,ko00001,ko03000
+            'KEGG_TC', #3.A.1.133.1 
+
+            # Domains
             'CAZy',
             'BiGG_Reaction',
             'PFAMs'
         ]
+        
         for multiple_text_prop in multiple_text_props:
-            # if multiple_text_prop == 'GOs':
-            #     """
-            #     """
-            #     pass
-            # elif multiple_text_prop == 'KEGG_ko':
-            #     pass
-            # else:
-            matrix, all_values = multiple2profile(tree, multiple_text_prop)
-            multiple_text_prop_layout = profile_layouts.LayoutProfile(name=multiple_text_prop, 
-            alignment=matrix, profiles=all_values, column=level)
-            level += 1
-            layouts.append(multiple_text_prop_layout)
+            if multiple_text_prop == 'GOs':
+                gos_input = os.path.join(os.path.dirname(__file__) + 'gos_input.tsv')
+                
+                with open(gos_input, 'w') as f:
+                    for leaf in tree.iter_leaves():
+                        if leaf.props.get(multiple_text_prop):
+                            go_prop = ','.join(leaf.props.get(multiple_text_prop))
+                            line = leaf.name + "\t" + go_prop + "\n"
+                            f.write(line)
+                
+                output, all_golsims = goslim_annotation(gos_input)
+                for leaf in tree.iter_leaves():
+                    leaf_goslim = output.get(leaf.name,'')
+                    if leaf_goslim:
+                        leaf.add_prop('GOslims', leaf_goslim)
+                
+                for entry, desc in all_golsims.items():
+                    if entry != '-':
+                        golayout = profile_layouts.LayoutGOslim(name=f'GOslims:{desc}({entry})', column=level, color='red', 
+                                            go_propfile=[entry, desc], goslim_prop='GOslims', padding_x=2, 
+                                            padding_y=2, legend=True)
+                        level+=1
+                        layouts.append(golayout)
+
+            else:
+                matrix, all_values = multiple2profile(tree, multiple_text_prop)
+                multiple_text_prop_layout = profile_layouts.LayoutProfile(name=multiple_text_prop, 
+                alignment=matrix, profiles=all_values, column=level)
+                level += 1
+                layouts.append(multiple_text_prop_layout)
             
 
         
