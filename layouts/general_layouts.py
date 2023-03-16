@@ -48,8 +48,8 @@ def get_heatmapface(node, prop, color, tooltip=None, width=70, height=50, paddin
         total += float(v)
     total = int(total)
     ratio = positive / total
-    if ratio < 0.15 and ratio != 0: # show minimum color for too low
-        ratio = 0.15
+    if ratio < 0.05 and ratio != 0: # show minimum color for too low
+        ratio = 0.05
     c1 = 'white'
     c2 = color
     gradient_color = color_gradient(c1, c2, mix=ratio)

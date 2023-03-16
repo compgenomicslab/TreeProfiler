@@ -1428,8 +1428,13 @@ def tree_plot(args):
         
         for multiple_text_prop in multiple_text_props:
             if multiple_text_prop == 'GOs':
+                pair_seperator = "--"
+                item_seperator = "||"
+                target_prop = 'GOslims'
                 gos_input = os.path.join(os.path.dirname(__file__) + 'gos_input.tsv')
-                
+                node2leaves = tree.get_cached_content()
+
+                # run goslim_list.r to retrieve goslims
                 with open(gos_input, 'w') as f:
                     for leaf in tree.iter_leaves():
                         if leaf.props.get(multiple_text_prop):
@@ -1438,18 +1443,35 @@ def tree_plot(args):
                             f.write(line)
                 
                 output, all_golsims = goslim_annotation(gos_input)
+
+                # load to leaves
                 for leaf in tree.iter_leaves():
                     leaf_goslim = output.get(leaf.name,'')
                     if leaf_goslim:
-                        leaf.add_prop('GOslims', leaf_goslim)
-                
+                        leaf.add_prop(target_prop, leaf_goslim[0])
+
+                # sum to parent nodes
+                for node in tree.traverse("postorder"):
+                    if node.is_leaf():
+                        pass
+                    else:
+                        prop_list = children_prop_array(node2leaves[node], target_prop)
+                        multi_prop_list = []
+                        for elements in prop_list:
+                            for j in elements:
+                                multi_prop_list.append(j)
+                        node.add_prop(add_suffix(target_prop, 'counter'), item_seperator.join([add_suffix(str(key), value, pair_seperator) for key, value in sorted(dict(Counter(multi_prop_list)).items())]))
+
+                # ouput to layouts 
                 for entry, desc in all_golsims.items():
                     if entry != '-':
                         golayout = profile_layouts.LayoutGOslim(name=f'GOslims:{desc}({entry})', column=level, color='red', 
-                                            go_propfile=[entry, desc], goslim_prop='GOslims', padding_x=2, 
+                                            go_propfile=[entry, desc], goslim_prop=target_prop, padding_x=2, 
                                             padding_y=2, legend=True)
                         level+=1
                         layouts.append(golayout)
+                popup_prop_keys.append('GOslims')
+                popup_prop_keys.append(add_suffix(target_prop, 'counter'))
 
             else:
                 matrix, all_values = multiple2profile(tree, multiple_text_prop)
