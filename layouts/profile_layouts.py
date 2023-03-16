@@ -318,9 +318,10 @@ class TextScaleFace(Face):
                 #                                'stroke': self.color})
             except IndexError:
                 break
+                
 class ProfileAlignmentFace(Face):
     def __init__(self, seq, bg=None,
-            gap_format='line', seqtype='aa', seq_format='[]',
+            gap_format='line', seqtype='aa', seq_format='compactseq',
             width=None, height=None, # max height
             fgcolor='black', bgcolor='#bcc3d0', gapcolor='gray',
             gap_linewidth=0.2,
@@ -470,7 +471,7 @@ class ProfileAlignmentFace(Face):
             seq = self.get_seq(sm_start, sm_end)
             sm_x = sm_x if drawer.TYPE == 'rect' else x0
             y, h = get_height(sm_x, y)
-            sm_box = Box(x0, y, posw * len(seq), h)
+            sm_box = Box(sm_x+sm_x0, y, posw * len(seq), h)
             if self.seq_format == 'compactseq' or posw * zx < self._min_fsize:
                 aa_type = "notext"
             else:
