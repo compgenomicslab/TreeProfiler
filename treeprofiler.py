@@ -1345,7 +1345,7 @@ def tree_plot(args):
     # get layouts
     if args.heatmap_layout:
         props = []
-        for i in args.heatmap_layout.split(','):
+        for i in args.heatmap_layout:
             props.append(i)
 
         heatmap_layouts = []

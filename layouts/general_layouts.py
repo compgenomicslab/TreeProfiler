@@ -35,7 +35,7 @@ def color_gradient(c1, c2, mix=0):
     c2 = np.array(mpl.colors.to_rgb(c2))
     return mpl.colors.to_hex((1-mix)*c1 + mix*c2)
 
-def get_heatmapface(node, prop, color, tooltip=None, width=70, height=50, padding_x=2, padding_y=2):
+def get_heatmapface(node, prop, color, tooltip=None, width=70, height=None, padding_x=2, padding_y=2):
     counter_props = node.props.get(prop).split('||')
     
     total = 0

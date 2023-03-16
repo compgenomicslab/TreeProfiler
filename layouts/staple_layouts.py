@@ -2,7 +2,7 @@ import matplotlib as mpl
 import numpy as np
 
 from ete4.smartview import TreeStyle, NodeStyle, TreeLayout
-from ete4.smartview  import TextFace, Face, ScaleFace, LegendFace
+from ete4.smartview  import TextFace, Face, ScaleFace, LegendFace, RectFace
 from ete4.smartview.renderer.draw_helpers import *
 from ete4.treeview.svg_colors import random_color
 
@@ -249,7 +249,7 @@ class LayoutBarplot(LayoutPlot):
                     collapsed_only=True)
 
 class LayoutHeatmap(TreeLayout):
-    def __init__(self, name=None, column=0, width=70, height=50, internal_rep=None, \
+    def __init__(self, name=None, column=0, width=70, height=None, internal_rep=None, \
         prop=None, maxval=100, minval=0, min_color="#ffffff", max_color="#ff0000",\
         legend=True):
         super().__init__(name)
@@ -399,176 +399,3 @@ class LayoutHeatmap(TreeLayout):
         #     #face_name = TextFace(node.props.get('name'), color="red")
         #     #face_name = TextFace("%.1f" % (relative_abundance), color=color)
         #     node.add_face(identF, column = self.column,  position = 'aligned', collapsed_only=True)
-class RectFace(Face):
-    def __init__(self, width, height, color='gray',
-            opacity=0.7,
-            text=None, fgcolor='black', # text color
-            min_fsize=6, max_fsize=15,
-            ftype='sans-serif',
-            tooltip=None,
-            name="",
-            padding_x=0, padding_y=0):
-
-        Face.__init__(self, name=name, padding_x=padding_x, padding_y=padding_y)
-
-        self.width = width
-        self.height = height
-        self.stretch = True
-        self.color = color
-        self.opacity = opacity
-        # Text related
-        self.text = str(text) if text is not None else None
-        self.rotate_text = False
-        self.fgcolor = fgcolor
-        self.ftype = ftype
-        self.min_fsize = min_fsize
-        self.max_fsize = max_fsize
-
-        self.tooltip = tooltip
-
-    def __name__(self):
-        return "RectFace"
-
-    def compute_bounding_box(self, 
-            drawer,
-            point, size,
-            dx_to_closest_child,
-            bdx, bdy,
-            bdy0, bdy1,
-            pos, row,
-            n_row, n_col,
-            dx_before, dy_before):
-
-        if drawer.TYPE == 'circ':
-            pos = swap_pos(pos, point[1])
-
-        box = super().compute_bounding_box( 
-            drawer,
-            point, size,
-            dx_to_closest_child,
-            bdx, bdy,
-            bdy0, bdy1,
-            pos, row,
-            n_row, n_col,
-            dx_before, dy_before)
-
-        x, y, dx, dy = box
-        zx, zy = self.zoom
-        zx = 1 if self.stretch\
-                and pos.startswith('aligned')\
-                and drawer.TYPE != 'circ'\
-                else zx
-
-        r = (x or 1e-10) if drawer.TYPE == 'circ' else 1
-
-        def get_dimensions(max_width, max_height):
-            if not (max_width or max_height):
-                return 0, 0
-            if (type(max_width) in (int, float) and max_width <= 0) or\
-               (type(max_height) in (int, float) and max_height <= 0):
-                return 0, 0
-
-            width = self.width / zx if self.width is not None else None
-            height = self.height / zy if self.height is not None else None
-
-            if width is None:
-                return max_width or 0, min(height or float('inf'), max_height)
-            if height is None:
-                return min(width, max_width or float('inf')), max_height
-
-            hw_ratio = height / width
-
-            if max_width and width > max_width:
-                width = max_width
-                height = width * hw_ratio
-            if max_height and height > max_height:
-                height = max_height
-                if not self.stretch or drawer.TYPE == 'circ':
-                    width = height / hw_ratio
-
-            height /= r  # in circular drawer
-            return width, height
-
-        max_dy = dy * r  # take into account circular mode
-
-        if pos == 'branch_top':
-            width, height = get_dimensions(dx, max_dy)
-            box = (x, y + dy - height, width, height) # container bottom
-
-        elif pos == 'branch_bottom':
-            width, height = get_dimensions(dx, max_dy)
-            box = (x, y, width, height) # container top
-
-        elif pos == 'branch_right':
-            width, height = get_dimensions(dx, max_dy)
-            box = (x, y + (dy - height) / 2, width, height)
-
-        elif pos.startswith('aligned'):
-            width, height = get_dimensions(None, dy)
-            # height = min(dy, (self.height - 2 * self.padding_y) / zy)
-            # width = min(self.width - 2 * self.padding_x) / zx
-
-            if pos == 'aligned_bottom':
-                y = y + dy - height
-            elif pos == 'aligned_top':
-                y = y
-            else:
-                y = y + (dy - height) / 2
-
-            box = (x, y, width, height)
-
-        self._box = Box(*box)
-        return self._box
-
-    def draw(self, drawer):
-        self._check_own_variables()
-
-        circ_drawer = drawer.TYPE == 'circ'
-        style = {'fill': self.color, 'opacity': self.opacity}
-        if self.text and circ_drawer:
-            rect_id = get_random_string(10)
-            style['id'] = rect_id
-
-        yield draw_rect(self._box,
-                self.name,
-                style=style,
-                tooltip=self.tooltip)
-
-        if self.text:
-            x, y, dx, dy = self._box
-            zx, zy = self.zoom
-
-            r = (x or 1e-10) if circ_drawer else 1
-            if self.rotate_text:
-                rotation = 90
-                self.compute_fsize(dy * zy / (len(self.text) * zx) * r,
-                                   dx * zx / zy, zx, zy)
-
-                text_box = Box(x + (dx - self._fsize / (2 * zx)) / 2,
-                        y + dy / 2,
-                        dx, dy)
-            else:
-                rotation = 0
-                self.compute_fsize(dx / len(self.text), dy, zx, zy)
-                text_box = Box(x + dx / 2,
-                        y + (dy - self._fsize / (zy * r)) / 2,
-                        dx, dy)
-            text_style = {
-                'max_fsize': self._fsize,
-                'text_anchor': 'middle',
-                'ftype': f'{self.ftype}, sans-serif', # default sans-serif
-                }
-
-            if circ_drawer:
-                offset = dx * zx + dy * zy * r / 2
-                # Turn text upside down on bottom
-                if y + dy / 2 > 0:
-                    offset += dx * zx + dy * zy * r
-                text_style['offset'] = offset
-
-            yield draw_text(text_box,
-                    self.text,
-                    rotation=rotation,
-                    anchor=('#' + str(rect_id)) if circ_drawer else None,
-                    style=text_style)
-    
