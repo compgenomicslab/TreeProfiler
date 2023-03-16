@@ -1204,23 +1204,29 @@ def multiple2profile(tree, profiling_prop):
         'A', 'R', 'N',
         'D', 'C', 'Q',
         'E', 'G', 'H',
-        'I', 'L', 'K',
+        'I', 'S', 'K',
         'M', 'F', 'P',
-        'S', 'T', 'W',
-        'Y', 'V', 'B',
-        'Z', 'X'
+        'L', 'T', 'W',
+        'Z', 'V', 'B',
+        'Y', 'X'
     ]
     matrix = ''
     for leaf in tree.iter_leaves():
         matrix += '\n'+'>'+leaf.name+'\n'
         if leaf.props.get(profiling_prop):
-            for val in all_values:
+            # for val in all_values:
+            #     if val != 'NaN' and val in leaf.props.get(profiling_prop):
+            #         matrix += 'Y'
+            #     else:
+            #         matrix += '-'
+            for index in range(len(all_values)):
+                val = all_values[index]
                 if val != 'NaN' and val in leaf.props.get(profiling_prop):
-                    matrix += 'Y'
+                    matrix += aa[index % len(aa)]
                 else:
                     matrix += '-'
         else:
-            matrix += '-'*len(all_values) +'\n'
+            matrix += '-' * len(all_values) +'\n'
     return matrix, all_values
 
 ### visualize tree

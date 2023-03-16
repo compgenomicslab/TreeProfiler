@@ -194,7 +194,7 @@ class TextScaleFace(Face):
     def __init__(self, name='', width=None, color='black',
             scale_range=(0, 0), headers=None, tick_width=100, line_width=1,
             formatter='%.0f', 
-            min_fsize=10, max_fsize=10, ftype='sans-serif',
+            min_fsize=5, max_fsize=20, ftype='sans-serif',
             padding_x=0, padding_y=0):
 
         Face.__init__(self, name=name,
