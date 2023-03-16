@@ -109,7 +109,7 @@ class LayoutGOslim(TreeLayout):
         self.padding_y = padding_y
         self.legend = legend
         self.width = 70
-        self.height = 50
+        self.height = None
 
     def set_tree_style(self, tree, tree_style):
         super().set_tree_style(tree, tree_style)
