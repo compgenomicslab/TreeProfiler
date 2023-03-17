@@ -59,23 +59,20 @@ class TaxaClade(TreeLayout):
                 #node.add_face(face_name, column = 5, position = 'branch_right', collapsed_only=True)
 
 class LayoutSciName(TreeLayout):
-    def __init__(self, name="Scientific name"):
+    def __init__(self, name="Scientific name", color_dict={}):
         super().__init__(name, aligned_faces=True)
+        self.color_dict = color_dict
 
     def set_node_style(self, node):
         if node.is_leaf():
-           
             sci_name = node.props.get('sci_name')
-            # prot_id = node.name.split('.', 1)[1]
-
             prot_id = node.name
 
-            # if node.props.get('sci_name') in sciName2color.keys():
-            #     color = sciName2color[node.props.get('sci_name')]
-            # else:
-            #     color = 'black'
-            
-            color = 'Gray'
+            rank_colordict = self.color_dict.get(node.props.get('rank'),'')
+            if rank_colordict:
+                color = rank_colordict.get(sci_name, 'gray')
+            else:
+                color = 'gray'
             node.add_face(TextFace(sci_name, color = color, padding_x=2),
                 column=0, position="branch_right")
 
@@ -90,32 +87,47 @@ class LayoutSciName(TreeLayout):
             names = summary(node.children)
             texts = names if len(names) < 6 else (names[:3] + ['...'] + names[-2:])
             for i, text in enumerate(texts):
-                color = 'Gray'
+                sci_name = node.props.get('sci_name')
+                rank_colordict = self.color_dict.get(node.props.get('rank'),'')
+                if rank_colordict:
+                    color = rank_colordict.get(sci_name, 'gray')
+                else:
+                    color = 'gray'
                 node.add_face(TextFace(text, padding_x=2, color = color),
                         position="branch_right", column=1, collapsed_only=True)
                         
 class TaxaRectangular(TreeLayout):
-    def __init__(self, name="Last common ancestor",
-            rect_width=15, column=0):
+    def __init__(self, name="Last common ancestor", rank=None, color_dict={}, rect_width=20, column=0, legend=True ):
         super().__init__(name, aligned_faces=True)
 
         self.active = True
-
+        self.rank = rank
+        self.color_dict=color_dict
         self.rect_width = rect_width
         self.column = column
 
+    def set_tree_style(self, tree, tree_style):
+        super().set_tree_style(tree, tree_style)
+        if self.legend:
+            if self.color_dict:
+                tree_style.add_legend(title='TaxaRectangular_'+self.rank,
+                                    variable='discrete',
+                                    colormap=self.color_dict,
+                                    )
     def set_node_style(self, node):
-        if node.props.get('sci_name'):
-            lca = node.props.get('sci_name')
-            color = node.props.get('sci_name_color', 'lightgray')
-            
+        node_rank = node.props.get('rank')
+        node_sciname = node.props.get('sci_name')
+        if node_sciname and (node_rank == self.rank):
+            lca = node_sciname
+            color = self.color_dict.get(lca, 'lightgray')
+            print()
             level = get_level(node, level=self.column)
             # lca_face = RectFace(self.rect_width, float('inf'), 
             #         color = color, 
             #         text = lca,
             #         fgcolor = "white",
             #         padding_x = 1, padding_y = 1)
-            lca_face = RectFace(self.rect_width, float('inf'), text = lca, color=color, padding_x=1, padding_y=1)
+            lca_face = RectFace(self.rect_width, None, text = lca, color=color, padding_x=1, padding_y=1)
             lca_face.rotate_text = True
             node.add_face(lca_face, position='aligned', column=level)
             node.add_face(lca_face, position='aligned', column=level,

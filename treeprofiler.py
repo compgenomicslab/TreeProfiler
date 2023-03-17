@@ -1304,7 +1304,7 @@ def tree_plot(args):
     
     #### Layouts settings ####
     # Taxa layouts
-    if args.taxon_layout:
+    if args.taxonclade_layout or args.taxonrectangular_layout:
         taxon_color_dict = {}
         taxa_layouts = []
         
@@ -1326,11 +1326,19 @@ def tree_plot(args):
                     color_dict[value[i]] = paried_color[i]
                 else:
                     color_dict[value[i]] = random_color(h=None)
+            
+            if args.taxonclade_layout:
+                taxa_layout = taxon_layouts.TaxaClade(name='TaxaClade_'+rank, level=level, rank = rank, color_dict=color_dict)
+                taxa_layouts.append(taxa_layout)
 
-            taxa_layout = taxon_layouts.TaxaClade(name='TaxaClade_'+rank, level=level, rank = rank, color_dict=color_dict)
-            taxa_layouts.append(taxa_layout)
+            if args.taxonrectangular_layout:
+                taxa_layout = taxon_layouts.TaxaRectangular(name = "TaxaRect_"+rank, rank=rank ,color_dict=color_dict, column=level)
+                taxa_layouts.append(taxa_layout)
+            
             taxon_color_dict[rank] = color_dict
-        taxa_layouts.append(taxon_layouts.LayoutSciName(name = 'Taxa Scientific name'))
+            
+        #taxa_layouts.append(taxon_layouts.TaxaRectangular(name = "Last Common Ancester", color_dict=taxon_color_dict, column=level))
+        taxa_layouts.append(taxon_layouts.LayoutSciName(name = 'Taxa Scientific name', color_dict=taxon_color_dict))
         layouts = layouts + taxa_layouts
         level += 1
         total_color_dict.append(taxon_color_dict)
@@ -2082,10 +2090,14 @@ def poplulate_plot_args(plot_args_p):
         type=lambda s: [item for item in s.split(',')],
         required=False,
         help="<col1,col2> names, column index or index range of columns which need to be read as barplot_layouts")
-    group.add_argument('--taxon_layout',
+    group.add_argument('--taxonclade_layout',
         default=False,
         action='store_true',
-        help="activate taxon_layout")
+        help="activate taxonclade_layout")
+    group.add_argument('--taxonrectangular_layout',
+        default=False,
+        action='store_true',
+        help="activate taxonrectangular_layout")
     group.add_argument('--emapper_layout',
         default=False,
         action='store_true',
