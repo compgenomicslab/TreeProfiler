@@ -120,7 +120,6 @@ class TaxaRectangular(TreeLayout):
         if node_sciname and (node_rank == self.rank):
             lca = node_sciname
             color = self.color_dict.get(lca, 'lightgray')
-            print()
             level = get_level(node, level=self.column)
             # lca_face = RectFace(self.rect_width, float('inf'), 
             #         color = color, 

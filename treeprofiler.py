@@ -1303,46 +1303,6 @@ def tree_plot(args):
             layouts.append(s_layout)
     
     #### Layouts settings ####
-    # Taxa layouts
-    if args.taxonclade_layout or args.taxonrectangular_layout:
-        taxon_color_dict = {}
-        taxa_layouts = []
-        
-        # generate a rank2values dict for pre taxonomic annotated tree
-        if not rank2values:
-            rank2values = defaultdict(list)
-            for n in tree.traverse():
-                if n.props.get('rank') and n.props.get('rank') != 'Unknown':
-                    rank2values[n.props.get('rank')].append(n.props.get('sci_name',''))
-        else:
-            pass
-        
-        # assign color for each value of each rank
-        for rank, value in sorted(rank2values.items(),):
-            color_dict = {} 
-            nvals = len(value)
-            for i in range(0, nvals):
-                if nvals <= 14:
-                    color_dict[value[i]] = paried_color[i]
-                else:
-                    color_dict[value[i]] = random_color(h=None)
-            
-            if args.taxonclade_layout:
-                taxa_layout = taxon_layouts.TaxaClade(name='TaxaClade_'+rank, level=level, rank = rank, color_dict=color_dict)
-                taxa_layouts.append(taxa_layout)
-
-            if args.taxonrectangular_layout:
-                taxa_layout = taxon_layouts.TaxaRectangular(name = "TaxaRect_"+rank, rank=rank ,color_dict=color_dict, column=level)
-                taxa_layouts.append(taxa_layout)
-            
-            taxon_color_dict[rank] = color_dict
-            
-        #taxa_layouts.append(taxon_layouts.TaxaRectangular(name = "Last Common Ancester", color_dict=taxon_color_dict, column=level))
-        taxa_layouts.append(taxon_layouts.LayoutSciName(name = 'Taxa Scientific name', color_dict=taxon_color_dict))
-        layouts = layouts + taxa_layouts
-        level += 1
-        total_color_dict.append(taxon_color_dict)
-
     # numerical representative mearsure 
     # if args.num_stat != 'all':
     #     internal_num_rep = args.num_stat
@@ -1514,6 +1474,45 @@ def tree_plot(args):
             level += 1
             layouts.append(profile_layout)
 
+    # Taxa layouts
+    if args.taxonclade_layout or args.taxonrectangular_layout:
+        taxon_color_dict = {}
+        taxa_layouts = []
+        
+        # generate a rank2values dict for pre taxonomic annotated tree
+        if not rank2values:
+            rank2values = defaultdict(list)
+            for n in tree.traverse():
+                if n.props.get('rank') and n.props.get('rank') != 'Unknown':
+                    rank2values[n.props.get('rank')].append(n.props.get('sci_name',''))
+        else:
+            pass
+        
+        # assign color for each value of each rank
+        for rank, value in sorted(rank2values.items(),):
+            color_dict = {} 
+            nvals = len(value)
+            for i in range(0, nvals):
+                if nvals <= 14:
+                    color_dict[value[i]] = paried_color[i]
+                else:
+                    color_dict[value[i]] = random_color(h=None)
+            
+            if args.taxonclade_layout:
+                taxa_layout = taxon_layouts.TaxaClade(name='TaxaClade_'+rank, level=level, rank = rank, color_dict=color_dict)
+                taxa_layouts.append(taxa_layout)
+
+            if args.taxonrectangular_layout:
+                taxa_layout = taxon_layouts.TaxaRectangular(name = "TaxaRect_"+rank, rank=rank ,color_dict=color_dict, column=level)
+                taxa_layouts.append(taxa_layout)
+                #level += 1
+            taxon_color_dict[rank] = color_dict
+            
+        #taxa_layouts.append(taxon_layouts.TaxaRectangular(name = "Last Common Ancester", color_dict=taxon_color_dict, column=level))
+        taxa_layouts.append(taxon_layouts.LayoutSciName(name = 'Taxa Scientific name', color_dict=taxon_color_dict))
+        layouts = layouts + taxa_layouts
+        level += 1
+        total_color_dict.append(taxon_color_dict)
     #### prune at the last step in case of losing leaves information
     # prune tree by rank
     if args.rank_limit:
