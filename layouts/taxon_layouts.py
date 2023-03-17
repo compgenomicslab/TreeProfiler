@@ -80,8 +80,6 @@ class LayoutSciName(TreeLayout):
                 prot_id = prot_id[0:37] + " ..."
            
             #node.add_face(TextFace(prot_id, color = 'Gray', padding_x=2), column = 2, position = "aligned")
-
-
         else:
             # Collapsed face
             names = summary(node.children)
@@ -126,7 +124,14 @@ class TaxaRectangular(TreeLayout):
             #         text = lca,
             #         fgcolor = "white",
             #         padding_x = 1, padding_y = 1)
-            lca_face = RectFace(self.rect_width, None, text = lca, color=color, padding_x=1, padding_y=1)
+            tooltip = ""
+            if node.name:
+                tooltip += f'<b>{node.name}</b><br>'
+            if lca:
+                tooltip += f'rank: {node_rank}<br>'
+                tooltip += f'sci_name: {lca}<br>'
+
+            lca_face = RectFace(self.rect_width, None, text = lca, color=color, padding_x=1, padding_y=1, tooltip=tooltip)
             lca_face.rotate_text = True
             node.add_face(lca_face, position='aligned', column=level)
             node.add_face(lca_face, position='aligned', column=level,
