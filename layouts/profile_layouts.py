@@ -110,11 +110,13 @@ class LayoutGOslim(TreeLayout):
         self.legend = legend
         self.width = 70
         self.height = None
+        self.min_fsize = 5
+        self.max_fsize = 10
 
     def set_tree_style(self, tree, tree_style):
         super().set_tree_style(tree, tree_style)
         header = f'{self.go_propfile[1]}({self.go_propfile[0]})'
-        text = TextFace(header, min_fsize=5, max_fsize=10, padding_x=self.padding_x, width=70, rotation=315)
+        text = TextFace(header, min_fsize=self.min_fsize, max_fsize=self.max_fsize, padding_x=self.padding_x, width=70, rotation=315)
         tree_style.aligned_panel_header.add_face(text, column=self.column)
     
     def set_node_style(self, node):

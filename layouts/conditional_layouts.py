@@ -108,7 +108,8 @@ class LayoutBinary(TreeLayout):
         self.legend = legend
         self.width = 70
         self.height = None
-
+        self.min_fsize = 5
+        self.max_fsize = 10
     # def set_tree_style(self, tree, tree_style):
     #     super().set_tree_style(tree, tree_style)
     #     text = TextFace(self.name, max_fsize=11, padding_x=1)

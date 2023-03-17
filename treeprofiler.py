@@ -1691,6 +1691,8 @@ def get_layouts(argv_inputs, layout_name, level, internal_rep, prop2type=None):
     for idx, prop in enumerate(props):
         
         color_dict = {} # key = value, value = color id
+
+        # binary layout should be set width
         if layout_name in ['binary', 'revbinary']:
             
             if columns:
@@ -1735,7 +1737,7 @@ def get_layouts(argv_inputs, layout_name, level, internal_rep, prop2type=None):
 
             prop_color_dict[prop] = barplot_color
 
-        # categorical layouts
+        # categorical layouts should be set width
         elif layout_name in ['label','rectangular', 'colorbranch']:
             if prop2type and prop2type[prop] == list:
                 leaf_values = list(map(list,set(map(tuple,children_prop_array(tree, prop)))))    
@@ -1752,7 +1754,9 @@ def get_layouts(argv_inputs, layout_name, level, internal_rep, prop2type=None):
                     color_dict[prop_values[i]] = random_color(h=None)
             
             if layout_name == 'label':
-                layout = text_layouts.LayoutText('Label_'+prop, level, color_dict, text_prop = prop)
+                #longest_val =  len(max(prop_values, key = len))
+                layout = text_layouts.LayoutText('Label_'+prop, level, color_dict, 
+                                                text_prop = prop)
                 #layout = TreeLayout(name=prop+'_'+layout_name, ns=text_layouts.text_layout(prop, level, color_dict, internal_rep))
             
             elif layout_name == 'rectangular':
