@@ -21,27 +21,27 @@ profilecolors = {
     'G':"#EBEBEB" ,
     'H':"#8282D2" ,
     'I':"#0F820F" ,
-    'L':"#0F820F" ,
+    'S':"#FA9600" ,
     'K':"#145AFF" ,
     'M':"#E6E600" ,
     'F':"#3232AA" ,
     'P':"#DC9682" ,
-    'S':"#FA9600" ,
+    'L':"#0F820F" ,
     'T':"#FA9600" ,
     'W':"#B45AB4" ,
-    'Y':"#3232AA" ,
+    'Z':"#FF69B4" ,
     'V':"#0F820F" ,
     'B':"#FF69B4" ,
-    'Z':"#FF69B4" ,
+    'Y':"#3232AA" ,
     'X':"#BEA06E",
-    '.':"#FFFFFF",
-    '-':"#FFFFFF",
+    # '.':"#FFFFFF",
+    # '-':"#FFFFFF",
     }
 
 class LayoutProfile(TreeLayout):
     def __init__(self, name="Profile",
             alignment=None, format='compactseq', profiles=None, width=700, height=15,
-            column=0, range=None, summarize_inner_nodes=False):
+            column=0, range=None, summarize_inner_nodes=False, legend=True):
         super().__init__(name)
         self.alignment = SeqGroup(alignment) if alignment else None
         self.width = width
@@ -54,6 +54,7 @@ class LayoutProfile(TreeLayout):
         self.length = len(next(self.alignment.iter_entries())[1]) if self.alignment else None
         self.scale_range = range or (0, self.length)
         self.summarize_inner_nodes = summarize_inner_nodes
+        self.legend = legend
 
     def set_tree_style(self, tree, tree_style):
         if self.length:
@@ -61,7 +62,18 @@ class LayoutProfile(TreeLayout):
                                 headers=self.profiles, padding_y=0)
             #face = ScaleFace(width=self.width, scale_range=self.scale_range, padding_y=0)
             tree_style.aligned_panel_header.add_face(face, column=self.column)
-    
+        if self.legend:
+            color_dict = {}
+            for i in range(len(self.profiles)):
+                profile_val = self.profiles[i]
+                profile_color = profilecolors[list(profilecolors.keys())[i % len(profilecolors)]]
+                color_dict[profile_val] = profile_color
+            
+            tree_style.add_legend(title=self.name,
+                                variable='discrete',
+                                colormap=color_dict,
+                                )
+
     def _get_seq(self, node):
         if self.alignment:
             return self.alignment.get_seq(node.name)
