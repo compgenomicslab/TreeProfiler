@@ -550,14 +550,14 @@ def flatten(nasted_list):
             list_of_lists.extend(nasted_list)
     return list_of_lists
 
-def multiple_text_profile(tree, profiling_prop):
-    all_gos = children_prop_array(tree, profiling_prop)
-    all_gos = flatten(all_gos)
+# def multiple_text_profile(tree, profiling_prop):
+#     all_gos = children_prop_array(tree, profiling_prop)
+#     all_gos = flatten(all_gos)
     
-    for go in all_gos:
-        for n in tree.iter_leaves():
-            print(n.props.get(profiling_prop))
-    return
+#     for go in all_gos:
+#         for n in tree.iter_leaves():
+#             print(n.props.get(profiling_prop))
+#     return
 
 def infer_dtype(column):
     if get_comma_separated_values(column):
@@ -1210,24 +1210,66 @@ def multiple2profile(tree, profiling_prop):
         'Z', 'V', 'B',
         'Y', 'X'
     ]
+    presence = 'D' # #E60A0A red
+    absence = 'G' # #EBEBEB lightgrey
     matrix = ''
     for leaf in tree.iter_leaves():
         matrix += '\n'+'>'+leaf.name+'\n'
         if leaf.props.get(profiling_prop):
-            # for val in all_values:
+            for val in all_values:
+                if val != 'NaN' and val in leaf.props.get(profiling_prop):
+                    matrix += presence
+                else:
+                    matrix += absence
+            # for index in range(len(all_values)):
+            #     val = all_values[index]
             #     if val != 'NaN' and val in leaf.props.get(profiling_prop):
-            #         matrix += 'Y'
+            #         matrix += aa[index % len(aa)]
             #     else:
             #         matrix += '-'
-            for index in range(len(all_values)):
-                val = all_values[index]
-                if val != 'NaN' and val in leaf.props.get(profiling_prop):
-                    matrix += aa[index % len(aa)]
-                else:
-                    matrix += '-'
         else:
-            matrix += '-' * len(all_values) +'\n'
+            matrix += absence * len(all_values) +'\n'
     return matrix, all_values
+
+def props2matrix(tree, profiling_props, dtype=float):
+        gradients = [
+        'a', 'b', 'c',
+        'd', 'e', 'f',
+        'g', 'h', 'i',
+        'j', 'k', 'l',
+        'm', 'n', 'o',
+        'p', 'q', 'r', 
+        's', 't'
+        ] #blue to red
+
+        leaf2matrix = {}
+        for node in tree.traverse():
+            if node.is_leaf():
+                leaf2matrix[node.name] = []
+                for profiling_prop in profiling_props:
+                    if node.props.get(profiling_prop):
+                        if dtype == float:
+                            val = float(node.props.get(profiling_prop))
+                        leaf2matrix[node.name].append(val)
+                    else:
+                        leaf2matrix[node.name].append(None)
+        
+        # gain all values from metadata
+        all_values = list(set(flatten([sublist for sublist in leaf2matrix.values()])))
+        maxval = max(all_values)
+        minval = min(all_values)
+        num = len(gradients)
+        values = np.linspace(minval, maxval, num)
+
+        matrix = ''
+        for leaf, prop in leaf2matrix.items():
+            matrix += '\n'+'>'+leaf+'\n'
+            for index in range(len(prop)):
+                search_value = prop[index]
+                # Find the index of the closest element to the search value
+                index = np.abs(values - search_value).argmin()
+                matrix += gradients[index]
+        return matrix
 
 ### visualize tree
 def tree_plot(args):
@@ -1454,8 +1496,6 @@ def tree_plot(args):
                 level += 1
                 layouts.append(multiple_text_prop_layout)
             
-
-        
     if args.alignment_layout:
         fasta_file = args.alignment_layout
         aln_layout = seq_layouts.LayoutAlignment(name='Alignment_layout', alignment=fasta_file, column=level)
@@ -1465,14 +1505,37 @@ def tree_plot(args):
         domain_layout = seq_layouts.LayoutDomain(name="Domain_layout", prop='dom_arq')
         layouts.append(domain_layout)
     
-    if args.profiling_layout:
-        profiling_props = args.profiling_layout
+    if args.multi_profiling_layout:
+        profiling_props = args.multi_profiling_layout
         for profiling_prop in profiling_props:
             matrix, all_values = multiple2profile(tree, profiling_prop)
             profile_layout = profile_layouts.LayoutProfile(name=profiling_prop, 
             alignment=matrix, profiles=all_values, column=level)
             level += 1
             layouts.append(profile_layout)
+
+    
+
+    def get_alnface(alignment, level):
+        def layout_fn(node):
+            if node.is_leaf():
+                seq = alignment.get_seq(node.name)
+                seq_face = profile_layouts.ProfileAlignmentFace(seq, seqtype='aa',
+                gap_format='line', seq_format='gradients',
+                width=700, height=20, # max height
+                fgcolor='black', bgcolor='#bcc3d0', gapcolor='gray',
+                gap_linewidth=0.2,
+                max_fsize=12, ftype='sans-serif',
+                padding_x=0, padding_y=0)
+                node.add_face(seq_face, position="aligned", column=level)
+        return layout_fn
+
+    if args.numerical_profiling_layout:
+        profiling_props = args.numerical_profiling_layout
+        alignment = SeqGroup(props2matrix(tree, profiling_props))
+        profile_layout = TreeLayout(name='numerical_profiling_layout', ns=get_alnface(alignment, level), aligned_faces = True)
+        level += 1
+        layouts.append(profile_layout)
 
     # Taxa layouts
     if args.taxonclade_layout or args.taxonrectangular_layout:
@@ -2113,10 +2176,14 @@ def poplulate_plot_args(plot_args_p):
         type=str,
         required=False,
         help="provide alignment file as fasta format")
-    group.add_argument('--profiling_layout',
+    group.add_argument('--multi_profiling_layout',
         type=lambda s: [item for item in s.split(',')],
         required=False,
-        help="<col1,col2> names, column index which need to be plot as profiling_layout for multiple values column")
+        help="<col1,col2> names, column index which need to be plot as multi_profiling_layout for multiple values column")
+    group.add_argument('--numerical_profiling_layout',
+        type=lambda s: [item for item in s.split(',')],
+        required=False,
+        help="<col1,col2> names, column index which need to be plot as numerical_profiling_layout for numerical values column")
 
     group = plot_args_p.add_argument_group(title='Output arguments',
         description="Output parameters")

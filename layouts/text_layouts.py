@@ -5,7 +5,7 @@ from layouts.general_layouts import get_piechartface
 #paried_color = ["red", "darkblue", "darkgreen", "darkyellow", "violet", "mediumturquoise", "sienna", "lightCoral", "lightSkyBlue", "indigo", "tan", "coral", "olivedrab", "teal"]
 
 class LayoutText(TreeLayout):
-    def __init__(self, name, column, color_dict, text_prop, width=70, min_fsize=5, max_fsize=10, legend=True):
+    def __init__(self, name, column, color_dict, text_prop, width=70, min_fsize=5, max_fsize=15, legend=True):
         super().__init__(name)
         self.aligned_faces = True
         self.text_prop = text_prop
@@ -112,8 +112,9 @@ class LayoutRect(TreeLayout):
         self.width = width
         self.height = height
         self.min_fsize = 5
-        self.max_fsize = 10
-
+        self.max_fsize = 15
+        self.padding_x = 1
+        self.padding_y = 0
     # def set_tree_style(self, tree, tree_style):
     #     super().set_tree_style(tree, tree_style)
     #     text = TextFace(self.name, max_fsize=11, padding_x=1)
@@ -148,7 +149,7 @@ class LayoutRect(TreeLayout):
                 if self.color_dict:
                     color = self.color_dict.get(str(prop_text),"")
                     prop_face = RectFace(width=self.width, height=self.height, color=color, \
-                        padding_x=2, padding_y=1, tooltip=tooltip)
+                        padding_x=self.padding_x , padding_y=self.padding_y, tooltip=tooltip)
                     node.add_face(prop_face, column=self.column, position="aligned")
             
         elif node.is_leaf() and node.props.get(self.internal_prop):

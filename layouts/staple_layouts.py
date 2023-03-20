@@ -182,7 +182,7 @@ class LayoutBarplot(LayoutPlot):
             scale = ScaleFace(width=self.width, scale_range=self.size_range, 
                     formatter='%.2f',
                     padding_x=self.padding_x, padding_y=2)
-            text = TextFace(self.prop, max_fsize=11, padding_x=self.padding_x, rotation=315)
+            text = TextFace(self.prop, max_fsize=15, padding_x=self.padding_x, rotation=315)
             tree_style.aligned_panel_header.add_face(scale, column=self.column)
             tree_style.aligned_panel_header.add_face(text, column=self.column)
         
@@ -250,7 +250,7 @@ class LayoutBarplot(LayoutPlot):
 
 class LayoutHeatmap(TreeLayout):
     def __init__(self, name=None, column=0, width=70, height=None, internal_rep=None, \
-        prop=None, maxval=100, minval=0, min_color="#ffffff", max_color="#ff0000",\
+        prop=None, maxval=100, minval=0, min_color="#ffffff", max_color="#971919",\
         legend=True):
         super().__init__(name)
         self.aligned_faces = True
@@ -264,10 +264,11 @@ class LayoutHeatmap(TreeLayout):
         self.internal_prop = prop+'_'+internal_rep
         self.width = width
         self.height = height
-        self.padding_x = 2
-        self.padding_y = 2
+        self.padding_x = 1
+        self.padding_y = 0
         self.min_fsize = 5
-        self.max_fsize = 10
+        self.max_fsize = 15
+        
     def set_tree_style(self, tree, tree_style):
         super().set_tree_style(tree, tree_style)
         text = TextFace(self.num_prop, min_fsize=self.min_fsize, max_fsize=self.max_fsize, padding_x=self.padding_x, width=self.width, rotation=315)
@@ -343,61 +344,3 @@ class LayoutHeatmap(TreeLayout):
             # identF = RectFace(width=50,height=50,text="NaN", color=c1, 
             #     padding_x=1, padding_y=1)
             # node.add_face(identF, column = self.column,  position = 'aligned', collapsed_only=True)
-
-        ## old way
-        # if node.is_leaf() and node.props.get(self.num_prop):
-            # redgradient = heatmap_gradient(0.95, 0.6, 10)
-            # relative_abundance = float(node.props.get(self.num_prop))
-            # tooltip = ""
-            # if node.name:
-            #     tooltip += f'<b>{node.name}</b><br>'
-            # if self.num_prop:
-            #     tooltip += f'<br>{self.num_prop}: {node.props.get(self.num_prop)}<br>'
-            
-            # try:
-            #     color_idx = int(relative_abundance*10)
-            #     color = redgradient[color_idx]
-                
-            #     identF = RectFace(width=50,height=50,text="%.2f" % (relative_abundance), color=color, 
-            #     padding_x=1, padding_y=1, tooltip=tooltip)
-            # except ValueError: # for miss data
-            #     color = redgradient[0]
-                
-            #     identF = RectFace(width=50,height=50,text="NaN", color=color, 
-            #     padding_x=1, padding_y=1, tooltip=tooltip)
-            # node.add_face(identF, column = self.column,  position = 'aligned')
-            
-        # elif node.is_leaf() and node.props.get(self.internal_prop):
-        #     # heatmap
-        #     redgradient = heatmap_gradient(0.95, 0.6, 10)
-        #     relative_abundance = float(node.props.get(self.internal_prop))
-        #     color_idx = int(relative_abundance*10)
-        #     color = redgradient[color_idx]
-        #     tooltip = ""
-        #     if node.name:
-        #         tooltip += f'<b>{node.name}</b><br>'
-        #     if self.internal_prop:
-        #         tooltip += f'<br>{self.internal_prop}: {node.props.get(self.internal_prop)}<br>'
-            
-        #     identF = RectFace(width=50,height=50,text="%.1f" % (relative_abundance), color=color, 
-        #     padding_x=1, padding_y=1)
-        #     node.add_face(identF, column = self.column,  position = 'aligned')
-
-        # elif node.props.get(self.internal_prop):
-        #     # heatmap
-        #     redgradient = heatmap_gradient(0.95, 0.6, 10)
-        #     relative_abundance = float(node.props.get(self.internal_prop))
-        #     color_idx = int(relative_abundance*10)
-            
-        #     color = redgradient[color_idx]
-        #     tooltip = ""
-        #     if node.name:
-        #         tooltip += f'<b>{node.name}</b><br>'
-        #     if self.internal_prop:
-        #         tooltip += f'<br>{self.internal_prop}: {node.props.get(self.internal_prop)}<br>'
-            
-        #     identF = RectFace(width=50,height=50,text="%.1f" % (relative_abundance), color=color, 
-        #     padding_x=1, padding_y=1, tooltip=tooltip)
-        #     #face_name = TextFace(node.props.get('name'), color="red")
-        #     #face_name = TextFace("%.1f" % (relative_abundance), color=color)
-        #     node.add_face(identF, column = self.column,  position = 'aligned', collapsed_only=True)

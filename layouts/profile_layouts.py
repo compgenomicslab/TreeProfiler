@@ -35,12 +35,35 @@ profilecolors = {
     'Y':"#3232AA" ,
     'X':"#BEA06E",
     # '.':"#FFFFFF",
-    # '-':"#FFFFFF",
+    '-':"#cccce8",
     }
+
+gradientscolor = {
+    'a': '#00008b',
+    'b': '#1a1a97',
+    'c': '#3333a2',
+    'd': '#4c4cae',
+    'e': '#6666b9',
+    'f': '#8080c5',
+    'g': '#9999d1',
+    'h': '#b2b2dc',
+    'i': '#cccce8',
+    'j': '#e6e6f3',
+    'k': '#ffffff',
+    'l': '#f3e6e6',
+    'm': '#e8cccc',
+    'n': '#dcb2b2',
+    'o': '#d19999',
+    'p': '#c58080',
+    'q': '#b96666',
+    'r': '#ae4d4d',
+    's': '#a23333',
+    't': '#971919',
+}
 
 class LayoutProfile(TreeLayout):
     def __init__(self, name="Profile",
-            alignment=None, format='compactseq', profiles=None, width=700, height=15,
+            alignment=None, format='compactseq', profiles=None, width=1000, height=20,
             column=0, range=None, summarize_inner_nodes=False, legend=True):
         super().__init__(name)
         self.alignment = SeqGroup(alignment) if alignment else None
@@ -66,9 +89,13 @@ class LayoutProfile(TreeLayout):
             color_dict = {}
             for i in range(len(self.profiles)):
                 profile_val = self.profiles[i]
-                profile_color = profilecolors[list(profilecolors.keys())[i % len(profilecolors)]]
-                color_dict[profile_val] = profile_color
-            
+                #profile_color = profilecolors[list(profilecolors.keys())[i % len(profilecolors)]]
+                color_dict[profile_val] = ''
+            # color_dict = {
+            #     'presence': '#E60A0A',
+            #     'absence': '#EBEBEB',
+            #     'no data': 'white',
+            # }
             tree_style.add_legend(title=self.name,
                                 variable='discrete',
                                 colormap=color_dict,
@@ -97,8 +124,9 @@ class LayoutProfile(TreeLayout):
             poswidth = self.width / (len(self.profiles)-1 )
         else:
             poswidth = self.width
+
         if seq:
-            seqFace = ProfileAlignmentFace(seq, gap_format='line', seqtype='aa', 
+            seqFace = ProfileAlignmentFace(seq, gap_format=None, seqtype='aa', 
             seq_format=self.format, width=self.width, height=self.height, 
             poswidth=poswidth,
             fgcolor='black', bgcolor='#bcc3d0', gapcolor='gray',
@@ -167,7 +195,7 @@ class LayoutGOslim(TreeLayout):
                 node.add_face(profiling_face, column = self.column, position = "aligned", collapsed_only=True)
 
     
-    def get_profile_gradientface(self, node, target_go, internal_prop,  color, width, height, padding_x, padding_y, tooltip=None):
+    def get_profile_gradientface(self, node, target_go, internal_prop, color, width, height, padding_x, padding_y, min_color="#ffffff", tooltip=None):
         counter_props = node.props.get(internal_prop).split('||')
     
         total = 0
@@ -183,7 +211,7 @@ class LayoutGOslim(TreeLayout):
         ratio = positive / total
         if ratio < 0.05 and ratio != 0: # show minimum color for too low
             ratio = 0.05
-        c1 = 'white'
+        c1 = min_color
         c2 = color
         gradient_color = color_gradient(c1, c2, mix=ratio)
         text = f"{positive} / {total}"
@@ -208,7 +236,7 @@ class TextScaleFace(Face):
     def __init__(self, name='', width=None, color='black',
             scale_range=(0, 0), headers=None, tick_width=100, line_width=1,
             formatter='%.0f', 
-            min_fsize=10, max_fsize=10, ftype='sans-serif',
+            min_fsize=10, max_fsize=15, ftype='sans-serif',
             padding_x=0, padding_y=0):
 
         Face.__init__(self, name=name,
@@ -286,6 +314,7 @@ class TextScaleFace(Face):
 
 
         #nticks = round((self.width * zx) / self.tick_width)
+        
         if len(self.headers) > 1:
             nticks = len(self.headers)
         else:
@@ -325,11 +354,11 @@ class TextScaleFace(Face):
                         dx, dy)
                 yield draw_text(text_box, text, style=text_style,rotation=270)
 
-                # p1 = (x, y + dy - self.vt_line_height / zy)
-                # p2 = (x, y + dy)
+                p1 = (x, y + dy - self.vt_line_height / zy)
+                p2 = (x, y + dy)
 
-                # yield draw_line(p1, p2, style={'stroke-width': self.line_width,
-                #                                'stroke': self.color})
+                yield draw_line(p1, p2, style={'stroke-width': self.line_width,
+                                               'stroke': self.color})
             except IndexError:
                 break
                 
@@ -358,7 +387,7 @@ class ProfileAlignmentFace(Face):
         self.poswidth = poswidth
         self.w_scale = 1
         self.width = width    # sum of all regions' width if not provided
-        self.height = height  # dynamically computed if not provided
+        self.height = None  # dynamically computed if not provided
 
         total_width = self.seqlength * self.poswidth
         if self.width:
@@ -480,7 +509,12 @@ class ProfileAlignmentFace(Face):
                     box = Box(bx, by, (bend + 1 - bstart) * posw, bh)
                     
                     yield [ "pixi-block", box ]
-
+        elif self.seq_format == "gradients":
+            seq = self.get_seq(sm_start, sm_end)
+            sm_x = sm_x if drawer.TYPE == 'rect' else x0
+            y, h = get_height(sm_x, y)
+            sm_box = Box(sm_x+sm_x0, y, posw * len(seq), h)
+            yield [ f'pixi-gradients', sm_box, seq ]
         else:
             seq = self.get_seq(sm_start, sm_end)
             sm_x = sm_x if drawer.TYPE == 'rect' else x0

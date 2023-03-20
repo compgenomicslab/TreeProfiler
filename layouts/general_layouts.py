@@ -35,7 +35,7 @@ def color_gradient(c1, c2, mix=0):
     c2 = np.array(mpl.colors.to_rgb(c2))
     return mpl.colors.to_hex((1-mix)*c1 + mix*c2)
 
-def get_heatmapface(node, prop, color, tooltip=None, width=70, height=None, padding_x=2, padding_y=2):
+def get_heatmapface(node, prop, min_color="#ffffff", max_color="#971919", tooltip=None, width=70, height=None, padding_x=2, padding_y=2):
     counter_props = node.props.get(prop).split('||')
     
     total = 0
@@ -50,8 +50,8 @@ def get_heatmapface(node, prop, color, tooltip=None, width=70, height=None, padd
     ratio = positive / total
     if ratio < 0.05 and ratio != 0: # show minimum color for too low
         ratio = 0.05
-    c1 = 'white'
-    c2 = color
+    c1 = min_color
+    c2 = max_color
     gradient_color = color_gradient(c1, c2, mix=ratio)
     text = f"{positive} / {total}"
     # gradientFace = RectFace(width=100,height=50,text="%.1f" % (ratio*100), color=gradient_color, 
