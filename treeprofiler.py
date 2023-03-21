@@ -1269,7 +1269,7 @@ def props2matrix(tree, profiling_props, dtype=float):
                 # Find the index of the closest element to the search value
                 index = np.abs(values - search_value).argmin()
                 matrix += gradients[index]
-        return matrix
+        return matrix, maxval, minval
 
 ### visualize tree
 def tree_plot(args):
@@ -1532,10 +1532,10 @@ def tree_plot(args):
 
     if args.numerical_profiling_layout:
         profiling_props = args.numerical_profiling_layout
-        matrix = props2matrix(tree, profiling_props)
+        matrix, maxval, minval = props2matrix(tree, profiling_props)
         #profile_layout = TreeLayout(name='numerical_profiling_layout', ns=get_alnface(alignment, level), aligned_faces = True)
         profile_layout = profile_layouts.LayoutProfile(name='numerical_profiling_layout', 
-            alignment=matrix, format='gradients', profiles=profiling_props, column=level)
+            alignment=matrix, seq_format='gradients', profiles=profiling_props, value_range=[minval, maxval],column=level)
         level += 1
         layouts.append(profile_layout)
 

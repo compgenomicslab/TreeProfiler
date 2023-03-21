@@ -6,6 +6,7 @@ from ete4.smartview.renderer.draw_helpers import *
 from ete4 import SeqGroup
 from layouts.general_layouts import get_piechartface, get_heatmapface, color_gradient 
 from collections import OrderedDict, namedtuple
+import numpy as np
 import re
 
 Box = namedtuple('Box', 'x y dx dy')  # corner and size of a 2D shape
@@ -63,19 +64,20 @@ gradientscolor = {
 
 class LayoutProfile(TreeLayout):
     def __init__(self, name="Profile",
-            alignment=None, format='compactseq', profiles=None, width=1000, height=20,
-            column=0, range=None, summarize_inner_nodes=False, legend=True):
+            alignment=None, seq_format='compactseq', profiles=None, width=1000, height=20,
+            column=0, range=None, summarize_inner_nodes=False, value_range=[],legend=True):
         super().__init__(name)
         self.alignment = SeqGroup(alignment) if alignment else None
         self.width = width
         self.height = height
         self.column = column
         self.aligned_faces = True
-        self.format = format
+        self.seq_format = seq_format
         self.profiles = profiles
 
         self.length = len(next(self.alignment.iter_entries())[1]) if self.alignment else None
         self.scale_range = range or (0, self.length)
+        self.value_range = value_range
         self.summarize_inner_nodes = summarize_inner_nodes
         self.legend = legend
 
@@ -85,21 +87,31 @@ class LayoutProfile(TreeLayout):
                                 headers=self.profiles, padding_y=0, rotation=270)
             #face = ScaleFace(width=self.width, scale_range=self.scale_range, padding_y=0)
             tree_style.aligned_panel_header.add_face(face, column=self.column)
+
         if self.legend:
-            color_dict = {}
-            for i in range(len(self.profiles)):
-                profile_val = self.profiles[i]
-                #profile_color = profilecolors[list(profilecolors.keys())[i % len(profilecolors)]]
-                color_dict[profile_val] = ''
-            # color_dict = {
-            #     'presence': '#E60A0A',
-            #     'absence': '#EBEBEB',
-            #     'no data': 'white',
-            # }
-            tree_style.add_legend(title=self.name,
-                                variable='discrete',
-                                colormap=color_dict,
-                                )
+            if self.seq_format == 'gradients':
+                if self.value_range:
+                    color_gradient = [gradientscolor['a'], gradientscolor['t']]
+                    tree_style.add_legend(title=self.name,
+                                    variable="continuous",
+                                    value_range=self.value_range,
+                                    color_range=color_gradient,
+                                    )
+            else:
+                color_dict = {}
+                for i in range(len(self.profiles)):
+                    profile_val = self.profiles[i]
+                    #profile_color = profilecolors[list(profilecolors.keys())[i % len(profilecolors)]]
+                    color_dict[profile_val] = ''
+                # color_dict = {
+                #     'presence': '#E60A0A',
+                #     'absence': '#EBEBEB',
+                #     'no data': 'white',
+                # }
+                tree_style.add_legend(title=self.name,
+                                    variable='discrete',
+                                    colormap=color_dict,
+                                    )
 
     def _get_seq(self, node):
         if self.alignment:
@@ -127,7 +139,7 @@ class LayoutProfile(TreeLayout):
 
         if seq:
             seqFace = ProfileAlignmentFace(seq, gap_format=None, seqtype='aa', 
-            seq_format=self.format, width=self.width, height=self.height, 
+            seq_format=self.seq_format, width=self.width, height=self.height, 
             poswidth=poswidth,
             fgcolor='black', bgcolor='#bcc3d0', gapcolor='gray',
             gap_linewidth=0.2,
