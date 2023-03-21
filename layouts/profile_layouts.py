@@ -82,7 +82,7 @@ class LayoutProfile(TreeLayout):
     def set_tree_style(self, tree, tree_style):
         if self.length:
             face = TextScaleFace(width=self.width, scale_range=self.scale_range, 
-                                headers=self.profiles, padding_y=0)
+                                headers=self.profiles, padding_y=0, rotation=270)
             #face = ScaleFace(width=self.width, scale_range=self.scale_range, padding_y=0)
             tree_style.aligned_panel_header.add_face(face, column=self.column)
         if self.legend:
@@ -237,7 +237,7 @@ class TextScaleFace(Face):
             scale_range=(0, 0), headers=None, tick_width=100, line_width=1,
             formatter='%.0f', 
             min_fsize=10, max_fsize=15, ftype='sans-serif',
-            padding_x=0, padding_y=0):
+            padding_x=0, padding_y=0, rotation=0):
 
         Face.__init__(self, name=name,
                 padding_x=padding_x, padding_y=padding_y)
@@ -253,7 +253,8 @@ class TextScaleFace(Face):
         self._fsize = max_fsize
         self.ftype = ftype
         self.formatter = formatter
-
+        self.rotation=rotation
+        
         self.tick_width = tick_width
         self.line_width = line_width
 
@@ -291,9 +292,7 @@ class TextScaleFace(Face):
         self.viewport = (drawer.viewport.x, drawer.viewport.x + drawer.viewport.dx)
 
         self.height = (self.line_width + 10 + self.max_fsize) / zy
-
         height = min(dy, self.height)
-
         if pos == "aligned_bottom":
             y = y + dy - height
 
@@ -303,7 +302,6 @@ class TextScaleFace(Face):
     def draw(self, drawer):
         x0, y, _, dy = self._box
         zx, zy = self.zoom
-
         p1 = (x0, y + dy - 5 / zy)
         p2 = (x0 + self.width, y + dy - self.vt_line_height / (2 * zy))
         if drawer.TYPE == 'circ':
@@ -347,12 +345,18 @@ class TextScaleFace(Face):
                     'text_anchor': 'left', # left, middle or right
                     'ftype': f'{self.ftype}, sans-serif', # default sans-serif
                     }
-
-                text_box = Box(x,
-                        y,
+                    
+                if self.rotation != 0:
+                    text_box = Box(x,
+                        y + 5,
                         # y + (dy - self._fsize / (zy * r)) / 2,
                         dx, dy)
-                yield draw_text(text_box, text, style=text_style,rotation=270)
+                else:
+                    text_box = Box(x,
+                            y,
+                            # y + (dy - self._fsize / (zy * r)) / 2,
+                            dx, dy)
+                yield draw_text(text_box, text, style=text_style,rotation=self.rotation)
 
                 p1 = (x, y + dy - self.vt_line_height / zy)
                 p2 = (x, y + dy)
