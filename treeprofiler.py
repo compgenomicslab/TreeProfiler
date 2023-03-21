@@ -1378,11 +1378,6 @@ def tree_plot(args):
         colorbranch_layouts, level, color_dict = get_layouts(args.colorbranch_layout, 'colorbranch', level, 'counter', prop2type=prop2type)
         layouts.extend(colorbranch_layouts)
         total_color_dict.append(color_dict)
-
-    if args.rectangular_layout:
-        rectangular_layouts, level, color_dict = get_layouts(args.rectangular_layout, 'rectangular', level, 'counter', prop2type=prop2type)
-        layouts.extend(rectangular_layouts)
-        total_color_dict.append(color_dict)
         
     if args.label_layout:
         label_layouts, level, color_dict = get_layouts(args.label_layout, 'label', level, 'counter', prop2type=prop2type)
@@ -1404,6 +1399,11 @@ def tree_plot(args):
         layouts.extend(barplot_layouts)
         total_color_dict.append(color_dict)
 
+    if args.rectangular_layout:
+        rectangular_layouts, level, color_dict = get_layouts(args.rectangular_layout, 'rectangular', level, 'counter', prop2type=prop2type)
+        layouts.extend(rectangular_layouts)
+        total_color_dict.append(color_dict)
+        
     if args.emapper_layout:
         text_props = [
             'seed_ortholog',
@@ -1513,22 +1513,6 @@ def tree_plot(args):
             alignment=matrix, profiles=all_values, column=level)
             level += 1
             layouts.append(profile_layout)
-
-    
-
-    def get_alnface(alignment, level):
-        def layout_fn(node):
-            if node.is_leaf():
-                seq = alignment.get_seq(node.name)
-                seq_face = profile_layouts.ProfileAlignmentFace(seq, seqtype='aa',
-                gap_format='line', seq_format='gradients',
-                width=700, height=20, # max height
-                fgcolor='black', bgcolor='#bcc3d0', gapcolor='gray',
-                gap_linewidth=0.2,
-                max_fsize=12, ftype='sans-serif',
-                padding_x=0, padding_y=0)
-                node.add_face(seq_face, position="aligned", column=level)
-        return layout_fn
 
     if args.numerical_profiling_layout:
         profiling_props = args.numerical_profiling_layout

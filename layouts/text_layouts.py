@@ -101,7 +101,7 @@ class LayoutColorbranch(TreeLayout):
             node.add_face(piechart_face, column = self.column, position = "aligned", collapsed_only=True)
 
 class LayoutRect(TreeLayout):
-    def __init__(self, name, column, color_dict, text_prop, width=70, height=None, legend=True):
+    def __init__(self, name, column, color_dict, text_prop, width=20, height=None, legend=True):
         super().__init__(name)
         self.aligned_faces = True
         self.text_prop = text_prop
