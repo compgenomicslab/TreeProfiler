@@ -137,14 +137,15 @@ class LayoutProfile(TreeLayout):
                     collapsed_only=(not node.is_leaf())) 
 
 class LayoutGOslim(TreeLayout):
-    def __init__(self, name=None, column=1, color='red', go_propfile=[], goslim_prop=None, padding_x=2, padding_y=2, legend=True):
+    def __init__(self, name=None, column=1, min_color="#ffffff", max_color="red", go_propfile=[], goslim_prop=None, padding_x=2, padding_y=2, legend=True):
         super().__init__(name)
         self.aligned_faces = True
         self.go_propfile = go_propfile
         self.goslim_prop = goslim_prop
         self.internal_prop = goslim_prop +'_counter' #GOslims_counter
         self.column = column
-        self.color = color
+        self.max_color = max_color
+        self.min_color = min_color
         self.padding_x = padding_x
         self.padding_y = padding_y
         self.legend = legend
@@ -172,7 +173,11 @@ class LayoutGOslim(TreeLayout):
             if node.props.get(self.goslim_prop):
                 goslims = node.props.get(self.goslim_prop)
                 if entry in goslims:
-                    profiling_face = RectFace(width=self.width, height=self.height, color=self.color,  
+                    profiling_face = RectFace(width=self.width, height=self.height, color=self.max_color,  
+                    padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
+                    node.add_face(profiling_face, column=self.column, position = "aligned")
+                else:
+                    profiling_face = RectFace(width=self.width, height=self.height, color=self.min_color,  
                     padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
                     node.add_face(profiling_face, column=self.column, position = "aligned")
                 # if entry in goslims[0]:
@@ -184,13 +189,12 @@ class LayoutGOslim(TreeLayout):
                 #     prop_face = RectFace(width=self.width, height=self.height, color=gradient_color,  padding_x=self.padding_x, padding_y=self.padding_y)
                 #     node.add_face(prop_face, column=self.column, position = "aligned")
             elif node.props.get(self.internal_prop):
-
-                profiling_face = self.get_profile_gradientface(node, entry, self.internal_prop, self.color, 
+                profiling_face = self.get_profile_gradientface(node, entry, self.internal_prop, self.max_color, 
                                 width=self.width, height=self.height, padding_x=self.padding_x, padding_y=self.padding_y)
                 node.add_face(profiling_face, column=self.column, position = "aligned")
         else: 
             if node.props.get(self.internal_prop):
-                profiling_face = self.get_profile_gradientface(node, entry, self.internal_prop, self.color, 
+                profiling_face = self.get_profile_gradientface(node, entry, self.internal_prop, self.max_color, 
                                     width=self.width, height=self.height, padding_x=self.padding_x, padding_y=self.padding_y)
                 node.add_face(profiling_face, column = self.column, position = "aligned", collapsed_only=True)
 
@@ -346,16 +350,11 @@ class TextScaleFace(Face):
                     'ftype': f'{self.ftype}, sans-serif', # default sans-serif
                     }
                     
-                if self.rotation != 0:
-                    text_box = Box(x,
-                        y + 5,
+                
+                text_box = Box(x,
+                        y,
                         # y + (dy - self._fsize / (zy * r)) / 2,
                         dx, dy)
-                else:
-                    text_box = Box(x,
-                            y,
-                            # y + (dy - self._fsize / (zy * r)) / 2,
-                            dx, dy)
                 yield draw_text(text_box, text, style=text_style,rotation=self.rotation)
 
                 p1 = (x, y + dy - self.vt_line_height / zy)

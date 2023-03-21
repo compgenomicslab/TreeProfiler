@@ -1481,7 +1481,7 @@ def tree_plot(args):
                 # ouput to layouts 
                 for entry, desc in all_golsims.items():
                     if entry != '-':
-                        golayout = profile_layouts.LayoutGOslim(name=f'GOslims:{desc}({entry})', column=level, color='red', 
+                        golayout = profile_layouts.LayoutGOslim(name=f'GOslims:{desc}({entry})', column=level,
                                             go_propfile=[entry, desc], goslim_prop=target_prop, padding_x=2, 
                                             padding_y=2, legend=True)
                         level+=1
