@@ -16,7 +16,7 @@ def highlight_layout(conditions, level, prop2type={}, color='purple'):
             if op == 'in':
                 value = condition[0]
                 prop = condition[2]
-                datatype = prop2type[prop]
+                datatype = prop2type.get(prop)
                 final_call = call(node, prop, datatype, op, value)
 
             elif ':' in condition[0] :
@@ -27,7 +27,7 @@ def highlight_layout(conditions, level, prop2type={}, color='purple'):
             else:
                 prop = condition[0]
                 value = condition[2]
-                datatype = prop2type[prop]
+                datatype = prop2type.get(prop)
                 final_call = call(node, prop, datatype, op, value)
             
             if final_call == False:
@@ -62,7 +62,7 @@ def collapsed_by_layout(conditions, level, prop2type={}, color='red'):
             if op == 'in':
                 value = condition[0]
                 prop = condition[2]
-                datatype = prop2type[prop]
+                datatype = prop2type.get(prop)
                 final_call = call(node, prop, datatype, op, value)
 
             elif ':' in condition[0] :
@@ -73,7 +73,7 @@ def collapsed_by_layout(conditions, level, prop2type={}, color='red'):
             else:
                 prop = condition[0]
                 value = condition[2]
-                datatype = prop2type[prop]
+                datatype = prop2type.get(prop)
                 final_call = call(node, prop, datatype, op, value)
             
             if final_call == False:

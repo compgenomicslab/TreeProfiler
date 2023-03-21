@@ -1652,7 +1652,7 @@ def conditional_prune(tree, conditions_input, prop2type):
                         if op == 'in':
                             value = condition[0]
                             prop = condition[2]
-                            datatype = prop2type[prop]
+                            datatype = prop2type.get(prop)
                             final_call = call(n, prop, datatype, op, value)
                         elif ":" in condition[0]:
                             internal_prop, leaf_prop = condition[0].split(':')
@@ -1664,7 +1664,7 @@ def conditional_prune(tree, conditions_input, prop2type):
                             value = condition[2]
                             prop = condition[0]
                             value = condition[2]
-                            datatype = prop2type[prop]
+                            datatype = prop2type.get(prop)
                             final_call = call(n, prop, datatype, op, value)
                         if final_call == False:
                             break
@@ -1785,7 +1785,7 @@ def get_layouts(argv_inputs, layout_name, level, internal_rep, prop2type=None):
         #     layout =  staple_layouts.LayoutHeatmap('Heatmap_'+prop, level, internal_rep, prop)
        
         elif layout_name == 'barplot':
-            if prop in prop2type and prop2type[prop] == float:
+            if prop in prop2type and prop2type.get(prop) == float:
                 size_prop = prop+'_'+internal_rep # using internal prop to set the range in case rank_limit cut all the leaves
             else:
                 size_prop = prop
@@ -1804,7 +1804,7 @@ def get_layouts(argv_inputs, layout_name, level, internal_rep, prop2type=None):
 
         # categorical layouts should be set width
         elif layout_name in ['label','rectangular', 'colorbranch']:
-            if prop2type and prop2type[prop] == list:
+            if prop2type and prop2type.get(prop) == list:
                 leaf_values = list(map(list,set(map(tuple,children_prop_array(tree, prop)))))    
                 prop_values = [val for sublist in leaf_values for val in sublist]
             else:
