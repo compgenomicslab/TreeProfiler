@@ -195,16 +195,9 @@ class LayoutBarplot(LayoutPlot):
                                     )
         
     def set_node_style(self, node):
-        internal_prop = self.prop + '_' + self.internal_rep
-        # width = self.get_size(node)
-        # color = self.get_color(node)
-        
+        internal_prop = self.prop + '_' + self.internal_rep  
         if node.is_leaf() and node.props.get(self.prop):
             width = self.get_size(node, self.prop)
-            
-            
-            #print(self.scale_width, self.scale_range)
-            #color = self.get_color(node)
             color = self.color
             tooltip = ""
             if node.name:
