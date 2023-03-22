@@ -2,6 +2,9 @@ from ete4.smartview import TreeStyle, NodeStyle, TreeLayout, PieChartFace
 from ete4.smartview  import RectFace, CircleFace, SeqMotifFace, TextFace, OutlineFace
 from layouts.general_layouts import get_piechartface
 
+"""
+label_layout, colorbranch_layout, rectangular_layout   
+"""
 #paried_color = ["red", "darkblue", "darkgreen", "darkyellow", "violet", "mediumturquoise", "sienna", "lightCoral", "lightSkyBlue", "indigo", "tan", "coral", "olivedrab", "teal"]
 
 class LayoutText(TreeLayout):
@@ -107,6 +110,7 @@ class LayoutRect(TreeLayout):
         self.text_prop = text_prop
         self.column = column
         self.color_dict = color_dict
+        self.absence_color = "#EBEBEB"
         self.internal_prop = text_prop+'_counter'
         self.legend = legend
         self.width = width
@@ -126,20 +130,20 @@ class LayoutRect(TreeLayout):
 
         if self.legend:
             if self.color_dict:
+                self.color_dict['NaN'] = self.absence_color
                 tree_style.add_legend(title=self.text_prop,
                                     variable='discrete',
                                     colormap=self.color_dict
                                     )
                                     
     def set_node_style(self, node):
-        if node.is_leaf() and node.props.get(self.text_prop):
+        if node.is_leaf():
             prop_text = node.props.get(self.text_prop)
             if prop_text:
                 if type(prop_text) == list:
                     prop_text = ",".join(prop_text)
                 else:
                     pass
-
                 tooltip = ""
                 if node.name:
                     tooltip += f'<b>{node.name}</b><br>'
@@ -151,7 +155,12 @@ class LayoutRect(TreeLayout):
                     prop_face = RectFace(width=self.width, height=self.height, color=color, \
                         padding_x=self.padding_x , padding_y=self.padding_y, tooltip=tooltip)
                     node.add_face(prop_face, column=self.column, position="aligned")
-            
+            else:
+                #prop_face = CircleFace(radius=self.radius, color='grey', padding_x=self.padding_x, padding_y=self.padding_y)
+                prop_face = RectFace(width=self.width, height=self.height, color=self.absence_color, \
+                        padding_x=self.padding_x , padding_y=self.padding_y, tooltip=None)
+                node.add_face(prop_face, column=self.column, position="aligned")
+        
         elif node.is_leaf() and node.props.get(self.internal_prop):
             piechart_face = get_piechartface(node, self.internal_prop, self.color_dict)
             node.add_face(piechart_face, column = self.column, position = "branch_top")

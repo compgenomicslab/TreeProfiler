@@ -43,13 +43,18 @@ def get_heatmapface(node, prop, min_color="#ffffff", max_color="#971919", toolti
     for counter_prop in counter_props:
         k, v = counter_prop.split('--')
         if not check_nan(k):
+            total += float(v) # here doesn't consider missing data in total
             if strtobool(k):
                 positive = float(v)
-        total += float(v)
+        #total += float(v) # here consider missing data in total
     total = int(total)
-    ratio = positive / total
+    if total != 0:
+        ratio = positive / total
+    else:
+        ratio = 0
     if ratio < 0.05 and ratio != 0: # show minimum color for too low
         ratio = 0.05
+    
     c1 = min_color
     c2 = max_color
     gradient_color = color_gradient(c1, c2, mix=ratio)

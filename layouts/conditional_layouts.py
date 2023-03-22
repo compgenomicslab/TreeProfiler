@@ -126,12 +126,26 @@ class LayoutBinary(TreeLayout):
             if self.prop_colour_dict:
                 if self.reverse:
                     title = 'ReverseBinary_' + self.bool_prop
+                    colormap = {
+                        "True": self.color,
+                        "False" : self.absence_color,
+                        "NaN": 'white'
+                    }
+                    tree_style.add_legend(title=title,
+                                        variable='discrete',
+                                        colormap=colormap,
+                                        )
                 else:
                     title = 'Binary_' + self.bool_prop
-                tree_style.add_legend(title=title,
-                                    variable='discrete',
-                                    colormap={self.bool_prop:self.color}
-                                    )
+                    colormap = {
+                        "True": self.color,
+                        "False" : self.absence_color,
+                        "NaN": 'white'
+                    }
+                    tree_style.add_legend(title=title,
+                                        variable='discrete',
+                                        colormap=colormap,
+                                        )
                 # tree_style.add_legend(title=self.internal_prop,
                 #                     variable='discrete',
                 #                     colormap=self.prop_colour_dict
@@ -171,7 +185,8 @@ class LayoutBinary(TreeLayout):
                         node.add_face(prop_face, column=self.column, position = "aligned")
             else:
                 #prop_face = CircleFace(radius=self.radius, color='grey', padding_x=self.padding_x, padding_y=self.padding_y)
-                prop_face = TextFace('NaN', min_fsize=5, max_fsize=10, padding_x=self.padding_x, width=self.width)
+                #prop_face = TextFace('NaN', min_fsize=5, max_fsize=10, padding_x=self.padding_x, width=self.width)
+                prop_face = RectFace(width=self.width, height=self.height, color='white', padding_x=self.padding_x, padding_y=self.padding_y, stroke_color=self.absence_color, tooltip=None)
                 node.add_face(prop_face, column=self.column, position = "aligned")
         
         elif node.is_leaf() and node.props.get(self.internal_prop):
