@@ -184,23 +184,14 @@ class LayoutBinary(TreeLayout):
                         prop_face = RectFace(width=self.width, height=self.height, color=self.absence_color,  padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
                         node.add_face(prop_face, column=self.column, position = "aligned")
             else:
-                #prop_face = CircleFace(radius=self.radius, color='grey', padding_x=self.padding_x, padding_y=self.padding_y)
-                #prop_face = TextFace('NaN', min_fsize=5, max_fsize=10, padding_x=self.padding_x, width=self.width)
                 prop_face = RectFace(width=self.width, height=self.height, color='white', padding_x=self.padding_x, padding_y=self.padding_y, stroke_color=self.absence_color, tooltip=None)
                 node.add_face(prop_face, column=self.column, position = "aligned")
         
         elif node.is_leaf() and node.props.get(self.internal_prop):
-            # piechart_face = get_piechartface(node, self.internal_prop, self.prop_colour_dict, self.radius)
-            # node.add_face(piechart_face, column = self.column, position = "branch_top")
             heatmapFace = get_heatmapface(node, self.internal_prop, max_color=self.color, width=self.width, height=self.height)
             node.add_face(heatmapFace, column = self.column, position = "aligned", collapsed_only=False)
 
         elif node.props.get(self.internal_prop):
-            # if node.is_root():
-            #     piechart_face = get_piechartface(node, self.internal_prop, self.prop_colour_dict, self.radius*0.15)
-            # else:
-            #     piechart_face = get_piechartface(node, self.internal_prop, self.prop_colour_dict, self.radius)
-            #node.add_face(piechart_face, column = self.column, position = "branch_top")
             heatmapFace = get_heatmapface(node, self.internal_prop, max_color=self.color, width=self.width, height=self.height)
             node.add_face(heatmapFace, column = self.column, position = "aligned", collapsed_only=True)
 
