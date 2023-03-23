@@ -7,7 +7,7 @@ import matplotlib as mpl
 from utils import to_code, call, counter_call
 from utils import check_nan
 
-def get_piechartface(node, prop, colour_dict=None, radius=40, tooltip=None):
+def get_piechartface(node, prop, colour_dict=None, radius=20, tooltip=None):
     pair_delimiter = "--"
     item_seperator = "||"
     piechart_data = []
