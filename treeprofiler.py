@@ -1200,16 +1200,6 @@ def goslim_annotation(gos_input, relative=True):
 
 def multiple2profile(tree, profiling_prop):
     all_values = sorted(list(set(flatten(children_prop_array(tree, profiling_prop)))))
-    aa = [
-        'A', 'R', 'N',
-        'D', 'C', 'Q',
-        'E', 'G', 'H',
-        'I', 'S', 'K',
-        'M', 'F', 'P',
-        'L', 'T', 'W',
-        'Z', 'V', 'B',
-        'Y', 'X'
-    ]
     presence = 'D' # #E60A0A red
     absence = 'G' # #EBEBEB lightgrey
     matrix = ''
@@ -1230,6 +1220,29 @@ def multiple2profile(tree, profiling_prop):
         else:
             matrix += absence * len(all_values) +'\n'
     return matrix, all_values
+
+# def categorical2profile(tree, profiling_prop):
+#     all_values = sorted(list(set(flatten(children_prop_array(tree, profiling_prop)))))
+#     aa = [
+#         'A', 'R', 'N',
+#         'D', 'C', 'Q',
+#         'E', 'G', 'H',
+#         'I', 'S', 'K',
+#         'M', 'F', 'P',
+#         'L', 'T', 'W',
+#         'Z', 'V', 'B',
+#         'Y', 'X'
+#     ]
+#     matrix = ''
+#     for leaf in tree.iter_leaves():
+#         matrix += '\n'+'>'+leaf.name+'\n'
+#         for i in range(len(all_values)):
+#             leaf_prop = leaf.props.get(profiling_prop)
+#             if leaf_prop and leaf_prop != 'NaN':
+#                 matrix += aa[i % len(aa)]
+#             else:
+#                 matrix += 'G'
+#     return matrix
 
 def props2matrix(tree, profiling_props, dtype=float):
         gradients = [
@@ -1420,7 +1433,17 @@ def tree_plot(args):
         if layout == 'domain_layout':
             domain_layout = seq_layouts.LayoutDomain(name="Domain_layout", prop='dom_arq')
             layouts.append(domain_layout)
-        
+
+        # if layout == 'profiling_layout':
+        #     profiling_props = args.profiling_layout
+        #     for profiling_prop in profiling_props:
+        #         matrix = categorical2profile(tree, profiling_prop)
+        #         print(matrix)
+        #         profile_layout = profile_layouts.LayoutProfile(name=profiling_prop, 
+        #         alignment=matrix, profiles=all_values, column=level)
+        #         level += 1
+        #         layouts.append(profile_layout)
+
         if layout == 'multi_profiling_layout':
             profiling_props = args.multi_profiling_layout
             for profiling_prop in profiling_props:
@@ -2250,6 +2273,10 @@ def poplulate_plot_args(plot_args_p):
         type=str,
         required=False,
         help="provide alignment file as fasta format")
+    group.add_argument('--profiling_layout',
+        type=lambda s: [item for item in s.split(',')],
+        required=False,
+        help="<col1,col2> names, column index which need to be plot as profiling_layout for categorical columns")
     group.add_argument('--multi_profiling_layout',
         type=lambda s: [item for item in s.split(',')],
         required=False,

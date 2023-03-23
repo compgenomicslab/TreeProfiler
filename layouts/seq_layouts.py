@@ -15,7 +15,7 @@ def get_colormap():
 
 class LayoutAlignment(TreeLayout):
     def __init__(self, name="Alignment",
-            alignment=None, format='[]', width=700, height=15,
+            alignment=None, format='seq', width=700, height=15,
             column=0, range=None, summarize_inner_nodes=False):
         super().__init__(name)
         self.alignment = SeqGroup(alignment) if alignment else None

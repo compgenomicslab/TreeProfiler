@@ -52,12 +52,12 @@ class LayoutText(TreeLayout):
             
         elif node.is_leaf() and node.props.get(self.internal_prop):
             piechart_face = get_piechartface(node, self.internal_prop, self.color_dict)
-            node.add_face(piechart_face, column = self.column, position = "branch_top")
+            #node.add_face(piechart_face, column = self.column, position = "branch_top")
             node.add_face(piechart_face, column = self.column, position = "aligned", collapsed_only=False)
 
         elif node.props.get(self.internal_prop):
             piechart_face = get_piechartface(node, self.internal_prop, self.color_dict)
-            node.add_face(piechart_face, column = self.column, position = "branch_top")
+            #node.add_face(piechart_face, column = self.column, position = "branch_top")
             node.add_face(piechart_face, column = self.column, position = "aligned", collapsed_only=True)
 
 class LayoutColorbranch(TreeLayout):
@@ -95,12 +95,12 @@ class LayoutColorbranch(TreeLayout):
             
         elif node.is_leaf() and node.props.get(self.internal_prop):
             piechart_face = get_piechartface(node, self.internal_prop, self.color_dict)
-            node.add_face(piechart_face, column = self.column, position = "branch_top")
+            #node.add_face(piechart_face, column = self.column, position = "branch_top")
             node.add_face(piechart_face, column = self.column, position = "aligned", collapsed_only=False)
 
         elif node.props.get(self.internal_prop):
             piechart_face = get_piechartface(node, self.internal_prop, self.color_dict)
-            node.add_face(piechart_face, column = self.column, position = "branch_top")
+            #node.add_face(piechart_face, column = self.column, position = "branch_top")
             node.add_face(piechart_face, column = self.column, position = "aligned", collapsed_only=True)
 
 class LayoutRect(TreeLayout):
@@ -163,10 +163,11 @@ class LayoutRect(TreeLayout):
         
         elif node.is_leaf() and node.props.get(self.internal_prop):
             piechart_face = get_piechartface(node, self.internal_prop, self.color_dict)
-            node.add_face(piechart_face, column = self.column, position = "branch_top")
+            #node.add_face(piechart_face, column = self.column, position = "branch_top")
             node.add_face(piechart_face, column = self.column, position = "aligned", collapsed_only=False)
 
         elif node.props.get(self.internal_prop):
+            print(node.props.get(self.internal_prop))
             piechart_face = get_piechartface(node, self.internal_prop, self.color_dict)
-            node.add_face(piechart_face, column = self.column, position = "branch_top")
+            #node.add_face(piechart_face, column = self.column, position = "branch_top")
             node.add_face(piechart_face, column = self.column, position = "aligned", collapsed_only=True)
