@@ -7,6 +7,7 @@ from ete4.coretype.seqgroup import SeqGroup
 from ete4 import GTDBTaxa
 from ete4 import NCBITaxa
 from ete4.smartview import TreeStyle, NodeStyle, TreeLayout
+from ete4.smartview.renderer.gardening import remove
 #from ete4.smartview  import SeqFace, SeqMotifFace, AlignmentFace
 from layouts import (text_layouts, taxon_layouts, staple_layouts, 
                     conditional_layouts, seq_layouts, profile_layouts)
@@ -1756,8 +1757,6 @@ def taxatree_prune(tree, rank_limit='subspecies'):
     #         if n.props.get('rank') != rank_limit:
     #             n.detach()
     #             ex = False
-
-    from ete4.smartview.renderer.gardening import remove
     for node in tree.traverse("preorder"):
         if node.props.get('rank') == rank_limit:
             children = node.children.copy()
