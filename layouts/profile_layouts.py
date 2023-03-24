@@ -63,11 +63,12 @@ gradientscolor = {
 }
 
 class LayoutProfile(TreeLayout):
-    def __init__(self, name="Profile",
+    def __init__(self, name="Profile", mode='simple',
             alignment=None, seq_format='compactseq', profiles=None, width=1000, height=20,
-            column=0, range=None, summarize_inner_nodes=False, value_range=[],legend=True):
+            column=0, range=None, summarize_inner_nodes=False, value_range=[], legend=True):
         super().__init__(name)
         self.alignment = SeqGroup(alignment) if alignment else None
+        self.mode = mode
         self.width = width
         self.height = height
         self.column = column
@@ -89,7 +90,7 @@ class LayoutProfile(TreeLayout):
             tree_style.aligned_panel_header.add_face(face, column=self.column)
 
         if self.legend:
-            if self.seq_format == 'gradients':
+            if self.mode == 'numerical':
                 if self.value_range:
                     color_gradient = [gradientscolor['a'], gradientscolor['t']]
                     tree_style.add_legend(title=self.name,
@@ -97,17 +98,23 @@ class LayoutProfile(TreeLayout):
                                     value_range=self.value_range,
                                     color_range=color_gradient,
                                     )
-            else:
+            if self.mode == 'simple':
+                color_dict = {}
+                for i in range(len(self.profiles)):
+                    profile_val = self.profiles[i]
+                    profile_color = profilecolors[list(profilecolors.keys())[i % len(profilecolors)]]
+                    color_dict[profile_val] = profile_color
+                tree_style.add_legend(title=self.name,
+                                    variable='discrete',
+                                    colormap=color_dict,
+                                    )
+            if self.mode == 'multi':
                 color_dict = {}
                 for i in range(len(self.profiles)):
                     profile_val = self.profiles[i]
                     #profile_color = profilecolors[list(profilecolors.keys())[i % len(profilecolors)]]
                     color_dict[profile_val] = ''
-                # color_dict = {
-                #     'presence': '#E60A0A',
-                #     'absence': '#EBEBEB',
-                #     'no data': 'white',
-                # }
+
                 tree_style.add_legend(title=self.name,
                                     variable='discrete',
                                     colormap=color_dict,

@@ -1221,53 +1221,67 @@ def multiple2profile(tree, profiling_prop):
             matrix += absence * len(all_values) +'\n'
     return matrix, all_values
 
-# def categorical2profile(tree, profiling_prop):
-#     all_values = sorted(list(set(flatten(children_prop_array(tree, profiling_prop)))))
-#     aa = [
-#         'A', 'R', 'N',
-#         'D', 'C', 'Q',
-#         'E', 'G', 'H',
-#         'I', 'S', 'K',
-#         'M', 'F', 'P',
-#         'L', 'T', 'W',
-#         'Z', 'V', 'B',
-#         'Y', 'X'
-#     ]
-#     matrix = ''
-#     for leaf in tree.iter_leaves():
-#         matrix += '\n'+'>'+leaf.name+'\n'
-#         for i in range(len(all_values)):
-#             leaf_prop = leaf.props.get(profiling_prop)
-#             if leaf_prop and leaf_prop != 'NaN':
-#                 matrix += aa[i % len(aa)]
-#             else:
-#                 matrix += 'G'
-#     return matrix
+def categorical2profile(tree, profiling_prop):
+    all_values = sorted(list(set(flatten(children_prop_array(tree, profiling_prop)))))
+    aa = [
+        'A', 'R', 'N',
+        'D', 'C', 'Q',
+        'E', 'G', 'H',
+        'I', 'S', 'K',
+        'M', 'F', 'P',
+        'L', 'T', 'W',
+        'Z', 'V', 'B',
+        'Y', 'X'
+    ]
+    matrix = ''
+    for leaf in tree.iter_leaves():
+        matrix += '\n'+'>'+leaf.name+'\n'
+        for i in range(len(all_values)):
+            leaf_prop = leaf.props.get(profiling_prop)
+            if leaf_prop and leaf_prop != 'NaN':
+                matrix += aa[i % len(aa)]
+            else:
+                matrix += 'G'
+    return matrix
 
 def props2matrix(tree, profiling_props, dtype=float):
-        gradients = [
-        'a', 'b', 'c',
-        'd', 'e', 'f',
-        'g', 'h', 'i',
-        'j', 'k', 'l',
-        'm', 'n', 'o',
-        'p', 'q', 'r', 
-        's', 't'
-        ] #blue to red
+    aa = [
+        'A', 'R', 'N',
+        'D', 'C', 'Q',
+        'E', 'H',
+        'I', 'S', 'K',
+        'M', 'F', 'P',
+        'L', 'T', 'W',
+        'Z', 'V', 'B',
+        'Y', 'X'
+    ]
+    absence_color = 'G'
+    gradients = [
+    'a', 'b', 'c',
+    'd', 'e', 'f',
+    'g', 'h', 'i',
+    'j', 'k', 'l',
+    'm', 'n', 'o',
+    'p', 'q', 'r', 
+    's', 't'
+    ] #blue to red
 
-        leaf2matrix = {}
-        for node in tree.traverse():
-            if node.is_leaf():
-                leaf2matrix[node.name] = []
-                for profiling_prop in profiling_props:
-                    if node.props.get(profiling_prop):
-                        if dtype == float:
-                            val = float(node.props.get(profiling_prop))
-                        leaf2matrix[node.name].append(val)
-                    else:
-                        leaf2matrix[node.name].append(None)
-        
-        # gain all values from metadata
+    leaf2matrix = {}
+    for node in tree.traverse():
+        if node.is_leaf():
+            leaf2matrix[node.name] = []
+            for profiling_prop in profiling_props:
+                if node.props.get(profiling_prop):
+                    if dtype == float:
+                        val = float(node.props.get(profiling_prop))
+                    elif dtype == str:
+                        val = node.props.get(profiling_prop)
+                    leaf2matrix[node.name].append(val)
+                else:
+                    leaf2matrix[node.name].append(None)
+    
+    # gain all values from metadata
+    if dtype == float:
         all_values = list(set(flatten([sublist for sublist in leaf2matrix.values()])))
         maxval = max(all_values)
         minval = min(all_values)
@@ -1277,12 +1291,30 @@ def props2matrix(tree, profiling_props, dtype=float):
         matrix = ''
         for leaf, prop in leaf2matrix.items():
             matrix += '\n'+'>'+leaf+'\n'
-            for index in range(len(prop)):
-                search_value = prop[index]
+            for i in range(len(prop)):
+                search_value = prop[i]
                 # Find the index of the closest element to the search value
                 index = np.abs(values - search_value).argmin()
                 matrix += gradients[index]
         return matrix, maxval, minval
+    
+    elif dtype == str:
+        value2color = {}
+        all_values = list(set(flatten([sublist for sublist in leaf2matrix.values()])))
+        for i in range(len(all_values)):
+            val = all_values[i]
+            if val != 'NaN':
+                value2color[val] = aa[i]
+            else:
+                value2color[val] = 'G'
+        
+        matrix = ''
+        for leaf, prop in leaf2matrix.items():
+            matrix += '\n'+'>'+leaf+'\n'
+            for item in prop:
+                matrix += value2color[item]
+        return matrix
+                
 
 ### visualize tree
 def tree_plot(args):
@@ -1434,21 +1466,19 @@ def tree_plot(args):
             domain_layout = seq_layouts.LayoutDomain(name="Domain_layout", prop='dom_arq')
             layouts.append(domain_layout)
 
-        # if layout == 'profiling_layout':
-        #     profiling_props = args.profiling_layout
-        #     for profiling_prop in profiling_props:
-        #         matrix = categorical2profile(tree, profiling_prop)
-        #         print(matrix)
-        #         profile_layout = profile_layouts.LayoutProfile(name=profiling_prop, 
-        #         alignment=matrix, profiles=all_values, column=level)
-        #         level += 1
-        #         layouts.append(profile_layout)
+        if layout == 'profiling_layout':
+            profiling_props = args.profiling_layout
+            matrix = props2matrix(tree, profiling_props, dtype=str)
+            profile_layout = profile_layouts.LayoutProfile(name='profiling_layout', mode='simple',
+                alignment=matrix, profiles=profiling_props, column=level)
+            level += 1
+            layouts.append(profile_layout)
 
         if layout == 'multi_profiling_layout':
             profiling_props = args.multi_profiling_layout
             for profiling_prop in profiling_props:
                 matrix, all_values = multiple2profile(tree, profiling_prop)
-                profile_layout = profile_layouts.LayoutProfile(name=profiling_prop, 
+                profile_layout = profile_layouts.LayoutProfile(name=profiling_prop, mode='multi',
                 alignment=matrix, profiles=all_values, column=level)
                 level += 1
                 layouts.append(profile_layout)
@@ -1457,7 +1487,7 @@ def tree_plot(args):
             profiling_props = args.numerical_profiling_layout
             matrix, maxval, minval = props2matrix(tree, profiling_props)
             #profile_layout = TreeLayout(name='numerical_profiling_layout', ns=get_alnface(alignment, level), aligned_faces = True)
-            profile_layout = profile_layouts.LayoutProfile(name='numerical_profiling_layout', 
+            profile_layout = profile_layouts.LayoutProfile(name='numerical_profiling_layout', mode='numerical',
                 alignment=matrix, seq_format='gradients', profiles=profiling_props, value_range=[minval, maxval],column=level)
             level += 1
             layouts.append(profile_layout)
@@ -1677,6 +1707,7 @@ def tree_plot(args):
     # prune tree by rank
     if args.rank_limit:
         tree = taxatree_prune(tree, rank_limit=args.rank_limit)
+        
     # prune tree by condition 
     if args.pruned_by: # need to be wrap with quotes
         condition_strings = args.pruned_by
@@ -1702,21 +1733,21 @@ def taxatree_prune(tree, rank_limit='subspecies'):
     ranks = ['domain','superkingdom','kingdom','subkingdom','infrakingdom','superphylum','phylum','division','subphylum','subdivision','infradivision','superclass','class','subclass','infraclass','subterclass','parvclass','megacohort','supercohort','cohort','subcohort','infracohort','superorder','order','suborder','infraorder','parvorder','superfamily','family','subfamily','supertribe','tribe','subtribe','genus','subgenus','section','subsection','species group','series','species subgroup','species','infraspecies','subspecies','forma specialis','variety','varietas','subvariety','race','stirp','form','forma','morph','subform','biotype','isolate','pathogroup','serogroup','serotype','strain','aberration']
     no_ranks = ['clade','unspecified','no rank','unranked','Unknown']
     
-    rank_limit = rank_limit.lower()
+    # rank_limit = rank_limit.lower()
     
-    ex = False
-    while not ex:
-        ex = True
-        for n in tree.traverse('preorder'):
-            if not n.is_root():
-                rank_prop = n.props.get('rank')
-                if rank_prop in ranks: 
-                    rank_idx = ranks.index(rank_prop)
-                    limit_rank_idx = ranks.index(rank_limit)
-                    if rank_idx >= limit_rank_idx:
-                        for child in n.get_children():
-                            child.detach()
-                            ex = False
+    # ex = False
+    # while not ex:
+    #     ex = True
+    #     for n in tree.traverse('preorder'):
+    #         if not n.is_root():
+    #             rank_prop = n.props.get('rank')
+    #             if rank_prop in ranks: 
+    #                 rank_idx = ranks.index(rank_prop)
+    #                 limit_rank_idx = ranks.index(rank_limit)
+    #                 if rank_idx >= limit_rank_idx:
+    #                     for child in n.get_children():
+    #                         child.detach()
+    #                         ex = False
                     
     # ex = False
     # while not ex:
@@ -1726,6 +1757,13 @@ def taxatree_prune(tree, rank_limit='subspecies'):
     #             n.detach()
     #             ex = False
 
+    from ete4.smartview.renderer.gardening import remove
+    for node in tree.traverse("preorder"):
+        if node.props.get('rank') == rank_limit:
+            children = node.children.copy()
+            for ch in children:
+                print("prune", ch.name)
+                remove(ch)
     return tree
 
 from utils import to_code, call, counter_call
