@@ -1,6 +1,6 @@
 from ete4.smartview import TreeStyle, NodeStyle, TreeLayout, PieChartFace
 from ete4.smartview  import RectFace, CircleFace, SeqMotifFace, TextFace, OutlineFace
-from layouts.general_layouts import get_piechartface
+from layouts.general_layouts import get_piechartface, get_stackedbarface
 
 """
 label_layout, colorbranch_layout, rectangular_layout   
@@ -51,14 +51,18 @@ class LayoutText(TreeLayout):
             node.add_face(prop_face, column=self.column, position="aligned")
             
         elif node.is_leaf() and node.props.get(self.internal_prop):
-            piechart_face = get_piechartface(node, self.internal_prop, self.color_dict)
+            #piechart_face = get_piechartface(node, self.internal_prop, self.color_dict)
             #node.add_face(piechart_face, column = self.column, position = "branch_top")
             node.add_face(piechart_face, column = self.column, position = "aligned", collapsed_only=False)
+            stackedbar_face = get_stackedbarface(node, self.internal_prop, self.color_dict)
+            node.add_face(stackedbar_face, column = self.column, position = "aligned", collapsed_only=False)
 
         elif node.props.get(self.internal_prop):
-            piechart_face = get_piechartface(node, self.internal_prop, self.color_dict)
+            #piechart_face = get_piechartface(node, self.internal_prop, self.color_dict)
             #node.add_face(piechart_face, column = self.column, position = "branch_top")
-            node.add_face(piechart_face, column = self.column, position = "aligned", collapsed_only=True)
+            #node.add_face(piechart_face, column = self.column, position = "aligned", collapsed_only=True)
+            stackedbar_face = get_stackedbarface(node, self.internal_prop, self.color_dict)
+            node.add_face(stackedbar_face, column = self.column, position = "aligned", collapsed_only=True)
 
 class LayoutColorbranch(TreeLayout):
     def __init__(self, name, column, color_dict, text_prop, legend=True):
@@ -94,17 +98,21 @@ class LayoutColorbranch(TreeLayout):
                     node.sm_style["hz_line_width"] = 2
             
         elif node.is_leaf() and node.props.get(self.internal_prop):
-            piechart_face = get_piechartface(node, self.internal_prop, self.color_dict)
+            #piechart_face = get_piechartface(node, self.internal_prop, self.color_dict)
             #node.add_face(piechart_face, column = self.column, position = "branch_top")
-            node.add_face(piechart_face, column = self.column, position = "aligned", collapsed_only=False)
+            #node.add_face(piechart_face, column = self.column, position = "aligned", collapsed_only=False)
+            stackedbar_face = get_stackedbarface(node, self.internal_prop, self.color_dict)
+            node.add_face(stackedbar_face, column = self.column, position = "aligned", collapsed_only=False)
 
         elif node.props.get(self.internal_prop):
-            piechart_face = get_piechartface(node, self.internal_prop, self.color_dict)
+            #piechart_face = get_piechartface(node, self.internal_prop, self.color_dict)
             #node.add_face(piechart_face, column = self.column, position = "branch_top")
-            node.add_face(piechart_face, column = self.column, position = "aligned", collapsed_only=True)
+            #node.add_face(piechart_face, column = self.column, position = "aligned", collapsed_only=True)
+            stackedbar_face = get_stackedbarface(node, self.internal_prop, self.color_dict)
+            node.add_face(stackedbar_face, column = self.column, position = "aligned", collapsed_only=True)
 
 class LayoutRect(TreeLayout):
-    def __init__(self, name, column, color_dict, text_prop, width=20, height=None, legend=True):
+    def __init__(self, name, column, color_dict, text_prop, width=70, height=None, legend=True):
         super().__init__(name)
         self.aligned_faces = True
         self.text_prop = text_prop
@@ -162,11 +170,16 @@ class LayoutRect(TreeLayout):
                 node.add_face(prop_face, column=self.column, position="aligned")
         
         elif node.is_leaf() and node.props.get(self.internal_prop):
-            piechart_face = get_piechartface(node, self.internal_prop, self.color_dict)
+            #piechart_face = get_piechartface(node, self.internal_prop, self.color_dict) #get_stackedbarface
             #node.add_face(piechart_face, column = self.column, position = "branch_top")
-            node.add_face(piechart_face, column = self.column, position = "aligned", collapsed_only=False)
+            #node.add_face(piechart_face, column = self.column, position = "aligned", collapsed_only=False)
+            stackedbar_face = get_stackedbarface(node, self.internal_prop, self.color_dict)
+            node.add_face(stackedbar_face, column = self.column, position = "aligned", collapsed_only=False)
 
         elif node.props.get(self.internal_prop):
-            piechart_face = get_piechartface(node, self.internal_prop, self.color_dict)
+            #piechart_face = get_piechartface(node, self.internal_prop, self.color_dict)
             #node.add_face(piechart_face, column = self.column, position = "branch_top")
-            node.add_face(piechart_face, column = self.column, position = "aligned", collapsed_only=True)
+            #node.add_face(piechart_face, column = self.column, position = "aligned", collapsed_only=False)
+            stackedbar_face = get_stackedbarface(node, self.internal_prop, self.color_dict)
+            node.add_face(stackedbar_face, column = self.column, position = "aligned", collapsed_only=True)
+
