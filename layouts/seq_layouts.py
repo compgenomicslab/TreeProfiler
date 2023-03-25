@@ -1,9 +1,13 @@
+
 from ete4.coretype.seqgroup import SeqGroup
 from ete4.smartview import TreeLayout
 from ete4.smartview import AlignmentFace, SeqMotifFace, ScaleFace
 from ete4.smartview.renderer import draw_helpers
+from layouts.general_layouts import get_consensus_seq
 from pathlib import Path
+from io import StringIO
 import json
+
 
 __all__ = [ "LayoutAlignment" ]
 DOMAIN2COLOR = 'pfam2color.json' # smart2color.json
@@ -16,7 +20,7 @@ def get_colormap():
 class LayoutAlignment(TreeLayout):
     def __init__(self, name="Alignment",
             alignment=None, format='seq', width=700, height=15,
-            column=0, range=None, summarize_inner_nodes=False):
+            column=0, range=None, summarize_inner_nodes=True):
         super().__init__(name)
         self.alignment = SeqGroup(alignment) if alignment else None
         self.width = width
@@ -45,7 +49,15 @@ class LayoutAlignment(TreeLayout):
 
         if self.summarize_inner_nodes:
             # TODO: summarize inner node's seq
-            return None
+            matrix = ''
+            for leaf in node.iter_leaves():
+                matrix += ">"+leaf.name+"\n"
+                matrix += self._get_seq(leaf)+"\n"
+            try:
+                consensus_seq = get_consensus_seq(StringIO(matrix))
+                return str(consensus_seq)
+            except ValueError:
+                return None
         else:
             first_leaf = next(node.iter_leaves())
             return self._get_seq(first_leaf)

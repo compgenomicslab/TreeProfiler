@@ -1,9 +1,13 @@
+from __future__ import annotations
 from ete4.smartview import TreeStyle, NodeStyle, TreeLayout, PieChartFace, LegendFace, RectFace
-
+import Bio
+from Bio import AlignIO
+from Bio.Align import MultipleSeqAlignment
+from Bio.Align.AlignInfo import SummaryInfo
 import numpy as np
 from distutils.util import strtobool
 import matplotlib as mpl
-
+from itertools import chain
 from utils import to_code, call, counter_call
 from utils import check_nan
 
@@ -75,3 +79,12 @@ def get_heatmapface(node, prop, min_color="#ffffff", max_color="#971919", toolti
                             color=gradient_color, 
                             padding_x=padding_x, padding_y=padding_y, tooltip=tooltip)
     return gradientFace
+
+SeqRecord = Bio.SeqRecord.SeqRecord
+def get_consensus_seq(filename: Path | str, threshold=0.7) -> SeqRecord:
+    common_alignment = MultipleSeqAlignment(
+        chain(*AlignIO.parse(filename, "fasta"))
+    )
+    summary = SummaryInfo(common_alignment)
+    consensus = summary.dumb_consensus(threshold, "-")
+    return consensus

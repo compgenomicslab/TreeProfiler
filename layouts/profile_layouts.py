@@ -4,7 +4,9 @@ from ete4.smartview  import (RectFace, CircleFace, SeqMotifFace, TextFace, Outli
                             SeqFace, Face, ScaleFace, AlignmentFace)
 from ete4.smartview.renderer.draw_helpers import *
 from ete4 import SeqGroup
-from layouts.general_layouts import get_piechartface, get_heatmapface, color_gradient 
+from layouts.general_layouts import get_piechartface, get_heatmapface, color_gradient, get_consensus_seq
+from layouts.general_layouts import get_consensus_seq
+from io import StringIO 
 from collections import OrderedDict, namedtuple
 import numpy as np
 import re
@@ -65,7 +67,7 @@ gradientscolor = {
 class LayoutProfile(TreeLayout):
     def __init__(self, name="Profile", mode='simple',
             alignment=None, seq_format='compactseq', profiles=None, width=1000, height=20,
-            column=0, range=None, summarize_inner_nodes=False, value_range=[], legend=True):
+            column=0, range=None, summarize_inner_nodes=True, value_range=[], legend=True):
         super().__init__(name)
         self.alignment = SeqGroup(alignment) if alignment else None
         self.mode = mode
@@ -131,7 +133,18 @@ class LayoutProfile(TreeLayout):
 
         if self.summarize_inner_nodes:
             # TODO: summarize inner node's seq
-            return None
+            matrix = ''
+            for leaf in node.iter_leaves():
+                matrix += ">"+leaf.name+"\n"
+                matrix += self._get_seq(leaf)+"\n"
+            try:
+                if self.mode =="numerical":
+                    consensus_seq = get_consensus_seq(StringIO(matrix), 0.1)
+                else:
+                    consensus_seq = get_consensus_seq(StringIO(matrix), 0.7)
+                return str(consensus_seq)
+            except ValueError:
+                return None
         else:
             first_leaf = next(node.iter_leaves())
             return self._get_seq(first_leaf)

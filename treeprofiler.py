@@ -1480,7 +1480,7 @@ def tree_plot(args):
             for profiling_prop in profiling_props:
                 matrix, all_values = multiple2profile(tree, profiling_prop)
                 profile_layout = profile_layouts.LayoutProfile(name=profiling_prop, mode='multi',
-                alignment=matrix, profiles=all_values, column=level)
+                alignment=matrix, profiles=all_values, column=level, summarize_inner_nodes=False)
                 level += 1
                 layouts.append(profile_layout)
         
@@ -1492,85 +1492,6 @@ def tree_plot(args):
                 alignment=matrix, seq_format='gradients', profiles=profiling_props, value_range=[minval, maxval],column=level)
             level += 1
             layouts.append(profile_layout)
-
-    # get layouts
-    # if args.heatmap_layout:
-    #     props = []
-    #     for i in args.heatmap_layout:
-    #         props.append(i)
-
-    #     heatmap_layouts = []
-    #     for prop in props:
-    #         prop_values = np.array(list(set(children_prop_array(tree, prop)))).astype('float64')
-    #         prop_values = prop_values[~np.isnan(prop_values)]
-    #         minval, maxval = prop_values.min(), prop_values.max()
-    #         layout =  staple_layouts.LayoutHeatmap(name='Heatmap_'+prop, column=level, \
-    #                             internal_rep=internal_num_rep, prop=prop, maxval=maxval, minval=minval)
-    #         heatmap_layouts.append(layout)
-    #         level += 1
-    #         popup_prop_keys.append(prop)
-    #         popup_prop_keys.append(prop+"_"+internal_num_rep)
-
-    #     #heatmap_layouts, level, _ = staple_layouts.LayoutHeatmap('Heatmap_'+args.heatmap_layout, level, internal_num_rep, args.heatmap_layout)
-    #     layouts.extend(heatmap_layouts)
-
-    # # categorical and boolean 
-    # if args.colorbranch_layout:
-    #     colorbranch_layouts, level, color_dict = get_layouts(args.colorbranch_layout, 'colorbranch', level, 'counter', prop2type=prop2type)
-    #     layouts.extend(colorbranch_layouts)
-    #     total_color_dict.append(color_dict)
-        
-    # if args.label_layout:
-    #     label_layouts, level, color_dict = get_layouts(args.label_layout, 'label', level, 'counter', prop2type=prop2type)
-    #     layouts.extend(label_layouts)
-    #     total_color_dict.append(color_dict)
-
-    # if args.rectangular_layout:
-    #     rectangular_layouts, level, color_dict = get_layouts(args.rectangular_layout, 'rectangular', level, 'counter', prop2type=prop2type)
-    #     layouts.extend(rectangular_layouts)
-    #     total_color_dict.append(color_dict)
-
-    # if args.binary_layout:
-    #     label_layouts, level, color_dict = get_layouts(args.binary_layout, 'binary', level, 'counter')
-    #     layouts.extend(label_layouts)
-    #     total_color_dict.append(color_dict)
-
-    # if args.revbinary_layout:
-    #     label_layouts, level, color_dict = get_layouts(args.revbinary_layout, 'revbinary', level, 'counter')
-    #     layouts.extend(label_layouts)
-    #     total_color_dict.append(color_dict)
-
-    # if args.barplot_layout:
-    #     barplot_layouts, level,color_dict = get_layouts(args.barplot_layout, 'barplot', level, internal_num_rep, prop2type=prop2type)
-    #     layouts.extend(barplot_layouts)
-    #     total_color_dict.append(color_dict)
-
-    # if args.alignment_layout:
-    #     fasta_file = args.alignment_layout
-    #     aln_layout = seq_layouts.LayoutAlignment(name='Alignment_layout', alignment=fasta_file, column=level)
-    #     layouts.append(aln_layout)
-
-    # if args.domain_layout:
-    #     domain_layout = seq_layouts.LayoutDomain(name="Domain_layout", prop='dom_arq')
-    #     layouts.append(domain_layout)
-    
-    # if args.multi_profiling_layout:
-    #     profiling_props = args.multi_profiling_layout
-    #     for profiling_prop in profiling_props:
-    #         matrix, all_values = multiple2profile(tree, profiling_prop)
-    #         profile_layout = profile_layouts.LayoutProfile(name=profiling_prop, 
-    #         alignment=matrix, profiles=all_values, column=level)
-    #         level += 1
-    #         layouts.append(profile_layout)
-
-    # if args.numerical_profiling_layout:
-    #     profiling_props = args.numerical_profiling_layout
-    #     matrix, maxval, minval = props2matrix(tree, profiling_props)
-    #     #profile_layout = TreeLayout(name='numerical_profiling_layout', ns=get_alnface(alignment, level), aligned_faces = True)
-    #     profile_layout = profile_layouts.LayoutProfile(name='numerical_profiling_layout', 
-    #         alignment=matrix, seq_format='gradients', profiles=profiling_props, value_range=[minval, maxval],column=level)
-    #     level += 1
-    #     layouts.append(profile_layout)
 
     # emapper layout 
     if args.emapper_layout:
