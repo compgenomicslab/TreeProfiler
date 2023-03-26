@@ -127,7 +127,6 @@ class StackedBarFace(RectFace):
         self.height = height
 
         # data = [ [name, value, color, tooltip], ... ]
-        # self.data = [ (name, value, color, tooltip, a, da) ]
         # self.data = [
         #     ['first', 10, 'red', None],
         #     ['second', 40, 'blue', None],
