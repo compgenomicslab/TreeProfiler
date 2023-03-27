@@ -108,7 +108,7 @@ def get_stackedbarface(node, prop, colour_dict=None, width=70, height=None, tool
         #     tooltip += f'<b>{node.name}</b><br>'
         # if prop:
         #     tooltip += f'<br>{prop}: {piechart_data}<br>' # {counter_props}
-        stackedbar_face = StackedBarFace(width=width, height=None, data=stackedbar_data, padding_x=2, tooltip=tooltip)
+        stackedbar_face = StackedBarFace(width=width, height=None, data=stackedbar_data, padding_x=1, tooltip=tooltip)
         
         return stackedbar_face
     else:
@@ -117,7 +117,7 @@ def get_stackedbarface(node, prop, colour_dict=None, width=70, height=None, tool
 class StackedBarFace(RectFace):
     def __init__(self, width, height, data=None, name="", opacity=0.7, 
                 min_fsize=6, max_fsize=15, ftype='sans-serif',
-                padding_x=0, padding_y=0, tooltip=None):
+                padding_x=1, padding_y=0, tooltip=None):
         
         RectFace.__init__(self, width=width, height=height, name=name, color=None, 
             min_fsize=min_fsize, max_fsize=max_fsize, 
@@ -147,7 +147,6 @@ class StackedBarFace(RectFace):
             yield from RectFace.draw(self, drawer)
 
         else:
-           
             total_value = sum(d[1] for d in self.data)
             start_x, start_y, dx, dy = self._box        
             

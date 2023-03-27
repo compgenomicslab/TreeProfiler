@@ -53,7 +53,7 @@ class LayoutText(TreeLayout):
         elif node.is_leaf() and node.props.get(self.internal_prop):
             #piechart_face = get_piechartface(node, self.internal_prop, self.color_dict)
             #node.add_face(piechart_face, column = self.column, position = "branch_top")
-            node.add_face(piechart_face, column = self.column, position = "aligned", collapsed_only=False)
+            #node.add_face(piechart_face, column = self.column, position = "aligned", collapsed_only=False)
             stackedbar_face = get_stackedbarface(node, self.internal_prop, self.color_dict)
             node.add_face(stackedbar_face, column = self.column, position = "aligned", collapsed_only=False)
 
@@ -63,7 +63,11 @@ class LayoutText(TreeLayout):
             #node.add_face(piechart_face, column = self.column, position = "aligned", collapsed_only=True)
             stackedbar_face = get_stackedbarface(node, self.internal_prop, self.color_dict)
             node.add_face(stackedbar_face, column = self.column, position = "aligned", collapsed_only=True)
-
+        else:
+            #prop_face = CircleFace(radius=self.radius, color='grey', padding_x=self.padding_x, padding_y=self.padding_y)
+            prop_face = RectFace(width=self.width, height=self.height, color=self.absence_color, \
+                    padding_x=self.padding_x , padding_y=self.padding_y, tooltip=None)
+            node.add_face(prop_face, column=self.column, position="aligned", collapsed_only=True)
 class LayoutColorbranch(TreeLayout):
     def __init__(self, name, column, color_dict, text_prop, legend=True):
         super().__init__(name)
@@ -110,6 +114,12 @@ class LayoutColorbranch(TreeLayout):
             #node.add_face(piechart_face, column = self.column, position = "aligned", collapsed_only=True)
             stackedbar_face = get_stackedbarface(node, self.internal_prop, self.color_dict)
             node.add_face(stackedbar_face, column = self.column, position = "aligned", collapsed_only=True)
+        
+        else:
+            #prop_face = CircleFace(radius=self.radius, color='grey', padding_x=self.padding_x, padding_y=self.padding_y)
+            prop_face = RectFace(width=self.width, height=self.height, color=self.absence_color, \
+                    padding_x=self.padding_x , padding_y=self.padding_y, tooltip=None)
+            node.add_face(prop_face, column=self.column, position="aligned", collapsed_only=True)
 
 class LayoutRect(TreeLayout):
     def __init__(self, name, column, color_dict, text_prop, width=70, height=None, legend=True):
@@ -143,7 +153,11 @@ class LayoutRect(TreeLayout):
                                     variable='discrete',
                                     colormap=self.color_dict
                                     )
-                                    
+            else:
+                tree_style.add_legend(title=self.text_prop,
+                                    variable='discrete',
+                                    colormap={'NaN':self.absence_color}
+                                    )
     def set_node_style(self, node):
         if node.is_leaf():
             prop_text = node.props.get(self.text_prop)
@@ -183,3 +197,8 @@ class LayoutRect(TreeLayout):
             stackedbar_face = get_stackedbarface(node, self.internal_prop, self.color_dict)
             node.add_face(stackedbar_face, column = self.column, position = "aligned", collapsed_only=True)
 
+        else:
+            #prop_face = CircleFace(radius=self.radius, color='grey', padding_x=self.padding_x, padding_y=self.padding_y)
+            prop_face = RectFace(width=self.width, height=self.height, color=self.absence_color, \
+                    padding_x=self.padding_x , padding_y=self.padding_y, tooltip=None)
+            node.add_face(prop_face, column=self.column, position="aligned", collapsed_only=True)
