@@ -12,7 +12,7 @@ from ete4.smartview.renderer.gardening import remove
 from layouts import (text_layouts, taxon_layouts, staple_layouts, 
                     conditional_layouts, seq_layouts, profile_layouts)
 from tree_plot import get_image
-#from utils import check_nan
+from utils import get_consensus_seq
 
 from argparse import ArgumentParser
 import argparse
@@ -20,6 +20,7 @@ from collections import defaultdict
 from collections import Counter
 from itertools import islice
 from scipy import stats
+from io import StringIO
 import colorsys
 import random
 import b64pickle
@@ -278,13 +279,21 @@ def tree_annotate(args):
     # load annotations to leaves
     start = time.time()
     
+    # alignment annotation
+    if args.alignment:
+        alignment_prop = 'alignment'
+        name2seq = parse_fasta(args.alignment)
+        for leaf in tree.iter_leaves():
+            leaf.add_prop(alignment_prop, name2seq.get(leaf.name,''))
+    
     # domain annotation before other annotation
     if args.emapper_pfam:
-        annot_tree_pfam_table(tree, args.emapper_pfam, args.seq)
+        annot_tree_pfam_table(tree, args.emapper_pfam, args.alignment)
     
     if args.emapper_smart:
-        annot_tree_smart_table(tree, args.emapper_smart, args.seq)
+        annot_tree_smart_table(tree, args.emapper_smart, args.alignment)
     
+
     # load all metadata to leaf nodes
     taxon_column = []
     if not args.annotated_tree:
@@ -346,6 +355,16 @@ def tree_annotate(args):
 
                 for key,value in internal_props.items():
                     node.add_prop(key, value)
+
+                if args.alignment:
+                    matrix = ''
+                    for leaf in node.iter_leaves():
+                        matrix += ">"+leaf.name+"\n"
+                        matrix += name2seq.get(leaf.name, '')+"\n"
+                    consensus_seq = get_consensus_seq(StringIO(matrix), 0.7)
+                    node.add_prop(alignment_prop, consensus_seq)
+
+
 
     else:
         pass
@@ -432,7 +451,7 @@ def ete4_parse(newick):
     # Correct 0-dist trees
     has_dist = False
     for n in tree.traverse(): 
-        if n.dist > 0: 
+        if float(n.dist) > 0: 
             has_dist = True
             break
     if not has_dist: 
@@ -887,15 +906,15 @@ def tree_emapper_annotate(args):
         columns = {}
     
     if args.emapper_pfam:
-        annot_tree_pfam_table(tree, args.emapper_pfam, args.seq)
+        annot_tree_pfam_table(tree, args.emapper_pfam, args.alignment)
         pass
     
     if args.emapper_smart:
-        annot_tree_smart_table(tree, args.emapper_smart, args.seq)
+        annot_tree_smart_table(tree, args.emapper_smart, args.alignment)
         pass
     
-    if args.seq:
-        #name2seq = parse_fasta(args.seq)
+    if args.alignment:
+        #name2seq = parse_fasta(args.alignment)
         # for leaf in tree.iter_leaves():
         #     leaf.add_prop('seq', name2seq.get(leaf.name,''))
         pass
@@ -1459,8 +1478,11 @@ def tree_plot(args):
             total_color_dict.append(color_dict)
 
         if layout == 'alignment_layout':
-            fasta_file = args.alignment_layout
-            aln_layout = seq_layouts.LayoutAlignment(name='Alignment_layout', alignment=fasta_file, column=level)
+            #fasta_file = args.alignment_layout
+            lengh = len(max(children_prop_array(tree, 'alignment'),key=len))
+            aln_layout = seq_layouts.LayoutAlignment(name='Alignment_layout', 
+                        alignment_prop='alignment', column=level, scale_range=lengh,
+                        summarize_inner_nodes=False)
             layouts.append(aln_layout)
 
         if layout == 'domain_layout':
@@ -2047,7 +2069,7 @@ def populate_annotate_args(annotate_args_p):
         type=str,
         required=False,
         help="out.emapper.smart")
-    group.add_argument('--seq',
+    group.add_argument('--alignment',
         type=str,
         required=False,
         help="Sequence alignment, .fasta format")
@@ -2101,7 +2123,7 @@ def populate_emapper_annotate_args(emapper_annotate_args_p):
         type=str,
         required=False,
         help="out.emapper.smart")
-    group.add_argument('--seq',
+    group.add_argument('--alignment',
         type=str,
         required=False,
         help="Sequence alignment, .fasta format")
@@ -2227,9 +2249,13 @@ def poplulate_plot_args(plot_args_p):
         default=False,
         action='store_true',
         help="activate domain_layout") #domain_layout
+    # group.add_argument('--alignment_layout',
+    #     type=str,
+    #     required=False,
+    #     help="provide alignment file as fasta format")
     group.add_argument('--alignment_layout',
-        type=str,
-        required=False,
+        default=False,
+        action='store_true',
         help="provide alignment file as fasta format")
     group.add_argument('--profiling_layout',
         type=lambda s: [item for item in s.split(',')],

@@ -1,6 +1,14 @@
+from __future__ import annotations
+from Bio import AlignIO
+from Bio.Align import MultipleSeqAlignment
+from Bio.Align.AlignInfo import SummaryInfo
+from itertools import chain
 import re
 import operator
 import math
+import Bio
+
+
 operator_dict = {
                 '<':operator.lt,
                 '<=':operator.le,
@@ -87,4 +95,12 @@ def to_code(string):
 
     return conditional_output
 
-    
+SeqRecord = Bio.SeqRecord.SeqRecord
+def get_consensus_seq(filename: Path | str, threshold=0.7) -> SeqRecord:
+    #https://stackoverflow.com/questions/73702044/how-to-get-a-consensus-of-multiple-sequence-alignments-using-biopython
+    common_alignment = MultipleSeqAlignment(
+        chain(*AlignIO.parse(filename, "fasta"))
+    )
+    summary = SummaryInfo(common_alignment)
+    consensus = summary.dumb_consensus(threshold, "-")
+    return consensus

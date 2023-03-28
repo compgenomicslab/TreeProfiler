@@ -3,7 +3,7 @@ from ete4.coretype.seqgroup import SeqGroup
 from ete4.smartview import TreeLayout
 from ete4.smartview import AlignmentFace, SeqMotifFace, ScaleFace
 from ete4.smartview.renderer import draw_helpers
-from layouts.general_layouts import get_consensus_seq
+#from utils import get_consensus_seq
 from pathlib import Path
 from io import StringIO
 import json
@@ -19,45 +19,49 @@ def get_colormap():
 
 class LayoutAlignment(TreeLayout):
     def __init__(self, name="Alignment",
-            alignment=None, format='seq', width=700, height=15,
-            column=0, range=None, summarize_inner_nodes=True):
+            alignment=None, alignment_prop=None, format='seq', width=700, height=15,
+            column=0, scale_range=None, summarize_inner_nodes=False):
         super().__init__(name)
-        self.alignment = SeqGroup(alignment) if alignment else None
+        #self.alignment = SeqGroup(alignment) if alignment else None
+        self.alignment_prop = alignment_prop
         self.width = width
         self.height = height
         self.column = column
         self.aligned_faces = True
         self.format = format
 
-        self.length = len(next(self.alignment.iter_entries())[1]) if self.alignment else None
-        self.scale_range = range or (0, self.length)
+        #self.length = len(next(self.alignment.iter_entries())[1]) if self.alignment else None
+        self.scale_range = (0, scale_range) or (0, self.length)
         self.summarize_inner_nodes = summarize_inner_nodes
 
     def set_tree_style(self, tree, tree_style):
-        if self.length:
+        if self.scale_range:
             face = ScaleFace(width=self.width, scale_range=self.scale_range, padding_y=10)
             tree_style.aligned_panel_header.add_face(face, column=self.column)
     
     def _get_seq(self, node):
-        if self.alignment:
-            return self.alignment.get_seq(node.name)
-        return node.props.get("seq", None)
+        return node.props.get(self.alignment_prop, None)
+        # if self.alignment:
+        #     return self.alignment.get_seq(node.name)
+        # else:
+        #     return node.props.get(alignment_prop, None)
 
     def get_seq(self, node):
         if node.is_leaf():
             return self._get_seq(node)
 
         if self.summarize_inner_nodes:
-            # TODO: summarize inner node's seq
-            matrix = ''
-            for leaf in node.iter_leaves():
-                matrix += ">"+leaf.name+"\n"
-                matrix += self._get_seq(leaf)+"\n"
-            try:
-                consensus_seq = get_consensus_seq(StringIO(matrix))
-                return str(consensus_seq)
-            except ValueError:
-                return None
+            # # TODO: summarize inner node's seq
+            # matrix = ''
+            # for leaf in node.iter_leaves():
+            #     matrix += ">"+leaf.name+"\n"
+            #     matrix += self._get_seq(leaf)+"\n"
+            # try:
+            #     consensus_seq = get_consensus_seq(StringIO(matrix))
+            #     return str(consensus_seq)
+            # except ValueError:
+            #     return None
+            return
         else:
             first_leaf = next(node.iter_leaves())
             return self._get_seq(first_leaf)
