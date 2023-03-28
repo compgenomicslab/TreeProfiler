@@ -4,8 +4,8 @@ from ete4.smartview  import (RectFace, CircleFace, SeqMotifFace, TextFace, Outli
                             SeqFace, Face, ScaleFace, AlignmentFace)
 from ete4.smartview.renderer.draw_helpers import *
 from ete4 import SeqGroup
-from layouts.general_layouts import get_piechartface, get_heatmapface, color_gradient, get_consensus_seq
-from layouts.general_layouts import get_consensus_seq
+from layouts.general_layouts import get_piechartface, get_heatmapface, color_gradient
+from utils import get_consensus_seq
 from io import StringIO 
 from collections import OrderedDict, namedtuple
 import numpy as np
@@ -130,7 +130,6 @@ class LayoutProfile(TreeLayout):
     def get_seq(self, node):
         if node.is_leaf():
             return self._get_seq(node)
-
         if self.summarize_inner_nodes:
             # TODO: summarize inner node's seq
             matrix = ''
