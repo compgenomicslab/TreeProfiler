@@ -1,4 +1,4 @@
-# MetaTreeProfiler Tutorial
+# TreeProfiler Tutorial
 ## Table of Contents
 1. [Introduction](#introduction)
 2. [Installation](#installation)
@@ -25,10 +25,10 @@
     4. [conditional pruning based on taxonomic level](#conditional-pruning-based-on-taxonomic-level)
 
 ## Introduction
-MetaTreeProfiler is command-line tool for profiling metadata table into phylogenetic tree with descriptive analysis and output visualization
+TreeProfiler is command-line tool for profiling metadata table into phylogenetic tree with descriptive analysis and output visualization
 
 ## Installation
-MetaTreeProfiler requires to install ete4 toolkit
+TreeProfiler requires to install ete4 toolkit
 ```
 # install ete4 dependencies Cython
 conda install -c anaconda cython
@@ -43,22 +43,32 @@ git branch checkout ete4
 pip install -e .
 ```
 
-Install MetaTreeProfiler
+Install TreeProfiler
 ```
 # install selenium via pip 
 pip install selenium
 # or conda
 conda install -c conda-forge selenium 
 
-# install MetaTreeProfiler
+# install TreeProfiler
 git clone https://github.com/dengzq1234/MetaTreeDrawer
 cd MetaTreeDrawer/
 # add treeprofiler to path
 export PATH=$PATH:$(pwd)
 ```
 
+if user wanted to annotate GO terms information from eggNOG-mapper output, TreeProfiler will parse GO terms into GO slim terms via `goslim_list.R`, which requires to install the following packages:
+
+```
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("GSEABase")
+BiocManager::install("GO.db")
+```
+
 ### Input files
-MetaTreeProfiler takes following file types as input 
+TreeProfiler takes following file types as input 
 
 | Input    |      Filetype  | 
 |----------|-------------   |
@@ -66,11 +76,11 @@ MetaTreeProfiler takes following file types as input
 | Metadata |      TSV       |
 
 ### Basic usage
-MetaTreeProfiler has two main subcommand:
+TreeProfiler has two main subcommand:
  - annotate
  - plot
 
-The first one `annotate` is used to annotate your input tree and corresponding metadata, MetaTreeProfiler will map all the metadata into corresponding tree node. In this step, annotated tree will be generated in newick and ete format
+The first one `annotate` is used to annotate your input tree and corresponding metadata, TreeProfiler will map all the metadata into corresponding tree node. In this step, annotated tree will be generated in newick and ete format
 
 ```
 treeprofiler.py annotate --tree tree.nw --metadata metadata.tsv --outdir ./
@@ -88,17 +98,47 @@ treeprofiler.py plot --tree tree_annotated.ete --tree_type ete
 ```
 
 
-# Using MetaTreeProfiler
-In this Tutorial we will use MetaTreeProfiler and demostrate basic usage with data in examples/
+# Using TreeProfiler
+In this Tutorial we will use TreeProfiler and demostrate basic usage with data in examples/
 
 
 ```
 cd examples/
-ls 
-basic_example1.nw   basic_example1.tsv
-gtdb_example1.nw    gtdb_example1.tsv        
-progenome3.nw   progenome3.tsv 
-spongilla_example.nw  spongilla_example.tsv
+examples/
+├── basic_example1
+│   ├── basic_example1_null.tsv
+│   ├── basic_example1.nw
+│   ├── basic_example1.tsv
+│   └── unaligned_NUP62.fasta
+├── basic_example2
+│   ├── diauxic.array
+│   ├── diauxic.nw
+│   ├── FluA_H3_AA.fas
+│   ├── MCC_FluA_H3_Genotype.txt
+│   └── MCC_FluA_H3.nw
+├── emapper
+│   ├── 7955.ENSDARP00000116736.aln.faa
+│   ├── 7955.ENSDARP00000116736.fasta
+│   ├── 7955.ENSDARP00000116736.nw
+│   ├── 7955.out.emapper.annotations
+│   ├── 7955.out.emapper.annotations.clean
+│   ├── 7955.out.emapper.pfam
+│   └── 7955.out.emapper.smart.out
+├── gtdb_example1
+│   ├── gtdb_example1.nw
+│   ├── gtdb_example1_taxa.nw
+│   └── gtdb_example1.tsv
+├── gtdb_example2
+│   ├── bac120.tree
+│   ├── gtdbv202.nw
+│   └── taxonomy_and_metallophores.tsv
+├── gtdb_metatree -> /home/deng/Projects/metatree_drawer/gtdb_metatree
+├── progenome3
+│   ├── progenome3.nw
+│   └── progenome3.tsv
+└── spongilla_example
+    ├── spongilla_example.nw
+    └── spongilla_example.tsv
 ```
 
 ## `annotate`, Mapping metadata into tree 
@@ -106,15 +146,17 @@ spongilla_example.nw  spongilla_example.tsv
 usage: treeprofiler.py annotate [-h] [-t TREE] [--annotated_tree] [--tree_type TREE_TYPE]
                                 [--prop2type PROP2TYPE] [--rank_limit RANK_LIMIT]
                                 [--pruned_by PRUNED_BY] [-d METADATA] [--no_colnames]
-                                [--text_prop TEXT_PROP] [--num_prop NUM_PROP]
-                                [--bool_prop BOOL_PROP] [--text_prop_idx TEXT_PROP_IDX]
-                                [--num_prop_idx NUM_PROP_IDX]
+                                [--text_prop TEXT_PROP] [--multiple_text_prop MULTIPLE_TEXT_PROP]
+                                [--num_prop NUM_PROP] [--bool_prop BOOL_PROP]
+                                [--text_prop_idx TEXT_PROP_IDX] [--num_prop_idx NUM_PROP_IDX]
                                 [--bool_prop_idx BOOL_PROP_IDX] [--taxatree TAXATREE]
                                 [--taxadb TAXADB] [--taxon_column TAXON_COLUMN]
-                                [--taxon_delimiter TAXON_DELIMITER]
-                                [--taxa_field TAXA_FIELD] [--taxonomic_profile]
-                                [--num_stat NUM_STAT] [--counter_stat COUNTER_STAT]
-                                [--ete4out] [-o OUTDIR] [--outtsv OUTTSV]
+                                [--taxon_delimiter TAXON_DELIMITER] [--taxa_field TAXA_FIELD]
+                                [--emapper_annotations EMAPPER_ANNOTATIONS]
+                                [--emapper_pfam EMAPPER_PFAM] [--emapper_smart EMAPPER_SMART]
+                                [--alignment ALIGNMENT] [--taxonomic_profile]
+                                [--num_stat NUM_STAT] [--counter_stat COUNTER_STAT] [--ete4out]
+                                [-o OUTDIR] [--outtsv OUTTSV]
 
 annotate tree
 
@@ -127,11 +169,11 @@ SOURCE TREE INPUT:
   -t TREE, --tree TREE  Input tree, .nw file, customized tree input
   --annotated_tree      input tree already annotated by treeprofiler
   --tree_type TREE_TYPE
-                        statistic calculation to perform for numerical data in internal
-                        nodes, [newick, ete]
+                        statistic calculation to perform for numerical data in internal nodes,
+                        [newick, ete]
   --prop2type PROP2TYPE
-                        config tsv file where determine the datatype of target properties,
-                        if your input tree type is .ete, it's note necessary
+                        config tsv file where determine the datatype of target properties, if your
+                        input tree type is .ete, it's note necessary
 
 Pruning parameters:
   Auto pruning parameters
@@ -148,41 +190,50 @@ METADATA TABLE parameters:
                         <metadata.csv> .csv, .tsv. mandatory input
   --no_colnames         metadata table doesn't contain columns name
   --text_prop TEXT_PROP
-                        <col1,col2> names, column index or index range of columns which
-                        need to be read as categorical data
-  --num_prop NUM_PROP   <col1,col2> names, column index or index range of columns which
-                        need to be read as numerical data
+                        <col1,col2> names, column index or index range of columns which need to be
+                        read as categorical data
+  --multiple_text_prop MULTIPLE_TEXT_PROP
+                        <col1,col2> names, column index or index range of columns which need to be
+                        read as categorical data which contains more than one value and seperate
+                        by ',' such as GO:0000003,GO:0000902,GO:0000904,GO:0003006
+  --num_prop NUM_PROP   <col1,col2> names, column index or index range of columns which need to be
+                        read as numerical data
   --bool_prop BOOL_PROP
-                        <col1,col2> names, column index or index range of columns which
-                        need to be read as boolean data
+                        <col1,col2> names, column index or index range of columns which need to be
+                        read as boolean data
   --text_prop_idx TEXT_PROP_IDX
-                        1,2,3 or [1-5] index of columns which need to be read as
-                        categorical data
+                        1,2,3 or [1-5] index of columns which need to be read as categorical data
   --num_prop_idx NUM_PROP_IDX
-                        1,2,3 or [1-5] index columns which need to be read as numerical
-                        data
+                        1,2,3 or [1-5] index columns which need to be read as numerical data
   --bool_prop_idx BOOL_PROP_IDX
                         1,2,3 or [1-5] index columns which need to be read as boolean data
-  --taxatree TAXATREE   <kingdom|phylum|class|order|family|genus|species|subspecies>
-                        reference tree from taxonomic database
-  --taxadb TAXADB       <NCBI|GTDB> for taxonomic profiling or fetch taxatree default
-                        [GTDB]
+  --taxatree TAXATREE   <kingdom|phylum|class|order|family|genus|species|subspecies> reference
+                        tree from taxonomic database
+  --taxadb TAXADB       <NCBI|GTDB> for taxonomic profiling or fetch taxatree default [GTDB]
   --taxon_column TAXON_COLUMN
                         <col1> name of columns which need to be read as taxon data
   --taxon_delimiter TAXON_DELIMITER
                         delimiter of taxa columns. default [;]
   --taxa_field TAXA_FIELD
                         field of taxa name after delimiter. default 0
+  --emapper_annotations EMAPPER_ANNOTATIONS
+                        out.emapper.annotations
+  --emapper_pfam EMAPPER_PFAM
+                        out.emapper.pfams
+  --emapper_smart EMAPPER_SMART
+                        out.emapper.smart
+  --alignment ALIGNMENT
+                        Sequence alignment, .fasta format
 
 Annotation arguments:
   Annotation parameters
 
   --taxonomic_profile   Determine if you need taxonomic annotation on tree
-  --num_stat NUM_STAT   statistic calculation to perform for numerical data in internal
-                        nodes, [all, sum, avg, max, min, std]
+  --num_stat NUM_STAT   statistic calculation to perform for numerical data in internal nodes,
+                        [all, sum, avg, max, min, std]
   --counter_stat COUNTER_STAT
-                        statistic calculation to perform for categorical data in internal
-                        nodes, raw count or in percentage [raw, relative]
+                        statistic calculation to perform for categorical data in internal nodes,
+                        raw count or in percentage [raw, relative]
 
 OUTPUT options:
 
@@ -190,69 +241,55 @@ OUTPUT options:
   -o OUTDIR, --outdir OUTDIR
                         output annotated tree
   --outtsv OUTTSV       output annotated tsv file
-
 ```
-### **Simple mapping metadata into leaf nodes** 
-treeprofiler will start local server which metadata will be mapped to corresponding leaf nodes
-```
-treeprofiler.py annotate --tree examples/basic_example1/basic_example1.nw --metadata examples/basic_example1/basic_example1.tsv --outdir ./examples/basic_example1/
-```
-
-Annotated tree will be generated in newick and ete format, alongside with a config file where describes datatype of each properties
 
 ### **Mapping metadata into tree and profile tree internal nodes annotations and analysis**
 At the above example, we only mapped metadata to leaf nodes, in this example, we will also profile **internal nodes** annotation and analysis of their children nodes.
 
-### Mapping Categorical data
-For categorical dataset, each internal node will count the selected feature of its children nodes as counter, as shown as ```<feature_name>_counter``` in internal node. To label categorical feature metadata, using following arguments
+TreeProfiler can infer automatically the datatype of each column in your metadata, including 
+- `list` (seperate by `,` )
+- `string`
+- `numerical`( float or integer)
+- `booleans` 
 
+Internal node will summurize children nodes information according to their datatypes.
+
+demo tree
 ```
-# label categorical data by column name(s) in metadata (for multiple columns, seperate by ","), using --text_prop <header>
-treeprofiler.py annotate --tree examples/basic_example1/basic_example1.nw --metadata examples/basic_example1/basic_example1.tsv --text_prop random_type --outdir ./examples/basic_example1/
-
-# label categorical data by column index, using --text_prop_idx <idx>
-treeprofiler.py annotate --tree examples/basic_example1/basic_example1.nw --metadata examples/basic_example1/basic_example1.tsv --text_prop_idx 6 --outdir ./examples/basic_example1/
-
-# label column index by range, "[star_idx-end_idx]"
-treeprofiler.py annotate --tree examples/basic_example1/basic_example1.nw --metadata examples/basic_example1/basic_example1.tsv --text_prop_idx [1-6] --outdir ./examples/basic_example1/
+      ╭╴A
+╴root╶┤
+      │   ╭╴B
+      ╰╴D╶┤
+          ╰╴C
 ```
 
-Categorical data will be process as counter in each internal node. Users can choose either counter is raw or relative count by using `--counter_stat`
+demo metadata
+|  #name | text_property |  multiple_text_property  |   numerical_property  | bool_property| 
+|----------|----------|----------|-------------|-------------|
+|A|vowel|a,b,c|10|True|
+|B|consonant|b,c,d|4|False|
+|C|consonant|c,d,e|9|True|
+
+Treeprofiler will infer the datatypes of above metadata and adpot different summary method:
+|  - | text_property |  multiple_text_property  |   numerical_property  | bool_property| 
+|----------|----------|----------|-------------|-------------|
+|datatype|string|list|float|bool|
+|method|counter|counter|average,sum,max,min,standard deviation|counter|
+
+After annotation, internal nodes will be summarized. If property was summarize with `counter`, in internal node will be named as ```<property_name>_counter```
+
+
+Users can choose either counter is raw or relative count by using `--counter_stat`
 | internal_node properties  |      statistic method  | 
 |----------|-------------   |
-| `<feature name>`_counter  |      raw, relative    | 
+| `<feature name>`_counter  |      raw(default), relative    | 
 
-```
-# raw count, example internal_node shown as: ```random_type_counter: medium--3||high--2```
-treeprofiler.py annotate --tree examples/basic_example1/basic_example1.nw --metadata examples/basic_example1/basic_example1.tsv --text_prop random_type --counter_stat raw --outdir ./examples/basic_example1/
+|  internal_node| text_property_counter |  multiple_text_property_counter  | bool_property_counter| 
+|----------|----------|-------------|-------------|
+|D|consonant--2|b--1\|\|c--2\|\|d--2\|\|e--1|True--1\|\|False--1|
+|root|vowel--1\|\|consonant--2|a--2\|\|b--2\|\|c--3\|\|d--2\|\|e--1|True--2\|\|False--1|
 
-# relative count, example internal_node shown as: ```random_type_counter: medium--0.60||high--0.40```
- internal_node example shown as, random_type_counter: medium--3||high--2
-treeprofiler.py annotate --tree examples/basic_example1/basic_example1.nw --metadata examples/basic_example1/basic_example1.tsv --text_prop random_type --counter_stat relative --outdir ./examples/basic_example1/
-```
-
-
-### Mapping Boolean data
-For Boolean dataset, each internal node will count the selected feature(s) of its children nodes as counter as categorical, as shown as `_counter` of suffix feature name(s) of internal node. To label Boolean feature metadata, using following arguments
-
-
-```
-# label boolean data by column name(s) in metadata (for multiple columns, seperate by ","), using --bool_prop <header>
-treeprofiler.py annotate --tree examples/basic_example1/basic_example1.nw --metadata examples/basic_example1/basic_example1.tsv --bool_prop bool_type,bool_type2 --outdir ./examples/basic_example1/
-
-# label boolean data by column index, using --bool_prop_idx <idx>
-treeprofiler.py annotate --tree examples/basic_example1/basic_example1.nw --metadata examples/basic_example1/basic_example1.tsv --bool_prop_idx 7,8 --outdir ./examples/basic_example1/
-
-# label column index by range, "[star_idx-end_idx]"
-treeprofiler.py annotate --tree examples/basic_example1/basic_example1.nw --metadata examples/basic_example1/basic_example1.tsv --bool_prop_idx [7-8] --outdir ./examples/basic_example1/
-```
-
-Boolean counter stats follows rule as categorical data
- 
-
-### Mapping Numerical data
-For numerical dataset, each internal node will perform folwing descriptive statistic analysis of all of its children node of selected feature(s)
-
+After annotation, internal nodes will be summarized.  If property was numerical data, in internal node will be named as 
 | internal_node properties  |      statistic method  | 
 |----------|-------------   |
 | `<feature name>`_avg      |      average    | 
@@ -261,33 +298,27 @@ For numerical dataset, each internal node will perform folwing descriptive stati
 | `<feature name>`_min      |      minimum    | 
 | `<feature name>`_std      |      standard deviation    | 
 
-To label numerical data
-```
-# label numerical data by column name(s) in metadata (for multiple columns, seperate by ","), using --num_prop <header>
-treeprofiler.py annotate --tree examples/basic_example1/basic_example1.nw --metadata examples/basic_example1/basic_example1.tsv --num_prop sample1,sample2,sample3,sample4,sample5 --outdir ./examples/basic_example1/
-
-# label numerical data by column index, using --num_prop_idx <idx>
-treeprofiler.py annotate --tree examples/basic_example1/basic_example1.nw --metadata examples/basic_example1/basic_example1.tsv --num_prop_idx 1,2,3,4,5 --outdir ./examples/basic_example1/ 
-
-# label column index by range, "[star_idx-end_idx]"
-treeprofiler.py annotate --tree examples/basic_example1/basic_example1.nw --metadata examples/basic_example1/basic_example1.tsv --num_prop_idx [1-5]  --outdir ./examples/basic_example1/
-```
-
 By default, numerical feature will be calculated all the descriptive statistic, but users can choose specific one to be calculated by using `--num_stat [all, sum, avg, max, min, std] `
 
---num_stat NUM_STAT   statistic calculation to perform for numerical data in internal nodes, [all, sum, avg, max, min, std] 
-```
-# by default
-treeprofiler.py annotate --tree examples/basic_example1/basic_example1.nw --metadata examples/basic_example1/basic_example1.tsv --num_prop sample1 --num_stat all --outdir ./examples/basic_example1/
+In our demo, it would be:
+|  internal_node| numerical_property_avg |  numerical_property_sum  | numerical_property_max| numerical_property_max| numerical_property_max| 
+|----------|----------|-------------|-------------|-------------|-------------|
+|D| 6.5| 13| 9| 4|2.5|
+|root| 7.67 | 23| 10| 4| 2.32| 
 
-# only average calculation
-treeprofiler.py annotate --tree examples/basic_example1/basic_example1.nw --metadata examples/basic_example1/basic_example1.tsv --num_prop sample1 --num_stat avg --outdir ./examples/basic_example1/
+Excecute example data provided in `examples/`
 ```
+treeprofiler.py annotate --tree examples/basic_example1/basic_example1.nw --metadata examples/basic_example1/basic_example1.tsv --outdir ./examples/basic_example1/
+```
+
+### Determine datatype in arguments
+Although TreeProfiler can detect datatype of each column, users still can determine the datatype using the following arguments
+
 ### Mapping metadata without column names
-if metadata doesn't contain column names, please add `--no_colnames` as flag. MetaTreeProfiler will automatically assign feature name by index order
+if metadata doesn't contain column names, please add `--no_colnames` as flag. TreeProfiler will automatically assign feature name by index order
 
 ### Taxonomic profiling
-If input metadada containcs taxon data, MetaTreeProfiler allows users to process taxonomic annotation with either GTDB or NCBI database.
+If input metadada containcs taxon data, TreeProfiler allows users to process taxonomic annotation with either GTDB or NCBI database.
 
 - `--taxadb`, `NCBI` or `GTDB`, choose the Taxonomic Database for annotation
 - `--taxon_column`, choose the column in metadata which representa taxon
@@ -322,7 +353,7 @@ In the following `plot` step, users can use either `.nw` or `.ete` by putting `-
  - ete format is a novel format developed to solve the situation we encounter in the previous step, annotated tree can be recover easily with all the annotated data without changing the data type. Besides, the ete format optimized the tree file size after mapped with its associated data. Hence it's very handy for programers in their own script. At this moment we can only view the ete format in treeprofiler, but we will make the ete format more universal to other phylogenetic software.
 
 ## `plot`, visualizing annotated tree with layouts
-MetaTreeProfiler provides a several of layout options for visualize features in metadata along with tree, depends on their datatype
+TreeProfiler provides a several of layout options for visualize features in metadata along with tree, depends on their datatype
 ```
 usage: treeprofiler.py plot [-h] [-t TREE] [--annotated_tree] [--tree_type TREE_TYPE]
                             [--prop2type PROP2TYPE] [--rank_limit RANK_LIMIT]
@@ -491,7 +522,7 @@ treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.nw 
 ```
 
 ### Visualizing annotated internal nodes
-If internal nodes are annotated, MetaTreeProfiler is also able to visualize annotated features automatically when layouts are activated
+If internal nodes are annotated, TreeProfiler is also able to visualize annotated features automatically when layouts are activated
 
 #### Internal nodes of categorical and boolean data
 As internal nodes of categorical and boolean data are annotated as counter, hence when activating layouts of categorical or boolean data, it generate pipechart of counter summary at the top of each internal node
@@ -524,7 +555,7 @@ treeprofiler.py plot --tree examples/spongilla_example/spongilla_example/gtdb_ex
 
 
 ## Conditional query in annotated tree
-MetaTreeProfiler allows users to perform conditional process based on different circumstances
+TreeProfiler allows users to perform conditional process based on different circumstances
 
 - Conditional pruning, conditional pruning works both `annotate` and `plot` subcommand
     - `--pruned_by`, prune the annotated tree by conditions, and remove the branches or clades which don't fit the condition.
@@ -585,7 +616,7 @@ treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.ete
 ```
 
 #### AND and OR conditions
-The syntax for the AND condition and OR condition in MetaTreeProfiler is:
+The syntax for the AND condition and OR condition in TreeProfiler is:
 
 AND condition will be under one argument, syntax seperated by `,`, such as 
 ```
