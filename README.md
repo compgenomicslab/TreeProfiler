@@ -103,7 +103,7 @@ In this Tutorial we will use TreeProfiler and demostrate basic usage with data i
 
 
 ```
-cd examples/
+tree examples/
 examples/
 ├── basic_example1
 │   ├── basic_example1_null.tsv
@@ -248,8 +248,8 @@ At the above example, we only mapped metadata to leaf nodes, in this example, we
 
 TreeProfiler can infer automatically the datatype of each column in your metadata, including 
 - `list` (seperate by `,` )
-- `string`
-- `numerical`( float or integer)
+- `string` (categorcial data)
+- `numerical`(numerical data, float or integer)
 - `booleans` 
 
 Internal node will summurize children nodes information according to their datatypes.
@@ -312,10 +312,20 @@ treeprofiler.py annotate --tree examples/basic_example1/basic_example1.nw --meta
 ```
 
 ### Determine datatype in arguments
-Although TreeProfiler can detect datatype of each column, users still can determine the datatype using the following arguments
+Although TreeProfiler can detect datatype of each column, users still can determine the datatype using the following arguments using
+
+- `--text_prop` and `--text_prop_idx`, to determine columms which need to be read as categorical data
+
+- `--multiple_text_prop`, to determine columns which contains multiple values sperated by `,`, and will be process as list
+
+- `--num_prop` and `--num_prop_idx`, to determine columms which need to be read as numerical data
+
+- `--bool_prop` and `--bool_prop_idx`, to determine columms which need to be read as boolean data
+
 
 ### Mapping metadata without column names
 if metadata doesn't contain column names, please add `--no_colnames` as flag. TreeProfiler will automatically assign feature name by index order
+
 
 ### Taxonomic profiling
 If input metadada containcs taxon data, TreeProfiler allows users to process taxonomic annotation with either GTDB or NCBI database.
@@ -326,18 +336,30 @@ If input metadada containcs taxon data, TreeProfiler allows users to process tax
 - `--taxon_delimiter`, delimiter of taxa columns. default `.`
 - `--taxa_field`, field of taxa name after delimiter. default `0`
 
+
 #### Basic usage on GTDB 
-Here we demonstrate with `examples/gtdb_example1/gtdb_example1.nw` and `examples/gtdb_example1/gtdb_example1.tsv`
+Here we demonstrate with `examples/gtdb_example1/gtdb_example1.nw` and `examples/gtdb_example1/gtdb_example1.tsv`. Taxonomic accesion IDs are located in the first column which should be the names of leaf. If accesions are located in different columns, using `--taxon_column <column name>` to locate the the column. 
+
 ```
 # in case of gtdb_example1.tsv
-treeprofiler.py annotate --tree examples/gtdb_example1/gtdb_example1.nw --metadata examples/gtdb_example1/gtdb_example1.tsv --taxonomic_profile --taxon_column 0 --taxadb GTDB --outdir ./examples/gtdb_example1/
+head -3 examples/gtdb_example1/gtdb_example1.tsv
+name	sample1	sample2	sample3	sample4	sample5	random_type	bool_type	bool_type2
+RS_GCF_001560035.1	0.05	0.12	0.86	0.01	0.69	medium	1	True
+RS_GCF_001560635.1	0.64	0.67	0.51	0.29	0.14	medium	1	True
+
+# annotate tree with gtdb taxonomic annotation
+treeprofiler.py annotate --tree examples/gtdb_example1/gtdb_example1.nw --metadata examples/gtdb_example1/gtdb_example1.tsv --taxonomic_profile --taxadb GTDB --outdir ./examples/gtdb_example1/
 ```
 
 #### Basic usage on NCBI
-For instance of `examples/spongilla_example/spongilla_example.nw` and `examples/spongilla_example/spongilla_example.tsv`, it contains accession ID such as `83887.comp22273_c0_seq2_m.43352`, hence using `--` 
+For instance of `examples/spongilla_example/spongilla_example.nw` and `examples/spongilla_example/spongilla_example.tsv`, it contains accession ID such as `83887.comp22273_c0_seq2_m.43352`, hence using `--taxon_delimiter` and `--taxa_field` to locate the taxonomic accession.
+
 ```
-treeprofiler.py annotate --tree examples/spongilla_example/spongilla_example.nw --metadata examples/spongilla_example/spongilla_example.tsv --taxonomic_profile --taxon_column name --taxon_delimiter .  --taxa_field 0 --taxadb NCBI --outdir ./examples/
+treeprofiler.py annotate --tree examples/spongilla_example/spongilla_example.nw --metadata examples/spongilla_example/spongilla_example.tsv --taxonomic_profile --taxon_column name --taxon_delimiter . --taxa_field 0 --taxadb NCBI --outdir ./examples/spongilla_example/
 ```
+
+### Annotation from eggnog-mapper output
+### Annotation from multiple sequence alignment
 
 ### **Annotate tree format**
 treeprofiler `annotate` subcommand will generate the following output file
@@ -359,16 +381,18 @@ usage: treeprofiler.py plot [-h] [-t TREE] [--annotated_tree] [--tree_type TREE_
                             [--prop2type PROP2TYPE] [--rank_limit RANK_LIMIT]
                             [--pruned_by PRUNED_BY]
                             [--internal_plot_measure INTERNAL_PLOT_MEASURE]
-                            [--collapsed_by COLLAPSED_BY]
-                            [--highlighted_by HIGHLIGHTED_BY] [--drawer DRAWER]
-                            [--collapse_level COLLAPSE_LEVEL] [--ultrametric]
-                            [--binary_layout BINARYLAYOUT]
-                            [--revbinary_layout REVBINARYLAYOUT]
-                            [--colorbranch_layout COLORBRANCHLAYOUT]
-                            [--label_layout LABELLAYOUT]
-                            [--rectangular_layout RECTANGULARLAYOUT]
-                            [--heatmap_layout HEATMAPLAYOUT]
-                            [--barplot_layout BARPLOTLAYOUT] [--taxon_layout]
+                            [--collapsed_by COLLAPSED_BY] [--highlighted_by HIGHLIGHTED_BY]
+                            [--drawer DRAWER] [--collapse_level COLLAPSE_LEVEL] [--ultrametric]
+                            [--binary_layout BINARY_LAYOUT] [--revbinary_layout REVBINARY_LAYOUT]
+                            [--colorbranch_layout COLORBRANCH_LAYOUT]
+                            [--label_layout LABEL_LAYOUT]
+                            [--rectangular_layout RECTANGULAR_LAYOUT]
+                            [--heatmap_layout HEATMAP_LAYOUT] [--barplot_layout BARPLOT_LAYOUT]
+                            [--taxonclade_layout] [--taxonrectangular_layout] [--emapper_layout]
+                            [--domain_layout] [--alignment_layout]
+                            [--profiling_layout PROFILING_LAYOUT]
+                            [--multi_profiling_layout MULTI_PROFILING_LAYOUT]
+                            [--numerical_profiling_layout NUMERICAL_PROFILING_LAYOUT]
                             [--interactive] [--port PORT] [--plot PLOT] [--out_colordict]
 
 annotate plot
@@ -382,11 +406,11 @@ SOURCE TREE INPUT:
   -t TREE, --tree TREE  Input tree, .nw file, customized tree input
   --annotated_tree      input tree already annotated by treeprofiler
   --tree_type TREE_TYPE
-                        statistic calculation to perform for numerical data in internal
-                        nodes, [newick, ete]
+                        statistic calculation to perform for numerical data in internal nodes,
+                        [newick, ete]
   --prop2type PROP2TYPE
-                        config tsv file where determine the datatype of target properties,
-                        if your input tree type is .ete, it's note necessary
+                        config tsv file where determine the datatype of target properties, if your
+                        input tree type is .ete, it's note necessary
 
 Pruning parameters:
   Auto pruning parameters
@@ -400,8 +424,8 @@ Conditional display arguments:
   Conditional display parameters
 
   --internal_plot_measure INTERNAL_PLOT_MEASURE
-                        statistic measures to be shown in numerical layout for internal
-                        nodes, [default: avg]
+                        statistic measures to be shown in numerical layout for internal nodes,
+                        [default: avg]
   --collapsed_by COLLAPSED_BY
                         target tree collapsed by customized conditions
   --highlighted_by HIGHLIGHTED_BY
@@ -418,28 +442,42 @@ Basic treelayout arguments:
 Properties' layout arguments:
   Prop layout parameters
 
-  --binary_layout BINARYLAYOUT
-                        <col1,col2> names, column index or index range of columns which
-                        need to be plot as binary_layout
-  --revbinary_layout REVBINARYLAYOUT
-                        <col1,col2> names, column index or index range of columns which
-                        need to be plot as revbinary_layout
-  --colorbranch_layout COLORBRANCHLAYOUT
-                        <col1,col2> names, column index or index range of columns which
-                        need to be plot as Textlayouts
-  --label_layout LABELLAYOUT
-                        <col1,col2> names, column index or index range of columns which
-                        need to be plot as label_layout
-  --rectangular_layout RECTANGULARLAYOUT
-                        <col1,col2> names, column index or index range of columns which
-                        need to be plot as rectangular_layout
-  --heatmap_layout HEATMAPLAYOUT
-                        <col1,col2> names, column index or index range of columns which
-                        need to be read as heatmap_layout
-  --barplot_layout BARPLOTLAYOUT
-                        <col1,col2> names, column index or index range of columns which
-                        need to be read as barplot_layouts
-  --taxon_layout         activate taxon_layout
+  --binary_layout BINARY_LAYOUT
+                        <col1,col2> names, column index or index range of columns which need to be
+                        plot as binary_layout
+  --revbinary_layout REVBINARY_LAYOUT
+                        <col1,col2> names, column index or index range of columns which need to be
+                        plot as revbinary_layout
+  --colorbranch_layout COLORBRANCH_LAYOUT
+                        <col1,col2> names, column index or index range of columns which need to be
+                        plot as Textlayouts
+  --label_layout LABEL_LAYOUT
+                        <col1,col2> names, column index or index range of columns which need to be
+                        plot as label_layout
+  --rectangular_layout RECTANGULAR_LAYOUT
+                        <col1,col2> names, column index or index range of columns which need to be
+                        plot as rectangular_layout
+  --heatmap_layout HEATMAP_LAYOUT
+                        <col1,col2> names, column index or index range of columns which need to be
+                        read as heatmap_layout
+  --barplot_layout BARPLOT_LAYOUT
+                        <col1,col2> names, column index or index range of columns which need to be
+                        read as barplot_layouts
+  --taxonclade_layout   activate taxonclade_layout
+  --taxonrectangular_layout
+                        activate taxonrectangular_layout
+  --emapper_layout      activate emapper_layout
+  --domain_layout       activate domain_layout
+  --alignment_layout    provide alignment file as fasta format
+  --profiling_layout PROFILING_LAYOUT
+                        <col1,col2> names, column index which need to be plot as profiling_layout
+                        for categorical columns
+  --multi_profiling_layout MULTI_PROFILING_LAYOUT
+                        <col1,col2> names, column index which need to be plot as
+                        multi_profiling_layout for multiple values column
+  --numerical_profiling_layout NUMERICAL_PROFILING_LAYOUT
+                        <col1,col2> names, column index which need to be plot as
+                        numerical_profiling_layout for numerical values column
 
 Output arguments:
   Output parameters
@@ -449,6 +487,29 @@ Output arguments:
   --plot PLOT           output as pdf
   --out_colordict       print color dictionary of each property
 ```
+
+Here we use `examples/basic_example1/`, 
+```
+tree examples/basic_example1/
+examples/basic_example1/
+├── basic_example1_null.tsv
+├── basic_example1.nw
+├── basic_example1.tsv
+└── unaligned_NUP62.fasta
+
+head examples/basic_example1/basic_example1.tsv 
+#name	sample1	sample2	sample3	sample4	sample5	random_type	*bool_type	bool_type2
+Phy003I7ZJ_CHICK	0.05	0.12	0.86	0.01	0.69	medium	1	TRUE
+Phy0054BO3_MELGA	0.64	0.67	0.51	0.29	0.14	medium	1	TRUE
+Phy00508FR_NIPNI	0.89	0.38	0.97	0.49	0.26	low	1	FALSE
+Phy004O1E0_APTFO	0.1	0.09	0.38	0.31	0.41	medium	0	TRUE
+
+## annotate tree first
+treeprofiler.py annotate --tree examples/basic_example1/basic_example1.nw --metadata examples/basic_example1/basic_example1.tsv --bool_prop bool_type -o examples/basic_example1/
+```
+
+*if bool value is 1 or 0, treeprofiler will infer it as numerical data, hence we determine it as boolean value by using `--bool_prop` arguments
+
 
 ### Layouts for categorical data
 Users can add the following flag to activate layouts for categorical data
@@ -463,8 +524,7 @@ Users can add the following flag to activate layouts for categorical data
 
 example
 ```
-## annotate tree first
-treeprofiler.py annotate --tree examples/basic_example1/basic_example1.nw --metadata examples/basic_example1/basic_example1.tsv --text_prop random_type --outdir ./examples/basic_example1/
+
 ## target column "random_type" in examples/basic_example1/basic_example1.tsv
 # List random_type feature as text in aligned panel using label_layout
 treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.nw --label_layout random_type 
@@ -474,7 +534,9 @@ treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.nw 
 
 # Label random_type feature with retangular block in aligned panel using --rectangular_layout
 treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.nw  --rectangular_layout random_type 
+
 ```
+
 ### Layouts for boolean data
 Users can add the following flag to activate layouts for Boolean data
 ```
@@ -485,10 +547,6 @@ Users can add the following flag to activate layouts for Boolean data
 ```
 
 ```
-## annotate tree first
-# multiple columns seperated by ','
-treeprofiler.py annotate --tree examples/basic_example1/basic_example1.nw --metadata examples/basic_example1/basic_example1.tsv --bool_prop bool_type,bool_type2 --outdir ./examples/basic_example1/
-
 ## target column "bool_type", "bool_type2" in examples/basic_example1/basic_example1.tsv
 # List postive bool_type feature in aligned panel using binary_layout
 treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.nw  --binary_layout bool_type
@@ -509,23 +567,29 @@ Users can add the following flag to activate layouts for Numerical data
                         <col1,col2> names, column index or index range of columns which need to be read as barplot_layouts
 ```
 ```
-## annotate tree first
-# multiple columns seperated by ','
-treeprofiler.py annotate --tree examples/basic_example1/basic_example1.nw --metadata examples/basic_example1/basic_example1.tsv --num_prop_idx [1-5] --outdir ./examples/basic_example1/
-
 ## target column 'sample[1-5]' feature in examples/basic_example1/basic_example1.tsv
 # visualize sample1 feature in Barplot
 treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.nw  --barplot_layout sample1,sample2,sample3,sample4,sample5
 
 # visualize sample1-sample5 in Heatmap
-#treeprofiler.py plot --tree examples/basic_example1/basic_example1.nw --metadata #examples/basic_example1/basic_example1.tsv --heatmap_layout [1-5]  
+#treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.nw --metadata #examples/basic_example1/basic_example1.tsv --heatmap_layout sample1,sample2,sample3,sample4,sample5
 ```
+
+### Layouts for multiple text data
+
+### Layouts for multiple sequence alignment
+
+### Layouts for eggnog-mapper annotations
+
+### Layouts for eggnog-mapper pfam annotations
+
+### Layouts for eggnog-mapper smart annotations
 
 ### Visualizing annotated internal nodes
 If internal nodes are annotated, TreeProfiler is also able to visualize annotated features automatically when layouts are activated
 
 #### Internal nodes of categorical and boolean data
-As internal nodes of categorical and boolean data are annotated as counter, hence when activating layouts of categorical or boolean data, it generate pipechart of counter summary at the top of each internal node
+As internal nodes of categorical and boolean data are annotated as counter, for categorical data it generates a stacked bar of counter summary at the top of each internal node. And for boolean data, it generates a heatmap where represent positive(or negative) percentage of total data of each internal node.
 
 #### Internal nodes of numerical data
 Internal nodes of numerical data are process descriptive statistic analysis by default, hence when users collapse any branch, barplot_layout or heatmap_layout will demonstrate representative value, `avg` by default. representative value can be changed by using `--internal_plot_measure`
@@ -537,20 +601,20 @@ treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.nw 
 ```
 
 ### Layouts for Taxonomic data
-Activate Taxonomic layout using `--taxon_layout`
+Activate Taxonomic layout using `--taxonclade_layout` or `--taxonrectangular_layout`
 ```
 ## Annotate
 # GTDB
-treeprofiler.py annotate --tree examples/gtdb_example1/gtdb_example1/gtdb_example1.nw --metadata examples/gtdb_example1/gtdb_example1/gtdb_example1.tsv --taxonomic_profile --taxon_column 0 --taxadb GTDB --outdir ./examples/gtdb_example1/
+treeprofiler.py annotate --tree examples/gtdb_example1/gtdb_example1.nw --metadata examples/gtdb_example1/gtdb_example1.tsv --taxon_column name --taxonomic_profile --taxadb GTDB --outdir ./examples/gtdb_example1/
 
 # NCBI
-treeprofiler.py annotate --tree examples/spongilla_example/spongilla_example/spongilla_example.nw --metadata examples/spongilla_example/spongilla_example/spongilla_example.tsv --taxonomic_profile --taxon_column name --taxon_delimiter .  --taxa_field 0 --taxadb NCBI 
---outdir ./examples/spongilla_example/
+treeprofiler.py annotate --tree examples/spongilla_example/spongilla_example.nw --metadata examples/spongilla_example/spongilla_example.tsv --taxonomic_profile --taxon_delimiter .  --taxa_field 0 --taxadb NCBI --outdir ./examples/spongilla_example/
 
 
 ## Visualize 
-treeprofiler.py plot --tree examples/spongilla_example/spongilla_example/gtdb_example1_annotated.ete --tree_type ete --taxon_layout
+treeprofiler.py plot --tree examples/gtdb_example1/gtdb_example1_annotated.nw --taxonrectangular_layout
 
+treeprofiler.py plot --tree examples/spongilla_example/spongilla_example_annotated.nw --taxonclade_layout
 ```
 
 
@@ -587,8 +651,6 @@ All the conditional query shared the same syntax, a standard query consists the 
 
 Example 
 ```
-# annotate all metadata to tree  
-treeprofiler.py annotate --tree examples/basic_example1/basic_example1.nw --metadata examples/basic_example1/basic_example1.tsv --num_prop_idx [1-5] --text_prop random_type --bool_prop bool_type,bool_type2 --counter_stat relative --outdir examples/basic_example1/ 
 # Conditional pruning, prune leaf node whose name contain "FALPE"
 treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.ete --tree_type ete --pruned_by "name contains FALPE"
 
@@ -635,22 +697,19 @@ Prune taxonomic annotated tree based on following taxonomic rank level,
 `kingdom`, `phylum`, `class`, `order`, `family`, `genus`, `species`, `subspecies` 
 ```
 # Case in GTDB
-# prune tree in annotation, rank limit to family level in GTDB database
-treeprofiler.py annotate --tree examples/gtdb_example1/gtdb_example1.nw --metadata examples/gtdb_example1/gtdb_example1.tsv --taxonomic_profile --taxadb GTDB --outdir ./examples/gtdb_example1/
 
 # prune tree in visualization, rank limit to family level
-treeprofiler.py plot --tree examples/gtdb_example1/gtdb_example1_annotated.ete --tree_type ete --rank_limit family --taxon_layout  
+treeprofiler.py plot --tree examples/gtdb_example1/gtdb_example1_annotated.ete --tree_type ete --rank_limit family --taxonclade_layout  
 
 
 # Case in NCBI
-treeprofiler.py annotate --tree examples/spongilla_example/spongilla_example.nw --metadata examples/spongilla_example/spongilla_example.tsv --taxonomic_profile --taxon_column name --taxon_delimiter .  --taxa_field 0 --taxadb NCBI --outdir ./examples/spongilla_example/
 
 # prune tree in visualization, rank limit to phylum level
-treeprofiler.py plot --tree examples/spongilla_example/spongilla_example_annotated.ete --tree_type ete --rank_limit phylum --taxon_layout
+treeprofiler.py plot --tree examples/spongilla_example/spongilla_example_annotated.ete --tree_type ete --rank_limit phylum --taxonclade_layout
 
 ```
 
-## Explore progenome data
+## Case study1: Explore progenome data
 We store progenome v3 data in examples/ directory for exploration,
 
 A glance of metadata
@@ -669,3 +728,5 @@ treeprofiler.py annotate --tree examples/progenome3/progenome3.nw --metadata exa
 treeprofiler.py plot --tree examples/progenome3/progenome3_annotated.ete --tree_type ete
 --barplot_layout GC,size --taxon_layout --binary_layout aquatic_habitat,host_associated,soil_habitat  
 ```
+
+## Case study2: Explore emapper data

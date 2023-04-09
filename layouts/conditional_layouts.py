@@ -127,8 +127,8 @@ class LayoutBinary(TreeLayout):
                 if self.reverse:
                     title = 'ReverseBinary_' + self.bool_prop
                     colormap = {
-                        "True": self.color,
-                        "False" : self.absence_color,
+                        "False": self.color,
+                        "True" : self.absence_color,
                         "NaN": 'white'
                     }
                     tree_style.add_legend(title=title,
