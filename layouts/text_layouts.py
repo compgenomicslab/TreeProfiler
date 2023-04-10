@@ -17,8 +17,12 @@ class LayoutText(TreeLayout):
         self.internal_prop = text_prop+'_counter'
         self.legend = legend
         self.width = width
+        self.height = None
         self.min_fsize = min_fsize 
         self.max_fsize = max_fsize
+        self.absence_color = "#EBEBEB"
+        self.padding_x = 1
+        self.padding_y = 0
 
     # def set_tree_style(self, tree, tree_style):
     #     super().set_tree_style(tree, tree_style)
@@ -68,6 +72,7 @@ class LayoutText(TreeLayout):
             prop_face = RectFace(width=self.width, height=self.height, color=self.absence_color, \
                     padding_x=self.padding_x , padding_y=self.padding_y, tooltip=None)
             node.add_face(prop_face, column=self.column, position="aligned", collapsed_only=True)
+
 class LayoutColorbranch(TreeLayout):
     def __init__(self, name, column, color_dict, text_prop, legend=True):
         super().__init__(name)
@@ -77,6 +82,11 @@ class LayoutColorbranch(TreeLayout):
         self.color_dict = color_dict
         self.internal_prop = text_prop+'_counter'
         self.legend = legend
+        self.height = None
+        self.absence_color = "#EBEBEB"
+        self.width = 70
+        self.padding_x = 1
+        self.padding_y = 0
 
     def set_tree_style(self, tree, tree_style):
         super().set_tree_style(tree, tree_style)

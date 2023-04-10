@@ -530,7 +530,6 @@ def parse_csv(input_files, delimiter='\t', no_colnames=False):
             else:
                 dtype = infer_dtype(columns[prop])
                 prop2type[prop] = dtype # get_type_convert(dtype)
-
     return metadata, node_props, columns, prop2type
 
 def get_type_convert(np_type):
@@ -616,7 +615,7 @@ def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, 
                         taxon_prop = value.split(taxon_delimiter)[-1]
                         target_node.add_prop(key, taxon_prop)
                     # numerical
-                    elif key in prop2type and prop2type[key]==np.float64:
+                    elif key in prop2type and prop2type[key]==float:
                         try:
                             flot_value = float(value)
                             if math.isnan(flot_value):
@@ -1384,7 +1383,6 @@ def tree_plot(args):
             leafa, _, leafb, _ = tree._get_farthest_and_closest_leaves()
             leaf_prop2type = get_prop2type(leafa)
             leaf_prop2type.update(get_prop2type(leafb))
-            
             internal_node_prop2type = get_prop2type(tree)
             prop2type.update(leaf_prop2type)
             prop2type.update(internal_node_prop2type)
