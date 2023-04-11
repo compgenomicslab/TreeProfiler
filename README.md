@@ -1,29 +1,40 @@
 # TreeProfiler Tutorial
 ## Table of Contents
-1. [Introduction](#introduction)
-2. [Installation](#installation)
-3. [Mapping metadata into tree](#mapping-metadata-into-tree) 
-    1. [Simple mapping metadata into leaf nodes](#simple-mapping-metadata-into-leaf-nodes)
-    2. [Mapping Categorical data](#mapping-categorical-data)
-    3. [Mapping Boolean data](#mapping-boolean-data)
-    4. [Mapping Numerical data](#mapping-numerical-data)
-    5. [Mapping metadata without column names](#mapping-metadata-without-column-names)
-    6. [Taxonomic profiling](#taxonomic-profiling)
-        1. [Basic usage on GTDB](#basic-usage-on-GTDB)
-        2. [Basic usage on NCBI](#basic-usage-on-NCBI)
-    7. [Annotated tree format](#annotate-tree-format)
-4. [Visualizing annotated tree with layouts](#visualizing-annotated-tree-with-layouts)
-    1. [Layouts for categorical data](#layouts-for-categorical-data)
-    2. [Layouts for boolean data](#layouts-for-boolean-data)
-    3. [Layouts for numerical data](#layouts-for-numerical-data)
-    4. [Visualizing annotated internal nodes](#visualizing-annotated-internal-nodes)
-    5. [Layouts for Taxonomic data](#layouts-for-taxonomic-data)
-5. [Conditional query in annotated tree](#conditional-query-in-annotated-tree)
-    1. [Basic Query](#basic-query)
-    2. [Query in internal nodes](#query-in-internal-nodes)
-    3. [AND and OR conditions](#and-and-or-conditions)
-    4. [conditional pruning based on taxonomic level](#conditional-pruning-based-on-taxonomic-level)
-
+- [Introduction](#introduction)
+- [Installation](#installation)
+    - [Input files](#input-files)
+    - [Quick Start](#quick-start)
+- [Using TreeProfiler](#using-treeprofiler) 
+  - [Annotate metadata into tree ](#annotate-annotate-metadata-into-tree)
+      - [Annotate metadata into tree internal nodes](#annotate-metadata-into-tree-internal-nodes)
+      - [Determine datatype in arguments](#determine-datatype-in-arguments)
+      - [Mapping metadata without column names](#mapping-metadata-without-column-names)
+      - [Taxonomic profiling](#taxonomic-profiling)
+          - [Basic usage on GTDB](#basic-usage-on-GTDB)
+          - [Basic usage on NCBI](#basic-usage-on-NCBI)
+      - [Annotation from eggnog-mapper output](#annotation-from-eggnog-mapper-output)
+      - [Annotated tree format](#annotate-tree-format)
+  - [Plot annotated tree with layouts](#plot-plot-annotated-tree-with-layouts)
+      - [Layouts for categorical data](#layouts-for-categorical-data)
+      - [Layouts for boolean data](#layouts-for-boolean-data)
+      - [Layouts for numerical data](#layouts-for-numerical-data)
+      - [Layouts for multiple text data](#layouts-for-multiple-text-data)
+      - [Layouts for multiple sequence alignment](#layouts-for-multiple-sequence-alignment)
+      - [Layouts for eggnog-mapper pfam annotations](#layouts-for-eggnog-mapper-pfam-annotations)
+      - [Layouts for eggnog-mapper smart annotations](#layouts-for-eggnog-mapper-smart-annotations)
+      - [Layouts for eggnog-mapper annotations](#layouts-for-eggnog-mapper-annotations)
+      - [Visualizing annotated internal nodes](#visualizing-annotated-internal-nodes)
+        - [Internal nodes of categorical and boolean data](#internal-nodes-of-categorical-and-boolean-data)
+        - [Internal nodes of numerical data](#internal-nodes-of-numerical-data)
+      - [Layouts for Taxonomic data](#layouts-for-taxonomic-data)
+  - [Conditional query in annotated tree](#conditional-query-in-annotated-tree)
+      - [Basic Query](#basic-query)
+      - [Query in internal nodes](#query-in-internal-nodes)
+      - [AND and OR conditions](#and-and-or-conditions)
+      - [Conditional pruning based on taxonomic level](#conditional-limit-based-on-taxonomic-level)
+  - [Demo1 Explore progenome data](#demo1-explore-progenome-data)
+  - [Demo2 Explore eggnog-mapper annotations data with taxonomic annotation](#demo2-explore-eggnog-mapper-annotations-data-with-taxonomic-annotation)
+  - [Demo3 Explore distribution of metallophores data in GTDB taxonomy](#demo3-explore-distribution-of-metallophores-data-in-gtdb-taxonomy)
 ## Introduction
 TreeProfiler is command-line tool for profiling metadata table into phylogenetic tree with descriptive analysis and output visualization
 
@@ -75,7 +86,7 @@ TreeProfiler takes following file types as input
 | Tree     |      Newick    | 
 | Metadata |      TSV       |
 
-### Basic usage
+### Quick Start
 TreeProfiler has two main subcommand:
  - annotate
  - plot
@@ -141,7 +152,7 @@ examples/
     └── spongilla_example.tsv
 ```
 
-## `annotate`, Mapping metadata into tree 
+## `annotate`, Annotate metadata into tree 
 ```
 usage: treeprofiler.py annotate [-h] [-t TREE] [--annotated_tree] [--tree_type TREE_TYPE]
                                 [--prop2type PROP2TYPE] [--rank_limit RANK_LIMIT]
@@ -243,7 +254,7 @@ OUTPUT options:
   --outtsv OUTTSV       output annotated tsv file
 ```
 
-### **Mapping metadata into tree and profile tree internal nodes annotations and analysis**
+### Annotate metadata into tree internal nodes
 At the above example, we only mapped metadata to leaf nodes, in this example, we will also profile **internal nodes** annotation and analysis of their children nodes.
 
 TreeProfiler can infer automatically the datatype of each column in your metadata, including 
@@ -373,7 +384,7 @@ In the following `plot` step, users can use either `.nw` or `.ete` by putting `-
 
  - ete format is a novel format developed to solve the situation we encounter in the previous step, annotated tree can be recover easily with all the annotated data without changing the data type. Besides, the ete format optimized the tree file size after mapped with its associated data. Hence it's very handy for programers in their own script. At this moment we can only view the ete format in treeprofiler, but we will make the ete format more universal to other phylogenetic software.
 
-## `plot`, visualizing annotated tree with layouts
+## `plot`, Plot annotated tree with layouts
 TreeProfiler provides a several of layout options for visualize features in metadata along with tree, depends on their datatype
 ```
 usage: treeprofiler.py plot [-h] [-t TREE] [--annotated_tree] [--tree_type TREE_TYPE]
@@ -875,7 +886,7 @@ treeprofiler.py plot --tree examples/emapper/7955.ENSDARP00000116736_annotated.e
 ![emapper example3](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/emapper_OGs_plot.jpeg?raw=true)
 ![emapper example4](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/emapper_goslims_plot.jpeg?raw=true)
 
-## Demo3 Explore GTDB
+## Demo3 Explore distribution of metallophores data in GTDB taxonomy
 Here we take a glance of `examples/gtdb_example2/taxonomy_and_metallophores.tsv`([Zachary L. Reitz, 2023](https://www.biorxiv.org/content/10.1101/2022.12.14.519525v1.full)). We would like to see distribution of metallophores dataset among bacteria taxonomy 
 
 ```
