@@ -62,6 +62,7 @@ gradientscolor = {
     'r': '#ae4d4d',
     's': '#a23333',
     't': '#971919',
+    '-': "#cccce8",
 }
 
 class LayoutProfile(TreeLayout):
@@ -533,7 +534,6 @@ class ProfileAlignmentFace(Face):
         sm_end = self.seqlength - round(max(sm_x0 + w - viewport_end, 0) / posw)
 
         if too_small or self.seq_format == "[]":
-            
             for start, end in self.blocks:
                 if end >= sm_start and start <= sm_end:
                     bstart = max(sm_start, start)
@@ -548,7 +548,8 @@ class ProfileAlignmentFace(Face):
             sm_x = sm_x if drawer.TYPE == 'rect' else x0
             y, h = get_height(sm_x, y)
             sm_box = Box(sm_x+sm_x0, y, posw * len(seq), h)
-            yield [ f'pixi-gradients', sm_box, seq ]
+            #yield [ f'pixi-gradients', sm_box, seq ]
+            yield ['array', sm_box, [gradientscolor[x] for x in seq] ]
         else:
             seq = self.get_seq(sm_start, sm_end)
             sm_x = sm_x if drawer.TYPE == 'rect' else x0
