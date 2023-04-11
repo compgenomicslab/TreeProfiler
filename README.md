@@ -562,6 +562,10 @@ treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.nw 
 # Label all feature with retangular block in aligned panel using --profiling_layout
 treeprofiler.py plot --tree examples/basic_example2/MCC_FluA_H3_annotated.nw --profiling_layout PB2,PB1,PA,HA,NP,NA,M,NS
 ```
+![label_layout example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_label_layout.jpeg?raw=true)
+![colorbranch_layout example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_colorbranch_layout.jpeg?raw=true)
+![rectangular_layout example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_rectangular_layout.jpeg?raw=true)
+![profiling_layout example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_profiling_layout.jpeg?raw=true)
 
 ### Layouts for boolean data
 Users can add the following flag to activate layouts for Boolean data
@@ -587,6 +591,8 @@ treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.nw 
 treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.nw  --profiling_layout bool_type,bool_type2  
 
 ```
+![binary example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_binary_layout.jpeg?raw=true)
+![revbinary example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_revbinary_layout.jpeg?raw=true)
 
 ### Layouts for Numerical data
 Users can add the following flag to activate layouts for Numerical data
@@ -608,10 +614,13 @@ treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.nw 
 treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.nw --heatmap_layout sample1,sample2,sample3,sample4,sample5
 
 # visualize sample1-sample5 in numerical profiling
-treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.nw --numerical_profiling_layout sample1,sample2,sample3,sample4,sample5
+#treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.nw --numerical_profiling_layout sample1,sample2,sample3,sample4,sample5
 
 treeprofiler.py plot --tree examples/basic_example2/diauxic_annotated.nw --numerical_profiling_layout col1,col2,col3,col4,col5,col6,col7
 ```
+![barplot example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_barplot_layout.jpeg?raw=true)
+![heatmap example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_heatmap_layout.jpeg?raw=true)
+![numerical profiling example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_numerical_profiling_layout.jpeg?raw=true)
 
 ### Layouts for multiple text data
 here we use example in `examples/emapper/`
@@ -639,6 +648,7 @@ As you can see, many columns in metadata are mulitiple value which seperated by 
 # visualize using multi_profiling_layout
 treeprofiler.py plot --tree examples/emapper/7955.ENSDARP00000116736_annotated.ete --tree_type ete --multi_profiling_layout eggNOG_OGs
 ```
+![eggNOG_OGs example3](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/emapper_OGs_plot.jpeg?raw=true)
 
 ### Layouts for multiple sequence alignment
 In order to visualize multiple sequence alignment alongside with the tree, first we need to annotate alignment using `--alignment` in `annotate`. Then activate alignment layout by adding `--alignment_layout` 
@@ -650,6 +660,8 @@ treeprofiler.py annotate --tree examples/basic_example2/MCC_FluA_H3.nw --alignme
 # visualize
 treeprofiler.py plot --tree examples/basic_example2/MCC_FluA_H3_annotated.nw --alignment_layout
 ```
+![alignment example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_alignment_layout.jpeg?raw=true)
+
 ### Layouts for eggnog-mapper pfam annotations
 if metadata is pfam annotations from eggnog-mapper, using `--emapper_pfam` to annotate domain information in target tree and must be with the alignment using `--alignment` to attach corresponding file.
 
@@ -660,6 +672,8 @@ treeprofiler.py annotate --tree examples/emapper/7955.ENSDARP00000116736.nw --em
 
 treeprofiler.py plot --tree examples/emapper/7955.ENSDARP00000116736_annotated.nw --domain_layout
 ```
+![pfam example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_domain_layout.jpeg?raw=true)
+
 ### Layouts for eggnog-mapper smart annotations
 if metadata is smart annotations from eggnog-mapper, using `--emapper_smart` to annotate domain information in target tree and must be with the alignment using `--alignment` to attach corresponding file.
 
@@ -683,12 +697,21 @@ treeprofiler.py annotate --tree examples/emapper/7955.ENSDARP00000116736.nw --em
 
 treeprofiler.py plot --tree examples/emapper/7955.ENSDARP00000116736_annotated.ete --tree_type ete --emapper_layout
 ```
+[Check eggnogmapper example](#demo2-explore-eggnog-mapper-annotations-data-with-taxonomic-annotation)
 
 ### Visualizing annotated internal nodes
 If internal nodes are annotated, TreeProfiler is also able to visualize annotated features automatically when layouts are activated
 
 #### Internal nodes of categorical and boolean data
 As internal nodes of categorical and boolean data are annotated as counter, for categorical data it generates a stacked bar of counter summary at the top of each internal node. And for boolean data, it generates a heatmap where represent positive(or negative) percentage of total data of each internal node.
+
+Before collapsed
+![text_uncollapsed](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_text_uncollapsed.jpeg?raw=true)
+![bool_uncollapsed](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_bool_uncollapsed.jpeg?raw=true)
+
+After collapsed
+![text_collapsed](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_text_collapsed.jpeg?raw=true)
+![bool_collapsed](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_bool_collapsed.jpeg?raw=true)
 
 #### Internal nodes of numerical data
 Internal nodes of numerical data are process descriptive statistic analysis by default, hence when users collapse any branch, barplot_layout or heatmap_layout will demonstrate representative value, `avg` by default. representative value can be changed by using `--internal_plot_measure`
@@ -698,6 +721,14 @@ example
 # select max instead of avg as internal node ploting representative
 treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.nw  --heatmap_layout sample1,sample2,sample3,sample4,sample5 --internal_plot_measure max 
 ```
+Before collapsed
+![heatmap_uncollapsed](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_heatmap_uncollapsed.jpeg?raw=true)
+
+After collapsed
+avg as itnernal plot measure
+![heatmap_collapsed](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_heatmap_collapsed.jpeg?raw=true)
+max as itnernal plot measure
+![heatmap_max_collapsed](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_heatmap_collapsed_max.jpeg?raw=true)
 
 ### Layouts for Taxonomic data
 Activate Taxonomic layout using `--taxonclade_layout` or `--taxonrectangular_layout`
@@ -713,9 +744,10 @@ treeprofiler.py annotate --tree examples/spongilla_example/spongilla_example.nw 
 ## Visualize 
 treeprofiler.py plot --tree examples/gtdb_example1/gtdb_example1_annotated.nw --taxonrectangular_layout
 
-treeprofiler.py plot --tree examples/spongilla_example/spongilla_example_annotated.nw --taxonclade_layout
+treeprofiler.py plot --tree examples/gtdb_example1/gtdb_example1_annotated.nw --taxonclade_layout
 ```
-
+![taxarect_collapsed](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_taxarect.jpeg?raw=true)
+![taxaclade_collapsed](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_taxaclade.jpeg?raw=true)
 
 ## Conditional query in annotated tree
 TreeProfiler allows users to perform conditional process based on different circumstances
@@ -809,7 +841,7 @@ treeprofiler.py plot --tree examples/gtdb_example1/gtdb_example1_annotated.nw  -
 treeprofiler.py plot --tree examples/spongilla_example/spongilla_example_annotated.nw --rank_limit phylum --taxonclade_layout
 ```
 
-## Case study1: Explore progenome data
+## Demo1 Explore progenome data
 We store progenome v3 data in examples/ directory for exploration,
 
 A glance of metadata
@@ -825,8 +857,40 @@ Here we will conduct the profiling with two command line
 treeprofiler.py annotate --tree examples/progenome3/progenome3.nw --metadata examples/progenome3/progenome3.tsv --taxonomic_profile --taxadb NCBI --taxon_delimiter . --taxa_field 0 --num_prop GC,size --bool_prop aquatic_habitat,host_associated,soil_habitat 
 --outdir examples/progenome3/
 
-treeprofiler.py plot --tree examples/progenome3/progenome3_annotated.ete --tree_type ete
---barplot_layout GC,size --taxon_layout --binary_layout aquatic_habitat,host_associated,soil_habitat  
+treeprofiler.py plot --tree examples/progenome3/progenome3_annotated.ete --tree_type ete --barplot_layout GC,size --binary_layout aquatic_habitat,host_associated,soil_habitat --taxonclade_layout 
 ```
 
-## Case study2: Explore emapper data
+![progenome3 example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/progenome_example.jpeg?raw=true)
+
+## Demo2 Explore eggnog-mapper annotations data with taxonomic annotation 
+
+```
+treeprofiler.py annotate --tree examples/emapper/7955.ENSDARP00000116736.nw --emapper_annotations examples/emapper/7955.out.emapper.annotations
+
+treeprofiler.py plot --tree examples/emapper/7955.ENSDARP00000116736_annotated.ete --tree_type ete --emapper_layout 
+```
+
+![emapper example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/emapper_general_plot.jpeg?raw=true)
+![emapper example2](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/emapper_keggpathway_plot.jpeg?raw=true)
+![emapper example3](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/emapper_OGs_plot.jpeg?raw=true)
+![emapper example4](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/emapper_goslims_plot.jpeg?raw=true)
+
+## Demo3 Explore GTDB
+Here we take a glance of `examples/gtdb_example2/taxonomy_and_metallophores.tsv`([Zachary L. Reitz, 2023](https://www.biorxiv.org/content/10.1101/2022.12.14.519525v1.full)). We would like to see distribution of metallophores dataset among bacteria taxonomy 
+
+```
+head examples/gtdb_example2/taxonomy_and_metallophores.tsv
+Assembly	NRP.met	NRPS	HYDROXAMATE	SALICYLATE	OHASP	OHHIS	PYOVERDINE	CATECHOL	GRAMININE	DMAQ	K	P	C	O	F	G
+RS_GCF_000067165.1	2	6	FALSE	FALSE	TRUE	FALSE	FALSE	TRUE	FALSE	FALSEBacteria	Myxococcota	Polyangia	Polyangiales	Polyangiaceae	Sorangium
+RS_GCF_001189295.1	0	12	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSEBacteria	Myxococcota	Polyangia	Polyangiales	Polyangiaceae	Chondromyces  
+```
+
+```
+# annotate tree
+treeprofiler.py annotate --tree examples/gtdb_example2/bac120.tree --metadata examples/gtdb_example2/taxonomy_and_metallophores.tsv -o examples/gtdb_example2/ --taxonomic_profile
+
+# plot tree
+treeprofiler.py plot --tree examples/gtdb_example2/bac120_annotated.ete --tree_type ete --barplot_layout NRP.met,NRPS --binary_layout HYDROXAMATE,SALICYLATE,OHASP,OHHIS,PYOVERDINE,CATECHOL,GRAMININE,DMAQ --rectangular_layout P
+```
+
+![bac120 example4](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/bac120_example.jpeg?raw=true)
