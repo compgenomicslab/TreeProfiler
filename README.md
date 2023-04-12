@@ -32,9 +32,9 @@
       - [Query in internal nodes](#query-in-internal-nodes)
       - [AND and OR conditions](#and-and-or-conditions)
       - [Conditional pruning based on taxonomic level](#conditional-limit-based-on-taxonomic-level)
-  - [Demo1 Explore progenome data](#demo1-explore-progenome-data)
-  - [Demo2 Explore eggnog-mapper annotations data with taxonomic annotation](#demo2-explore-eggnog-mapper-annotations-data-with-taxonomic-annotation)
-  - [Demo3 Explore distribution of metallophores data in GTDB taxonomy](#demo3-explore-distribution-of-metallophores-data-in-gtdb-taxonomy)
+- [Demo1 Explore progenome data](#demo1-explore-progenome-data)
+- [Demo2 Explore eggnog-mapper annotations data with taxonomic annotation](#demo2-explore-eggnog-mapper-annotations-data-with-taxonomic-annotation)
+- [Demo3 Explore distribution of metallophores data in GTDB taxonomy](#demo3-explore-distribution-of-metallophores-data-in-gtdb-taxonomy)
 ## Introduction
 TreeProfiler is command-line tool for profiling metadata table into phylogenetic tree with descriptive analysis and output visualization
 
