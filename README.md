@@ -403,7 +403,7 @@ usage: treeprofiler.py plot [-h] [-t TREE] [--annotated_tree] [--tree_type TREE_
                             [--profiling_layout PROFILING_LAYOUT]
                             [--multi_profiling_layout MULTI_PROFILING_LAYOUT]
                             [--numerical_profiling_layout NUMERICAL_PROFILING_LAYOUT]
-                            [--interactive] [--port PORT] [--plot PLOT] [--out_colordict]
+                            [--port PORT] [--plot PLOT] [--out_colordict]
 
 annotate plot
 

@@ -2270,10 +2270,10 @@ def poplulate_plot_args(plot_args_p):
 
     group = plot_args_p.add_argument_group(title='Output arguments',
         description="Output parameters")
-    group.add_argument('--interactive',
-        default=False,
-        action='store_true',
-        help="run interactive session")
+    # group.add_argument('--interactive',
+    #     default=False,
+    #     action='store_true',
+    #     help="run interactive session")
     group.add_argument('--port',
         type=str,
         default=5000,
