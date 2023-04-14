@@ -258,7 +258,7 @@ class LayoutHeatmap(TreeLayout):
         self.width = width
         self.height = height
         self.padding_x = 1
-        self.padding_y = 0
+        self.padding_y = 1
         self.min_fsize = 5
         self.max_fsize = 15
         
@@ -296,7 +296,7 @@ class LayoutHeatmap(TreeLayout):
                     padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
                
             except ValueError: # for miss data
-                identF = RectFace(width=self.width, height=self.height, text="NaN", color=c1, 
+                identF = RectFace(width=self.width, height=self.height, text="NA", color=c1, 
                 padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
 
             node.add_face(identF, column = self.column,  position = 'aligned')
@@ -314,7 +314,7 @@ class LayoutHeatmap(TreeLayout):
                 identF = RectFace(width=self.width, height=self.height, text="%.2f" % (float(node.props.get(self.internal_prop))), color=gradient_color, 
                     padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
             except ValueError: # for miss data
-                identF = RectFace(width=self.width, height=self.height, text="NaN", color=c1, 
+                identF = RectFace(width=self.width, height=self.height, text="NA", color=c1, 
                 padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
             node.add_face(identF, column = self.column,  position = 'aligned')
 
@@ -331,9 +331,9 @@ class LayoutHeatmap(TreeLayout):
                 identF = RectFace(width=self.width, height=self.height, text="%.2f" % (float(node.props.get(self.internal_prop))), color=gradient_color, 
                     padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
             except ValueError: # for miss data
-                identF = RectFace(width=self.width, height=self.height, text="NaN", color=c1, 
+                identF = RectFace(width=self.width, height=self.height, text="NA", color=c1, 
                 padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
             node.add_face(identF, column = self.column,  position = 'aligned', collapsed_only=True)
-            # identF = RectFace(width=50,height=50,text="NaN", color=c1, 
+            # identF = RectFace(width=50,height=50,text="NA", color=c1, 
             #     padding_x=1, padding_y=1)
             # node.add_face(identF, column = self.column,  position = 'aligned', collapsed_only=True)

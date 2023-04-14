@@ -158,7 +158,7 @@ class LayoutRect(TreeLayout):
 
         if self.legend:
             if self.color_dict:
-                self.color_dict['NaN'] = self.absence_color
+                self.color_dict['NA'] = self.absence_color
                 tree_style.add_legend(title=self.text_prop,
                                     variable='discrete',
                                     colormap=self.color_dict
@@ -166,7 +166,7 @@ class LayoutRect(TreeLayout):
             else:
                 tree_style.add_legend(title=self.text_prop,
                                     variable='discrete',
-                                    colormap={'NaN':self.absence_color}
+                                    colormap={'NA':self.absence_color}
                                     )
     def set_node_style(self, node):
         if node.is_leaf():
@@ -189,7 +189,7 @@ class LayoutRect(TreeLayout):
                     node.add_face(prop_face, column=self.column, position="aligned")
             else:
                 #prop_face = CircleFace(radius=self.radius, color='grey', padding_x=self.padding_x, padding_y=self.padding_y)
-                prop_face = RectFace(width=self.width, height=self.height, color=self.absence_color, \
+                prop_face = RectFace(width=self.width, height=self.height, text="NA", color=self.absence_color, \
                         padding_x=self.padding_x , padding_y=self.padding_y, tooltip=None)
                 node.add_face(prop_face, column=self.column, position="aligned")
         
