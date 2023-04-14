@@ -661,11 +661,11 @@ def merge_text_annotations(nodes, target_props, counter_stat='raw'):
     internal_props = {}
     for target_prop in target_props:
         if counter_stat == 'raw':
-            prop_list = children_prop_array(nodes, target_prop)
+            prop_list = children_prop_array_missing(nodes, target_prop)
             internal_props[add_suffix(target_prop, 'counter')] = item_seperator.join([add_suffix(str(key), value, pair_seperator) for key, value in sorted(dict(Counter(prop_list)).items())])
 
         elif counter_stat == 'relative':
-            prop_list = children_prop_array(nodes, target_prop)
+            prop_list = children_prop_array_missing(nodes, target_prop)
             counter_line = []
 
             total = sum(dict(Counter(prop_list)).values())
@@ -793,7 +793,13 @@ def add_suffix(name, suffix, delimiter='_'):
     return str(name) + delimiter + str(suffix)
 
 def children_prop_array(nodes, prop):
-    array = [n.props.get(prop) for n in nodes if n.props.get(prop)] 
+    #array = [n.props.get(prop) if n.props.get(prop) else 'NaN' for n in nodes] 
+    array = [n.props.get(prop) for n in nodes if n.props.get(prop) ] 
+    return array
+
+def children_prop_array_missing(nodes, prop):
+    array = [n.props.get(prop) if n.props.get(prop) else 'NaN' for n in nodes] 
+    #array = [n.props.get(prop) for n in nodes if n.props.get(prop) ] 
     return array
 
 def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field=0):
@@ -1890,7 +1896,6 @@ def get_layouts(argv_inputs, layout_name, level, internal_rep, prop2type=None):
                     color_dict[prop_values[i]] = paried_color[i]
                 else:
                     color_dict[prop_values[i]] = random_color(h=None)
-            
             if layout_name == 'label':
                 #longest_val =  len(max(prop_values, key = len))
                 layout = text_layouts.LayoutText('Label_'+prop, level, color_dict, 
