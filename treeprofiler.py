@@ -2220,12 +2220,12 @@ def poplulate_plot_args(plot_args_p):
     group.add_argument('--barplot_width',
         type=int,
         default=200,
-        help="customize barplot width of each layout."
+        help="customize barplot width of barplot layout."
     )
     group.add_argument('--profiling_width',
         type=int,
         default=1000,
-        help="customize barplot width of each layout."
+        help="customize profiling width of each profiling layout."
     )
     group.add_argument('--binary_layout',
         type=lambda s: [item for item in s.split(',')],
