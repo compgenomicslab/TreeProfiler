@@ -68,16 +68,6 @@ cd MetaTreeDrawer/
 export PATH=$PATH:$(pwd)
 ```
 
-if user wanted to annotate GO terms information from eggNOG-mapper output, TreeProfiler will parse GO terms into GO slim terms via `goslim_list.R`, which requires to install the following packages:
-
-```
-if (!require("BiocManager", quietly = TRUE))
-    install.packages("BiocManager")
-
-BiocManager::install("GSEABase")
-BiocManager::install("GO.db")
-```
-
 ### Input files
 TreeProfiler takes following file types as input 
 
@@ -884,7 +874,6 @@ treeprofiler.py plot --tree examples/emapper/7955.ENSDARP00000116736_annotated.e
 ![emapper example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/emapper_general_plot.jpeg?raw=true)
 ![emapper example2](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/emapper_keggpathway_plot.jpeg?raw=true)
 ![emapper example3](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/emapper_OGs_plot.jpeg?raw=true)
-![emapper example4](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/emapper_goslims_plot.jpeg?raw=true)
 
 ## Demo3 Explore distribution of metallophores data in GTDB taxonomy
 Here we take a glance of `examples/gtdb_example2/taxonomy_and_metallophores.tsv`([Zachary L. Reitz, 2023](https://www.biorxiv.org/content/10.1101/2022.12.14.519525v1.full)). We would like to see distribution of metallophores dataset among bacteria taxonomy 
