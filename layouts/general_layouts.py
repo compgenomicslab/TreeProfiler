@@ -41,18 +41,23 @@ def color_gradient(c1, c2, mix=0):
     c2 = np.array(mpl.colors.to_rgb(c2))
     return mpl.colors.to_hex((1-mix)*c1 + mix*c2)
 
-def get_heatmapface(node, prop, min_color="#ffffff", max_color="#971919", tooltip=None, width=70, height=None, padding_x=1, padding_y=1):
+def get_heatmapface(node, prop, min_color="#ffffff", max_color="#971919", tooltip=None, width=70, height=None, padding_x=1, padding_y=1, count_missing=True):
     counter_props = node.props.get(prop).split('||')
-    
     total = 0
     positive = 0
     for counter_prop in counter_props:
         k, v = counter_prop.split('--')
-        if not check_nan(k):
-            total += float(v) # here doesn't consider missing data in total
-            if strtobool(k):
-                positive = float(v)
-        #total += float(v) # here consider missing data in total
+        if count_missing:
+            if not check_nan(k):
+                if strtobool(k):
+                    positive = float(v)
+            total += float(v) # here consider missing data in total
+        else:
+            if not check_nan(k):
+                total += float(v) # here doesn't consider missing data in total
+                if strtobool(k):
+                    positive = float(v)
+            
     total = int(total)
     if total != 0:
         ratio = positive / total
@@ -97,10 +102,11 @@ def get_stackedbarface(node, prop, colour_dict=None, width=70, height=None, tool
     pair_delimiter = "--"
     item_seperator = "||"
     stackedbar_data = []
+    absence_color = "#EBEBEB"
     counter_props = node.props.get(prop).split(item_seperator)
     for counter_prop in counter_props:
         k, v = counter_prop.split(pair_delimiter)
-        stackedbar_data.append([k,float(v),colour_dict.get(k,None),None])
+        stackedbar_data.append([k,float(v),colour_dict.get(k,absence_color),None])
         
     if stackedbar_data:
         # tooltip = ""

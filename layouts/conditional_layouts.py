@@ -93,7 +93,7 @@ from utils import check_nan
 
 class LayoutBinary(TreeLayout):
     def __init__(self, name=None, level=1, color='#E60A0A', prop_colour_dict=None, \
-        bool_prop=None, reverse=False, radius=25, padding_x=1, padding_y=0, legend=True):
+        bool_prop=None, reverse=False, radius=25, padding_x=1, padding_y=1, width=70, legend=True):
         super().__init__(name)
         self.aligned_faces = True
         self.bool_prop = bool_prop
@@ -107,7 +107,7 @@ class LayoutBinary(TreeLayout):
         self.padding_x = padding_x
         self.padding_y = padding_y
         self.legend = legend
-        self.width = 70
+        self.width = width
         self.height = None
         self.min_fsize = 5
         self.max_fsize = 10
@@ -129,7 +129,7 @@ class LayoutBinary(TreeLayout):
                     colormap = {
                         "False": self.color,
                         "True" : self.absence_color,
-                        "NaN": 'white'
+                        "NA": 'white'
                     }
                     tree_style.add_legend(title=title,
                                         variable='discrete',
@@ -140,7 +140,7 @@ class LayoutBinary(TreeLayout):
                     colormap = {
                         "True": self.color,
                         "False" : self.absence_color,
-                        "NaN": 'white'
+                        "NA": 'white'
                     }
                     tree_style.add_legend(title=title,
                                         variable='discrete',
@@ -153,38 +153,42 @@ class LayoutBinary(TreeLayout):
                 
 
     def set_node_style(self, node):
-        if node.is_leaf() and node.props.get(self.bool_prop):
-            prop_bool = node.props.get(self.bool_prop)
-            
-            if not check_nan(prop_bool):
-                str2bool = strtobool(prop_bool)
-                tooltip = ""
-                if node.name:
-                    tooltip += f'<b>{node.name}</b><br>'
-                if self.bool_prop:
-                    tooltip += f'<br>{self.bool_prop}: {node.props.get(self.bool_prop)}<br>'
+        if node.is_leaf():
+            if node.props.get(self.bool_prop):
+                prop_bool = node.props.get(self.bool_prop)
+                
+                if not check_nan(prop_bool):
+                    str2bool = strtobool(prop_bool)
+                    tooltip = ""
+                    if node.name:
+                        tooltip += f'<b>{node.name}</b><br>'
+                    if self.bool_prop:
+                        tooltip += f'<br>{self.bool_prop}: {node.props.get(self.bool_prop)}<br>'
 
-                if self.reverse:
-                    if not bool(str2bool):
-                        
-                        #prop_face = CircleFace(radius=self.radius, color=self.color, padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
-                        prop_face = RectFace(width=self.width, height=self.height, color=self.color,  padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
-                        node.add_face(prop_face, column=self.column, position = "aligned")
+                    if self.reverse:
+                        if not bool(str2bool):
+                            
+                            #prop_face = CircleFace(radius=self.radius, color=self.color, padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
+                            prop_face = RectFace(width=self.width, height=self.height, color=self.color,  padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
+                            node.add_face(prop_face, column=self.column, position = "aligned")
+                        else:
+                            #prop_face = CircleFace(radius=self.radius, color=self.absence_color, padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
+                            prop_face = RectFace(width=self.width, height=self.height, color=self.absence_color,  padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
+                            node.add_face(prop_face, column=self.column, position = "aligned")
                     else:
-                        #prop_face = CircleFace(radius=self.radius, color=self.absence_color, padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
-                        prop_face = RectFace(width=self.width, height=self.height, color=self.absence_color,  padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
-                        node.add_face(prop_face, column=self.column, position = "aligned")
-                else:
-                    if bool(str2bool):
-                        #prop_face = CircleFace(radius=self.radius, color=self.color, padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
-                        prop_face = RectFace(width=self.width, height=self.height, color=self.color,  padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
-                        node.add_face(prop_face, column=self.column, position = "aligned")
-                    else:
-                        #prop_face = CircleFace(radius=self.radius, color=self.absence_color, padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
-                        prop_face = RectFace(width=self.width, height=self.height, color=self.absence_color,  padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
-                        node.add_face(prop_face, column=self.column, position = "aligned")
+                        if bool(str2bool):
+                            #prop_face = CircleFace(radius=self.radius, color=self.color, padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
+                            prop_face = RectFace(width=self.width, height=self.height, color=self.color,  padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
+                            node.add_face(prop_face, column=self.column, position = "aligned")
+                        else:
+                            #prop_face = CircleFace(radius=self.radius, color=self.absence_color, padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
+                            prop_face = RectFace(width=self.width, height=self.height, color=self.absence_color,  padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
+                            node.add_face(prop_face, column=self.column, position = "aligned")
+                else: #mising
+                    prop_face = RectFace(width=self.width, height=self.height, text="NA", color=self.absence_color,  padding_x=self.padding_x, padding_y=self.padding_y, stroke_color=self.absence_color, tooltip=None)
+                    node.add_face(prop_face, column=self.column, position = "aligned")
             else:
-                prop_face = RectFace(width=self.width, height=self.height, color='white', padding_x=self.padding_x, padding_y=self.padding_y, stroke_color=self.absence_color, tooltip=None)
+                prop_face = RectFace(width=self.width, height=self.height, text="NA", color=self.absence_color,  padding_x=self.padding_x, padding_y=self.padding_y, stroke_color=self.absence_color, tooltip=None)
                 node.add_face(prop_face, column=self.column, position = "aligned")
         
         elif node.is_leaf() and node.props.get(self.internal_prop):
@@ -194,7 +198,9 @@ class LayoutBinary(TreeLayout):
         elif node.props.get(self.internal_prop):
             heatmapFace = get_heatmapface(node, self.internal_prop, max_color=self.color, width=self.width, height=self.height)
             node.add_face(heatmapFace, column = self.column, position = "aligned", collapsed_only=True)
-
+        # else:
+        #     prop_face = RectFace(width=self.width, height=self.height, text="NA", color=self.absence_color,  padding_x=self.padding_x, padding_y=self.padding_y, stroke_color=self.absence_color, tooltip=None)
+        #     node.add_face(prop_face, column=self.column, position = "aligned")
 
 # hightlighted as rectangular
 

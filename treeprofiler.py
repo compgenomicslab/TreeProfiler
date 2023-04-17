@@ -661,11 +661,11 @@ def merge_text_annotations(nodes, target_props, counter_stat='raw'):
     internal_props = {}
     for target_prop in target_props:
         if counter_stat == 'raw':
-            prop_list = children_prop_array(nodes, target_prop)
+            prop_list = children_prop_array_missing(nodes, target_prop)
             internal_props[add_suffix(target_prop, 'counter')] = item_seperator.join([add_suffix(str(key), value, pair_seperator) for key, value in sorted(dict(Counter(prop_list)).items())])
 
         elif counter_stat == 'relative':
-            prop_list = children_prop_array(nodes, target_prop)
+            prop_list = children_prop_array_missing(nodes, target_prop)
             counter_line = []
 
             total = sum(dict(Counter(prop_list)).values())
@@ -793,7 +793,13 @@ def add_suffix(name, suffix, delimiter='_'):
     return str(name) + delimiter + str(suffix)
 
 def children_prop_array(nodes, prop):
-    array = [n.props.get(prop) for n in nodes if n.props.get(prop)] 
+    #array = [n.props.get(prop) if n.props.get(prop) else 'NaN' for n in nodes] 
+    array = [n.props.get(prop) for n in nodes if n.props.get(prop) ] 
+    return array
+
+def children_prop_array_missing(nodes, prop):
+    array = [n.props.get(prop) if n.props.get(prop) else 'NaN' for n in nodes] 
+    #array = [n.props.get(prop) for n in nodes if n.props.get(prop) ] 
     return array
 
 def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field=0):
@@ -1207,16 +1213,6 @@ def goslim_annotation(gos_input, relative=True):
                     all_golsims_dict[entry] = single_desc
     return output_dict, all_golsims_dict 
 
-# def goslim_annotation(gos_input):
-#     goslim_script = os.path.join(os.path.dirname(__file__), 'goslim_list.R')
-#     output = subprocess.check_output([goslim_script,gos_input])
-#     output = output.decode('utf-8').split('\n')
-#     output = list(filter(None, output))[0].split(' \t ')
-#     if output[1] != '-':
-#         return output
-#     else:
-#         return None
-
 def multiple2profile(tree, profiling_prop):
     all_values = sorted(list(set(flatten(children_prop_array(tree, profiling_prop)))))
     presence = 'D' # #E60A0A red
@@ -1302,6 +1298,7 @@ def props2matrix(tree, profiling_props, dtype=float):
     # gain all values from metadata
     if dtype == float:
         all_values = list(set(flatten([sublist for sublist in leaf2matrix.values()])))
+        all_values = list(filter(lambda x: x is not None and not math.isnan(x), all_values))
         maxval = max(all_values)
         minval = min(all_values)
         num = len(gradients)
@@ -1312,9 +1309,12 @@ def props2matrix(tree, profiling_props, dtype=float):
             matrix += '\n'+'>'+leaf+'\n'
             for i in range(len(prop)):
                 search_value = prop[i]
-                # Find the index of the closest element to the search value
-                index = np.abs(values - search_value).argmin()
-                matrix += gradients[index]
+                if search_value:
+                    # Find the index of the closest element to the search value
+                    index = np.abs(values - search_value).argmin()
+                    matrix += gradients[index]
+                else:
+                    matrix += '-'
         return matrix, maxval, minval
     
     elif dtype == str:
@@ -1426,6 +1426,7 @@ def tree_plot(args):
     
     for layout in input_order:
         if layout == 'heatmap_layout':
+            column_width = args.column_width
             props = []
             for i in args.heatmap_layout:
                 props.append(i)
@@ -1435,8 +1436,9 @@ def tree_plot(args):
                 prop_values = np.array(list(set(children_prop_array(tree, prop)))).astype('float64')
                 prop_values = prop_values[~np.isnan(prop_values)]
                 minval, maxval = prop_values.min(), prop_values.max()
-                layout =  staple_layouts.LayoutHeatmap(name='Heatmap_'+prop, column=level, \
-                                    internal_rep=internal_num_rep, prop=prop, maxval=maxval, minval=minval)
+                layout =  staple_layouts.LayoutHeatmap(name='Heatmap_'+prop, column=level, 
+                                    width=column_width, internal_rep=internal_num_rep, 
+                                    prop=prop, maxval=maxval, minval=minval)
                 heatmap_layouts.append(layout)
                 level += 1
                 popup_prop_keys.append(prop)
@@ -1446,32 +1448,34 @@ def tree_plot(args):
             layouts.extend(heatmap_layouts)
 
         if layout == 'colorbranch_layout':
-            colorbranch_layouts, level, color_dict = get_layouts(args.colorbranch_layout, 'colorbranch', level, 'counter', prop2type=prop2type)
+            colorbranch_layouts, level, color_dict = get_layouts(args.colorbranch_layout, 'colorbranch',  
+                                                                level, 'counter', prop2type=prop2type, 
+                                                                column_width=args.column_width)
             layouts.extend(colorbranch_layouts)
             total_color_dict.append(color_dict)
 
         if layout == 'label_layout':
-            label_layouts, level, color_dict = get_layouts(args.label_layout, 'label', level, 'counter', prop2type=prop2type)
+            label_layouts, level, color_dict = get_layouts(args.label_layout, 'label', level, 'counter', prop2type=prop2type, column_width=args.column_width)
             layouts.extend(label_layouts)
             total_color_dict.append(color_dict)
 
         if layout == 'rectangular_layout':
-            rectangular_layouts, level, color_dict = get_layouts(args.rectangular_layout, 'rectangular', level, 'counter', prop2type=prop2type)
+            rectangular_layouts, level, color_dict = get_layouts(args.rectangular_layout, 'rectangular', level, 'counter', prop2type=prop2type, column_width=args.column_width)
             layouts.extend(rectangular_layouts)
             total_color_dict.append(color_dict)
 
         if layout == 'binary_layout':
-            label_layouts, level, color_dict = get_layouts(args.binary_layout, 'binary', level, 'counter')
+            label_layouts, level, color_dict = get_layouts(args.binary_layout, 'binary', level, 'counter', column_width=args.column_width)
             layouts.extend(label_layouts)
             total_color_dict.append(color_dict)
 
         if layout == 'revbinary_layout':
-            label_layouts, level, color_dict = get_layouts(args.revbinary_layout, 'revbinary', level, 'counter')
+            label_layouts, level, color_dict = get_layouts(args.revbinary_layout, 'revbinary', level, 'counter', column_width=args.column_width)
             layouts.extend(label_layouts)
             total_color_dict.append(color_dict)
         
         if layout == 'barplot_layout':
-            barplot_layouts, level,color_dict = get_layouts(args.barplot_layout, 'barplot', level, internal_num_rep, prop2type=prop2type)
+            barplot_layouts, level,color_dict = get_layouts(args.barplot_layout, 'barplot', level, internal_num_rep, prop2type=prop2type, column_width=args.barplot_width)
             layouts.extend(barplot_layouts)
             total_color_dict.append(color_dict)
 
@@ -1491,7 +1495,7 @@ def tree_plot(args):
             profiling_props = args.profiling_layout
             matrix = props2matrix(tree, profiling_props, dtype=str)
             profile_layout = profile_layouts.LayoutProfile(name='profiling_layout', mode='simple',
-                alignment=matrix, profiles=profiling_props, column=level)
+                alignment=matrix, profiles=profiling_props, column=level, width=args.profiling_width)
             level += 1
             layouts.append(profile_layout)
 
@@ -1500,7 +1504,7 @@ def tree_plot(args):
             for profiling_prop in profiling_props:
                 matrix, all_values = multiple2profile(tree, profiling_prop)
                 profile_layout = profile_layouts.LayoutProfile(name=profiling_prop, mode='multi',
-                alignment=matrix, profiles=all_values, column=level, summarize_inner_nodes=False)
+                alignment=matrix, profiles=all_values, column=level, summarize_inner_nodes=False, width=args.profiling_width)
                 level += 1
                 layouts.append(profile_layout)
         
@@ -1508,8 +1512,8 @@ def tree_plot(args):
             profiling_props = args.numerical_profiling_layout
             matrix, maxval, minval = props2matrix(tree, profiling_props)
             #profile_layout = TreeLayout(name='numerical_profiling_layout', ns=get_alnface(alignment, level), aligned_faces = True)
-            profile_layout = profile_layouts.LayoutProfile(name='numerical_profiling_layout', mode='numerical',
-                alignment=matrix, seq_format='gradients', profiles=profiling_props, value_range=[minval, maxval],column=level)
+            profile_layout = profile_layouts.LayoutProfile(name='numerical_profiling_layout', mode='numerical', 
+                alignment=matrix, seq_format='gradients', profiles=profiling_props, value_range=[minval, maxval], column=level, width=args.profiling_width)
             level += 1
             layouts.append(profile_layout)
 
@@ -1553,59 +1557,64 @@ def tree_plot(args):
         ]
         
         for multiple_text_prop in multiple_text_props:
-            if multiple_text_prop == 'GOs':
-                pair_seperator = "--"
-                item_seperator = "||"
-                target_prop = 'GOslims'
-                gos_input = os.path.join(os.path.dirname(__file__) + 'gos_input.tsv')
-                node2leaves = tree.get_cached_content()
+            matrix, all_values = multiple2profile(tree, multiple_text_prop)
+            multiple_text_prop_layout = profile_layouts.LayoutProfile(name=multiple_text_prop, 
+            alignment=matrix, profiles=all_values, column=level)
+            level += 1
+            layouts.append(multiple_text_prop_layout)
+            # if multiple_text_prop == 'GOs':
+            #     pair_seperator = "--"
+            #     item_seperator = "||"
+            #     target_prop = 'GOslims'
+            #     gos_input = os.path.join(os.path.dirname(__file__) + 'gos_input.tsv')
+            #     node2leaves = tree.get_cached_content()
 
-                # run goslim_list.r to retrieve goslims
-                with open(gos_input, 'w') as f:
-                    for leaf in tree.iter_leaves():
-                        if leaf.props.get(multiple_text_prop):
-                            go_prop = ','.join(leaf.props.get(multiple_text_prop))
-                            line = leaf.name + "\t" + go_prop + "\n"
-                            f.write(line)
+            #     # run goslim_list.r to retrieve goslims
+            #     with open(gos_input, 'w') as f:
+            #         for leaf in tree.iter_leaves():
+            #             if leaf.props.get(multiple_text_prop):
+            #                 go_prop = ','.join(leaf.props.get(multiple_text_prop))
+            #                 line = leaf.name + "\t" + go_prop + "\n"
+            #                 f.write(line)
                 
-                output, all_golsims = goslim_annotation(gos_input)
+            #     output, all_golsims = goslim_annotation(gos_input)
 
-                # load to leaves
-                for leaf in tree.iter_leaves():
-                    leaf_goslim = output.get(leaf.name,'')
-                    if leaf_goslim:
-                        leaf.add_prop(target_prop, leaf_goslim[0])
+            #     # load to leaves
+            #     for leaf in tree.iter_leaves():
+            #         leaf_goslim = output.get(leaf.name,'')
+            #         if leaf_goslim:
+            #             leaf.add_prop(target_prop, leaf_goslim[0])
 
-                # sum to parent nodes
-                for node in tree.traverse("postorder"):
-                    if node.is_leaf():
-                        pass
-                    else:
-                        prop_list = children_prop_array(node2leaves[node], target_prop)
-                        multi_prop_list = []
-                        for elements in prop_list:
-                            for j in elements:
-                                multi_prop_list.append(j)
-                        node.add_prop(add_suffix(target_prop, 'counter'), item_seperator.join([add_suffix(str(key), value, pair_seperator) for key, value in sorted(dict(Counter(multi_prop_list)).items())]))
+            #     # sum to parent nodes
+            #     for node in tree.traverse("postorder"):
+            #         if node.is_leaf():
+            #             pass
+            #         else:
+            #             prop_list = children_prop_array(node2leaves[node], target_prop)
+            #             multi_prop_list = []
+            #             for elements in prop_list:
+            #                 for j in elements:
+            #                     multi_prop_list.append(j)
+            #             node.add_prop(add_suffix(target_prop, 'counter'), item_seperator.join([add_suffix(str(key), value, pair_seperator) for key, value in sorted(dict(Counter(multi_prop_list)).items())]))
 
-                # ouput to layouts 
-                for entry, desc in all_golsims.items():
-                    if entry != '-':
-                        golayout = profile_layouts.LayoutGOslim(name=f'GOslims:{desc}({entry})', column=level,
-                                            go_propfile=[entry, desc], goslim_prop=target_prop, padding_x=2, 
-                                            padding_y=2, legend=True)
-                        level+=1
-                        layouts.append(golayout)
-                popup_prop_keys.append('GOslims')
-                popup_prop_keys.append(add_suffix(target_prop, 'counter'))
+            #     # ouput to layouts 
+            #     for entry, desc in all_golsims.items():
+            #         if entry != '-':
+            #             golayout = profile_layouts.LayoutGOslim(name=f'GOslims:{desc}({entry})', column=level,
+            #                                 go_propfile=[entry, desc], goslim_prop=target_prop, padding_x=2, 
+            #                                 padding_y=2, legend=True)
+            #             level+=1
+            #             layouts.append(golayout)
+            #     popup_prop_keys.append('GOslims')
+            #     popup_prop_keys.append(add_suffix(target_prop, 'counter'))
 
-            else:
-                matrix, all_values = multiple2profile(tree, multiple_text_prop)
-                multiple_text_prop_layout = profile_layouts.LayoutProfile(name=multiple_text_prop, 
-                alignment=matrix, profiles=all_values, column=level)
-                level += 1
-                layouts.append(multiple_text_prop_layout)
-                
+            # else:
+            #     matrix, all_values = multiple2profile(tree, multiple_text_prop)
+            #     multiple_text_prop_layout = profile_layouts.LayoutProfile(name=multiple_text_prop, 
+            #     alignment=matrix, profiles=all_values, column=level)
+            #     level += 1
+            #     layouts.append(multiple_text_prop_layout)
+            
     # Taxa layouts
     if args.taxonclade_layout or args.taxonrectangular_layout:
         taxon_color_dict = {}
@@ -1807,11 +1816,10 @@ def wrtie_color(color_dict):
                     f.write('\n')
     return
 
-def get_layouts(argv_inputs, layout_name, level, internal_rep, prop2type=None): 
+def get_layouts(argv_inputs, layout_name, level, internal_rep, prop2type=None, column_width=70): 
     props = []
     layouts = []
     prop_color_dict = {} # key = value, value = color id
-
     # identify range [1-5], index 1,2,3 and column names
     for i in argv_inputs:
         if i[0] == '[' and i[-1] == ']':
@@ -1844,7 +1852,6 @@ def get_layouts(argv_inputs, layout_name, level, internal_rep, prop2type=None):
             
             color = random_color(h=None)
             if layout_name == 'binary':
-                #print("here", color)
                 layout = conditional_layouts.LayoutBinary('Binary_'+prop, level, color, color_dict, prop, reverse=False)
 
             elif layout_name == 'revbinary':
@@ -1868,9 +1875,10 @@ def get_layouts(argv_inputs, layout_name, level, internal_rep, prop2type=None):
             else:
                 barplot_color = paried_color[level]
             
-            layout =  staple_layouts.LayoutBarplot(name='Barplot_'+prop, prop=prop, \
-                                        color=barplot_color, size_prop=size_prop, 
-                                        column=level, internal_rep=internal_rep
+            layout =  staple_layouts.LayoutBarplot(name='Barplot_'+prop, prop=prop, 
+                                        width=column_width, color=barplot_color, 
+                                        size_prop=size_prop, column=level, 
+                                        internal_rep=internal_rep,
                                         )
 
             prop_color_dict[prop] = barplot_color
@@ -1890,18 +1898,20 @@ def get_layouts(argv_inputs, layout_name, level, internal_rep, prop2type=None):
                     color_dict[prop_values[i]] = paried_color[i]
                 else:
                     color_dict[prop_values[i]] = random_color(h=None)
-            
             if layout_name == 'label':
                 #longest_val =  len(max(prop_values, key = len))
-                layout = text_layouts.LayoutText('Label_'+prop, level, color_dict, 
-                                                text_prop = prop)
+                layout = text_layouts.LayoutText(name='Label_'+prop, column=level, \
+                    color_dict=color_dict, text_prop=prop, width=column_width)
                 #layout = TreeLayout(name=prop+'_'+layout_name, ns=text_layouts.text_layout(prop, level, color_dict, internal_rep))
             
             elif layout_name == 'rectangular':
-                layout = text_layouts.LayoutRect('Rectangular_'+prop, level, color_dict, text_prop = prop)
+                layout = text_layouts.LayoutRect(name='Rectangular_'+prop, column=level,  \
+                    color_dict=color_dict, text_prop=prop,\
+                    width=column_width)
             
             elif layout_name == 'colorbranch':
-                layout = text_layouts.LayoutColorbranch('Colorbranch_'+prop, level, color_dict, text_prop = prop)
+                layout = text_layouts.LayoutColorbranch(name='Colorbranch_'+prop, column=level, \
+                    color_dict=color_dict, text_prop=prop, width=column_width)
             
             prop_color_dict[prop] = color_dict
         
@@ -2202,7 +2212,21 @@ def poplulate_plot_args(plot_args_p):
 
     group = plot_args_p.add_argument_group(title="Properties' layout arguments",
         description="Prop layout parameters")
-    
+    group.add_argument('--column_width',
+        type=int,
+        default=70,
+        help="customize column width of each layout."
+    )
+    group.add_argument('--barplot_width',
+        type=int,
+        default=200,
+        help="customize barplot width of each layout."
+    )
+    group.add_argument('--profiling_width',
+        type=int,
+        default=1000,
+        help="customize barplot width of each layout."
+    )
     group.add_argument('--binary_layout',
         type=lambda s: [item for item in s.split(',')],
         required=False,
@@ -2247,10 +2271,6 @@ def poplulate_plot_args(plot_args_p):
         default=False,
         action='store_true',
         help="activate domain_layout") #domain_layout
-    # group.add_argument('--alignment_layout',
-    #     type=str,
-    #     required=False,
-    #     help="provide alignment file as fasta format")
     group.add_argument('--alignment_layout',
         default=False,
         action='store_true',
@@ -2270,10 +2290,10 @@ def poplulate_plot_args(plot_args_p):
 
     group = plot_args_p.add_argument_group(title='Output arguments',
         description="Output parameters")
-    group.add_argument('--interactive',
-        default=False,
-        action='store_true',
-        help="run interactive session")
+    # group.add_argument('--interactive',
+    #     default=False,
+    #     action='store_true',
+    #     help="run interactive session")
     group.add_argument('--port',
         type=str,
         default=5000,
