@@ -443,14 +443,6 @@ Conditional display arguments:
   --highlighted_by HIGHLIGHTED_BY
                         target tree highlighted by customized conditions
 
-Basic treelayout arguments:
-  treelayout parameters
-
-  --drawer DRAWER       Circular or Rectangular
-  --collapse_level COLLAPSE_LEVEL
-                        default collapse level, default is 10
-  --ultrametric         ultrametric tree
-
 Properties' layout arguments:
   Prop layout parameters
 
@@ -503,7 +495,6 @@ Properties' layout arguments:
 
 Output arguments:
   Output parameters
-
   --port PORT           run interactive session on custom port
   --plot PLOT           output as pdf
   --out_colordict       print color dictionary of each property

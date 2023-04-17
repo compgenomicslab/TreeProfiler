@@ -1673,7 +1673,7 @@ def tree_plot(args):
     # elif args.plot:
     #     plot(tree, layouts, args.port, args.plot)
     if args.plot:
-        get_image(tree, layouts, args.port, args.plot)
+        get_image(tree, layouts, args.port, os.path.abspath(args.plot))
     else:
         tree.explore(tree_name='example',layouts=layouts, port=args.port, popup_prop_keys=sorted(popup_prop_keys))
     
@@ -2193,22 +2193,22 @@ def poplulate_plot_args(plot_args_p):
         action='append',
         help='target tree highlighted by customized conditions')
         
-    group = plot_args_p.add_argument_group(title='Basic treelayout arguments',
-        description="treelayout parameters")
+    # group = plot_args_p.add_argument_group(title='Basic treelayout arguments',
+    #     description="treelayout parameters")
 
-    group.add_argument('--drawer',
-        type=str,
-        required=False,
-        help="Circular or Rectangular")
-    group.add_argument('--collapse_level',
-        type=str,
-        required=False,
-        help="default collapse level, default is 10") 
-    group.add_argument('--ultrametric',
-        default=False,
-        action='store_true',
-        required=False,
-        help="ultrametric tree")
+    # group.add_argument('--drawer',
+    #     type=str,
+    #     required=False,
+    #     help="Circular or Rectangular")
+    # group.add_argument('--collapse_level',
+    #     type=str,
+    #     required=False,
+    #     help="default collapse level, default is 10") 
+    # group.add_argument('--ultrametric',
+    #     default=False,
+    #     action='store_true',
+    #     required=False,
+    #     help="ultrametric tree")
 
     group = plot_args_p.add_argument_group(title="Properties' layout arguments",
         description="Prop layout parameters")
