@@ -14,7 +14,7 @@ def tree_session(tree, layouts, port):
                 show_branch_length=True, show_branch_support=True, port=port,
                 custom_api={}, custom_route={}) 
 
-def snap_tree(port):
+def snap_tree(port, plot_file):
     url = 'http://127.0.0.1:{}/'.format(str(port))
 
     options = Options()
@@ -27,13 +27,25 @@ def snap_tree(port):
     actions = ActionChains(driver)
     actions.send_keys('d')
     actions.perform()
-    time.sleep(0.5)
+
+    defualt_download_dir = os.getcwd() # specify the directory where the file will be downloaded
+    file_name = 'example.svg' # specify the name of the downloaded file
+    file_path = os.path.join(defualt_download_dir, file_name)
+    
+    # wait for the file to appear in the directory
+    while not os.path.exists(file_path):
+        time.sleep(1)
+    #file_path = 'examples/basic_example1/basic_example1_annotated.png'
+
+    # Move the file
+    os.rename(file_path, plot_file)
+
     driver.quit()
 
 def get_image(tree, layouts, port, plot_file):
     p1 = Process(target=tree_session, args=(tree, layouts, port,))
-    p2 = Process(target=snap_tree, args=(port,))
-
+    p2 = Process(target=snap_tree, args=(port, plot_file, ))
+    print(plot_file)
     p1.start()
     time.sleep(1)
     p2.start()

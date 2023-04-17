@@ -377,18 +377,29 @@ In the following `plot` step, users can use either `.nw` or `.ete` by putting `-
 ## `plot`, Plot annotated tree with layouts
 TreeProfiler provides a several of layout options for visualize features in metadata along with tree, depends on their datatype
 ```
-usage: treeprofiler.py plot [-h] [-t TREE] [--annotated_tree] [--tree_type TREE_TYPE]
-                            [--prop2type PROP2TYPE] [--rank_limit RANK_LIMIT]
+treeprofiler.py plot -h
+usage: treeprofiler.py plot [-h] [-t TREE] [--annotated_tree]
+                            [--tree_type TREE_TYPE]
+                            [--prop2type PROP2TYPE]
+                            [--rank_limit RANK_LIMIT]
                             [--pruned_by PRUNED_BY]
                             [--internal_plot_measure INTERNAL_PLOT_MEASURE]
-                            [--collapsed_by COLLAPSED_BY] [--highlighted_by HIGHLIGHTED_BY]
-                            [--drawer DRAWER] [--collapse_level COLLAPSE_LEVEL] [--ultrametric]
-                            [--binary_layout BINARY_LAYOUT] [--revbinary_layout REVBINARY_LAYOUT]
+                            [--collapsed_by COLLAPSED_BY]
+                            [--highlighted_by HIGHLIGHTED_BY]
+                            [--drawer DRAWER]
+                            [--collapse_level COLLAPSE_LEVEL]
+                            [--ultrametric] [--column_width COLUMN_WIDTH]
+                            [--barplot_width BARPLOT_WIDTH]
+                            [--profiling_width PROFILING_WIDTH]
+                            [--binary_layout BINARY_LAYOUT]
+                            [--revbinary_layout REVBINARY_LAYOUT]
                             [--colorbranch_layout COLORBRANCH_LAYOUT]
                             [--label_layout LABEL_LAYOUT]
                             [--rectangular_layout RECTANGULAR_LAYOUT]
-                            [--heatmap_layout HEATMAP_LAYOUT] [--barplot_layout BARPLOT_LAYOUT]
-                            [--taxonclade_layout] [--taxonrectangular_layout] [--emapper_layout]
+                            [--heatmap_layout HEATMAP_LAYOUT]
+                            [--barplot_layout BARPLOT_LAYOUT]
+                            [--taxonclade_layout]
+                            [--taxonrectangular_layout] [--emapper_layout]
                             [--domain_layout] [--alignment_layout]
                             [--profiling_layout PROFILING_LAYOUT]
                             [--multi_profiling_layout MULTI_PROFILING_LAYOUT]
@@ -406,11 +417,12 @@ SOURCE TREE INPUT:
   -t TREE, --tree TREE  Input tree, .nw file, customized tree input
   --annotated_tree      input tree already annotated by treeprofiler
   --tree_type TREE_TYPE
-                        statistic calculation to perform for numerical data in internal nodes,
-                        [newick, ete]
+                        statistic calculation to perform for numerical
+                        data in internal nodes, [newick, ete]
   --prop2type PROP2TYPE
-                        config tsv file where determine the datatype of target properties, if your
-                        input tree type is .ete, it's note necessary
+                        config tsv file where determine the datatype of
+                        target properties, if your input tree type is
+                        .ete, it's note necessary
 
 Pruning parameters:
   Auto pruning parameters
@@ -424,45 +436,45 @@ Conditional display arguments:
   Conditional display parameters
 
   --internal_plot_measure INTERNAL_PLOT_MEASURE
-                        statistic measures to be shown in numerical layout for internal nodes,
-                        [default: avg]
+                        statistic measures to be shown in numerical layout
+                        for internal nodes, [default: avg]
   --collapsed_by COLLAPSED_BY
                         target tree collapsed by customized conditions
   --highlighted_by HIGHLIGHTED_BY
                         target tree highlighted by customized conditions
 
-Basic treelayout arguments:
-  treelayout parameters
-
-  --drawer DRAWER       Circular or Rectangular
-  --collapse_level COLLAPSE_LEVEL
-                        default collapse level, default is 10
-  --ultrametric         ultrametric tree
-
 Properties' layout arguments:
   Prop layout parameters
 
+  --column_width COLUMN_WIDTH
+                        customize column width of each layout.
+  --barplot_width BARPLOT_WIDTH
+                        customize barplot width of barplot layout.
+  --profiling_width PROFILING_WIDTH
+                        customize profiling width of each profiling
+                        layout.
   --binary_layout BINARY_LAYOUT
-                        <col1,col2> names, column index or index range of columns which need to be
-                        plot as binary_layout
+                        <col1,col2> names, column index or index range of
+                        columns which need to be plot as binary_layout
   --revbinary_layout REVBINARY_LAYOUT
-                        <col1,col2> names, column index or index range of columns which need to be
-                        plot as revbinary_layout
+                        <col1,col2> names, column index or index range of
+                        columns which need to be plot as revbinary_layout
   --colorbranch_layout COLORBRANCH_LAYOUT
-                        <col1,col2> names, column index or index range of columns which need to be
-                        plot as Textlayouts
+                        <col1,col2> names, column index or index range of
+                        columns which need to be plot as Textlayouts
   --label_layout LABEL_LAYOUT
-                        <col1,col2> names, column index or index range of columns which need to be
-                        plot as label_layout
+                        <col1,col2> names, column index or index range of
+                        columns which need to be plot as label_layout
   --rectangular_layout RECTANGULAR_LAYOUT
-                        <col1,col2> names, column index or index range of columns which need to be
-                        plot as rectangular_layout
+                        <col1,col2> names, column index or index range of
+                        columns which need to be plot as
+                        rectangular_layout
   --heatmap_layout HEATMAP_LAYOUT
-                        <col1,col2> names, column index or index range of columns which need to be
-                        read as heatmap_layout
+                        <col1,col2> names, column index or index range of
+                        columns which need to be read as heatmap_layout
   --barplot_layout BARPLOT_LAYOUT
-                        <col1,col2> names, column index or index range of columns which need to be
-                        read as barplot_layouts
+                        <col1,col2> names, column index or index range of
+                        columns which need to be read as barplot_layouts
   --taxonclade_layout   activate taxonclade_layout
   --taxonrectangular_layout
                         activate taxonrectangular_layout
@@ -470,19 +482,19 @@ Properties' layout arguments:
   --domain_layout       activate domain_layout
   --alignment_layout    provide alignment file as fasta format
   --profiling_layout PROFILING_LAYOUT
-                        <col1,col2> names, column index which need to be plot as profiling_layout
-                        for categorical columns
+                        <col1,col2> names, column index which need to be
+                        plot as profiling_layout for categorical columns
   --multi_profiling_layout MULTI_PROFILING_LAYOUT
-                        <col1,col2> names, column index which need to be plot as
-                        multi_profiling_layout for multiple values column
+                        <col1,col2> names, column index which need to be
+                        plot as multi_profiling_layout for multiple values
+                        column
   --numerical_profiling_layout NUMERICAL_PROFILING_LAYOUT
-                        <col1,col2> names, column index which need to be plot as
-                        numerical_profiling_layout for numerical values column
+                        <col1,col2> names, column index which need to be
+                        plot as numerical_profiling_layout for numerical
+                        values column
 
 Output arguments:
   Output parameters
-
-  --interactive         run interactive session
   --port PORT           run interactive session on custom port
   --plot PLOT           output as pdf
   --out_colordict       print color dictionary of each property
@@ -855,8 +867,7 @@ name    GC      GCA     aquatic_habitat host_associated size    soil_habitat    
 
 Here we will conduct the profiling with two command line
 ```
-treeprofiler.py annotate --tree examples/progenome3/progenome3.nw --metadata examples/progenome3/progenome3.tsv --taxonomic_profile --taxadb NCBI --taxon_delimiter . --taxa_field 0 --num_prop GC,size --bool_prop aquatic_habitat,host_associated,soil_habitat 
---outdir examples/progenome3/
+treeprofiler.py annotate --tree examples/progenome3/progenome3.nw --metadata examples/progenome3/progenome3.tsv --taxonomic_profile --taxadb NCBI --taxon_delimiter . --taxa_field 0 --num_prop GC,size --bool_prop aquatic_habitat,host_associated,soil_habitat --outdir examples/progenome3/
 
 treeprofiler.py plot --tree examples/progenome3/progenome3_annotated.ete --tree_type ete --barplot_layout GC,size --binary_layout aquatic_habitat,host_associated,soil_habitat --taxonclade_layout 
 ```
