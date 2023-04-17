@@ -43,7 +43,6 @@ def color_gradient(c1, c2, mix=0):
 
 def get_heatmapface(node, prop, min_color="#ffffff", max_color="#971919", tooltip=None, width=70, height=None, padding_x=1, padding_y=1, count_missing=True):
     counter_props = node.props.get(prop).split('||')
-    print(counter_props)
     total = 0
     positive = 0
     for counter_prop in counter_props:

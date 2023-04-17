@@ -93,7 +93,7 @@ from utils import check_nan
 
 class LayoutBinary(TreeLayout):
     def __init__(self, name=None, level=1, color='#E60A0A', prop_colour_dict=None, \
-        bool_prop=None, reverse=False, radius=25, padding_x=1, padding_y=1, legend=True):
+        bool_prop=None, reverse=False, radius=25, padding_x=1, padding_y=1, width=70, legend=True):
         super().__init__(name)
         self.aligned_faces = True
         self.bool_prop = bool_prop
@@ -107,7 +107,7 @@ class LayoutBinary(TreeLayout):
         self.padding_x = padding_x
         self.padding_y = padding_y
         self.legend = legend
-        self.width = 70
+        self.width = width
         self.height = None
         self.min_fsize = 5
         self.max_fsize = 10

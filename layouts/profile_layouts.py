@@ -62,7 +62,7 @@ gradientscolor = {
     'r': '#ae4d4d',
     's': '#a23333',
     't': '#971919',
-    '-': "#cccce8",
+    '-': "#EBEBEB",
 }
 
 class LayoutProfile(TreeLayout):

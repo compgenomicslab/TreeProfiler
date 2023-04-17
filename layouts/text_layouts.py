@@ -74,7 +74,7 @@ class LayoutText(TreeLayout):
             node.add_face(prop_face, column=self.column, position="aligned", collapsed_only=True)
 
 class LayoutColorbranch(TreeLayout):
-    def __init__(self, name, column, color_dict, text_prop, legend=True):
+    def __init__(self, name, column, color_dict, text_prop, legend=True, width=70):
         super().__init__(name)
         self.aligned_faces = True
         self.text_prop = text_prop
@@ -84,7 +84,7 @@ class LayoutColorbranch(TreeLayout):
         self.legend = legend
         self.height = None
         self.absence_color = "#EBEBEB"
-        self.width = 70
+        self.width = width
         self.padding_x = 1
         self.padding_y = 0
 
