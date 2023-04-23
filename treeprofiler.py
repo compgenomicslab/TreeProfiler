@@ -1675,7 +1675,7 @@ def tree_plot(args):
     if args.plot:
         get_image(tree, layouts, args.port, os.path.abspath(args.plot))
     else:
-        tree.explore(tree_name='example',layouts=layouts, port=args.port, popup_prop_keys=sorted(popup_prop_keys))
+        tree.explore(tree_name='example',layouts=layouts, port=args.port, include_props=sorted(popup_prop_keys))
     
     return
 
