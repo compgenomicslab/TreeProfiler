@@ -11,8 +11,9 @@ from ete4.smartview.renderer.gardening import remove
 #from ete4.smartview  import SeqFace, SeqMotifFace, AlignmentFace
 from layouts import (text_layouts, taxon_layouts, staple_layouts, 
                     conditional_layouts, seq_layouts, profile_layouts)
-from tree_plot import get_image
 from utils import get_consensus_seq
+from utils import to_code, call, counter_call
+from tree_image import get_image
 
 from argparse import ArgumentParser
 import argparse
@@ -23,6 +24,7 @@ from scipy import stats
 from io import StringIO
 import colorsys
 import random
+import numbers
 import b64pickle
 import itertools
 import math
@@ -31,6 +33,8 @@ import csv
 import sys
 import time
 import os
+import re
+
 
 __author__ = 'Ziqi DENG'
 __license__ = "GPL v2"
@@ -461,7 +465,6 @@ def ete4_parse(newick):
     return tree
 
 def check_missing(input_string):
-    import re
 
     pattern = r'^(?:\W+|none|None|null|NaN|)$'
 
@@ -841,8 +844,6 @@ def get_range(input_range):
     #column_list_idx = [i for i in range(column_start, column_end+1)]
     return column_start, column_end
 
-import numbers
-
 def get_prop2type(node):
     output = {}
     prop2value = node.props
@@ -1076,9 +1077,6 @@ def parse_emapper_annotations(input_file, delimiter='\t', no_colnames=False):
     
     return metadata, node_props, columns
 
-# def parse_pfam_annotations(input_file, delimiter='\t', no_colnames=False):
-#     return
-
 def annot_tree_pfam_table(post_tree, pfam_table, alg_fasta):
     pair_delimiter = "@"
     item_seperator = "||"
@@ -1189,8 +1187,10 @@ def parse_fasta(fastafile):
     fasta_dict[head] = seq
     return fasta_dict
 
-import subprocess
 def goslim_annotation(gos_input, relative=True):
+    """
+    deprecated
+    """
     output_dict = {}
     all_golsims_dict = {}
     goslim_script = os.path.join(os.path.dirname(__file__), 'goslim_list.R')
@@ -1562,58 +1562,6 @@ def tree_plot(args):
             alignment=matrix, profiles=all_values, column=level)
             level += 1
             layouts.append(multiple_text_prop_layout)
-            # if multiple_text_prop == 'GOs':
-            #     pair_seperator = "--"
-            #     item_seperator = "||"
-            #     target_prop = 'GOslims'
-            #     gos_input = os.path.join(os.path.dirname(__file__) + 'gos_input.tsv')
-            #     node2leaves = tree.get_cached_content()
-
-            #     # run goslim_list.r to retrieve goslims
-            #     with open(gos_input, 'w') as f:
-            #         for leaf in tree.iter_leaves():
-            #             if leaf.props.get(multiple_text_prop):
-            #                 go_prop = ','.join(leaf.props.get(multiple_text_prop))
-            #                 line = leaf.name + "\t" + go_prop + "\n"
-            #                 f.write(line)
-                
-            #     output, all_golsims = goslim_annotation(gos_input)
-
-            #     # load to leaves
-            #     for leaf in tree.iter_leaves():
-            #         leaf_goslim = output.get(leaf.name,'')
-            #         if leaf_goslim:
-            #             leaf.add_prop(target_prop, leaf_goslim[0])
-
-            #     # sum to parent nodes
-            #     for node in tree.traverse("postorder"):
-            #         if node.is_leaf():
-            #             pass
-            #         else:
-            #             prop_list = children_prop_array(node2leaves[node], target_prop)
-            #             multi_prop_list = []
-            #             for elements in prop_list:
-            #                 for j in elements:
-            #                     multi_prop_list.append(j)
-            #             node.add_prop(add_suffix(target_prop, 'counter'), item_seperator.join([add_suffix(str(key), value, pair_seperator) for key, value in sorted(dict(Counter(multi_prop_list)).items())]))
-
-            #     # ouput to layouts 
-            #     for entry, desc in all_golsims.items():
-            #         if entry != '-':
-            #             golayout = profile_layouts.LayoutGOslim(name=f'GOslims:{desc}({entry})', column=level,
-            #                                 go_propfile=[entry, desc], goslim_prop=target_prop, padding_x=2, 
-            #                                 padding_y=2, legend=True)
-            #             level+=1
-            #             layouts.append(golayout)
-            #     popup_prop_keys.append('GOslims')
-            #     popup_prop_keys.append(add_suffix(target_prop, 'counter'))
-
-            # else:
-            #     matrix, all_values = multiple2profile(tree, multiple_text_prop)
-            #     multiple_text_prop_layout = profile_layouts.LayoutProfile(name=multiple_text_prop, 
-            #     alignment=matrix, profiles=all_values, column=level)
-            #     level += 1
-            #     layouts.append(multiple_text_prop_layout)
             
     # Taxa layouts
     if args.taxonclade_layout or args.taxonrectangular_layout:
@@ -1679,7 +1627,6 @@ def tree_plot(args):
     
     return
 
-import re
 def taxatree_prune(tree, rank_limit='subspecies'):
     ranks = ['domain','superkingdom','kingdom','subkingdom','infrakingdom','superphylum','phylum','division','subphylum','subdivision','infradivision','superclass','class','subclass','infraclass','subterclass','parvclass','megacohort','supercohort','cohort','subcohort','infracohort','superorder','order','suborder','infraorder','parvorder','superfamily','family','subfamily','supertribe','tribe','subtribe','genus','subgenus','section','subsection','species group','series','species subgroup','species','infraspecies','subspecies','forma specialis','variety','varietas','subvariety','race','stirp','form','forma','morph','subform','biotype','isolate','pathogroup','serogroup','serotype','strain','aberration']
     no_ranks = ['clade','unspecified','no rank','unranked','Unknown']
@@ -1715,7 +1662,6 @@ def taxatree_prune(tree, rank_limit='subspecies'):
                 remove(ch)
     return tree
 
-from utils import to_code, call, counter_call
 def conditional_prune(tree, conditions_input, prop2type):
     conditional_output = []
     for line in conditions_input:
@@ -1919,8 +1865,6 @@ def get_layouts(argv_inputs, layout_name, level, internal_rep, prop2type=None, c
         level += 1
         
     return layouts, level, prop_color_dict
-
-
 
 def random_color(h=None):
     """Generates a random color in RGB format."""
