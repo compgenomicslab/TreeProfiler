@@ -1,14 +1,17 @@
 from __future__ import annotations
+from ete4.parser.newick import NewickError
+from ete4.smartview.renderer.gardening import remove
+from ete4 import Tree, PhyloTree
 from Bio import AlignIO
 from Bio.Align import MultipleSeqAlignment
 from Bio.Align.AlignInfo import SummaryInfo
 from itertools import chain
-import re
 import operator
 import math
 import Bio
+import re
 
-
+# conditional syntax calling
 operator_dict = {
                 '<':operator.lt,
                 '<=':operator.le,
@@ -104,3 +107,141 @@ def get_consensus_seq(filename: Path | str, threshold=0.7) -> SeqRecord:
     summary = SummaryInfo(common_alignment)
     consensus = summary.dumb_consensus(threshold, "-")
     return consensus
+
+
+# parse ete4 Tree
+def ete4_parse(newick):
+    #parse tree via ete4
+    try:
+        tree = PhyloTree(newick)
+    except NewickError:
+        try:
+            tree = PhyloTree(newick, format=1)            
+        except NewickError:
+            tree = PhyloTree(newick, format=1, quoted_node_names=True)
+
+    # Correct 0-dist trees
+    has_dist = False
+    for n in tree.traverse(): 
+        if float(n.dist) > 0: 
+            has_dist = True
+            break
+    if not has_dist: 
+        for n in tree.iter_descendants(): 
+            n.dist = 1
+
+    return tree
+
+# pruning
+def taxatree_prune(tree, rank_limit='subspecies'):
+    ranks = ['domain','superkingdom','kingdom','subkingdom','infrakingdom','superphylum','phylum','division','subphylum','subdivision','infradivision','superclass','class','subclass','infraclass','subterclass','parvclass','megacohort','supercohort','cohort','subcohort','infracohort','superorder','order','suborder','infraorder','parvorder','superfamily','family','subfamily','supertribe','tribe','subtribe','genus','subgenus','section','subsection','species group','series','species subgroup','species','infraspecies','subspecies','forma specialis','variety','varietas','subvariety','race','stirp','form','forma','morph','subform','biotype','isolate','pathogroup','serogroup','serotype','strain','aberration']
+    no_ranks = ['clade','unspecified','no rank','unranked','Unknown']
+    
+    # rank_limit = rank_limit.lower()
+    
+    # ex = False
+    # while not ex:
+    #     ex = True
+    #     for n in tree.traverse('preorder'):
+    #         if not n.is_root():
+    #             rank_prop = n.props.get('rank')
+    #             if rank_prop in ranks: 
+    #                 rank_idx = ranks.index(rank_prop)
+    #                 limit_rank_idx = ranks.index(rank_limit)
+    #                 if rank_idx >= limit_rank_idx:
+    #                     for child in n.get_children():
+    #                         child.detach()
+    #                         ex = False
+                    
+    # ex = False
+    # while not ex:
+    #     ex = True
+    #     for n in tree.iter_leaves():
+    #         if n.props.get('rank') != rank_limit:
+    #             n.detach()
+    #             ex = False
+    for node in tree.traverse("preorder"):
+        if node.props.get('rank') == rank_limit:
+            children = node.children.copy()
+            for ch in children:
+                print("prune", ch.name)
+                remove(ch)
+    return tree
+
+def conditional_prune(tree, conditions_input, prop2type):
+    conditional_output = []
+    for line in conditions_input:
+        single_one = to_code(line)
+        conditional_output.append(single_one)
+
+    ex = False
+    while not ex:
+        ex = True
+        for n in tree.traverse():
+            if not n.is_root():
+                final_call = False
+                for or_condition in conditional_output:
+                    for condition in or_condition:
+                        op = condition[1]
+                        if op == 'in':
+                            value = condition[0]
+                            prop = condition[2]
+                            datatype = prop2type.get(prop)
+                            final_call = call(n, prop, datatype, op, value)
+                        elif ":" in condition[0]:
+                            internal_prop, leaf_prop = condition[0].split(':')
+                            value = condition[2]
+                            datatype = prop2type[internal_prop]
+                            final_call = counter_call(n, internal_prop, leaf_prop, datatype, op, value)
+                        else:
+                            prop = condition[0]
+                            value = condition[2]
+                            prop = condition[0]
+                            value = condition[2]
+                            datatype = prop2type.get(prop)
+                            final_call = call(n, prop, datatype, op, value)
+                        if final_call == False:
+                            break
+                        else:
+                            continue
+                    if final_call:
+                        #print('cut', n.name)
+                        n.detach()
+                        ex = False
+                    else:
+                        pass
+            else:
+                if n.dist == 0: 
+                    n.dist = 1
+    return tree
+
+
+    #array = [n.props.get(prop) if n.props.get(prop) else 'NaN' for n in nodes] 
+    array = [n.props.get(prop) for n in nodes if n.props.get(prop) ] 
+    return array
+
+def children_prop_array(nodes, prop):
+    #array = [n.props.get(prop) if n.props.get(prop) else 'NaN' for n in nodes] 
+    array = [n.props.get(prop) for n in nodes if n.props.get(prop) ] 
+    return array
+
+def children_prop_array_missing(nodes, prop):
+    """replace empty to missing value 'NaN' """ 
+    array = [n.props.get(prop) if n.props.get(prop) else 'NaN' for n in nodes] 
+    #array = [n.props.get(prop) for n in nodes if n.props.get(prop) ] 
+    return array
+
+def flatten(nasted_list):
+    """
+    input: nasted_list - this contain any number of nested lists.
+    ------------------------
+    output: list_of_lists - one list contain all the items.
+    """
+
+    list_of_lists = []
+    for item in nasted_list:
+        if type(item) == list:
+            list_of_lists.extend(item)
+        else:
+            list_of_lists.extend(nasted_list)
+    return list_of_lists
