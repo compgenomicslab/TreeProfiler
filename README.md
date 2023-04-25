@@ -308,8 +308,12 @@ In our demo, it would be:
 |root| 7.67 | 23| 10| 4| 2.32| 
 
 Excecute example data provided in `examples/`
-```
-treeprofiler.py annotate --tree examples/basic_example1/basic_example1.nw --metadata examples/basic_example1/basic_example1.tsv --outdir ./examples/basic_example1/
+
+```sh
+treeprofiler.py annotate \
+    --tree examples/basic_example1/basic_example1.nw \
+    --metadata examples/basic_example1/basic_example1.tsv \
+    --outdir ./examples/basic_example1/
 ```
 
 ### Determine datatype in arguments
