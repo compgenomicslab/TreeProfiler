@@ -447,10 +447,6 @@ def run(args):
     if args.out_colordict:
         wrtie_color(total_color_dict)
     
-    # if args.interactive:
-    #     tree.explore(tree_name='example',layouts=layouts, port=args.port, popup_prop_keys=sorted(popup_prop_keys))
-    # elif args.plot:
-    #     plot(tree, layouts, args.port, args.plot)
     if args.plot:
         get_image(tree, layouts, args.port, os.path.abspath(args.plot))
     else:
