@@ -27,6 +27,7 @@ import os
 
 paried_color = ["red", "darkblue", "lightgreen", "sienna", "lightCoral", "violet", "mediumturquoise",   "lightSkyBlue", "indigo", "tan", "coral", "olivedrab", "teal", "darkyellow"]
 
+DESC = "plot tree"
 
 def poplulate_plot_args(plot_args_p):
     """
@@ -275,38 +276,35 @@ def run(args):
                 heatmap_layouts.append(layout)
                 level += 1
 
-            #heatmap_layouts, level, _ = staple_layouts.LayoutHeatmap('Heatmap_'+args.heatmap_layout, level, internal_num_rep, args.heatmap_layout)
             layouts.extend(heatmap_layouts)
 
-        if layout == 'colorbranch_layout':
-            colorbranch_layouts, level, color_dict = get_layouts(args.colorbranch_layout, 'colorbranch',  
-                                                                level, 'counter', prop2type=prop2type, 
-                                                                column_width=args.column_width)
-            layouts.extend(colorbranch_layouts)
-            total_color_dict.append(color_dict)
-
         if layout == 'label_layout':
-            label_layouts, level, color_dict = get_layouts(args.label_layout, 'label', level, 'counter', prop2type=prop2type, column_width=args.column_width)
+            label_layouts, level, color_dict = get_label_layouts(args.label_layout, level, prop2type=prop2type, column_width=args.column_width)
             layouts.extend(label_layouts)
             total_color_dict.append(color_dict)
 
+        if layout == 'colorbranch_layout':
+            colorbranch_layouts, level, color_dict = get_colorbranch_layouts(args.colorbranch_layout, level, prop2type=prop2type, column_width=args.column_width)
+            layouts.extend(colorbranch_layouts)
+            total_color_dict.append(color_dict)
+
         if layout == 'rectangular_layout':
-            rectangular_layouts, level, color_dict = get_layouts(args.rectangular_layout, 'rectangular', level, 'counter', prop2type=prop2type, column_width=args.column_width)
+            rectangular_layouts, level, color_dict = get_rectangular_layouts(args.rectangular_layout, level, prop2type=prop2type, column_width=args.column_width)
             layouts.extend(rectangular_layouts)
             total_color_dict.append(color_dict)
 
         if layout == 'binary_layout':
-            label_layouts, level, color_dict = get_layouts(args.binary_layout, 'binary', level, 'counter', column_width=args.column_width)
+            label_layouts, level, color_dict = get_binary_layouts(args.binary_layout, level, prop2type=prop2type, column_width=args.column_width, reverse=False)
             layouts.extend(label_layouts)
             total_color_dict.append(color_dict)
 
         if layout == 'revbinary_layout':
-            label_layouts, level, color_dict = get_layouts(args.revbinary_layout, 'revbinary', level, 'counter', column_width=args.column_width)
+            label_layouts, level, color_dict = get_binary_layouts(args.revbinary_layout, level, prop2type=prop2type, column_width=args.column_width, reverse=True)
             layouts.extend(label_layouts)
             total_color_dict.append(color_dict)
         
         if layout == 'barplot_layout':
-            barplot_layouts, level,color_dict = get_layouts(args.barplot_layout, 'barplot', level, internal_num_rep, prop2type=prop2type, column_width=args.barplot_width)
+            barplot_layouts, level,color_dict = get_barplot_layouts(args.barplot_layout, level, prop2type, column_width=args.barplot_width, internal_rep=internal_num_rep)
             layouts.extend(barplot_layouts)
             total_color_dict.append(color_dict)
 
@@ -358,14 +356,17 @@ def run(args):
             'Preferred_name',
             'EC',
             ]
-        label_layouts, level, _ = get_layouts(text_props, 'rectangular', level, 'counter', prop2type=prop2type)
+        #label_layouts, level, _ = get_layouts(text_props, 'rectangular', level, 'counter', prop2type=prop2type)
+        label_layouts, level, _ = get_rectangular_layouts(text_props, level, prop2type=prop2type, column_width=args.column_width)
+            
         layouts.extend(label_layouts)
         
         num_props = [
             #'evalue',
             'score'
         ]
-        barplot_layouts, level, _ = get_layouts(num_props, 'barplot', level, internal_num_rep, prop2type=prop2type)
+        #barplot_layouts, level, _ = get_layouts(num_props, 'barplot', level, internal_num_rep, prop2type=prop2type)
+        barplot_layouts, level, _ = get_barplot_layouts(num_props, level, prop2type, column_width=args.barplot_width, internal_rep=internal_num_rep)   
         layouts.extend(barplot_layouts)
         
         multiple_text_props = [
@@ -447,10 +448,6 @@ def run(args):
     if args.out_colordict:
         wrtie_color(total_color_dict)
     
-    # if args.interactive:
-    #     tree.explore(tree_name='example',layouts=layouts, port=args.port, popup_prop_keys=sorted(popup_prop_keys))
-    # elif args.plot:
-    #     plot(tree, layouts, args.port, args.plot)
     if args.plot:
         get_image(tree, layouts, args.port, os.path.abspath(args.plot))
     else:
@@ -474,22 +471,139 @@ def wrtie_color(color_dict):
                     f.write('\n')
     return
 
+def get_label_layouts(props, level, prop2type, column_width=70):
+    prop_color_dict = {}
+    layouts = []
+    for prop in props:
+        color_dict = {} # key = value, value = color id
+        if prop2type and prop2type.get(prop) == list:
+            leaf_values = list(map(list,set(map(tuple,children_prop_array(tree, prop)))))    
+            prop_values = [val for sublist in leaf_values for val in sublist]
+        else:
+            prop_values = sorted(list(set(children_prop_array(tree, prop))))
+        
+        # normal text prop
+        nvals = len(prop_values)            
+        for i in range(0, nvals):
+            if nvals <= 14:
+                color_dict[prop_values[i]] = paried_color[i]
+            else:
+                color_dict[prop_values[i]] = random_color(h=None)
+        layout = text_layouts.LayoutText(name='Label_'+prop, column=level, 
+        color_dict=color_dict, text_prop=prop, width=column_width)
+        layouts.append(layout)
+        level += 1
+    return layouts, level, prop_color_dict
+
+def get_colorbranch_layouts(props, level, prop2type, column_width=70):
+    prop_color_dict = {}
+    layouts = []
+    for prop in props:
+        color_dict = {} # key = value, value = color id
+        if prop2type and prop2type.get(prop) == list:
+            leaf_values = list(map(list,set(map(tuple,children_prop_array(tree, prop)))))    
+            prop_values = [val for sublist in leaf_values for val in sublist]
+        else:
+            prop_values = sorted(list(set(children_prop_array(tree, prop))))
+        
+        # normal text prop
+        nvals = len(prop_values)            
+        for i in range(0, nvals):
+            if nvals <= 14:
+                color_dict[prop_values[i]] = paried_color[i]
+            else:
+                color_dict[prop_values[i]] = random_color(h=None)
+        layout = text_layouts.LayoutColorbranch(name='Colorbranch_'+prop, column=level, \
+            color_dict=color_dict, text_prop=prop, width=column_width)
+        layouts.append(layout)
+    return layouts, level, prop_color_dict
+
+def get_rectangular_layouts(props, level, prop2type, column_width=70):
+    prop_color_dict = {}
+    layouts = []
+    for prop in props:
+        color_dict = {} # key = value, value = color id
+        if prop2type and prop2type.get(prop) == list:
+            leaf_values = list(map(list,set(map(tuple,children_prop_array(tree, prop)))))    
+            prop_values = [val for sublist in leaf_values for val in sublist]
+        else:
+            prop_values = sorted(list(set(children_prop_array(tree, prop))))
+        
+        # normal text prop
+        nvals = len(prop_values)            
+        for i in range(0, nvals):
+            if nvals <= 14:
+                color_dict[prop_values[i]] = paried_color[i]
+            else:
+                color_dict[prop_values[i]] = random_color(h=None)
+        layout = text_layouts.LayoutRect(name='Rectangular_'+prop, column=level,
+                    color_dict=color_dict, text_prop=prop,
+                    width=column_width)
+        layouts.append(layout)
+        level += 1
+    return layouts, level, prop_color_dict
+
+def get_binary_layouts(props, level, prop2type, column_width=70, reverse=False):
+    prop_color_dict = {}
+    layouts = []
+
+    for prop in props:
+        color_dict = {} # key = value, value = color id
+        prop_values = sorted(list(set(children_prop_array(tree, prop))))
+        nvals = len(prop_values)
+
+        for i in range(0, nvals): # only positive, negative, NaN, three options
+            color_dict[prop_values[i]] = paried_color[i]
+        
+        color = random_color(h=None)
+        if not reverse:
+            layout = conditional_layouts.LayoutBinary('Binary_'+prop, level, color, color_dict, prop, reverse=reverse)
+        else:
+            layout = conditional_layouts.LayoutBinary('ReverseBinary_'+prop, level, color, color_dict, prop, reverse=reverse)
+        
+        internal_prop = prop + '_' + 'counter'
+        prop_color_dict[internal_prop] = color_dict
+        prop_color_dict[prop] = color
+        layouts.append(layout)
+        level += 1
+    return layouts, level, prop_color_dict
+
+def get_barplot_layouts(props, level, prop2type, column_width=70, internal_rep='avg'):
+    prop_color_dict = {}
+    layouts = []
+    for prop in props:
+        
+        color_dict = {} # key = value, value = color id
+        if prop in prop2type and prop2type.get(prop) == float:
+            size_prop = prop+'_'+internal_rep # using internal prop to set the range in case rank_limit cut all the leaves
+        else:
+            size_prop = prop
+
+        if level > len(paried_color):
+            barplot_color =  random_color(h=None)
+        else:
+            barplot_color = paried_color[level]
+        
+        layout =  staple_layouts.LayoutBarplot(name='Barplot_'+prop, prop=prop, 
+                                    width=column_width, color=barplot_color, 
+                                    size_prop=size_prop, column=level, 
+                                    internal_rep=internal_rep,
+                                    )
+
+        
+        prop_color_dict[prop] = barplot_color
+        layouts.append(layout)  
+        level += 1
+
+    return layouts, level, prop_color_dict
+
+def get_heatmap_layouts():
+    return
+
 def get_layouts(argv_inputs, layout_name, level, internal_rep, prop2type=None, column_width=70): 
-    props = []
+    props = argv_inputs
     layouts = []
     prop_color_dict = {} # key = value, value = color id
-    # identify range [1-5], index 1,2,3 and column names
-    for i in argv_inputs:
-        if i[0] == '[' and i[-1] == ']':
-            column_start, column_end = get_range(i)
-            for j in range(column_start, column_end+1):
-                props.append(node_props[j-1])
-        else:
-            try:
-                i = int(i)
-                props.append(node_props[i-1])
-            except ValueError:
-                props.append(i)
 
     # load layout for each prop
     for idx, prop in enumerate(props):
