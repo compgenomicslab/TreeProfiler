@@ -158,22 +158,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
     total_color_dict = []
     layouts = []
     level = 1 # level 1 is the leaf name
-    #prop2type = {}
-    #metadata_dict = {}
-
-    # parse csv to metadata table
-    start = time.time()
-    print("start parsing...")
-    # if metadata: # make a series aof metadatas
-    #     if no_colnames:
-    #         # property key will be named col1, col2, col3, ... if without headers
-    #         metadata_dict, node_props, columns, prop2type = parse_csv(metadata, no_colnames=no_colnames)
-    #     else:
-    #         metadata_dict, node_props, columns, prop2type = parse_csv(metadata)
-    # else: # annotated_tree
-    #     node_props=[]
-    #     columns = {}
-        
+    
     if emapper_annotations:
         emapper_metadata_dict, emapper_node_props, emapper_columns = parse_emapper_annotations(emapper_annotations)
         metadata_dict.update(emapper_metadata_dict)
@@ -205,9 +190,6 @@ def run_tree_annotate(tree, input_annotated_tree=False,
             'BiGG_Reaction':list,
             'PFAMs':list
         })
-
-    end = time.time()
-    print('Time for parse_csv to run: ', end - start)
 
     if text_prop:
         text_prop = text_prop
@@ -351,6 +333,8 @@ def run_tree_annotate(tree, input_annotated_tree=False,
 
     # load all metadata to leaf nodes
     taxon_column = []
+
+    # input_annotated_tree determines if input tree is already annotated, if annotated, no longer need metadata
     if not input_annotated_tree:
         if taxon_column: # to identify taxon column as taxa property from metadata
             taxon_column.append(taxon_column)
@@ -480,6 +464,9 @@ def run(args):
     else:
         sys.exit('empty input')
 
+    # parse csv to metadata table
+    start = time.time()
+    print("start parsing...")
     # parsing metadata
     if args.metadata: # make a series aof metadatas
         if args.no_colnames:
@@ -490,6 +477,8 @@ def run(args):
     else: # annotated_tree
         node_props=[]
         columns = {}
+    end = time.time()
+    print('Time for parse_csv to run: ', end - start)
 
     if args.emapper_annotations:
         emapper_metadata_dict, emapper_node_props, emapper_columns = parse_emapper_annotations(args.emapper_annotations)
