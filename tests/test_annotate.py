@@ -11,7 +11,7 @@ import tree_annotate
 def test_annotate_01():
     # basic annotate categorical data
     # load tree
-    test_tree = tree_annotate.ete4_parse('(a);')
+    test_tree = tree_annotate.ete4_parse('(a);', parser='newick')
     
     # load metadata
     with NamedTemporaryFile(suffix='.tsv') as f_annotation:
@@ -30,7 +30,7 @@ def test_annotate_01():
 def test_annotate_02():
     # internal_nodes annotation categorical data
     # load tree
-    test_tree = tree_annotate.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;")
+    test_tree = tree_annotate.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;", parser='newick')
 
      # load metadata
     with NamedTemporaryFile(suffix='.tsv') as f_annotation:
@@ -53,7 +53,7 @@ def test_annotate_02():
 def test_annotate_03():
     # basic annotate numerical data
     # load tree
-    test_tree = tree_annotate.ete4_parse('(a);')
+    test_tree = tree_annotate.ete4_parse('(a);', parser='newick')
     
     # load metadata
     with NamedTemporaryFile(suffix='.tsv') as f_annotation:
@@ -72,7 +72,7 @@ def test_annotate_03():
 def test_annotate_04():
     # internal_nodes annotation categorical data
     # load tree
-    test_tree = tree_annotate.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;")
+    test_tree = tree_annotate.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;", parser='newick')
 
      # load metadata
     with NamedTemporaryFile(suffix='.tsv') as f_annotation:
