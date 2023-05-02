@@ -254,7 +254,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
             for line in f:
                 line = line.rstrip()
                 prop, value = line.split('\t')
-                prop2type[prop] = value 
+                prop2type[prop] = eval(value) 
     else:
         # output datatype of each property of each tree node including internal nodes
         if prop2type:
@@ -436,7 +436,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         condition_strings = pruned_by
         annotated_tree = conditional_prune(annotated_tree, condition_strings, prop2type)
 
-    return annotated_tree
+    return annotated_tree, prop2type
 
 def run(args):
     total_color_dict = []
@@ -511,7 +511,7 @@ def run(args):
             'PFAMs':list
         })
         
-    annotated_tree = run_tree_annotate(tree, input_annotated_tree=args.annotated_tree, 
+    annotated_tree, prop2type = run_tree_annotate(tree, input_annotated_tree=args.annotated_tree, 
         metadata_dict=metadata_dict, node_props=node_props, columns=columns, 
         prop2type=prop2type, 
         text_prop=args.text_prop, text_prop_idx=args.text_prop_idx, 
@@ -537,7 +537,7 @@ def run(args):
         with open(os.path.join(args.outdir, base+'_prop2type.txt'), "w") as f:
             #f.write(first_line + "\n")
             for key, value in prop2type.items():
-                f.write("{}\t{}\n".format(key, value))
+                f.write("{}\t{}\n".format(key, value.__name__))
         ### out ete
         with open(os.path.join(args.outdir, base+'_annotated.ete'), 'w') as f:
             f.write(b64pickle.dumps(annotated_tree, encoder='pickle', pack=False))
@@ -684,7 +684,7 @@ def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, 
     # preload all leaves to save time instead of search in tree
     for leaf in tree.iter_leaves():
         name2leaf[leaf.name].append(leaf)
-    
+
     # load all metadata to leaf nodes
     for node, props in metadata_dict.items():
         if node in name2leaf.keys():
