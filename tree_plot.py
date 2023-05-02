@@ -183,7 +183,9 @@ def run(args):
     #parse input tree
     if args.tree:
         if args.tree_type == 'newick':
-            tree = ete4_parse(args.tree)
+            tree = ete4_parse(args.tree, parser='newick')
+        elif args.tree_type == 'nexus':
+            tree = ete4_parse(args.tree, parser='nexus')
         elif args.tree_type == 'ete':
             with open(args.tree, 'r') as f:
                 file_content = f.read()

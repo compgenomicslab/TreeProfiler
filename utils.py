@@ -110,15 +110,15 @@ def get_consensus_seq(filename: Path | str, threshold=0.7) -> SeqRecord:
 
 
 # parse ete4 Tree
-def ete4_parse(newick):
+def ete4_parse(newick, parser='newick'):
     #parse tree via ete4
     try:
-        tree = PhyloTree(newick)
+        tree = PhyloTree(newick, parser=parser)
     except NewickError:
         try:
-            tree = PhyloTree(newick, format=1)            
+            tree = PhyloTree(newick, format=1,parser=parser)            
         except NewickError:
-            tree = PhyloTree(newick, format=1, quoted_node_names=True)
+            tree = PhyloTree(newick, format=1, parser=parser, quoted_node_names=True)
 
     # Correct 0-dist trees
     has_dist = False

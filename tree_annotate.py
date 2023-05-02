@@ -208,20 +208,6 @@ def run_tree_annotate(tree, input_annotated_tree=False,
 
     end = time.time()
     print('Time for parse_csv to run: ', end - start)
-    
-    # # parse input tree
-    # if tree:
-    #     if tree_type == 'newick':
-    #         tree = ete4_parse(tree)
-    #     elif tree_type == 'ete':
-    #         with open(tree, 'r') as f:
-    #             file_content = f.read()
-    #             tree = b64pickle.loads(file_content, encoder='pickle', unpack=False)
-    # # if refer tree from taxadb, input tree will be ignored
-    # elif taxatree and taxadb:
-    #     tree = ''
-    # else:
-    #     sys.exit('empty input')
 
     if text_prop:
         text_prop = text_prop
@@ -481,7 +467,9 @@ def run(args):
     # parsing tree
     if args.tree:
         if args.tree_type == 'newick':
-            tree = ete4_parse(args.tree)
+            tree = ete4_parse(args.tree, parser='newick')
+        elif args.tree_type == 'nexus':
+            tree = ete4_parse(args.tree, parser='nexus')
         elif args.tree_type == 'ete':
             with open(tree, 'r') as f:
                 file_content = f.read()
