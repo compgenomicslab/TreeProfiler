@@ -68,7 +68,7 @@ gradientscolor = {
 class LayoutProfile(TreeLayout):
     def __init__(self, name="Profile", mode='simple',
             alignment=None, seq_format='compactseq', profiles=None, width=1000, height=20,
-            column=0, range=None, summarize_inner_nodes=True, value_range=[], legend=True):
+            column=0, range=None, summarize_inner_nodes=True, value_range=[], value_color={}, legend=True):
         super().__init__(name)
         self.alignment = SeqGroup(alignment) if alignment else None
         self.mode = mode
@@ -82,6 +82,8 @@ class LayoutProfile(TreeLayout):
         self.length = len(next(self.alignment.iter_entries())[1]) if self.alignment else None
         self.scale_range = range or (0, self.length)
         self.value_range = value_range
+        self.value_color = value_color
+
         self.summarize_inner_nodes = summarize_inner_nodes
         self.legend = legend
 
@@ -103,10 +105,8 @@ class LayoutProfile(TreeLayout):
                                     )
             if self.mode == 'simple':
                 color_dict = {}
-                for i in range(len(self.profiles)):
-                    profile_val = self.profiles[i]
-                    profile_color = profilecolors[list(profilecolors.keys())[i % len(profilecolors)]]
-                    color_dict[profile_val] = profile_color
+                for val, letter in self.value_color.items():
+                    color_dict[val] = profilecolors[letter]
                 tree_style.add_legend(title=self.name,
                                     variable='discrete',
                                     colormap=color_dict,
