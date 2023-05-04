@@ -70,7 +70,7 @@ def test_annotate_03():
     assert test_tree_annotated.write(properties=[], format=1) == expected_tree
 
 def test_annotate_04():
-    # internal_nodes annotation categorical data
+    # internal_nodes annotation numerical data
     # load tree
     test_tree = tree_annotate.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;", parser='newick')
 
@@ -90,3 +90,9 @@ def test_annotate_04():
 
     assert test_tree_annotated.write(properties=[], format=1) == expected_tree_no_root
     assert test_tree_annotated.write(properties=[], format=1, format_root_node=True) == expected_tree_with_root
+
+def test_annotate_taxnomic_NCBI():
+    assert
+
+def test_annotate_taxnomic_GTDB():
+    assert
