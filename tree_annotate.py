@@ -1,27 +1,31 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+
+import os
+import time
+import re
+import random
+import math
+import csv
+from itertools import islice
+from collections import defaultdict
+from collections import Counter
+from io import StringIO
+
+import numpy as np
+from scipy import stats
+
 from ete4.parser.newick import NewickError
 from ete4.coretype.seqgroup import SeqGroup
 from ete4 import Tree, PhyloTree
 from ete4 import GTDBTaxa
 from ete4 import NCBITaxa
+
 from utils import (
     ete4_parse, taxatree_prune, conditional_prune,
     children_prop_array, children_prop_array_missing, 
     flatten, get_consensus_seq)
 import b64pickle
 
-from collections import defaultdict
-from collections import Counter
-import numpy as np
-from io import StringIO
-from scipy import stats
-from itertools import islice
-import random
-import math
-import csv
-import time
-import re
-import os
 
 DESC = "annotate tree"
 
