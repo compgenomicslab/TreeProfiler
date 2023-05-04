@@ -90,3 +90,9 @@ def test_annotate_04():
 
     assert test_tree_annotated.write(properties=[], format=1) == expected_tree_no_root
     assert test_tree_annotated.write(properties=[], format=1, format_root_node=True) == expected_tree_with_root
+
+def test_annotate_taxnomic_NCBI():
+    assert
+
+def test_annotate_taxnomic_GTDB():
+    assert

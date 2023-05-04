@@ -435,7 +435,6 @@ def run_tree_annotate(tree, input_annotated_tree=False,
     if pruned_by: # need to be wrap with quotes
         condition_strings = pruned_by
         annotated_tree = conditional_prune(annotated_tree, condition_strings, prop2type)
-
     return annotated_tree, prop2type
 
 def run(args):
@@ -552,7 +551,10 @@ def run(args):
                 'lineage',
                 'named_lineage'
             ])
-        tree2table(annotated_tree, internal_node=True, props=prop_keys, outfile=os.path.join(args.outdir, out_tsv))
+        if args.annotated_tree:
+            tree2table(annotated_tree, internal_node=True, props=[], outfile=os.path.join(args.outdir, out_tsv))
+        else:
+            tree2table(annotated_tree, internal_node=True, props=prop_keys, outfile=os.path.join(args.outdir, out_tsv))
                 
     # if args.outtsv:
     #     tree2table(annotated_tree, internal_node=True, outfile=args.outtsv)
@@ -1109,8 +1111,10 @@ def tree2table(tree, internal_node=True, props=[], outfile='tree2table.csv'):
     node2leaves = {}
     leaf2annotations = {}
     if not props:
-        leaf = tree.get_farthest_leaf()[0]
-        props = list(leaf.props)
+        props = set()
+        for node in tree.traverse():
+            props |= node.props.keys()
+        props = [ p for p in props if not p.startswith("_") ]
         
     with open(outfile, 'w', newline='') as csvfile:
         if '_speciesFunction' in props:
@@ -1141,170 +1145,3 @@ def tree2table(tree, internal_node=True, props=[], outfile='tree2table.csv'):
                     else:
                         pass
     return 
-
-
-
-
-### emapper annotate tree
-# def tree_emapper_annotate(args):
-#     print("start mapping emapper annotation")
-#     prop2type = {}
-#     metadata_dict = {}
-#     #parse input tree
-#     if args.tree:
-#         if args.tree_type == 'newick':
-#             tree = ete4_parse(args.tree)
-#         elif args.tree_type == 'ete':
-#             with open(args.tree, 'r') as f:
-#                 file_content = f.read()
-#                 tree = b64pickle.loads(file_content, encoder='pickle', unpack=False)
-    
-#     # parse emapper annotation
-    # if args.emapper_annotations:
-    #     metadata_dict, node_props, columns = parse_emapper_annotations(args.emapper_annotations)
-    #     prop2type.update({
-    #         'name': str,
-    #         'dist': float,
-    #         'support': float,
-    #         'seed_ortholog': str,
-    #         'evalue': float,
-    #         'score': float,
-    #         'eggNOG_OGs': list,
-    #         'max_annot_lvl': str,
-    #         'COG_category': str,
-    #         'Description': str,
-    #         'Preferred_name': str,
-    #         'GOs': list,
-    #         'EC':str,
-    #         'KEGG_ko': list,
-    #         'KEGG_Pathway': list,
-    #         'KEGG_Module': list,
-    #         'KEGG_Reaction':list,
-    #         'KEGG_rclass':list,
-    #         'BRITE':list,
-    #         'KEGG_TC':list,
-    #         'CAZy':list,
-    #         'BiGG_Reaction':list,
-    #         'PFAMs':list
-    #     })
-    # else: 
-    #     # annotated_tree
-    #     node_props=[]
-    #     columns = {}
-    
-#     if args.emapper_pfam:
-#         annot_tree_pfam_table(tree, args.emapper_pfam, args.alignment)
-#         pass
-    
-#     if args.emapper_smart:
-#         annot_tree_smart_table(tree, args.emapper_smart, args.alignment)
-#         pass
-    
-#     if args.alignment:
-#         #name2seq = parse_fasta(args.alignment)
-#         # for leaf in tree.iter_leaves():
-#         #     leaf.add_prop('seq', name2seq.get(leaf.name,''))
-#         pass
-
-#     popup_prop_keys = list(prop2type.keys())
-#     if args.taxonomic_profile:
-#         popup_prop_keys.extend([
-#             'rank',
-#             'sci_name',
-#             'taxid',
-#             'lineage',
-#             'named_lineage'
-#         ])
-        
-#     # load metadata to leaf nodes
-#     if args.taxon_column: # to identify taxon column as taxa property from metadata
-#         taxon_column.append(args.taxon_column)
-#         annotated_tree = load_metadata_to_tree(tree, metadata_dict, prop2type=prop2type, taxon_column=args.taxon_column, taxon_delimiter=args.taxon_delimiter)
-#     else:
-#         annotated_tree = load_metadata_to_tree(tree, metadata_dict, prop2type=prop2type)
-    
-#     # merge annotations depends on the column datatype
-#     start = time.time()
-#     if args.emapper_annotations:
-#         text_prop = ['seed_ortholog', 'max_annot_lvl', 'COG_category', 'EC', ]
-#         num_prop = ['evalue', 'score']
-#         multiple_text_prop = ['eggNOG_OGs', 'GOs', 'KEGG_ko', 'KEGG_Pathway', 
-#                             'KEGG_Module', 'KEGG_Reaction', 'KEGG_rclass',
-#                             'BRITE', 'KEGG_TC', 'CAZy', 'BiGG_Reaction', 'PFAMs'] # Pfams
-
-#         counter_stat = 'raw'
-#         num_stat = 'all'
-
-#         #pre load node2leaves to save time
-#         node2leaves = annotated_tree.get_cached_content()
-#         for node in annotated_tree.traverse("postorder"):
-#             internal_props = {}
-#             if node.is_leaf():
-#                 pass
-#             else:
-#                 if text_prop:
-#                     internal_props_text = merge_text_annotations(node2leaves[node], text_prop, counter_stat=counter_stat)
-#                     internal_props.update(internal_props_text)
-#                 if multiple_text_prop:
-#                     internal_props_multi = merge_multitext_annotations(node2leaves[node], multiple_text_prop, counter_stat=counter_stat)
-#                     internal_props.update(internal_props_multi)
-
-#                 if num_prop:
-#                     internal_props_num = merge_num_annotations(node2leaves[node], num_prop, num_stat=num_stat)                        
-#                     if internal_props_num:
-#                         internal_props.update(internal_props_num)
-
-#                 for key,value in internal_props.items():
-#                     node.add_prop(key, value)
-
-#     end = time.time()
-#     print('Time for merge annotations to run: ', end - start)
-
-#     # taxa annotations
-#     if args.taxonomic_profile:
-#         if not args.taxadb:
-#             print('Please specify which taxa db using --taxadb <GTDB|NCBI>')
-#         else:
-#             if args.taxadb == 'GTDB':
-#                 if args.taxon_column:
-#                     annotated_tree, rank2values = annotate_taxa(annotated_tree, db=args.taxadb, taxid_attr=args.taxon_column)
-#                 else:
-#                     annotated_tree, rank2values = annotate_taxa(annotated_tree, db=args.taxadb, taxid_attr="name")
-#             elif args.taxadb == 'NCBI':
-#                 if args.taxon_column:
-#                     annotated_tree, rank2values = annotate_taxa(annotated_tree, db=args.taxadb, taxid_attr=args.taxon_column, sp_delimiter=args.taxon_delimiter, sp_field=args.taxa_field)
-#                 else:
-#                     annotated_tree, rank2values = annotate_taxa(annotated_tree, db=args.taxadb, taxid_attr="name", sp_delimiter=args.taxon_delimiter, sp_field=args.taxa_field)
-#     else:
-#         rank2values = {}
-
-#     # prune tree by rank
-#     if args.rank_limit:
-#         annotated_tree = taxatree_prune(annotated_tree, rank_limit=args.rank_limit)
-
-#     # prune tree by condition 
-#     if args.pruned_by: # need to be wrap with quotes
-#         condition_strings = args.pruned_by
-#         annotated_tree = conditional_prune(annotated_tree, condition_strings, prop2type)
-
-#     if args.outdir:
-#         base=os.path.splitext(os.path.basename(args.tree))[0]
-#         out_newick = base + '_annotated.nw'
-#         out_prop2tpye = base + '_prop2type.txt'
-#         out_ete = base+'_annotated.ete'
-#         out_tsv = base+'_annotated.tsv'
-
-#         ### out newick
-#         annotated_tree.write(outfile=os.path.join(args.outdir, out_newick), properties = [], format=1)
-#         ### output prop2type
-#         with open(os.path.join(args.outdir, base+'_prop2type.txt'), "w") as f:
-#             #f.write(first_line + "\n")
-#             for key, value in prop2type.items():
-#                 f.write("{}\t{}\n".format(key, value))
-#         ### out ete
-#         with open(os.path.join(args.outdir, base+'_annotated.ete'), 'w') as f:
-#             f.write(b64pickle.dumps(annotated_tree, encoder='pickle', pack=False))
-        
-#         ### out tsv
-#         tree2table(annotated_tree, internal_node=True, props=popup_prop_keys, outfile=os.path.join(args.outdir, out_tsv))
-#     return 
