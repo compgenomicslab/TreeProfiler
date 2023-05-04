@@ -304,9 +304,9 @@ def run(args):
 
         if layout == 'profiling_layout':
             profiling_props = args.profiling_layout
-            matrix = props2matrix(tree, profiling_props, dtype=str)
+            matrix, value2color = props2matrix(tree, profiling_props, dtype=str)
             profile_layout = profile_layouts.LayoutProfile(name='profiling_layout', mode='simple',
-                alignment=matrix, profiles=profiling_props, column=level, width=args.profiling_width)
+                alignment=matrix, profiles=profiling_props, value_color=value2color, column=level, width=args.profiling_width)
             level += 1
             layouts.append(profile_layout)
 
@@ -687,7 +687,7 @@ def props2matrix(tree, profiling_props, dtype=float):
             matrix += '\n'+'>'+leaf+'\n'
             for item in prop:
                 matrix += value2color[item]
-        return matrix
+        return matrix, value2color
   
 def random_color(h=None):
     """Generates a random color in RGB format."""
