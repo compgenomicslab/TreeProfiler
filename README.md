@@ -4,7 +4,7 @@
 - [Installation](#installation)
     - [Input files](#input-files)
     - [Quick Start](#quick-start)
-- [Using TreeProfiler](#using-treeprofiler) 
+- [Using TreeProfiler](#using-treeprofiler)
   - [Annotate metadata into tree ](#annotate-annotate-metadata-into-tree)
       - [Annotate metadata into tree internal nodes](#annotate-metadata-into-tree-internal-nodes)
       - [Determine datatype in arguments](#determine-datatype-in-arguments)
@@ -56,10 +56,13 @@ pip install -e .
 
 Install TreeProfiler
 ```
-# install selenium via pip 
+# install selenium via pip
 pip install selenium
 # or conda
-conda install -c conda-forge selenium 
+conda install -c conda-forge selenium
+
+# install biopython
+conda install -c conda-forge biopython
 
 # install TreeProfiler
 git clone https://github.com/dengzq1234/MetaTreeDrawer
@@ -69,11 +72,11 @@ export PATH=$PATH:$(pwd)
 ```
 
 ### Input files
-TreeProfiler takes following file types as input 
+TreeProfiler takes following file types as input
 
-| Input    |      Filetype  | 
+| Input    |      Filetype  |
 |----------|-------------   |
-| Tree     |      Newick    | 
+| Tree     |      Newick    |
 | Metadata |      TSV       |
 
 ### Quick Start
@@ -90,12 +93,12 @@ treeprofiler.py annotate --tree tree.nw --metadata metadata.tsv --outdir ./
 The second subcommand `plot` is used to visualize tree with associated metadata. By default, treeprofiler will launch an interactive session at localhost for user to explore input tree.
 
 ```
-treeprofiler.py plot --tree tree_annotated.nw --tree_type newick 
+treeprofiler.py plot --tree tree_annotated.nw --tree_type newick
 ```
 or
 
 ```
-treeprofiler.py plot --tree tree_annotated.ete --tree_type ete 
+treeprofiler.py plot --tree tree_annotated.ete --tree_type ete
 ```
 
 
@@ -142,7 +145,7 @@ examples/
     └── spongilla_example.tsv
 ```
 
-## `annotate`, Annotate metadata into tree 
+## `annotate`, Annotate metadata into tree
 ```
 usage: treeprofiler.py annotate [-h] [-t TREE] [--annotated_tree] [--tree_type TREE_TYPE]
                                 [--prop2type PROP2TYPE] [--rank_limit RANK_LIMIT]
@@ -247,11 +250,11 @@ OUTPUT options:
 ### Annotate metadata into tree internal nodes
 At the above example, we only mapped metadata to leaf nodes, in this example, we will also profile **internal nodes** annotation and analysis of their children nodes.
 
-TreeProfiler can infer automatically the datatype of each column in your metadata, including 
+TreeProfiler can infer automatically the datatype of each column in your metadata, including
 - `list` (seperate by `,` )
 - `string` (categorcial data)
 - `numerical`(numerical data, float or integer)
-- `booleans` 
+- `booleans`
 
 Internal node will summurize children nodes information according to their datatypes.
 
@@ -265,14 +268,14 @@ demo tree
 ```
 
 demo metadata
-|  #name | text_property |  multiple_text_property  |   numerical_property  | bool_property| 
+|  #name | text_property |  multiple_text_property  |   numerical_property  | bool_property|
 |----------|----------|----------|-------------|-------------|
 |A|vowel|a,b,c|10|True|
 |B|consonant|b,c,d|4|False|
 |C|consonant|c,d,e|9|True|
 
 Treeprofiler will infer the datatypes of above metadata and adpot different summary method:
-|  - | text_property |  multiple_text_property  |   numerical_property  | bool_property| 
+|  - | text_property |  multiple_text_property  |   numerical_property  | bool_property|
 |----------|----------|----------|-------------|-------------|
 |datatype|string|list|float|bool|
 |method|counter|counter|average,sum,max,min,standard deviation|counter|
@@ -281,31 +284,31 @@ After annotation, internal nodes will be summarized. If property was summarize w
 
 
 Users can choose either counter is raw or relative count by using `--counter_stat`
-| internal_node properties  |      statistic method  | 
+| internal_node properties  |      statistic method  |
 |----------|-------------   |
-| `<feature name>`_counter  |      raw(default), relative    | 
+| `<feature name>`_counter  |      raw(default), relative    |
 
-|  internal_node| text_property_counter |  multiple_text_property_counter  | bool_property_counter| 
+|  internal_node| text_property_counter |  multiple_text_property_counter  | bool_property_counter|
 |----------|----------|-------------|-------------|
 |D|consonant--2|b--1\|\|c--2\|\|d--2\|\|e--1|True--1\|\|False--1|
 |root|vowel--1\|\|consonant--2|a--2\|\|b--2\|\|c--3\|\|d--2\|\|e--1|True--2\|\|False--1|
 
-After annotation, internal nodes will be summarized.  If property was numerical data, in internal node will be named as 
-| internal_node properties  |      statistic method  | 
+After annotation, internal nodes will be summarized.  If property was numerical data, in internal node will be named as
+| internal_node properties  |      statistic method  |
 |----------|-------------   |
-| `<feature name>`_avg      |      average    | 
-| `<feature name>`_sum      |      sum    | 
-| `<feature name>`_max      |      maximum    | 
-| `<feature name>`_min      |      minimum    | 
-| `<feature name>`_std      |      standard deviation    | 
+| `<feature name>`_avg      |      average    |
+| `<feature name>`_sum      |      sum    |
+| `<feature name>`_max      |      maximum    |
+| `<feature name>`_min      |      minimum    |
+| `<feature name>`_std      |      standard deviation    |
 
 By default, numerical feature will be calculated all the descriptive statistic, but users can choose specific one to be calculated by using `--num_stat [all, sum, avg, max, min, std] `
 
 In our demo, it would be:
-|  internal_node| numerical_property_avg |  numerical_property_sum  | numerical_property_max| numerical_property_max| numerical_property_max| 
+|  internal_node| numerical_property_avg |  numerical_property_sum  | numerical_property_max| numerical_property_max| numerical_property_max|
 |----------|----------|-------------|-------------|-------------|-------------|
 |D| 6.5| 13| 9| 4|2.5|
-|root| 7.67 | 23| 10| 4| 2.32| 
+|root| 7.67 | 23| 10| 4| 2.32|
 
 Excecute example data provided in `examples/`
 
@@ -342,8 +345,8 @@ If input metadada containcs taxon data, TreeProfiler allows users to process tax
 - `--taxa_field`, field of taxa name after delimiter. default `0`
 
 
-#### Basic usage on GTDB 
-Here we demonstrate with `examples/gtdb_example1/gtdb_example1.nw` and `examples/gtdb_example1/gtdb_example1.tsv`. Taxonomic accesion IDs are located in the first column which should be the names of leaf. If accesions are located in different columns, using `--taxon_column <column name>` to locate the the column. 
+#### Basic usage on GTDB
+Here we demonstrate with `examples/gtdb_example1/gtdb_example1.nw` and `examples/gtdb_example1/gtdb_example1.tsv`. Taxonomic accesion IDs are located in the first column which should be the names of leaf. If accesions are located in different columns, using `--taxon_column <column name>` to locate the the column.
 
 ```
 # in case of gtdb_example1.tsv
@@ -372,7 +375,7 @@ treeprofiler `annotate` subcommand will generate the following output file
 2) `<input_tree>` + *_annotated.ete*, ete format with annotated tree
 3) `<input_tree>` + *_annotated_prop2type.txt*, config file where store the datatype of each annotated properties
 
-In the following `plot` step, users can use either `.nw` or `.ete` by putting `--tree_type [newick, ete]` flag to identify. The difference between `.nw` and `.ete` format is 
+In the following `plot` step, users can use either `.nw` or `.ete` by putting `--tree_type [newick, ete]` flag to identify. The difference between `.nw` and `.ete` format is
 
  - newick file is more universal and be able to used in different other phylogenetic software although associated data of tree nodes will be considered as plain text, so if you use newick format, alongside with the prop2type config file which was generated before by adding `--prop2type <prop2type_file>`
 
@@ -522,7 +525,7 @@ examples/basic_example2
 └── MCC_FluA_H3.nw
 
 
-head examples/basic_example1/basic_example1.tsv 
+head examples/basic_example1/basic_example1.tsv
 #name	sample1	sample2	sample3	sample4	sample5	random_type	*bool_type	bool_type2
 Phy003I7ZJ_CHICK	0.05	0.12	0.86	0.01	0.69	medium	1	TRUE
 Phy0054BO3_MELGA	0.64	0.67	0.51	0.29	0.14	medium	1	TRUE
@@ -534,12 +537,12 @@ head -3 examples/basic_example2/diauxic.array
 YGR138C	-1.23	-0.81	1.79	0.78	-0.42	-0.69	0.58
 YPR156C	-1.76	-0.94	1.16	0.36	0.41	-0.35	1.12
 
-head -3 examples/basic_example2/MCC_FluA_H3_Genotype.txt 
+head -3 examples/basic_example2/MCC_FluA_H3_Genotype.txt
 #name	PB2	PB1	PA	HA	NP	NA	M	NS
 A/Swine/Binh_Duong/03_10/2010	trig	trig	trig	HuH3N2	trig	HuH3N2	trig	trig
 A/Swine/Binh_Duong/03_08/2010	trig	trig	trig	HuH3N2	trig	HuH3N2	trig	trig
 
-## annotate tree 
+## annotate tree
 treeprofiler.py annotate --tree examples/basic_example1/basic_example1.nw --metadata examples/basic_example1/basic_example1.tsv --bool_prop bool_type -o examples/basic_example1/
 
 treeprofiler.py annotate --tree examples/basic_example2/diauxic.nw --metadata examples/basic_example2/diauxic.array --outdir examples/basic_example2/
@@ -568,13 +571,13 @@ example
 
 ## target column "random_type" in examples/basic_example1/basic_example1.tsv
 # List random_type feature as text in aligned panel using label_layout
-treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.nw --label_layout random_type 
+treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.nw --label_layout random_type
 
 # Label random_type feature on branch with different colors in aligned panel  using --colorbranch_layout
-treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.nw  --colorbranch_layout random_type 
+treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.nw  --colorbranch_layout random_type
 
 # Label random_type feature with retangular block in aligned panel using --rectangular_layout
-treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.nw  --rectangular_layout random_type 
+treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.nw  --rectangular_layout random_type
 
 # Label all feature with retangular block in aligned panel using --profiling_layout
 treeprofiler.py plot --tree examples/basic_example2/MCC_FluA_H3_annotated.nw --profiling_layout PB2,PB1,PA,HA,NP,NA,M,NS
@@ -605,7 +608,7 @@ treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.nw 
 treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.nw  --revbinary_layout bool_type2
 
 # multiple columns seperated by ','
-treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.nw  --profiling_layout bool_type,bool_type2  
+treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.nw  --profiling_layout bool_type,bool_type2
 
 ```
 ![binary example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_binary_layout.jpeg?raw=true)
@@ -668,7 +671,7 @@ treeprofiler.py plot --tree examples/emapper/7955.ENSDARP00000116736_annotated.e
 ![eggNOG_OGs example3](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/emapper_OGs_plot.jpeg?raw=true)
 
 ### Layouts for multiple sequence alignment
-In order to visualize multiple sequence alignment alongside with the tree, first we need to annotate alignment using `--alignment` in `annotate`. Then activate alignment layout by adding `--alignment_layout` 
+In order to visualize multiple sequence alignment alongside with the tree, first we need to annotate alignment using `--alignment` in `annotate`. Then activate alignment layout by adding `--alignment_layout`
 
 ```
 # annotate
@@ -736,7 +739,7 @@ Internal nodes of numerical data are process descriptive statistic analysis by d
 example
 ```
 # select max instead of avg as internal node ploting representative
-treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.nw  --heatmap_layout sample1,sample2,sample3,sample4,sample5 --internal_plot_measure max 
+treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.nw  --heatmap_layout sample1,sample2,sample3,sample4,sample5 --internal_plot_measure max
 ```
 Before collapsed
 ![heatmap_uncollapsed](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_heatmap_uncollapsed.jpeg?raw=true)
@@ -758,7 +761,7 @@ treeprofiler.py annotate --tree examples/gtdb_example1/gtdb_example1.nw --metada
 treeprofiler.py annotate --tree examples/spongilla_example/spongilla_example.nw --metadata examples/spongilla_example/spongilla_example.tsv --taxonomic_profile --taxon_delimiter .  --taxa_field 0 --taxadb NCBI --outdir ./examples/spongilla_example/
 
 
-## Visualize 
+## Visualize
 treeprofiler.py plot --tree examples/gtdb_example1/gtdb_example1_annotated.nw --taxonrectangular_layout
 
 treeprofiler.py plot --tree examples/gtdb_example1/gtdb_example1_annotated.nw --taxonclade_layout
@@ -781,7 +784,7 @@ TreeProfiler allows users to perform conditional process based on different circ
 
 ### Query Syntax
 #### Basic Query
-All the conditional query shared the same syntax, a standard query consists the following 
+All the conditional query shared the same syntax, a standard query consists the following
 
 ```
 --pruned_by|collapsed_by|highlighted_by "<left_value> <operator> <right_value>"
@@ -790,17 +793,17 @@ All the conditional query shared the same syntax, a standard query consists the 
 * operators
     *  `=`
     * `!=`
-    * `>` 
+    * `>`
     * `>=`
     * `<`
     * `<=`
     * `contains`
 * right value, custom value for the condition
 
-Example 
+Example
 ```
-## annotate tree 
-treeprofiler.py annotate --tree examples/basic_example1/basic_example1.nw --metadata examples/basic_example1/basic_example1.tsv --bool_prop bool_type --counter_stat relative -o examples/basic_example1/ 
+## annotate tree
+treeprofiler.py annotate --tree examples/basic_example1/basic_example1.nw --metadata examples/basic_example1/basic_example1.tsv --bool_prop bool_type --counter_stat relative -o examples/basic_example1/
 
 # Conditional pruning, prune leaf node whose name contain "FALPE"
 treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.ete --tree_type ete --pruned_by "name contains FALPE"
@@ -814,12 +817,12 @@ treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.ete
 ```
 
 #### Query in internal nodes
-Query in internal nodes' properties is also available, in this case, `left_value` of query will be the internal node property, remember to add the proper suffixes such as `_avg`, `_max`,etc, for the numerical data or `_counter` for categorical and boolean data. 
+Query in internal nodes' properties is also available, in this case, `left_value` of query will be the internal node property, remember to add the proper suffixes such as `_avg`, `_max`,etc, for the numerical data or `_counter` for categorical and boolean data.
 
 Example
 ```
 # select tree internal node where sample1_avg feature < 0.50
-treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.ete --tree_type ete --heatmap_layout sample1 --collapsed_by "sample1_avg < 0.50" 
+treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.ete --tree_type ete --heatmap_layout sample1 --collapsed_by "sample1_avg < 0.50"
 ```
 
 Syntax for internal node counter data
@@ -831,26 +834,26 @@ treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.ete
 #### AND and OR conditions
 The syntax for the AND condition and OR condition in TreeProfiler is:
 
-AND condition will be under one argument, syntax seperated by `,`, such as 
+AND condition will be under one argument, syntax seperated by `,`, such as
 ```
 # select tree  node where sample1 feature > 0.50 AND sample2 < 0.2
-treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.ete --tree_type ete --heatmap_layout sample1,sample2,sample3,sample4,sample5 --highlighted_by "sample1>0.50,sample2<0.2" 
+treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.ete --tree_type ete --heatmap_layout sample1,sample2,sample3,sample4,sample5 --highlighted_by "sample1>0.50,sample2<0.2"
 ```
 
 OR condition will be used more than one arguments
 ```
 # select tree node where sample1 feature > 0.50 OR sample2 < 0.2
-treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.ete --tree_type ete --heatmap_layout sample1,sample2,sample3,sample4,sample5 --highlighted_by "sample1>0.50" --highlighted_by "sample2<0.2" 
+treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.ete --tree_type ete --heatmap_layout sample1,sample2,sample3,sample4,sample5 --highlighted_by "sample1>0.50" --highlighted_by "sample2<0.2"
 ```
 
 ### conditional limit based on taxonomic level
 Prune taxonomic annotated tree based on following taxonomic rank level,
-`kingdom`, `phylum`, `class`, `order`, `family`, `genus`, `species`, `subspecies` 
+`kingdom`, `phylum`, `class`, `order`, `family`, `genus`, `species`, `subspecies`
 ```
 # Case in GTDB
 
 # prune tree in visualization, rank limit to family level
-treeprofiler.py plot --tree examples/gtdb_example1/gtdb_example1_annotated.nw  --rank_limit family --taxonclade_layout  
+treeprofiler.py plot --tree examples/gtdb_example1/gtdb_example1_annotated.nw  --rank_limit family --taxonclade_layout
 
 # Case in NCBI
 
@@ -873,17 +876,17 @@ Here we will conduct the profiling with two command line
 ```
 treeprofiler.py annotate --tree examples/progenome3/progenome3.nw --metadata examples/progenome3/progenome3.tsv --taxonomic_profile --taxadb NCBI --taxon_delimiter . --taxa_field 0 --num_prop GC,size --bool_prop aquatic_habitat,host_associated,soil_habitat --outdir examples/progenome3/
 
-treeprofiler.py plot --tree examples/progenome3/progenome3_annotated.ete --tree_type ete --barplot_layout GC,size --binary_layout aquatic_habitat,host_associated,soil_habitat --taxonclade_layout 
+treeprofiler.py plot --tree examples/progenome3/progenome3_annotated.ete --tree_type ete --barplot_layout GC,size --binary_layout aquatic_habitat,host_associated,soil_habitat --taxonclade_layout
 ```
 
 ![progenome3 example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/progenome_example.jpeg?raw=true)
 
-## Demo2 Explore eggnog-mapper annotations data with taxonomic annotation 
+## Demo2 Explore eggnog-mapper annotations data with taxonomic annotation
 
 ```
 treeprofiler.py annotate --tree examples/emapper/7955.ENSDARP00000116736.nw --emapper_annotations examples/emapper/7955.out.emapper.annotations
 
-treeprofiler.py plot --tree examples/emapper/7955.ENSDARP00000116736_annotated.ete --tree_type ete --emapper_layout 
+treeprofiler.py plot --tree examples/emapper/7955.ENSDARP00000116736_annotated.ete --tree_type ete --emapper_layout
 ```
 
 ![emapper example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/emapper_general_plot.jpeg?raw=true)
@@ -891,13 +894,13 @@ treeprofiler.py plot --tree examples/emapper/7955.ENSDARP00000116736_annotated.e
 ![emapper example3](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/emapper_OGs_plot.jpeg?raw=true)
 
 ## Demo3 Explore distribution of metallophores data in GTDB taxonomy
-Here we take a glance of `examples/gtdb_example2/taxonomy_and_metallophores.tsv`([Zachary L. Reitz, 2023](https://www.biorxiv.org/content/10.1101/2022.12.14.519525v1.full)). We would like to see distribution of metallophores dataset among bacteria taxonomy 
+Here we take a glance of `examples/gtdb_example2/taxonomy_and_metallophores.tsv`([Zachary L. Reitz, 2023](https://www.biorxiv.org/content/10.1101/2022.12.14.519525v1.full)). We would like to see distribution of metallophores dataset among bacteria taxonomy
 
 ```
 head examples/gtdb_example2/taxonomy_and_metallophores.tsv
 Assembly	NRP.met	NRPS	HYDROXAMATE	SALICYLATE	OHASP	OHHIS	PYOVERDINE	CATECHOL	GRAMININE	DMAQ	K	P	C	O	F	G
 RS_GCF_000067165.1	2	6	FALSE	FALSE	TRUE	FALSE	FALSE	TRUE	FALSE	FALSEBacteria	Myxococcota	Polyangia	Polyangiales	Polyangiaceae	Sorangium
-RS_GCF_001189295.1	0	12	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSEBacteria	Myxococcota	Polyangia	Polyangiales	Polyangiaceae	Chondromyces  
+RS_GCF_001189295.1	0	12	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSEBacteria	Myxococcota	Polyangia	Polyangiales	Polyangiaceae	Chondromyces
 ```
 
 ```
