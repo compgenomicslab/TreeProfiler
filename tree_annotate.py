@@ -1,28 +1,34 @@
 #!/usr/bin/env python3
 
+# NOTE(JBC): The order of the imports is normally from more general to
+# more specific. It is easier to know the dependencies that way, but
+# also can affect the result if some general modules monkey-patch some
+# functions.
+
+import os
+import time
+import random
+import math
+import re
+import csv
+from io import StringIO
+from itertools import islice
+from collections import defaultdict, Counter
+
+import numpy as np
+from scipy import stats
+
 from ete4.parser.newick import NewickError
 from ete4.coretype.seqgroup import SeqGroup
 from ete4 import Tree, PhyloTree
 from ete4 import GTDBTaxa
 from ete4 import NCBITaxa
+
+import b64pickle
 from utils import (
     ete4_parse, taxatree_prune, conditional_prune,
     children_prop_array, children_prop_array_missing,
     flatten, get_consensus_seq)
-import b64pickle
-
-from collections import defaultdict
-from collections import Counter
-import numpy as np
-from io import StringIO
-from scipy import stats
-from itertools import islice
-import random
-import math
-import csv
-import time
-import re
-import os
 
 DESC = "annotate tree"
 
