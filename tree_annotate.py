@@ -129,6 +129,10 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         taxon_delimiter='.', taxa_field=0, rank_limit=None, pruned_by=None,
         outdir='./'):
 
+    # NOTE(JBC): The function has no docstring, and has a huge number of paramters.
+    # I'd suggest converting it into a few functions that do a single thing
+    # (and take few parameters and have docstrings that say what they do).
+
     total_color_dict = []
     layouts = []
     level = 1 # level 1 is the leaf name
