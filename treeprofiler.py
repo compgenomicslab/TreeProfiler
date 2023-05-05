@@ -20,6 +20,8 @@ def populate_main_args(main_args_p):
     Parse the input parameters
     Return the parsed arguments.
     """
+    # NOTE(JBC): The docstring lies about what this function does.
+
     # input parameters group
     group = main_args_p.add_argument_group(title='SOURCE TREE INPUT',
         description="Source tree input parameters")
