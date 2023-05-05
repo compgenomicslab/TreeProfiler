@@ -32,93 +32,60 @@ from utils import (
 
 DESC = "annotate tree"
 
-def populate_annotate_args(annotate_args_p):
-    group = annotate_args_p.add_argument_group(title='METADATA TABLE parameters',
+def populate_annotate_args(parser):
+    gmeta = parser.add_argument_group(
+        title='METADATA TABLE parameters',
         description="Input parameters of METADATA")
-    # group.add_argument('-t', '--tree',
-    #     type=str,
-    #     required=False,
-    #     help="Input tree, .nw file, customized tree input")
-    group.add_argument('-d', '--metadata',
-        required=False,
-        help="<metadata.csv> .csv, .tsv. mandatory input",
-        type=lambda s: [item for item in s.split(',')])
-    group.add_argument('--no_colnames',
-        default=False,
-        action='store_true',
-        required=False,
-        help="metadata table doesn't contain columns name")
-    group.add_argument('--text_prop',
-        required=False,
-        help="<col1,col2> names, column index or index range of columns which need to be read as categorical data",
-        type=lambda s: [item for item in s.split(',')])
-    group.add_argument('--multiple_text_prop',
-        required=False,
-        help="<col1,col2> names, column index or index range of columns which need to be read as categorical data which contains more than one value and seperate by ',' such as GO:0000003,GO:0000902,GO:0000904,GO:0003006",
-        type=lambda s: [item for item in s.split(',')])
-    group.add_argument('--num_prop',
-        required=False,
-        help="<col1,col2> names, column index or index range of columns which need to be read as numerical data",
-        type=lambda s: [item for item in s.split(',')])
-    group.add_argument('--bool_prop',
-        required=False,
-        help="<col1,col2> names, column index or index range of columns which need to be read as boolean data",
-        type=lambda s: [item for item in s.split(',')])
-    group.add_argument('--text_prop_idx',
-        type=str,
-        required=False,
-        help="1,2,3 or [1-5] index of columns which need to be read as categorical data")
-    group.add_argument('--num_prop_idx',
-        type=str,
-        required=False,
-        help="1,2,3 or [1-5] index columns which need to be read as numerical data")
-    group.add_argument('--bool_prop_idx',
-        type=str,
-        required=False,
-        help="1,2,3 or [1-5] index columns which need to be read as boolean data")
-    group.add_argument('--taxatree',
-        type=str,
-        required=False,
-        help="<kingdom|phylum|class|order|family|genus|species|subspecies> reference tree from taxonomic database")
-    group.add_argument('--taxadb',
-        type=str,
-        default='GTDB',
-        required=False,
-        help="<NCBI|GTDB> for taxonomic profiling or fetch taxatree default [GTDB]")
-    group.add_argument('--taxon_column',
-        type=str,
-        required=False,
-        help="<col1> name of columns which need to be read as taxon data")
-    group.add_argument('--taxon_delimiter',
-        type=str,
-        default=';',
-        required=False,
-        help="delimiter of taxa columns. default [;]")
-    group.add_argument('--taxa_field',
-        type=int,
-        default=0,
-        required=False,
-        help="field of taxa name after delimiter. default 0")
 
-    group.add_argument('--emapper_annotations',
-        type=str,
-        required=False,
+    csv_list = lambda txt: txt.split(',')
+
+    add = gmeta.add_argument
+    add('-d', '--metadata', type=csv_list,
+        help="<metadata.csv> .csv, .tsv. mandatory input")
+    add('--no_colnames', action='store_true',
+        help="metadata table doesn't contain columns name")
+    add('--text_prop', type=csv_list,
+        help=("<col1,col2> names, column index or index range of columns which "
+              "need to be read as categorical data"))
+    add('--multiple_text_prop', type=csv_list,
+        help=("<col1,col2> names, column index or index range of columns which "
+              "need to be read as categorical data which contains more than one"
+              " value and seperate by ',' such "
+              "as GO:0000003,GO:0000902,GO:0000904,GO:0003006"))
+    add('--num_prop', type=csv_list,
+        help=("<col1,col2> names, column index or index range of columns which "
+              "need to be read as numerical data"))
+    add('--bool_prop', type=csv_list,
+        help=("<col1,col2> names, column index or index range of columns which "
+              "need to be read as boolean data"))
+    add('--text_prop_idx',
+        help="1,2,3 or [1-5] index of columns which need to be read as categorical data")
+    add('--num_prop_idx',
+        help="1,2,3 or [1-5] index columns which need to be read as numerical data")
+    add('--bool_prop_idx',
+        help="1,2,3 or [1-5] index columns which need to be read as boolean data")
+    add('--taxatree',
+        help=("<kingdom|phylum|class|order|family|genus|species|subspecies> "
+              "reference tree from taxonomic database"))
+    add('--taxadb', default='GTDB',
+        help="<NCBI|GTDB> for taxonomic profiling or fetch taxatree default [GTDB]")
+    add('--taxon_column',
+        help="<col1> name of columns which need to be read as taxon data")
+    add('--taxon_delimiter', default=';',
+        help="delimiter of taxa columns. default [;]")
+    add('--taxa_field', type=int, default=0,
+        help="field of taxa name after delimiter. default 0")
+    add('--emapper_annotations',
         help="out.emapper.annotations")
-    group.add_argument('--emapper_pfam',
-        type=str,
-        required=False,
+    add('--emapper_pfam',
         help="out.emapper.pfams")
-    group.add_argument('--emapper_smart',
-        type=str,
-        required=False,
+    add('--emapper_smart',
         help="out.emapper.smart")
-    group.add_argument('--alignment',
-        type=str,
-        required=False,
+    add('--alignment',
         help="Sequence alignment, .fasta format")
 
 
-    group = annotate_args_p.add_argument_group(title='Annotation arguments',
+    group = parser.add_argument_group(title='Annotation arguments',
         description="Annotation parameters")
     group.add_argument('--taxonomic_profile',
         default=False,
@@ -136,7 +103,7 @@ def populate_annotate_args(annotate_args_p):
         required=False,
         help="statistic calculation to perform for categorical data in internal nodes, raw count or in percentage [raw, relative] ")
 
-    group = annotate_args_p.add_argument_group(title='OUTPUT options',
+    group = parser.add_argument_group(title='OUTPUT options',
         description="")
     # group.add_argument('--ete4out',
     #     default=False,
