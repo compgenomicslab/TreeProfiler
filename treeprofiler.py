@@ -80,11 +80,11 @@ def populate_main_args(main_args_p):
     #return args
 
 def main():
-    main_args_p = ap.ArgumentParser(description=
-        "treeprofiler.py (ver. "+__version__+
-        " of "+__date__+")." + __description__+ " Authors: "+
-        __author__+" ("+__email__+")",
-        formatter_class=ap.RawTextHelpFormatter, add_help=False)
+    desc = (f'treeprofiler.py (ver. {__version__} of {__date__}).'
+            f'{__description__} Authors: {__author__} ({__email__})')
+    main_args_p = ap.ArgumentParser(description=desc,
+                                    formatter_class=ap.RawTextHelpFormatter,
+                                    add_help=False)
 
     populate_main_args(main_args_p)
 
