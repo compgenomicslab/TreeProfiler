@@ -52,6 +52,9 @@ git clone https://github.com/etetoolkit/ete.git
 cd ete/
 git branch checkout ete4
 pip install -e .
+
+# install BioPython
+pip install biopython
 ```
 
 Install TreeProfiler

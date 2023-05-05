@@ -63,8 +63,8 @@ def get_heatmapface(node, prop, min_color="#ffffff", max_color="#971919", toolti
         ratio = positive / total
     else:
         ratio = 0
-    if ratio < 0.05 and ratio != 0: # show minimum color for too low
-        ratio = 0.05
+    if ratio < 0.15 and ratio != 0: # show minimum color for too low
+        ratio = 0.15
     
     c1 = min_color
     c2 = max_color
