@@ -94,16 +94,19 @@ def populate_annotate_args(parser):
         help="Determine if you need taxonomic annotation on tree")
     group.add_argument('--num_stat',
         default='all',
+        choices=['all', 'sum', 'avg', 'max', 'min', 'std', 'none'],
         type=str,
         required=False,
-        help="statistic calculation to perform for numerical data in internal nodes, [all, sum, avg, max, min, std] ")
+        help="statistic calculation to perform for numerical data in internal nodes, [all, sum, avg, max, min, std, none] ")  
+
     group.add_argument('--counter_stat',
         default='raw',
+        choices=['raw', 'relative', 'none'],
         type=str,
         required=False,
-        help="statistic calculation to perform for categorical data in internal nodes, raw count or in percentage [raw, relative] ")
-
-    group = parser.add_argument_group(title='OUTPUT options',
+        help="statistic calculation to perform for categorical data in internal nodes, raw count or in percentage [raw, relative, none] ")  
+    
+    group = annotate_args_p.add_argument_group(title='OUTPUT options',
         description="")
     # group.add_argument('--ete4out',
     #     default=False,
@@ -340,23 +343,24 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         for node in annotated_tree.traverse("postorder"):
             internal_props = {}
             if not node.is_leaf():
-                if text_prop:
-                    internal_props_text = merge_text_annotations(node2leaves[node], text_prop, counter_stat=counter_stat)
-                    internal_props.update(internal_props_text)
+                if counter_stat != 'none':
+                    if text_prop:
+                        internal_props_text = merge_text_annotations(node2leaves[node], text_prop, counter_stat=counter_stat)
+                        internal_props.update(internal_props_text)
 
-                if multiple_text_prop:
-                    internal_props_multi = merge_multitext_annotations(node2leaves[node], multiple_text_prop, counter_stat=counter_stat)
-                    internal_props.update(internal_props_multi)
+                    if multiple_text_prop:
+                        internal_props_multi = merge_multitext_annotations(node2leaves[node], multiple_text_prop, counter_stat=counter_stat)
+                        internal_props.update(internal_props_multi)
 
-                if num_prop:
-                    internal_props_num = merge_num_annotations(node2leaves[node], num_prop, num_stat=num_stat)
-                    if internal_props_num:
-                        internal_props.update(internal_props_num)
+                    if bool_prop:
+                        internal_props_bool = merge_text_annotations(node2leaves[node], bool_prop, counter_stat=counter_stat)
+                        internal_props.update(internal_props_bool)
 
-                if bool_prop:
-                    internal_props_bool = merge_text_annotations(node2leaves[node], bool_prop, counter_stat=counter_stat)
-                    internal_props.update(internal_props_bool)
-
+                if num_stat != 'none':
+                    if num_prop:
+                        internal_props_num = merge_num_annotations(node2leaves[node], num_prop, num_stat=num_stat)                        
+                        if internal_props_num:
+                            internal_props.update(internal_props_num)
 
                 # deprecated
                 # if rest_column:
