@@ -1,117 +1,91 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+
+# NOTE(JBC): The order of the imports is normally from more general to
+# more specific. It is easier to know the dependencies that way, but
+# also can affect the result if some general modules monkey-patch some
+# functions.
+
+import os
+import time
+import random
+import math
+import re
+import csv
+from io import StringIO
+from itertools import islice
+from collections import defaultdict, Counter
+
+import numpy as np
+from scipy import stats
+
 from ete4.parser.newick import NewickError
 from ete4.coretype.seqgroup import SeqGroup
 from ete4 import Tree, PhyloTree
 from ete4 import GTDBTaxa
 from ete4 import NCBITaxa
+
+import b64pickle
 from utils import (
     ete4_parse, taxatree_prune, conditional_prune,
-    children_prop_array, children_prop_array_missing, 
+    children_prop_array, children_prop_array_missing,
     flatten, get_consensus_seq)
-import b64pickle
-
-from collections import defaultdict
-from collections import Counter
-import numpy as np
-from io import StringIO
-from scipy import stats
-from itertools import islice
-import random
-import math
-import csv
-import time
-import re
-import os
 
 DESC = "annotate tree"
 
-def populate_annotate_args(annotate_args_p):
-    group = annotate_args_p.add_argument_group(title='METADATA TABLE parameters',
+def populate_annotate_args(parser):
+    gmeta = parser.add_argument_group(
+        title='METADATA TABLE parameters',
         description="Input parameters of METADATA")
-    # group.add_argument('-t', '--tree',
-    #     type=str,
-    #     required=False,
-    #     help="Input tree, .nw file, customized tree input")
-    group.add_argument('-d', '--metadata',
-        required=False,
-        help="<metadata.csv> .csv, .tsv. mandatory input",
-        type=lambda s: [item for item in s.split(',')])
-    group.add_argument('--no_colnames',
-        default=False,
-        action='store_true',
-        required=False,
+
+    csv_list = lambda txt: txt.split(',')
+
+    add = gmeta.add_argument
+    add('-d', '--metadata', type=csv_list,
+        help="<metadata.csv> .csv, .tsv. mandatory input")
+    add('--no_colnames', action='store_true',
         help="metadata table doesn't contain columns name")
-    group.add_argument('--text_prop',
-        required=False,
-        help="<col1,col2> names, column index or index range of columns which need to be read as categorical data",
-        type=lambda s: [item for item in s.split(',')])
-    group.add_argument('--multiple_text_prop',
-        required=False,
-        help="<col1,col2> names, column index or index range of columns which need to be read as categorical data which contains more than one value and seperate by ',' such as GO:0000003,GO:0000902,GO:0000904,GO:0003006",
-        type=lambda s: [item for item in s.split(',')])
-    group.add_argument('--num_prop',
-        required=False,
-        help="<col1,col2> names, column index or index range of columns which need to be read as numerical data",
-        type=lambda s: [item for item in s.split(',')])
-    group.add_argument('--bool_prop',
-        required=False,
-        help="<col1,col2> names, column index or index range of columns which need to be read as boolean data",
-        type=lambda s: [item for item in s.split(',')])
-    group.add_argument('--text_prop_idx',
-        type=str,
-        required=False,
+    add('--text_prop', type=csv_list,
+        help=("<col1,col2> names, column index or index range of columns which "
+              "need to be read as categorical data"))
+    add('--multiple_text_prop', type=csv_list,
+        help=("<col1,col2> names, column index or index range of columns which "
+              "need to be read as categorical data which contains more than one"
+              " value and seperate by ',' such "
+              "as GO:0000003,GO:0000902,GO:0000904,GO:0003006"))
+    add('--num_prop', type=csv_list,
+        help=("<col1,col2> names, column index or index range of columns which "
+              "need to be read as numerical data"))
+    add('--bool_prop', type=csv_list,
+        help=("<col1,col2> names, column index or index range of columns which "
+              "need to be read as boolean data"))
+    add('--text_prop_idx',
         help="1,2,3 or [1-5] index of columns which need to be read as categorical data")
-    group.add_argument('--num_prop_idx',
-        type=str,
-        required=False,
+    add('--num_prop_idx',
         help="1,2,3 or [1-5] index columns which need to be read as numerical data")
-    group.add_argument('--bool_prop_idx',
-        type=str,
-        required=False,
+    add('--bool_prop_idx',
         help="1,2,3 or [1-5] index columns which need to be read as boolean data")
-    group.add_argument('--taxatree',
-        type=str,
-        required=False,
-        help="<kingdom|phylum|class|order|family|genus|species|subspecies> reference tree from taxonomic database")
-    group.add_argument('--taxadb',
-        type=str,
-        default='GTDB',
-        required=False,
-        help="<NCBI|GTDB> for taxonomic profiling or fetch taxatree default [GTDB]")    
-    group.add_argument('--taxon_column',
-        type=str,
-        required=False,
+    add('--taxatree',
+        help=("<kingdom|phylum|class|order|family|genus|species|subspecies> "
+              "reference tree from taxonomic database"))
+    add('--taxadb', default='GTDB',
+        help="<NCBI|GTDB> for taxonomic profiling or fetch taxatree default [GTDB]")
+    add('--taxon_column',
         help="<col1> name of columns which need to be read as taxon data")
-    group.add_argument('--taxon_delimiter',
-        type=str,
-        default=';',
-        required=False,
+    add('--taxon_delimiter', default=';',
         help="delimiter of taxa columns. default [;]")
-    group.add_argument('--taxa_field',
-        type=int,
-        default=0,
-        required=False,
+    add('--taxa_field', type=int, default=0,
         help="field of taxa name after delimiter. default 0")
-    
-    group.add_argument('--emapper_annotations',
-        type=str,
-        required=False,
+    add('--emapper_annotations',
         help="out.emapper.annotations")
-    group.add_argument('--emapper_pfam',
-        type=str,
-        required=False,
+    add('--emapper_pfam',
         help="out.emapper.pfams")
-    group.add_argument('--emapper_smart',
-        type=str,
-        required=False,
+    add('--emapper_smart',
         help="out.emapper.smart")
-    group.add_argument('--alignment',
-        type=str,
-        required=False,
+    add('--alignment',
         help="Sequence alignment, .fasta format")
 
 
-    group = annotate_args_p.add_argument_group(title='Annotation arguments',
+    group = parser.add_argument_group(title='Annotation arguments',
         description="Annotation parameters")
     group.add_argument('--taxonomic_profile',
         default=False,
@@ -120,14 +94,17 @@ def populate_annotate_args(annotate_args_p):
         help="Determine if you need taxonomic annotation on tree")
     group.add_argument('--num_stat',
         default='all',
+        choices=['all', 'sum', 'avg', 'max', 'min', 'std', 'none'],
         type=str,
         required=False,
-        help="statistic calculation to perform for numerical data in internal nodes, [all, sum, avg, max, min, std] ")  
+        help="statistic calculation to perform for numerical data in internal nodes, [all, sum, avg, max, min, std, none] ")  
+
     group.add_argument('--counter_stat',
         default='raw',
+        choices=['raw', 'relative', 'none'],
         type=str,
         required=False,
-        help="statistic calculation to perform for categorical data in internal nodes, raw count or in percentage [raw, relative] ")  
+        help="statistic calculation to perform for categorical data in internal nodes, raw count or in percentage [raw, relative, none] ")  
     
     group = annotate_args_p.add_argument_group(title='OUTPUT options',
         description="")
@@ -145,20 +122,24 @@ def populate_annotate_args(annotate_args_p):
     #     help="output annotated tsv file")
 
 
-def run_tree_annotate(tree, input_annotated_tree=False, 
+def run_tree_annotate(tree, input_annotated_tree=False,
         metadata_dict={}, node_props=[], columns={}, prop2type={},
-        emapper_annotations=None,  
-        text_prop=[], text_prop_idx=[], multiple_text_prop=[], num_prop=[], num_prop_idx=[], 
+        emapper_annotations=None,
+        text_prop=[], text_prop_idx=[], multiple_text_prop=[], num_prop=[], num_prop_idx=[],
         bool_prop=[], bool_prop_idx=[], prop2type_file=None, alignment=None, emapper_pfam=None,
-        emapper_smart=None, counter_stat='raw', num_stat='all', 
-        taxonomic_profile=False, taxadb='GTDB', taxon_column='name', 
+        emapper_smart=None, counter_stat='raw', num_stat='all',
+        taxonomic_profile=False, taxadb='GTDB', taxon_column='name',
         taxon_delimiter='.', taxa_field=0, rank_limit=None, pruned_by=None,
         outdir='./'):
+
+    # NOTE(JBC): The function has no docstring, and has a huge number of paramters.
+    # I'd suggest converting it into a few functions that do a single thing
+    # (and take few parameters and have docstrings that say what they do).
 
     total_color_dict = []
     layouts = []
     level = 1 # level 1 is the leaf name
-    
+
     if emapper_annotations:
         emapper_metadata_dict, emapper_node_props, emapper_columns = parse_emapper_annotations(emapper_annotations)
         metadata_dict.update(emapper_metadata_dict)
@@ -205,7 +186,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         num_prop = num_prop
     else:
         num_prop = []
-    
+
     if bool_prop:
         bool_prop = bool_prop
     else:
@@ -222,7 +203,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
                 text_prop_idx.append(int(i))
 
         text_prop = [node_props[index-1] for index in text_prop_idx]
-    
+
     if num_prop_idx:
         num_prop_idx = []
         for i in num_prop_idx.split(','):
@@ -254,7 +235,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
             for line in f:
                 line = line.rstrip()
                 prop, value = line.split('\t')
-                prop2type[prop] = eval(value) 
+                prop2type[prop] = eval(value)
     else:
         # output datatype of each property of each tree node including internal nodes
         if prop2type:
@@ -273,28 +254,28 @@ def run_tree_annotate(tree, input_annotated_tree=False,
                         num_prop.append(key)
                     if dtype == bool:
                         bool_prop.append(key)
-        
+
         # paramemters can over write the default
         if emapper_annotations:
             text_prop.extend([
-                'seed_ortholog', 
-                'max_annot_lvl', 
-                'COG_category', 
+                'seed_ortholog',
+                'max_annot_lvl',
+                'COG_category',
                 'EC'
             ])
             num_prop.extend([
-                'evalue', 
+                'evalue',
                 'score'
             ])
             multiple_text_prop.extend([
-                'eggNOG_OGs', 'GOs', 'KEGG_ko', 'KEGG_Pathway', 
+                'eggNOG_OGs', 'GOs', 'KEGG_ko', 'KEGG_Pathway',
                 'KEGG_Module', 'KEGG_Reaction', 'KEGG_rclass',
                 'BRITE', 'KEGG_TC', 'CAZy', 'BiGG_Reaction', 'PFAMs'])
-        
+
         for prop in text_prop+bool_prop:
             prop2type[prop] = str
             prop2type[prop+'_counter'] = str
-            
+
         for prop in multiple_text_prop:
             prop2type[prop] = list
             prop2type[prop+'_counter'] = str
@@ -306,30 +287,30 @@ def run_tree_annotate(tree, input_annotated_tree=False,
             prop2type[prop+'_max'] = float
             prop2type[prop+'_min'] = float
             prop2type[prop+'_std'] = float
-        
+
         prop2type.update({# start with leaf name
                 'name':str,
                 'dist':float,
                 'support':float,
                 })
-    
+
     # load annotations to leaves
     start = time.time()
-    
+
     # alignment annotation
     if alignment:
         alignment_prop = 'alignment'
         name2seq = parse_fasta(alignment)
         for leaf in tree.iter_leaves():
             leaf.add_prop(alignment_prop, name2seq.get(leaf.name,''))
-    
+
     # domain annotation before other annotation
     if emapper_pfam:
         annot_tree_pfam_table(tree, emapper_pfam, alignment)
-    
+
     if emapper_smart:
         annot_tree_smart_table(tree, emapper_smart, alignment)
-    
+
 
     # load all metadata to leaf nodes
     taxon_column = []
@@ -346,7 +327,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
 
     end = time.time()
     print('Time for load_metadata_to_tree to run: ', end - start)
-    
+
     # stat method
     counter_stat = counter_stat #'raw' or 'relative'
     num_stat = num_stat
@@ -355,36 +336,37 @@ def run_tree_annotate(tree, input_annotated_tree=False,
     start = time.time()
     if not input_annotated_tree:
         #annotate_tree(t)
-        
+
         #pre load node2leaves to save time
         node2leaves = annotated_tree.get_cached_content()
         count = 0
         for node in annotated_tree.traverse("postorder"):
             internal_props = {}
             if not node.is_leaf():
-                if text_prop:
-                    internal_props_text = merge_text_annotations(node2leaves[node], text_prop, counter_stat=counter_stat)
-                    internal_props.update(internal_props_text)
+                if counter_stat != 'none':
+                    if text_prop:
+                        internal_props_text = merge_text_annotations(node2leaves[node], text_prop, counter_stat=counter_stat)
+                        internal_props.update(internal_props_text)
 
-                if multiple_text_prop:
-                    internal_props_multi = merge_multitext_annotations(node2leaves[node], multiple_text_prop, counter_stat=counter_stat)
-                    internal_props.update(internal_props_multi)
+                    if multiple_text_prop:
+                        internal_props_multi = merge_multitext_annotations(node2leaves[node], multiple_text_prop, counter_stat=counter_stat)
+                        internal_props.update(internal_props_multi)
 
-                if num_prop:
-                    internal_props_num = merge_num_annotations(node2leaves[node], num_prop, num_stat=num_stat)                        
-                    if internal_props_num:
-                        internal_props.update(internal_props_num)
+                    if bool_prop:
+                        internal_props_bool = merge_text_annotations(node2leaves[node], bool_prop, counter_stat=counter_stat)
+                        internal_props.update(internal_props_bool)
 
-                if bool_prop:
-                    internal_props_bool = merge_text_annotations(node2leaves[node], bool_prop, counter_stat=counter_stat)
-                    internal_props.update(internal_props_bool)
+                if num_stat != 'none':
+                    if num_prop:
+                        internal_props_num = merge_num_annotations(node2leaves[node], num_prop, num_stat=num_stat)                        
+                        if internal_props_num:
+                            internal_props.update(internal_props_num)
 
-                
                 # deprecated
                 # if rest_column:
                 #     internal_props_rest = merge_text_annotations(node2leaves[node], rest_column, counter_stat=counter_stat)
                 #     internal_props.update(internal_props_rest)
-                
+
                 #internal_props = {**internal_props_text, **internal_props_num, **internal_props_rest}
                 #print(internal_props.keys())
 
@@ -403,8 +385,8 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         pass
     end = time.time()
     print('Time for merge annotations to run: ', end - start)
-    
-    
+
+
     # taxa annotations
     start = time.time()
     if taxonomic_profile:
@@ -423,7 +405,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
                     annotated_tree, rank2values = annotate_taxa(annotated_tree, db=taxadb, taxid_attr="name", sp_delimiter=taxon_delimiter, sp_field=taxa_field)
     else:
         rank2values = {}
-    
+
     end = time.time()
     print('Time for annotate_taxa to run: ', end - start)
 
@@ -431,7 +413,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
     if rank_limit:
         annotated_tree = taxatree_prune(annotated_tree, rank_limit=rank_limit)
 
-    # prune tree by condition 
+    # prune tree by condition
     if pruned_by: # need to be wrap with quotes
         condition_strings = pruned_by
         annotated_tree = conditional_prune(annotated_tree, condition_strings, prop2type)
@@ -509,20 +491,20 @@ def run(args):
             'BiGG_Reaction':list,
             'PFAMs':list
         })
-        
-    annotated_tree, prop2type = run_tree_annotate(tree, input_annotated_tree=args.annotated_tree, 
-        metadata_dict=metadata_dict, node_props=node_props, columns=columns, 
-        prop2type=prop2type, 
-        text_prop=args.text_prop, text_prop_idx=args.text_prop_idx, 
-        multiple_text_prop=args.multiple_text_prop, num_prop=args.num_prop, num_prop_idx=args.num_prop_idx, 
-        bool_prop=args.bool_prop, bool_prop_idx=args.bool_prop_idx, 
-        prop2type_file=args.prop2type, alignment=args.alignment, 
-        emapper_pfam=args.emapper_pfam, emapper_smart=args.emapper_smart, 
-        counter_stat=args.counter_stat, num_stat=args.num_stat, 
-        taxonomic_profile=args.taxonomic_profile, taxadb=args.taxadb, taxon_column=args.taxon_column, 
+
+    annotated_tree, prop2type = run_tree_annotate(tree, input_annotated_tree=args.annotated_tree,
+        metadata_dict=metadata_dict, node_props=node_props, columns=columns,
+        prop2type=prop2type,
+        text_prop=args.text_prop, text_prop_idx=args.text_prop_idx,
+        multiple_text_prop=args.multiple_text_prop, num_prop=args.num_prop, num_prop_idx=args.num_prop_idx,
+        bool_prop=args.bool_prop, bool_prop_idx=args.bool_prop_idx,
+        prop2type_file=args.prop2type, alignment=args.alignment,
+        emapper_pfam=args.emapper_pfam, emapper_smart=args.emapper_smart,
+        counter_stat=args.counter_stat, num_stat=args.num_stat,
+        taxonomic_profile=args.taxonomic_profile, taxadb=args.taxadb, taxon_column=args.taxon_column,
         taxon_delimiter=args.taxon_delimiter, taxa_field=args.taxa_field,
         rank_limit=args.rank_limit, pruned_by=args.pruned_by, outdir=args.outdir)
-    
+
     if args.outdir:
         base=os.path.splitext(os.path.basename(args.tree))[0]
         out_newick = base + '_annotated.nw'
@@ -540,7 +522,7 @@ def run(args):
         ### out ete
         with open(os.path.join(args.outdir, base+'_annotated.ete'), 'w') as f:
             f.write(b64pickle.dumps(annotated_tree, encoder='pickle', pack=False))
-        
+
         ### out tsv
         prop_keys = list(prop2type.keys())
         if args.taxonomic_profile:
@@ -555,10 +537,10 @@ def run(args):
             tree2table(annotated_tree, internal_node=True, props=[], outfile=os.path.join(args.outdir, out_tsv))
         else:
             tree2table(annotated_tree, internal_node=True, props=prop_keys, outfile=os.path.join(args.outdir, out_tsv))
-                
+
     # if args.outtsv:
     #     tree2table(annotated_tree, internal_node=True, outfile=args.outtsv)
-    return 
+    return
 
 def check_missing(input_string):
 
@@ -569,11 +551,11 @@ def check_missing(input_string):
         return True
     else:
         return False
-    
+
 def parse_csv(input_files, delimiter='\t', no_colnames=False):
     """
     Takes tsv table as input
-    Return 
+    Return
     metadata, as dictionary of dictionaries for each node's metadata
     node_props, a list of property names(column names of metadata table)
     columns, dictionary of property name and it's values
@@ -591,20 +573,20 @@ def parse_csv(input_files, delimiter='\t', no_colnames=False):
                 reader = csv.DictReader(f, delimiter=delimiter)
                 headers = reader.fieldnames
             node_header, node_props = headers[0], headers[1:]
-            
+
             for row in reader:
-               
+
                 nodename = row[node_header]
                 del row[node_header]
-                
+
                 #row = {k: 'NaN' if (not v or v.lower() == 'none') else v for k, v in row.items() } ## replace empty to NaN
-                
+
                 for k, v in row.items(): # replace missing value
                     if check_missing(v):
                         row[k] = 'NaN'
                     else:
                         row[k] = v
-                
+
                 if nodename in metadata.keys():
                     for prop, value in row.items():
                         if prop in metadata[nodename]:
@@ -617,7 +599,7 @@ def parse_csv(input_files, delimiter='\t', no_colnames=False):
                             columns[prop].append(value)
                 else:
                     metadata[nodename] = dict(row)
-                    for (prop, value) in row.items(): # go over each column name and value             
+                    for (prop, value) in row.items(): # go over each column name and value
                         columns[prop].append(value) # append the value into the appropriate list
                                         # based on column name k
 
@@ -655,7 +637,7 @@ def convert_column_data(column, np_dtype):
 # def multiple_text_profile(tree, profiling_prop):
 #     all_gos = children_prop_array(tree, profiling_prop)
 #     all_gos = flatten(all_gos)
-    
+
 #     for go in all_gos:
 #         for n in tree.iter_leaves():
 #             print(n.props.get(profiling_prop))
@@ -716,7 +698,7 @@ def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, 
                         target_node.add_prop(key, value)
         else:
             pass
-        
+
         # hits = tree.get_leaves_by_name(node)
         # if hits:
         #     for target_node in hits:
@@ -728,7 +710,7 @@ def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, 
         #                 if math.isnan(float(value)):
         #                     target_node.add_prop(key, value)
         #                 else:
-        #                     target_node.add_prop(key, float(value))  
+        #                     target_node.add_prop(key, float(value))
         #             else:
         #                 target_node.add_prop(key, value)
         # else:
@@ -762,7 +744,7 @@ def merge_text_annotations(nodes, target_props, counter_stat='raw'):
         else:
             print('Invalid stat method')
             break
-    
+
     return internal_props
 
 def merge_multitext_annotations(nodes, target_props, counter_stat='raw'):
@@ -770,13 +752,13 @@ def merge_multitext_annotations(nodes, target_props, counter_stat='raw'):
     multi_text_seperator = ','
     pair_seperator = "--"
     item_seperator = "||"
-    
+
     internal_props = {}
     for target_prop in target_props:
         if counter_stat == 'raw':
             prop_list = children_prop_array(nodes, target_prop)
             multi_prop_list = []
-            
+
             for elements in prop_list:
                 for j in elements:
                     multi_prop_list.append(j)
@@ -785,7 +767,7 @@ def merge_multitext_annotations(nodes, target_props, counter_stat='raw'):
         elif counter_stat == 'relative':
             prop_list = children_prop_array(nodes, target_prop)
             multi_prop_list = []
-            
+
             for elements in prop_list:
                 for j in elements:
                     multi_prop_list.append(j)
@@ -802,7 +784,7 @@ def merge_multitext_annotations(nodes, target_props, counter_stat='raw'):
         else:
             print('Invalid stat method')
             break
-    
+
     return internal_props
 
 # def merge_bool_annotations(nodes, target_props, counter_stat='raw'):
@@ -813,7 +795,7 @@ def merge_multitext_annotations(nodes, target_props, counter_stat='raw'):
 #             counter_line = []
 #             for key, value in dict(Counter(prop_list)).items():
 #                 counter_line.append(add_suffix(key, value, '--'))
-            
+
 #             internal_props[add_suffix(target_prop, 'counter')] = '||'.join(counter_line)
 #             # internal_props[add_suffix(target_prop, 'counter')] = '||'.join([add_suffix(str(key), value, '--') for key, value in dict(Counter(prop_list)).items()])
 
@@ -824,13 +806,13 @@ def merge_multitext_annotations(nodes, target_props, counter_stat='raw'):
 #         else:
 #             print('Invalid stat method')
 #             break
-    
+
 #     return internal_props
 
 def merge_num_annotations(nodes, target_props, num_stat='all'):
     internal_props = {}
     for target_prop in target_props:
-        
+
         prop_array = np.array(children_prop_array(nodes, target_prop),dtype=np.float64)
         prop_array = prop_array[~np.isnan(prop_array)] # remove nan data
         if prop_array.any():
@@ -845,7 +827,7 @@ def merge_num_annotations(nodes, target_props, num_stat='all'):
                     internal_props[add_suffix(target_prop, 'std')] = sv
                 else:
                     internal_props[add_suffix(target_prop, 'std')] = 0
-            
+
             elif num_stat == 'avg':
                 internal_props[add_suffix(target_prop, 'avg')] = sm
             elif num_stat == 'sum':
@@ -864,24 +846,24 @@ def merge_num_annotations(nodes, target_props, num_stat='all'):
                 pass
         else:
             pass
-            
+
     if internal_props:
         return internal_props
     else:
         return None
-    
+
 
 def add_suffix(name, suffix, delimiter='_'):
     return str(name) + delimiter + str(suffix)
 
 # def children_prop_array(nodes, prop):
-#     #array = [n.props.get(prop) if n.props.get(prop) else 'NaN' for n in nodes] 
-#     array = [n.props.get(prop) for n in nodes if n.props.get(prop) ] 
+#     #array = [n.props.get(prop) if n.props.get(prop) else 'NaN' for n in nodes]
+#     array = [n.props.get(prop) for n in nodes if n.props.get(prop) ]
 #     return array
 
 # def children_prop_array_missing(nodes, prop):
-#     array = [n.props.get(prop) if n.props.get(prop) else 'NaN' for n in nodes] 
-#     #array = [n.props.get(prop) for n in nodes if n.props.get(prop) ] 
+#     array = [n.props.get(prop) if n.props.get(prop) else 'NaN' for n in nodes]
+#     #array = [n.props.get(prop) for n in nodes if n.props.get(prop) ]
 #     return array
 
 def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field=0):
@@ -910,7 +892,7 @@ def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field
             n.del_prop('_speciesFunction')
         if n.props.get('rank') and n.props.get('rank') != 'Unknown':
             rank2values[n.props.get('rank')].append(n.props.get('sci_name',''))
-        
+
         if n.name:
             pass
         else:
@@ -926,7 +908,7 @@ def get_range(input_range):
 def parse_emapper_annotations(input_file, delimiter='\t', no_colnames=False):
     """
     Takes tsv table as input
-    Return 
+    Return
     metadata, as dictionary of dictionaries for each node's metadata
     node_props, a list of property names(column names of metadata table)
     columns, dictionary of property name and it's values
@@ -936,39 +918,39 @@ def parse_emapper_annotations(input_file, delimiter='\t', no_colnames=False):
     prop2type = {}
     headers = ["#query", "seed_ortholog", "evalue",	"score","eggNOG_OGs",
             "max_annot_lvl","COG_category","Description","Preferred_name","GOs",
-            "EC","KEGG_ko","KEGG_Pathway",	"KEGG_Module", "KEGG_Reaction",	"KEGG_rclass",	
+            "EC","KEGG_ko","KEGG_Pathway",	"KEGG_Module", "KEGG_Reaction",	"KEGG_rclass",
             "BRITE", "KEGG_TC", "CAZy", "BiGG_Reaction", "PFAMs"]
 
     lines_count = len(open(input_file).readlines())
 
     with open(input_file, 'r') as f:
-        
+
         if no_colnames:
             reader = csv.DictReader(f, delimiter=delimiter, fieldnames=headers)
         else:
             lines_count = len(f.readlines())
-            
+
             skip_header = 4
             skip_footer = 3
             f.seek(0) # using f twice
             reader = csv.DictReader(islice(f,skip_header,lines_count-skip_footer), delimiter=delimiter)
-            
+
         node_header, node_props = headers[0], headers[1:]
         for row in reader:
             nodename = row[node_header]
             del row[node_header]
-            
+
             for k, v in row.items(): # replace missing value
-                
+
                 if check_missing(v):
                     row[k] = 'NaN'
                 else:
                     row[k] = v
             metadata[nodename] = dict(row)
-            for (k,v) in row.items(): # go over each column name and value 
+            for (k,v) in row.items(): # go over each column name and value
                 columns[k].append(v) # append the value into the appropriate list
                                     # based on column name k
-    
+
     return metadata, node_props, columns
 
 def annot_tree_pfam_table(post_tree, pfam_table, alg_fasta):
@@ -977,13 +959,13 @@ def annot_tree_pfam_table(post_tree, pfam_table, alg_fasta):
     fasta = SeqGroup(alg_fasta) # aligned_fasta
     raw2alg = defaultdict(dict)
     for num, (name, seq, _) in enumerate(fasta):
-        
+
         p_raw = 1
         for p_alg, (a) in enumerate(seq, 1):
             if a != '-':
-                raw2alg[name][p_raw] = p_alg 
+                raw2alg[name][p_raw] = p_alg
                 p_raw +=1
-    
+
     seq2doms = defaultdict(list)
     with open(pfam_table) as f_in:
         for line in f_in:
@@ -1012,7 +994,7 @@ def annot_tree_pfam_table(post_tree, pfam_table, alg_fasta):
             random_node = post_tree.search_nodes(name=random_seq_name)[0]
             random_node_domains = random_node.props.get('dom_arq', 'none@none@none')
             n.add_prop('dom_arq', random_node_domains)
-    
+
     # for n in post_tree.traverse():
     #     print(n.name, n.props.get('dom_arq'))
 
@@ -1022,13 +1004,13 @@ def annot_tree_smart_table(post_tree, smart_table, alg_fasta):
     fasta = SeqGroup(alg_fasta) # aligned_fasta
     raw2alg = defaultdict(dict)
     for num, (name, seq, _) in enumerate(fasta):
-        
+
         p_raw = 1
         for p_alg, (a) in enumerate(seq, 1):
             if a != '-':
-                raw2alg[name][p_raw] = p_alg 
+                raw2alg[name][p_raw] = p_alg
                 p_raw +=1
-    
+
     seq2doms = defaultdict(list)
     with open(smart_table) as f_in:
         for line in f_in:
@@ -1058,7 +1040,7 @@ def annot_tree_smart_table(post_tree, smart_table, alg_fasta):
             random_node = post_tree.search_nodes(name=random_seq_name)[0]
             random_node_domains = random_node.props.get('dom_arq', 'none@none@none')
             n.add_prop('dom_arq', random_node_domains)
-    
+
     # for n in post_tree.traverse():
     #     print(n.name, n.props.get('dom_arq'))
 
@@ -1095,7 +1077,7 @@ def goslim_annotation(gos_input, relative=True):
             name, entries, desc, count = line.split(' \t ')
             if entries != '-':
                 entries = entries.split(',')
-                desc = desc.split('|') 
+                desc = desc.split('|')
                 count = np.array(count.split('|')).astype(int)
                 if relative:
                     count = [float(i)/sum(count) for i in count]
@@ -1105,7 +1087,7 @@ def goslim_annotation(gos_input, relative=True):
                 single_desc = desc[i]
                 if entry not in all_golsims_dict:
                     all_golsims_dict[entry] = single_desc
-    return output_dict, all_golsims_dict 
+    return output_dict, all_golsims_dict
 
 def tree2table(tree, internal_node=True, props=[], outfile='tree2table.csv'):
     node2leaves = {}
@@ -1115,13 +1097,13 @@ def tree2table(tree, internal_node=True, props=[], outfile='tree2table.csv'):
         for node in tree.traverse():
             props |= node.props.keys()
         props = [ p for p in props if not p.startswith("_") ]
-        
+
     with open(outfile, 'w', newline='') as csvfile:
         if '_speciesFunction' in props:
             props.remove('_speciesFunction')
         fieldnames = ['name', 'dist', 'support']
         fieldnames.extend(x for x in sorted(props) if x not in fieldnames)
-        
+
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames, delimiter='\t', extrasaction='ignore')
         writer.writeheader()
         for node in tree.traverse():
@@ -1144,4 +1126,4 @@ def tree2table(tree, internal_node=True, props=[], outfile='tree2table.csv'):
                         writer.writerow(output_row)
                     else:
                         pass
-    return 
+    return

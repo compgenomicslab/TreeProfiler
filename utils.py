@@ -134,32 +134,6 @@ def ete4_parse(newick, parser='newick'):
 
 # pruning
 def taxatree_prune(tree, rank_limit='subspecies'):
-    ranks = ['domain','superkingdom','kingdom','subkingdom','infrakingdom','superphylum','phylum','division','subphylum','subdivision','infradivision','superclass','class','subclass','infraclass','subterclass','parvclass','megacohort','supercohort','cohort','subcohort','infracohort','superorder','order','suborder','infraorder','parvorder','superfamily','family','subfamily','supertribe','tribe','subtribe','genus','subgenus','section','subsection','species group','series','species subgroup','species','infraspecies','subspecies','forma specialis','variety','varietas','subvariety','race','stirp','form','forma','morph','subform','biotype','isolate','pathogroup','serogroup','serotype','strain','aberration']
-    no_ranks = ['clade','unspecified','no rank','unranked','Unknown']
-    
-    # rank_limit = rank_limit.lower()
-    
-    # ex = False
-    # while not ex:
-    #     ex = True
-    #     for n in tree.traverse('preorder'):
-    #         if not n.is_root():
-    #             rank_prop = n.props.get('rank')
-    #             if rank_prop in ranks: 
-    #                 rank_idx = ranks.index(rank_prop)
-    #                 limit_rank_idx = ranks.index(rank_limit)
-    #                 if rank_idx >= limit_rank_idx:
-    #                     for child in n.get_children():
-    #                         child.detach()
-    #                         ex = False
-                    
-    # ex = False
-    # while not ex:
-    #     ex = True
-    #     for n in tree.iter_leaves():
-    #         if n.props.get('rank') != rank_limit:
-    #             n.detach()
-    #             ex = False
     for node in tree.traverse("preorder"):
         if node.props.get('rank') == rank_limit:
             children = node.children.copy()

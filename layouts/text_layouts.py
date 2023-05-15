@@ -51,7 +51,7 @@ class LayoutText(TreeLayout):
                 if self.color_dict:
                     prop_face = TextFace(prop_text, color=self.color_dict.get(prop_text, 'black'),min_fsize=self.min_fsize, max_fsize=self.max_fsize, padding_x=2, width=self.width )
                 else:
-                    prop_face = TextFace(prop_text, color='black', min_fsize=self.min_fsiz, max_fsize=self.max_fsize, padding_x=2, width=self.width )
+                    prop_face = TextFace(prop_text, color='black', min_fsize=self.min_fsize, max_fsize=self.max_fsize, padding_x=2, width=self.width )
             node.add_face(prop_face, column=self.column, position="aligned")
             
         elif node.is_leaf() and node.props.get(self.internal_prop):
