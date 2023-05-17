@@ -18,7 +18,6 @@ __description__ = ('A program for profiling metadata on target '
 def populate_main_args(main_args_p):
     """
     Parse the input parameters
-    Return the parsed arguments.
     """
     # NOTE(JBC): The docstring lies about what this function does.
 
@@ -36,14 +35,12 @@ def populate_main_args(main_args_p):
         type=str,
         default='newick',
         help="statistic calculation to perform for numerical data in internal nodes, [newick, ete]")
-
     group.add_argument('--prop2type',
         type=str,
         help="config tsv file where determine the datatype of target properties, if your input tree type is .ete, it's note necessary")
 
     group = main_args_p.add_argument_group(title='Pruning parameters',
         description="Auto pruning parameters")
-
     group.add_argument('--rank_limit',
         type=str,
         help="TAXONOMIC_LEVEL prune annotate tree by rank limit")
@@ -51,33 +48,6 @@ def populate_main_args(main_args_p):
         type=str,
         action='append',
         help='target tree pruned by customized conditions')
-
-    # NOTE(JBC): I would not use the "required=False" since it is the default
-    # and makes things more verbose.
-
-    # NOTE(JBC): I would remove all the commented code.
-
-    # group = main_args_p.add_argument_group(title='OUTPUT options',
-    #     description="")
-    # group.add_argument('--ete4out',
-    #     default=False,
-    #     action='store_true',
-    #     help="export intermediate tree in ete4")
-    # group.add_argument('-o', '--outdir',
-    #     type=str,
-    #     required=False,
-    #     help="output annotated tree")
-    # group.add_argument('--outtsv',
-    #     type=str,
-    #     required=False,
-    #     help="output annotated tsv file")
-    # group.add_argument('--out_colordict',
-    #     action="store_true",
-    #     required=False,
-    #     help="print color dictionary of each property")
-
-    #args = parser.parse_args()
-    #return args
 
 def main():
     desc = (f'treeprofiler.py (ver. {__version__} of {__date__}).'
