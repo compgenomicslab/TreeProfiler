@@ -106,20 +106,12 @@ def populate_annotate_args(parser):
         required=False,
         help="statistic calculation to perform for categorical data in internal nodes, raw count or in percentage [raw, relative, none] ")  
     
-    group = annotate_args_p.add_argument_group(title='OUTPUT options',
+    group = parser.add_argument_group(title='OUTPUT options',
         description="")
-    # group.add_argument('--ete4out',
-    #     default=False,
-    #     action='store_true',
-    #     help="export intermediate tree in ete4")
     group.add_argument('-o', '--outdir',
         type=str,
         required=False,
         help="output annotated tree")
-    # group.add_argument('--outtsv',
-    #     type=str,
-    #     required=False,
-    #     help="output annotated tsv file")
 
 
 def run_tree_annotate(tree, input_annotated_tree=False,
