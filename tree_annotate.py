@@ -395,6 +395,13 @@ def run_tree_annotate(tree, input_annotated_tree=False,
                     annotated_tree, rank2values = annotate_taxa(annotated_tree, db=taxadb, taxid_attr=taxon_column, sp_delimiter=taxon_delimiter, sp_field=taxa_field)
                 else:
                     annotated_tree, rank2values = annotate_taxa(annotated_tree, db=taxadb, taxid_attr="name", sp_delimiter=taxon_delimiter, sp_field=taxa_field)
+        prop2type.update({# start with leaf name
+                'rank': str,
+                'sci_name': str,
+                'taxid': str,
+                'lineage':str,
+                'named_lineage': str
+                })
     else:
         rank2values = {}
 
@@ -505,7 +512,7 @@ def run(args):
         out_tsv = base+'_annotated.tsv'
 
         ### out newick
-        annotated_tree.write(outfile=os.path.join(args.outdir, out_newick), properties = [], format=1)
+        annotated_tree.write(outfile=os.path.join(args.outdir, out_newick), properties = [], format=1, format_root_node=True)
         ### output prop2type
         with open(os.path.join(args.outdir, base+'_prop2type.txt'), "w") as f:
             #f.write(first_line + "\n")

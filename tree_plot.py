@@ -459,7 +459,7 @@ def get_label_layouts(props, level, prop2type, column_width=70):
     layouts = []
     for prop in props:
         color_dict = {} # key = value, value = color id
-        if prop2type and prop2type.get(prop) == list:
+        if prop2type and eval(prop2type.get(prop)) == list:
             leaf_values = list(map(list,set(map(tuple,children_prop_array(tree, prop)))))    
             prop_values = [val for sublist in leaf_values for val in sublist]
         else:
@@ -483,7 +483,7 @@ def get_colorbranch_layouts(props, level, prop2type, column_width=70):
     layouts = []
     for prop in props:
         color_dict = {} # key = value, value = color id
-        if prop2type and prop2type.get(prop) == list:
+        if prop2type and eval(prop2type.get(prop)) == list:
             leaf_values = list(map(list,set(map(tuple,children_prop_array(tree, prop)))))    
             prop_values = [val for sublist in leaf_values for val in sublist]
         else:
@@ -506,7 +506,7 @@ def get_rectangular_layouts(props, level, prop2type, column_width=70):
     layouts = []
     for prop in props:
         color_dict = {} # key = value, value = color id
-        if prop2type and prop2type.get(prop) == list:
+        if prop2type and eval(prop2type.get(prop)) == list:
             leaf_values = list(map(list,set(map(tuple,children_prop_array(tree, prop)))))    
             prop_values = [val for sublist in leaf_values for val in sublist]
         else:
@@ -557,7 +557,7 @@ def get_barplot_layouts(props, level, prop2type, column_width=70, internal_rep='
     for prop in props:
         
         color_dict = {} # key = value, value = color id
-        if prop in prop2type and prop2type.get(prop) == float:
+        if prop in prop2type and eval(prop2type.get(prop)) == float:
             size_prop = prop+'_'+internal_rep # using internal prop to set the range in case rank_limit cut all the leaves
         else:
             size_prop = prop
@@ -784,7 +784,7 @@ def categorical2profile(tree, profiling_prop):
 #         #     layout =  staple_layouts.LayoutHeatmap('Heatmap_'+prop, level, internal_rep, prop)
        
 #         elif layout_name == 'barplot':
-#             if prop in prop2type and prop2type.get(prop) == float:
+#             if prop in prop2type and eval(prop2type.get(prop)) == float:
 #                 size_prop = prop+'_'+internal_rep # using internal prop to set the range in case rank_limit cut all the leaves
 #             else:
 #                 size_prop = prop
@@ -804,7 +804,7 @@ def categorical2profile(tree, profiling_prop):
 
 #         # categorical layouts should be set width
 #         elif layout_name in ['label','rectangular', 'colorbranch']:
-#             if prop2type and prop2type.get(prop) == list:
+#             if prop2type and eval(prop2type.get(prop)) == list:
 #                 leaf_values = list(map(list,set(map(tuple,children_prop_array(tree, prop)))))    
 #                 prop_values = [val for sublist in leaf_values for val in sublist]
 #             else:
