@@ -200,7 +200,7 @@ def run(args):
             for line in f:
                 line = line.rstrip()
                 prop, value = line.split('\t')
-                prop2type[prop] = value
+                prop2type[prop] = eval(value)
         
         popup_prop_keys = list(prop2type.keys()) 
 
@@ -461,7 +461,7 @@ def get_label_layouts(props, level, prop2type, column_width=70):
     layouts = []
     for prop in props:
         color_dict = {} # key = value, value = color id
-        if prop2type and eval(prop2type.get(prop)) == list:
+        if prop2type and prop2type.get(prop) == list:
             leaf_values = list(map(list,set(map(tuple,children_prop_array(tree, prop)))))    
             prop_values = [val for sublist in leaf_values for val in sublist]
         else:
@@ -485,7 +485,7 @@ def get_colorbranch_layouts(props, level, prop2type, column_width=70):
     layouts = []
     for prop in props:
         color_dict = {} # key = value, value = color id
-        if prop2type and eval(prop2type.get(prop)) == list:
+        if prop2type and prop2type.get(prop) == list:
             leaf_values = list(map(list,set(map(tuple,children_prop_array(tree, prop)))))    
             prop_values = [val for sublist in leaf_values for val in sublist]
         else:
@@ -508,7 +508,7 @@ def get_rectangular_layouts(props, level, prop2type, column_width=70):
     layouts = []
     for prop in props:
         color_dict = {} # key = value, value = color id
-        if prop2type and eval(prop2type.get(prop)) == list:
+        if prop2type and prop2type.get(prop) == list:
             leaf_values = list(map(list,set(map(tuple,children_prop_array(tree, prop)))))    
             prop_values = [val for sublist in leaf_values for val in sublist]
         else:
@@ -560,7 +560,7 @@ def get_barplot_layouts(props, level, prop2type, column_width=70, internal_rep='
         
         color_dict = {} # key = value, value = color id
 
-        if prop in prop2type and eval(prop2type.get(prop)) == float:
+        if prop in prop2type and prop2type.get(prop) == float:
             size_prop = prop+'_'+internal_rep # using internal prop to set the range in case rank_limit cut all the leaves
         else:
             size_prop = prop
@@ -606,11 +606,11 @@ def get_prop2type(node):
     
     for prop, value in prop2value.items():
         if isinstance(value, numbers.Number):
-            output[prop] = 'float'
-        elif type(value) == 'list':
-            output[prop] = 'list'
+            output[prop] = float
+        elif type(value) == list:
+            output[prop] = list
         else:
-            output[prop] = 'str'
+            output[prop] = str
 
     # for prop, value in prop2value.items():
     #     output[prop] = type(value)
