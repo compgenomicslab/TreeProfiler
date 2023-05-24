@@ -258,7 +258,7 @@ class LayoutHeatmap(TreeLayout):
         self.width = width
         self.height = height
         self.padding_x = 1
-        self.padding_y = 1
+        self.padding_y = 0
         self.min_fsize = 5
         self.max_fsize = 15
         

@@ -1,9 +1,24 @@
 #!/usr/bin/env python
+import numbers
+import math
+import colorsys
+import random
+import sys
+import os
+
+from collections import defaultdict
+from itertools import islice
+from io import StringIO
+import numpy as np
+
+import b64pickle
+
 from ete4.parser.newick import NewickError
 from ete4 import Tree, PhyloTree
 from ete4 import GTDBTaxa
 from ete4 import NCBITaxa
 from ete4.smartview import TreeStyle, NodeStyle, TreeLayout
+from tree_image import get_image
 from layouts import (
     text_layouts, taxon_layouts, staple_layouts, 
     conditional_layouts, seq_layouts, profile_layouts)
@@ -11,19 +26,6 @@ from utils import (
     ete4_parse, taxatree_prune, conditional_prune,
     children_prop_array, children_prop_array_missing, 
     flatten, get_consensus_seq)
-import b64pickle
-from tree_image import get_image
-
-from collections import defaultdict
-from itertools import islice
-from io import StringIO
-import numpy as np
-import numbers
-import math
-import colorsys
-import random
-import sys
-import os
 
 paried_color = ["red", "darkblue", "lightgreen", "sienna", "lightCoral", "violet", "mediumturquoise",   "lightSkyBlue", "indigo", "tan", "coral", "olivedrab", "teal", "darkyellow"]
 
@@ -47,7 +49,7 @@ def poplulate_plot_args(plot_args_p):
         type=str,
         required=False,
         action='append',
-        help='target tree collapsed by customized conditions')
+        help='target tree collapsed by customized conditions')  
     group.add_argument('--highlighted_by', 
         type=str,
         required=False,
@@ -198,7 +200,7 @@ def run(args):
             for line in f:
                 line = line.rstrip()
                 prop, value = line.split('\t')
-                prop2type[prop] = value
+                prop2type[prop] = eval(value)
         
         popup_prop_keys = list(prop2type.keys()) 
 
@@ -557,6 +559,7 @@ def get_barplot_layouts(props, level, prop2type, column_width=70, internal_rep='
     for prop in props:
         
         color_dict = {} # key = value, value = color id
+
         if prop in prop2type and prop2type.get(prop) == float:
             size_prop = prop+'_'+internal_rep # using internal prop to set the range in case rank_limit cut all the leaves
         else:
@@ -784,7 +787,7 @@ def categorical2profile(tree, profiling_prop):
 #         #     layout =  staple_layouts.LayoutHeatmap('Heatmap_'+prop, level, internal_rep, prop)
        
 #         elif layout_name == 'barplot':
-#             if prop in prop2type and prop2type.get(prop) == float:
+#             if prop in prop2type and eval(prop2type.get(prop)) == float:
 #                 size_prop = prop+'_'+internal_rep # using internal prop to set the range in case rank_limit cut all the leaves
 #             else:
 #                 size_prop = prop
@@ -804,7 +807,7 @@ def categorical2profile(tree, profiling_prop):
 
 #         # categorical layouts should be set width
 #         elif layout_name in ['label','rectangular', 'colorbranch']:
-#             if prop2type and prop2type.get(prop) == list:
+#             if prop2type and eval(prop2type.get(prop)) == list:
 #                 leaf_values = list(map(list,set(map(tuple,children_prop_array(tree, prop)))))    
 #                 prop_values = [val for sublist in leaf_values for val in sublist]
 #             else:

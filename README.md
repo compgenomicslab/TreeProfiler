@@ -884,7 +884,7 @@ treeprofiler.py plot --tree examples/progenome3/progenome3_annotated.ete --tree_
 ## Demo2 Explore eggnog-mapper annotations data with taxonomic annotation 
 
 ```
-treeprofiler.py annotate --tree examples/emapper/7955.ENSDARP00000116736.nw --emapper_annotations examples/emapper/7955.out.emapper.annotations
+treeprofiler.py annotate --tree examples/emapper/7955.ENSDARP00000116736.nw --emapper_annotations examples/emapper/7955.out.emapper.annotations --taxon_delimiter . --taxa_field 0 --taxadb NCBI  --taxonomic_profile --emapper_pfam  examples/emapper/7955.out.emapper.pfam --alignment examples/emapper/7955.ENSDARP00000116736.aln.faa -o examples/emapper/
 
 treeprofiler.py plot --tree examples/emapper/7955.ENSDARP00000116736_annotated.ete --tree_type ete --emapper_layout 
 ```

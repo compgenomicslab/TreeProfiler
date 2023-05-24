@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
 
-# NOTE(JBC): The order of the imports is normally from more general to
-# more specific. It is easier to know the dependencies that way, but
-# also can affect the result if some general modules monkey-patch some
-# functions.
-
 import os
 import time
 import random
@@ -14,17 +9,15 @@ import csv
 from io import StringIO
 from itertools import islice
 from collections import defaultdict, Counter
-
 import numpy as np
 from scipy import stats
 
+import b64pickle
 from ete4.parser.newick import NewickError
 from ete4.coretype.seqgroup import SeqGroup
 from ete4 import Tree, PhyloTree
 from ete4 import GTDBTaxa
 from ete4 import NCBITaxa
-
-import b64pickle
 from utils import (
     ete4_parse, taxatree_prune, conditional_prune,
     children_prop_array, children_prop_array_missing,
@@ -44,6 +37,8 @@ def populate_annotate_args(parser):
         help="<metadata.csv> .csv, .tsv. mandatory input")
     add('--no_colnames', action='store_true',
         help="metadata table doesn't contain columns name")
+    add('--aggregate_duplicate', action='store_true',
+        help="treeprofiler will aggregate duplicated metadata to a list as a property ignore if metadata contains duplicated row, otherwise it will ignore.")
     add('--text_prop', type=csv_list,
         help=("<col1,col2> names, column index or index range of columns which "
               "need to be read as categorical data"))
@@ -395,12 +390,19 @@ def run_tree_annotate(tree, input_annotated_tree=False,
                     annotated_tree, rank2values = annotate_taxa(annotated_tree, db=taxadb, taxid_attr=taxon_column, sp_delimiter=taxon_delimiter, sp_field=taxa_field)
                 else:
                     annotated_tree, rank2values = annotate_taxa(annotated_tree, db=taxadb, taxid_attr="name", sp_delimiter=taxon_delimiter, sp_field=taxa_field)
+        prop2type.update({# start with leaf name
+                'rank': str,
+                'sci_name': str,
+                'taxid': str,
+                'lineage':str,
+                'named_lineage': str
+                })
     else:
         rank2values = {}
 
     end = time.time()
     print('Time for annotate_taxa to run: ', end - start)
-
+    
     # prune tree by rank
     if rank_limit:
         annotated_tree = taxatree_prune(annotated_tree, rank_limit=rank_limit)
@@ -442,11 +444,7 @@ def run(args):
     print("start parsing...")
     # parsing metadata
     if args.metadata: # make a series aof metadatas
-        if args.no_colnames:
-            # property key will be named col1, col2, col3, ... if without headers
-            metadata_dict, node_props, columns, prop2type = parse_csv(args.metadata, no_colnames=args.no_colnames)
-        else:
-            metadata_dict, node_props, columns, prop2type = parse_csv(args.metadata)
+        metadata_dict, node_props, columns, prop2type = parse_csv(args.metadata, no_colnames=args.no_colnames, aggregate_duplicate=args.aggregate_duplicate)
     else: # annotated_tree
         node_props=[]
         columns = {}
@@ -505,7 +503,7 @@ def run(args):
         out_tsv = base+'_annotated.tsv'
 
         ### out newick
-        annotated_tree.write(outfile=os.path.join(args.outdir, out_newick), properties = [], format=1)
+        annotated_tree.write(outfile=os.path.join(args.outdir, out_newick), properties = [], format=1, format_root_node=True)
         ### output prop2type
         with open(os.path.join(args.outdir, base+'_prop2type.txt'), "w") as f:
             #f.write(first_line + "\n")
@@ -544,7 +542,7 @@ def check_missing(input_string):
     else:
         return False
 
-def parse_csv(input_files, delimiter='\t', no_colnames=False):
+def parse_csv(input_files, delimiter='\t', no_colnames=False, aggregate_duplicate=False):
     """
     Takes tsv table as input
     Return
@@ -581,11 +579,15 @@ def parse_csv(input_files, delimiter='\t', no_colnames=False):
 
                 if nodename in metadata.keys():
                     for prop, value in row.items():
-                        if prop in metadata[nodename]:
-                            exisiting_value = metadata[nodename][prop]
-                            new_value = ','.join([exisiting_value,value])
-                            metadata[nodename][prop] = new_value
-                            columns[prop].append(new_value)
+                        if aggregate_duplicate:
+                            if prop in metadata[nodename]:
+                                exisiting_value = metadata[nodename][prop]
+                                new_value = ','.join([exisiting_value,value])
+                                metadata[nodename][prop] = new_value
+                                columns[prop].append(new_value)
+                            else:
+                                metadata[nodename][prop] = value
+                                columns[prop].append(value)
                         else:
                             metadata[nodename][prop] = value
                             columns[prop].append(value)

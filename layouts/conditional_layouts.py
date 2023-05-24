@@ -93,13 +93,13 @@ from utils import check_nan
 
 class LayoutBinary(TreeLayout):
     def __init__(self, name=None, level=1, color='#E60A0A', prop_colour_dict=None, \
-        bool_prop=None, reverse=False, radius=25, padding_x=1, padding_y=1, width=70, legend=True):
+        bool_prop=None, reverse=False, radius=25, padding_x=1, padding_y=0, width=70, legend=True):
         super().__init__(name)
         self.aligned_faces = True
         self.bool_prop = bool_prop
         self.column = level
         self.color = color
-        self.absence_color = '#EBEBEB'
+        self.negative_color = '#EBEBEB'
         self.prop_colour_dict = prop_colour_dict
         self.internal_prop = bool_prop+'_counter'
         self.reverse = reverse
@@ -128,7 +128,7 @@ class LayoutBinary(TreeLayout):
                     title = 'ReverseBinary_' + self.bool_prop
                     colormap = {
                         "False": self.color,
-                        "True" : self.absence_color,
+                        "True" : self.negative_color,
                         "NA": 'white'
                     }
                     tree_style.add_legend(title=title,
@@ -139,7 +139,7 @@ class LayoutBinary(TreeLayout):
                     title = 'Binary_' + self.bool_prop
                     colormap = {
                         "True": self.color,
-                        "False" : self.absence_color,
+                        "False" : self.negative_color,
                         "NA": 'white'
                     }
                     tree_style.add_legend(title=title,
@@ -172,8 +172,8 @@ class LayoutBinary(TreeLayout):
                             prop_face = RectFace(width=self.width, height=self.height, color=self.color,  padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
                             node.add_face(prop_face, column=self.column, position = "aligned")
                         else:
-                            #prop_face = CircleFace(radius=self.radius, color=self.absence_color, padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
-                            prop_face = RectFace(width=self.width, height=self.height, color=self.absence_color,  padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
+                            #prop_face = CircleFace(radius=self.radius, color=self.negative_color, padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
+                            prop_face = RectFace(width=self.width, height=self.height, color=self.negative_color,  padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
                             node.add_face(prop_face, column=self.column, position = "aligned")
                     else:
                         if bool(str2bool):
@@ -181,14 +181,14 @@ class LayoutBinary(TreeLayout):
                             prop_face = RectFace(width=self.width, height=self.height, color=self.color,  padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
                             node.add_face(prop_face, column=self.column, position = "aligned")
                         else:
-                            #prop_face = CircleFace(radius=self.radius, color=self.absence_color, padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
-                            prop_face = RectFace(width=self.width, height=self.height, color=self.absence_color,  padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
+                            #prop_face = CircleFace(radius=self.radius, color=self.negative_color, padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
+                            prop_face = RectFace(width=self.width, height=self.height, color=self.negative_color,  padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
                             node.add_face(prop_face, column=self.column, position = "aligned")
                 else: #mising
-                    prop_face = RectFace(width=self.width, height=self.height, text="NA", color=self.absence_color,  padding_x=self.padding_x, padding_y=self.padding_y, stroke_color=self.absence_color, tooltip=None)
+                    prop_face = RectFace(width=self.width, height=self.height, text="NA", color=self.negative_color,  padding_x=self.padding_x, padding_y=self.padding_y, stroke_color=self.negative_color, tooltip=None)
                     node.add_face(prop_face, column=self.column, position = "aligned")
             else:
-                prop_face = RectFace(width=self.width, height=self.height, text="NA", color=self.absence_color,  padding_x=self.padding_x, padding_y=self.padding_y, stroke_color=self.absence_color, tooltip=None)
+                prop_face = RectFace(width=self.width, height=self.height, text="NA", color=self.negative_color,  padding_x=self.padding_x, padding_y=self.padding_y, stroke_color=self.negative_color, tooltip=None)
                 node.add_face(prop_face, column=self.column, position = "aligned")
         
         elif node.is_leaf() and node.props.get(self.internal_prop):
@@ -199,7 +199,7 @@ class LayoutBinary(TreeLayout):
             heatmapFace = get_heatmapface(node, self.internal_prop, max_color=self.color, width=self.width, height=self.height)
             node.add_face(heatmapFace, column = self.column, position = "aligned", collapsed_only=True)
         # else:
-        #     prop_face = RectFace(width=self.width, height=self.height, text="NA", color=self.absence_color,  padding_x=self.padding_x, padding_y=self.padding_y, stroke_color=self.absence_color, tooltip=None)
+        #     prop_face = RectFace(width=self.width, height=self.height, text="NA", color=self.negative_color,  padding_x=self.padding_x, padding_y=self.padding_y, stroke_color=self.negative_color, tooltip=None)
         #     node.add_face(prop_face, column=self.column, position = "aligned")
 
 # hightlighted as rectangular
