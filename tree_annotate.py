@@ -37,6 +37,8 @@ def populate_annotate_args(parser):
         help="<metadata.csv> .csv, .tsv. mandatory input")
     add('--no_colnames', action='store_true',
         help="metadata table doesn't contain columns name")
+    add('--aggregate_duplicate', action='store_true',
+        help="treeprofiler will aggregate duplicated metadata to a list as a property ignore if metadata contains duplicated row, otherwise it will ignore.")
     add('--text_prop', type=csv_list,
         help=("<col1,col2> names, column index or index range of columns which "
               "need to be read as categorical data"))
@@ -400,7 +402,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
 
     end = time.time()
     print('Time for annotate_taxa to run: ', end - start)
-
+    
     # prune tree by rank
     if rank_limit:
         annotated_tree = taxatree_prune(annotated_tree, rank_limit=rank_limit)
@@ -442,11 +444,7 @@ def run(args):
     print("start parsing...")
     # parsing metadata
     if args.metadata: # make a series aof metadatas
-        if args.no_colnames:
-            # property key will be named col1, col2, col3, ... if without headers
-            metadata_dict, node_props, columns, prop2type = parse_csv(args.metadata, no_colnames=args.no_colnames)
-        else:
-            metadata_dict, node_props, columns, prop2type = parse_csv(args.metadata)
+        metadata_dict, node_props, columns, prop2type = parse_csv(args.metadata, no_colnames=args.no_colnames, aggregate_duplicate=args.aggregate_duplicate)
     else: # annotated_tree
         node_props=[]
         columns = {}
@@ -544,7 +542,7 @@ def check_missing(input_string):
     else:
         return False
 
-def parse_csv(input_files, delimiter='\t', no_colnames=False):
+def parse_csv(input_files, delimiter='\t', no_colnames=False, aggregate_duplicate=False):
     """
     Takes tsv table as input
     Return
@@ -581,11 +579,15 @@ def parse_csv(input_files, delimiter='\t', no_colnames=False):
 
                 if nodename in metadata.keys():
                     for prop, value in row.items():
-                        if prop in metadata[nodename]:
-                            exisiting_value = metadata[nodename][prop]
-                            new_value = ','.join([exisiting_value,value])
-                            metadata[nodename][prop] = new_value
-                            columns[prop].append(new_value)
+                        if aggregate_duplicate:
+                            if prop in metadata[nodename]:
+                                exisiting_value = metadata[nodename][prop]
+                                new_value = ','.join([exisiting_value,value])
+                                metadata[nodename][prop] = new_value
+                                columns[prop].append(new_value)
+                            else:
+                                metadata[nodename][prop] = value
+                                columns[prop].append(value)
                         else:
                             metadata[nodename][prop] = value
                             columns[prop].append(value)
