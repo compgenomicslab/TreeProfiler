@@ -24,8 +24,6 @@ def test_annotate_01():
 
     expected_tree = '(a:1[&&NHX:col1=apple]);'
 
-    test_tree_annotated = tree_annotate.run_tree_annotate(test_tree,
-        metadata_dict=metadata_dict, node_props=node_props,
     test_tree_annotated, annotated_prop2type = tree_annotate.run_tree_annotate(test_tree, 
         metadata_dict=metadata_dict, node_props=node_props, 
         columns=columns, prop2type=prop2type)
