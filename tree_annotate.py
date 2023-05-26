@@ -959,7 +959,7 @@ def annot_tree_pfam_table(post_tree, pfam_table, alg_fasta):
             if a != '-':
                 raw2alg[name][p_raw] = p_alg
                 p_raw +=1
-
+    
     seq2doms = defaultdict(list)
     with open(pfam_table) as f_in:
         for line in f_in:
@@ -969,12 +969,12 @@ def annot_tree_pfam_table(post_tree, pfam_table, alg_fasta):
                 dom_name = info[1]
                 dom_start = int(info[7])
                 dom_end = int(info[8])
+                if raw2alg.get(seq_name):
+                    trans_dom_start = raw2alg[seq_name][dom_start]
+                    trans_dom_end = raw2alg[seq_name][dom_end]
 
-                trans_dom_start = raw2alg[seq_name][dom_start]
-                trans_dom_end = raw2alg[seq_name][dom_end]
-
-                dom_info_string = pair_delimiter.join([dom_name, str(trans_dom_start), str(trans_dom_end)])
-                seq2doms[seq_name].append(dom_info_string)
+                    dom_info_string = pair_delimiter.join([dom_name, str(trans_dom_start), str(trans_dom_end)])
+                    seq2doms[seq_name].append(dom_info_string)
 
     for l in post_tree:
         if l.name in seq2doms.keys():
@@ -1010,14 +1010,13 @@ def annot_tree_smart_table(post_tree, smart_table, alg_fasta):
         for line in f_in:
             if not line.startswith('#'):
                 info = line.strip().split('\t')
-                print(info)
                 seq_name = info[0]
                 dom_name = info[1]
                 dom_start = int(info[2])
                 dom_end = int(info[3])
-
-                trans_dom_start = raw2alg[seq_name][dom_start]
-                trans_dom_end = raw2alg[seq_name][dom_end]
+                if raw2alg.get(seq_name):
+                    trans_dom_start = raw2alg[seq_name][dom_start]
+                    trans_dom_end = raw2alg[seq_name][dom_end]
 
                 dom_info_string = pair_delimiter.join([dom_name, str(trans_dom_start), str(trans_dom_end)])
                 seq2doms[seq_name].append(dom_info_string)
