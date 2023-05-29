@@ -300,12 +300,12 @@ def run_tree_annotate(tree, input_annotated_tree=False,
 
 
     # load all metadata to leaf nodes
-    taxon_column = []
+    #taxon_column = []
 
     # input_annotated_tree determines if input tree is already annotated, if annotated, no longer need metadata
     if not input_annotated_tree:
         if taxon_column: # to identify taxon column as taxa property from metadata
-            taxon_column.append(taxon_column)
+            #taxon_column.append(taxon_column)
             annotated_tree = load_metadata_to_tree(tree, metadata_dict, prop2type=prop2type, taxon_column=taxon_column, taxon_delimiter=taxon_delimiter)
         else:
             annotated_tree = load_metadata_to_tree(tree, metadata_dict, prop2type=prop2type)
