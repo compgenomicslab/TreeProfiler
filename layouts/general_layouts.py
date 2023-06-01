@@ -104,21 +104,32 @@ def get_stackedbarface(node, prop, colour_dict=None, width=70, height=None, tool
     stackedbar_data = []
     absence_color = "#EBEBEB"
     counter_props = node.props.get(prop).split(item_seperator)
-    for counter_prop in counter_props:
+    tooltip = ""
+    total = 0
+    
+    for counter_prop in counter_props:    
         k, v = counter_prop.split(pair_delimiter)
+        if v:
+            total += float(v)
         stackedbar_data.append([k,float(v),colour_dict.get(k,absence_color),None])
         
     if stackedbar_data:
-        # tooltip = ""
-        # if node.name:
-        #     tooltip += f'<b>{node.name}</b><br>'
-        # if prop:
-        #     tooltip += f'<br>{prop}: {piechart_data}<br>' # {counter_props}
+        tooltip = ""
+        if node.name:
+            tooltip += f'<b>{node.name}</b><br>'
+        
+        if counter_props:
+            for counter_prop in counter_props:
+                k, v = counter_prop.split(pair_delimiter)
+                tooltip += f'<b>{k}:{v}/{int(total)}</b><br>'
+
         stackedbar_face = StackedBarFace(width=width, height=None, data=stackedbar_data, padding_x=1, tooltip=tooltip)
         
         return stackedbar_face
     else:
         return None
+
+
 
 class StackedBarFace(RectFace):
     def __init__(self, width, height, data=None, name="", opacity=0.7, 
