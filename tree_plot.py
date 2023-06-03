@@ -394,7 +394,7 @@ def run(args):
             pass
         
         # assign color for each value of each rank
-        for rank, value in sorted(rank2values.items(),):
+        for rank, value in sorted(rank2values.items()):
             color_dict = {} 
             nvals = len(value)
             for i in range(0, nvals):

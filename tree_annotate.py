@@ -322,7 +322,6 @@ def run_tree_annotate(tree, input_annotated_tree=False,
     # merge annotations depends on the column datatype
     start = time.time()
     if not input_annotated_tree:
-        #annotate_tree(t)
 
         #pre load node2leaves to save time
         node2leaves = annotated_tree.get_cached_content()
@@ -363,8 +362,9 @@ def run_tree_annotate(tree, input_annotated_tree=False,
                 if alignment:
                     matrix = ''
                     for leaf in node.iter_leaves():
-                        matrix += ">"+leaf.name+"\n"
-                        matrix += name2seq.get(leaf.name, '')+"\n"
+                        if name2seq.get(leaf.name):
+                            matrix += ">"+leaf.name+"\n"
+                            matrix += name2seq.get(leaf.name)+"\n"
                     consensus_seq = get_consensus_seq(StringIO(matrix), 0.7)
                     node.add_prop(alignment_prop, consensus_seq)
 
