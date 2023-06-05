@@ -20,7 +20,7 @@ def get_colormap():
 class LayoutAlignment(TreeLayout):
     def __init__(self, name="Alignment",
             alignment=None, alignment_prop=None, format='seq', width=700, height=15,
-            column=0, scale_range=None, summarize_inner_nodes=False):
+            column=0, scale_range=None, summarize_inner_nodes=True):
         super().__init__(name)
         #self.alignment = SeqGroup(alignment) if alignment else None
         self.alignment_prop = alignment_prop
@@ -51,17 +51,7 @@ class LayoutAlignment(TreeLayout):
             return self._get_seq(node)
 
         if self.summarize_inner_nodes:
-            # # TODO: summarize inner node's seq
-            # matrix = ''
-            # for leaf in node.iter_leaves():
-            #     matrix += ">"+leaf.name+"\n"
-            #     matrix += self._get_seq(leaf)+"\n"
-            # try:
-            #     consensus_seq = get_consensus_seq(StringIO(matrix))
-            #     return str(consensus_seq)
-            # except ValueError:
-            #     return None
-            return
+            return self._get_seq(node)
         else:
             first_leaf = next(node.iter_leaves())
             return self._get_seq(first_leaf)

@@ -121,7 +121,7 @@ def get_stackedbarface(node, prop, colour_dict=None, width=70, height=None, tool
         if counter_props:
             for counter_prop in counter_props:
                 k, v = counter_prop.split(pair_delimiter)
-                tooltip += f'<b>{k}:{v}/{int(total)}</b><br>'
+                tooltip += f'<b>{k}</b>:  {v}/{int(total)}<br>'
 
         stackedbar_face = StackedBarFace(width=width, height=None, data=stackedbar_data, padding_x=1, tooltip=tooltip)
         
