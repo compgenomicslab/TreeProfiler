@@ -297,7 +297,7 @@ def run(args):
             lengh = len(max(children_prop_array(tree, 'alignment'),key=len))
             aln_layout = seq_layouts.LayoutAlignment(name='Alignment_layout', 
                         alignment_prop='alignment', column=level, scale_range=lengh,
-                        summarize_inner_nodes=False)
+                        summarize_inner_nodes=True)
             layouts.append(aln_layout)
 
         if layout == 'domain_layout':
