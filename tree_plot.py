@@ -213,7 +213,10 @@ def run(args):
                 'sci_name': str,
                 'taxid': str,
                 'lineage':str,
-                'named_lineage': str
+                'named_lineage': str,
+                'evoltype': str,
+                'dup_sp': str,
+                'dup_percent': float,
                 }
         popup_prop_keys = list(prop2type.keys()) 
 
@@ -415,6 +418,10 @@ def run(args):
             
         #taxa_layouts.append(taxon_layouts.TaxaRectangular(name = "Last Common Ancester", color_dict=taxon_color_dict, column=level))
         taxa_layouts.append(taxon_layouts.LayoutSciName(name = 'Taxa Scientific name', color_dict=taxon_color_dict))
+        taxa_layouts.append(taxon_layouts.LayoutEvolEvents(name='Taxa Evolutionary events', prop="evoltype",
+            speciation_color="blue", 
+            duplication_color="red", node_size = 2,
+            legend=True))
         layouts = layouts + taxa_layouts
         level += 1
         total_color_dict.append(taxon_color_dict)

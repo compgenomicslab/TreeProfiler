@@ -146,6 +146,42 @@ class TaxaRectangular(TreeLayout):
             node.add_face(lca_face, position='aligned', column=level,
                 collapsed_only=True)
 
+
+class LayoutEvolEvents(TreeLayout):
+    def __init__(self, name="Evolutionary events", 
+            prop="evoltype",
+            speciation_color="blue", 
+            duplication_color="red", node_size = 2,
+            legend=True):
+        super().__init__(name)
+        
+        self.prop = prop
+        self.speciation_color = speciation_color
+        self.duplication_color = duplication_color
+        self.node_size = node_size
+        self.legend = legend
+
+        self.active = True
+
+    def set_tree_style(self, tree, tree_style):
+        super().set_tree_style(tree, tree_style)
+        if self.legend:
+            colormap = { "Speciation event": self.speciation_color,
+                         "Duplication event": self.duplication_color }
+            tree_style.add_legend(title=self.name, 
+                    variable="discrete",
+                    colormap=colormap)
+
+    def set_node_style(self, node):
+        if not node.is_leaf():
+            if node.props.get(self.prop, "") == "S":
+                node.sm_style["fgcolor"] = self.speciation_color
+                node.sm_style["size"] = self.node_size
+
+            elif node.props.get(self.prop, "") == "D":
+                node.sm_style["fgcolor"] = self.duplication_color
+                node.sm_style["size"] = self.node_size
+
 # def taxa_layout(rank, color_dict=None):
 #     def layout_fn(node):
 #         if not node.is_root() and node.props.get('rank') == rank:

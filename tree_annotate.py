@@ -377,6 +377,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
     # taxa annotations
     start = time.time()
     if taxonomic_profile:
+        # taxonomic annotation
         if not taxadb:
             print('Please specify which taxa db using --taxadb <GTDB|NCBI>')
         else:
@@ -390,12 +391,19 @@ def run_tree_annotate(tree, input_annotated_tree=False,
                     annotated_tree, rank2values = annotate_taxa(annotated_tree, db=taxadb, taxid_attr=taxon_column, sp_delimiter=taxon_delimiter, sp_field=taxa_field)
                 else:
                     annotated_tree, rank2values = annotate_taxa(annotated_tree, db=taxadb, taxid_attr="name", sp_delimiter=taxon_delimiter, sp_field=taxa_field)
+        
+        # evolutionary events annotation
+        annotated_tree = annotate_evol_events(annotated_tree, sp_delimiter=taxon_delimiter, sp_field=taxa_field)
+        
         prop2type.update({# start with leaf name
                 'rank': str,
                 'sci_name': str,
                 'taxid': str,
                 'lineage':str,
-                'named_lineage': str
+                'named_lineage': str,
+                'evoltype': str,
+                'dup_sp': str,
+                'dup_percent': float,
                 })
     else:
         rank2values = {}
@@ -892,6 +900,29 @@ def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field
         else:
             n.name = n.props.get("sci_name", "")
     return tree, rank2values
+
+def annotate_evol_events(tree, sp_delimiter='.', sp_field=0):
+    def return_spcode(leaf):
+        try:
+            return leaf.name.split(sp_delimiter)[sp_field]
+        except IndexError:
+            return leaf.name
+
+    tree.set_species_naming_function(return_spcode)
+
+    node2species = tree.get_cached_content(store_attr='species')
+    for n in tree.traverse():
+        n.props['species'] = node2species[n]
+        if len(n.children) == 2:
+            dup_sp = node2species[n.children[0]] & node2species[n.children[1]]
+            if dup_sp:
+                n.props['evoltype'] = 'D'
+                n.props['dup_sp'] = ','.join(dup_sp)
+                n.props['dup_percent'] = round(len(dup_sp)/len(node2species[n]), 3) * 100
+            else:
+                n.props['evoltype'] = 'S'
+        n.del_prop('_speciesFunction')
+    return tree
 
 def get_range(input_range):
     column_range = input_range[input_range.find("[")+1:input_range.find("]")]
