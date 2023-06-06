@@ -227,7 +227,7 @@ def run(args):
             internal_node_prop2type = get_prop2type(tree)
             prop2type.update(leaf_prop2type)
             prop2type.update(internal_node_prop2type)
-            
+        
         # elif args.tree_type == 'newick':
         #     popup_prop_keys = list(prop2type.keys()) 
     
@@ -469,11 +469,12 @@ def get_label_layouts(props, level, prop2type, column_width=70):
     for prop in props:
         color_dict = {} # key = value, value = color id
         if prop2type and prop2type.get(prop) == list:
-            leaf_values = list(map(list,set(map(tuple,children_prop_array(tree, prop)))))    
+            leaf_values = list(map(list,set(map(tuple,children_prop_array(tree, prop)))))
+            
             prop_values = [val for sublist in leaf_values for val in sublist]
         else:
             prop_values = sorted(list(set(children_prop_array(tree, prop))))
-        
+
         # normal text prop
         nvals = len(prop_values)            
         for i in range(0, nvals):
@@ -481,6 +482,7 @@ def get_label_layouts(props, level, prop2type, column_width=70):
                 color_dict[prop_values[i]] = paried_color[i]
             else:
                 color_dict[prop_values[i]] = random_color(h=None)
+
         layout = text_layouts.LayoutText(name='Label_'+prop, column=level, 
         color_dict=color_dict, text_prop=prop, width=column_width)
         layouts.append(layout)
@@ -566,11 +568,16 @@ def get_barplot_layouts(props, level, prop2type, column_width=70, internal_rep='
     for prop in props:
         
         color_dict = {} # key = value, value = color id
-
-        if prop in prop2type and prop2type.get(prop) == float:
-            size_prop = prop+'_'+internal_rep # using internal prop to set the range in case rank_limit cut all the leaves
-        else:
+        prop_values = children_prop_array(tree, prop)
+        if prop_values:
             size_prop = prop
+        else:
+            size_prop = prop+'_'+internal_rep
+
+        # if prop in prop2type and prop2type.get(prop) == float:
+        #     size_prop = prop+'_'+internal_rep # using internal prop to set the range in case rank_limit cut all the leaves
+        # else:
+        #     size_prop = prop
 
         if level > len(paried_color):
             barplot_color =  random_color(h=None)
@@ -583,7 +590,6 @@ def get_barplot_layouts(props, level, prop2type, column_width=70, internal_rep='
                                     internal_rep=internal_rep,
                                     )
 
-        
         prop_color_dict[prop] = barplot_color
         layouts.append(layout)  
         level += 1
