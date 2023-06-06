@@ -97,7 +97,7 @@ class LayoutProfile(TreeLayout):
         if self.legend:
             if self.mode == 'numerical':
                 if self.value_range:
-                    color_gradient = [gradientscolor['a'], gradientscolor['t']]
+                    color_gradient = [gradientscolor['a'], gradientscolor['k'], gradientscolor['t']]
                     tree_style.add_legend(title=self.name,
                                     variable="continuous",
                                     value_range=self.value_range,

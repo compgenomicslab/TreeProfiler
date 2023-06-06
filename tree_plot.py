@@ -365,7 +365,7 @@ def run(args):
             'KEGG_Reaction', #R00497
             'KEGG_rclass', #RC00141
 
-            # cannot use kegg_get()
+            #cannot use kegg_get()
             'BRITE', #ko00000,ko00001,ko03000
             'KEGG_TC', #3.A.1.133.1 
 
@@ -378,7 +378,7 @@ def run(args):
         for multiple_text_prop in multiple_text_props:
             matrix, all_values = multiple2profile(tree, multiple_text_prop)
             multiple_text_prop_layout = profile_layouts.LayoutProfile(name=multiple_text_prop, 
-            alignment=matrix, profiles=all_values, column=level)
+            mode='multi', alignment=matrix, profiles=all_values, column=level)
             level += 1
             layouts.append(multiple_text_prop_layout)
             
