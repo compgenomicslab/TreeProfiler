@@ -510,6 +510,7 @@ def get_colorbranch_layouts(props, level, prop2type, column_width=70):
         layout = text_layouts.LayoutColorbranch(name='Colorbranch_'+prop, column=level, \
             color_dict=color_dict, text_prop=prop, width=column_width)
         layouts.append(layout)
+        level += 1
     return layouts, level, prop_color_dict
 
 def get_rectangular_layouts(props, level, prop2type, column_width=70):
