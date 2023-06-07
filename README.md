@@ -764,7 +764,7 @@ treeprofiler.py annotate --tree examples/spongilla_example/spongilla_example.nw 
 ## Visualize 
 treeprofiler.py plot --tree examples/gtdb_example1/gtdb_example1_annotated.nw --taxonrectangular_layout
 
-treeprofiler.py plot --tree examples/gtdb_example1/gtdb_example1_annotated.nw --taxonclade_layout
+treeprofiler.py plot --tree examples/spongilla_example/spongilla_example_annotated.nw --taxonclade_layout
 ```
 ![taxarect_collapsed](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_taxarect.jpeg?raw=true)
 ![taxaclade_collapsed](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_taxaclade.jpeg?raw=true)
@@ -803,7 +803,7 @@ All the conditional query shared the same syntax, a standard query consists the 
 Example 
 ```
 ## annotate tree 
-treeprofiler.py annotate --tree examples/basic_example1/basic_example1.nw --metadata examples/basic_example1/basic_example1.tsv --bool_prop bool_type --counter_stat relative -o examples/basic_example1/ 
+treeprofiler.py annotate --tree examples/basic_example1/basic_example1.nw --metadata examples/basic_example1/basic_example1.tsv --bool_prop bool_type,bool_type2 --counter_stat relative -o examples/basic_example1/ 
 
 # Conditional pruning, prune leaf node whose name contain "FALPE"
 treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.ete --tree_type ete --pruned_by "name contains FALPE"

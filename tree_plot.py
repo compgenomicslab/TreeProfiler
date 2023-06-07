@@ -262,7 +262,7 @@ def run(args):
     
     for layout in input_order:
         if layout == 'heatmap_layout':
-            heatmap_layouts, level = get_heatmap_layouts(args.heatmap_layout, level, column_width=args.column_width)
+            heatmap_layouts, level = get_heatmap_layouts(args.heatmap_layout, level, column_width=args.column_width, internal_rep=internal_num_rep)
             layouts.extend(heatmap_layouts)
 
         if layout == 'label_layout':
