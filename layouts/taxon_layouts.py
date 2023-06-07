@@ -52,17 +52,29 @@ class TaxaClade(TreeLayout):
     #         if node.props.get('sci_name'):
     #             node.sm_style["bgcolor"] = self.color_dict[node.props.get('sci_name')] # highligh clade
 
-    #superlkingdom
     def set_node_style(self, node):
-        if not node.is_root() and node.props.get('rank') == self.rank: 
-            if node.props.get('sci_name'):
-                color = self.color_dict[node.props.get('sci_name')]
-                node.sm_style["hz_line_color"] = color
-                node.sm_style["hz_line_width"] = 2
-                node.sm_style["vt_line_color"] = color
-                node.sm_style["vt_line_width"] = 2
-                #node.sm_style["draw_descendants"] = False
-                node.sm_style["outline_color"] = color
+        named_lineage = node.props.get('named_lineage', None)
+        if named_lineage:
+            for clade, color in self.color_dict.items():
+                if clade in named_lineage:
+                    node.sm_style["hz_line_color"] = color
+                    node.sm_style["hz_line_width"] = 2
+                    node.sm_style["vt_line_color"] = color
+                    node.sm_style["vt_line_width"] = 2
+                    #node.sm_style["draw_descendants"] = False
+                    node.sm_style["outline_color"] = color
+                    break
+
+
+        # if not node.is_root() and node.props.get('rank') == self.rank: 
+        #     if node.props.get('sci_name'):
+        #         color = self.color_dict[node.props.get('sci_name')]
+        #         node.sm_style["hz_line_color"] = color
+        #         node.sm_style["hz_line_width"] = 2
+        #         node.sm_style["vt_line_color"] = color
+        #         node.sm_style["vt_line_width"] = 2
+        #         #node.sm_style["draw_descendants"] = False
+        #         node.sm_style["outline_color"] = color
                 
 
             
