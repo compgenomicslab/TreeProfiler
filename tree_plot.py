@@ -306,15 +306,18 @@ def run(args):
         if layout == 'domain_layout':
             domain_layout = seq_layouts.LayoutDomain(name="Domain_layout", prop='dom_arq')
             layouts.append(domain_layout)
-
+        
+        # presence-absence profiling based on categorical data
         if layout == 'profiling_layout':
             profiling_props = args.profiling_layout
-            matrix, value2color = props2matrix(tree, profiling_props, dtype=str)
-            profile_layout = profile_layouts.LayoutProfile(name='profiling_layout', mode='simple',
-                alignment=matrix, profiles=profiling_props, value_color=value2color, column=level, width=args.profiling_width)
-            level += 1
-            layouts.append(profile_layout)
-
+            for profiling_prop in profiling_props:
+                matrix, all_values = single2profile(tree, profiling_prop)
+                profile_layout = profile_layouts.LayoutProfile(name=f'Profiling_{profiling_prop}', mode='multi',
+                    alignment=matrix, profiles=all_values, column=level, summarize_inner_nodes=False, width=args.profiling_width)
+                level += 1
+                layouts.append(profile_layout)
+        
+        # presence-absence profiling based on list data
         if layout == 'multi_profiling_layout':
             profiling_props = args.multi_profiling_layout
             for profiling_prop in profiling_props:
@@ -324,6 +327,16 @@ def run(args):
                 level += 1
                 layouts.append(profile_layout)
         
+        # categorical matrix
+        # if layout == 'profiling_layout':
+        #     profiling_props = args.profiling_layout
+        #     matrix, value2color = props2matrix(tree, profiling_props, dtype=str)
+        #     profile_layout = profile_layouts.LayoutProfile(name='profiling_layout', mode='simple',
+        #         alignment=matrix, profiles=profiling_props, value_color=value2color, column=level, width=args.profiling_width)
+        #     level += 1
+        #     layouts.append(profile_layout)
+
+        # numerical matrix
         if layout == 'numerical_profiling_layout':
             profiling_props = args.numerical_profiling_layout
             matrix, maxval, minval = props2matrix(tree, profiling_props)
@@ -697,15 +710,56 @@ def props2matrix(tree, profiling_props, dtype=float):
             if val != 'NaN':
                 value2color[val] = aa[i]
             else:
-                value2color[val] = 'G'
+                value2color[val] = absence_color
         
         matrix = ''
         for leaf, prop in leaf2matrix.items():
             matrix += '\n'+'>'+leaf+'\n'
             for item in prop:
                 matrix += value2color[item]
+        
         return matrix, value2color
   
+def categorical2profile(tree, profiling_prop):
+    aa = [
+        'A', 'R', 'N',
+        'D', 'C', 'Q',
+        'E', 'H',
+        'I', 'S', 'K',
+        'M', 'F', 'P',
+        'L', 'T', 'W',
+        'Z', 'V', 'B',
+        'Y', 'X'
+    ]
+    absence_color = 'G'
+
+    leaf2matrix = {}
+    for node in tree.traverse():
+        if node.is_leaf():
+            leaf2matrix[node.name] = []
+            #for profiling_prop in profiling_props:
+            if node.props.get(profiling_prop):
+                val = node.props.get(profiling_prop)
+                leaf2matrix[node.name].append(val)
+            else:
+                leaf2matrix[node.name].append(None)
+
+    value2color = {}
+    all_values = list(set(flatten([sublist for sublist in leaf2matrix.values()])))
+    for i in range(len(all_values)):
+        val = all_values[i]
+        if val != 'NaN':
+            value2color[val] = aa[i]
+        else:
+            value2color[val] = absence_color
+    
+    matrix = ''
+    for leaf, prop in leaf2matrix.items():
+        matrix += '\n'+'>'+leaf+'\n'
+        for item in prop:
+            matrix += value2color[item]
+    return matrix, value2color
+
 def random_color(h=None):
     """Generates a random color in RGB format."""
     if not h:
@@ -717,8 +771,7 @@ def random_color(h=None):
 def _hls2hex(h, l, s):
     return '#%02x%02x%02x' %tuple(map(lambda x: int(x*255),
                                     colorsys.hls_to_rgb(h, l, s)))
-
-def multiple2profile(tree, profiling_prop):
+def single2profile(tree, profiling_prop):
     all_values = sorted(list(set(flatten(children_prop_array(tree, profiling_prop)))))
     presence = 'D' # #E60A0A red
     absence = 'G' # #EBEBEB lightgrey
@@ -727,7 +780,7 @@ def multiple2profile(tree, profiling_prop):
         matrix += '\n'+'>'+leaf.name+'\n'
         if leaf.props.get(profiling_prop):
             for val in all_values:
-                if val != 'NaN' and val in leaf.props.get(profiling_prop):
+                if val == leaf.props.get(profiling_prop):
                     matrix += presence
                 else:
                     matrix += absence
@@ -740,29 +793,30 @@ def multiple2profile(tree, profiling_prop):
         else:
             matrix += absence * len(all_values) +'\n'
     return matrix, all_values
-
-def categorical2profile(tree, profiling_prop):
+    
+def multiple2profile(tree, profiling_prop):
     all_values = sorted(list(set(flatten(children_prop_array(tree, profiling_prop)))))
-    aa = [
-        'A', 'R', 'N',
-        'D', 'C', 'Q',
-        'E', 'G', 'H',
-        'I', 'S', 'K',
-        'M', 'F', 'P',
-        'L', 'T', 'W',
-        'Z', 'V', 'B',
-        'Y', 'X'
-    ]
+    presence = 'D' # #E60A0A red
+    absence = 'G' # #EBEBEB lightgrey
     matrix = ''
     for leaf in tree.iter_leaves():
         matrix += '\n'+'>'+leaf.name+'\n'
-        for i in range(len(all_values)):
-            leaf_prop = leaf.props.get(profiling_prop)
-            if leaf_prop and leaf_prop != 'NaN':
-                matrix += aa[i % len(aa)]
-            else:
-                matrix += 'G'
-    return matrix              
+        if leaf.props.get(profiling_prop):
+            for val in all_values:
+                if val in leaf.props.get(profiling_prop):
+                    matrix += presence
+                else:
+                    matrix += absence
+            # for index in range(len(all_values)):
+            #     val = all_values[index]
+            #     if val != 'NaN' and val in leaf.props.get(profiling_prop):
+            #         matrix += aa[index % len(aa)]
+            #     else:
+            #         matrix += '-'
+        else:
+            matrix += absence * len(all_values) +'\n'
+    return matrix, all_values
+      
 
 # def get_layouts(argv_inputs, layout_name, level, internal_rep, prop2type=None, column_width=70): 
 #     props = argv_inputs
