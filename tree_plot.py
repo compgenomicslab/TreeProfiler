@@ -802,8 +802,10 @@ def single2profile(tree, profiling_prop):
     
 def multiple2profile(tree, profiling_prop):
     all_values = sorted(list(set(flatten(children_prop_array(tree, profiling_prop)))))
-    presence = 'D' # #E60A0A red
-    absence = 'G' # #EBEBEB lightgrey
+    # presence = 'D' # #E60A0A red
+    # absence = 'G' # #EBEBEB lightgrey
+    presence = 'a' # #E60A0A red
+    absence = '-' # #EBEBEB lightgrey
     matrix = ''
     for leaf in tree.iter_leaves():
         matrix += '\n'+'>'+leaf.name+'\n'
