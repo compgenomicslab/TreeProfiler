@@ -40,29 +40,11 @@ profilecolors = {
     # '.':"#FFFFFF",
     '-':"#cccce8",
     }
-
 gradientscolor = {
-    'a': '#00008b',
-    'b': '#1a1a97',
-    'c': '#3333a2',
-    'd': '#4c4cae',
-    'e': '#6666b9',
-    'f': '#8080c5',
-    'g': '#9999d1',
-    'h': '#b2b2dc',
-    'i': '#cccce8',
-    'j': '#e6e6f3',
-    'k': '#ffffff',
-    'l': '#f3e6e6',
-    'm': '#e8cccc',
-    'n': '#dcb2b2',
-    'o': '#d19999',
-    'p': '#c58080',
-    'q': '#b96666',
-    'r': '#ae4d4d',
-    's': '#a23333',
-    't': '#971919',
-    '-': "#EBEBEB",
+    'a': '#F62D2D', 'b': '#F74444', 'c': '#F85B5B', 'd': '#F97373', 'e': '#FA8A8A', 'f': '#FBA1A1',
+    'g': '#FCB9B9', 'h': '#FDD0D0', 'i': '#FEE7E7', 'j': '#e6e6f3', 'k': '#FFFFFF', 'l': '#E4E8F5',
+    'm': '#C9D1EB', 'n': '#AFBBE1', 'o': '#94A4D7', 'p': '#7A8ECD', 'q': '#5F77C3', 'r': '#4561B9',
+    's': '#2A4AAF', 't': '#1034A6', '-': "#EBEBEB"
 }
 
 class LayoutProfile(TreeLayout):
@@ -116,7 +98,7 @@ class LayoutProfile(TreeLayout):
             if self.mode == 'simple':
                 color_dict = {}
                 for val, letter in self.value_color.items():
-                    color_dict[val] = profilecolors[letter]
+                    color_dict[val] = gradientscolor[letter]
                 tree_style.add_legend(title=self.name,
                                     variable='discrete',
                                     colormap=color_dict,
@@ -568,7 +550,7 @@ class ProfileAlignmentFace(Face):
             if self.seq_format == 'compactseq' or posw * zx < self._min_fsize:
                 aa_type = "notext"
                 tooltip = f'<p>{seq}</p>'
-                yield ['array', sm_box, [profilecolors[x] for x in seq], tooltip]
+                yield ['array', sm_box, [gradientscolor[x] for x in seq], tooltip]
             else:
                 aa_type = "text"
                 yield [ f'pixi-aa_{aa_type}', sm_box, seq ]

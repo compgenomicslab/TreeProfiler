@@ -342,10 +342,10 @@ def run(args):
 
         # numerical matrix
         if layout == 'numerical_matrix_layout':
-            profiling_props = args.numerical_profiling_layout
+            profiling_props = args.numerical_matrix_layout
             matrix, maxval, minval = props2matrix(tree, profiling_props)
             #profile_layout = TreeLayout(name='numerical_profiling_layout', ns=get_alnface(alignment, level), aligned_faces = True)
-            profile_layout = profile_layouts.LayoutProfile(name='numerical_profiling_layout', mode='numerical', 
+            profile_layout = profile_layouts.LayoutProfile(name='numerical_matrix_layout', mode='numerical', 
                 alignment=matrix, seq_format='gradients', profiles=profiling_props, value_range=[minval, maxval], column=level, width=args.profiling_width)
             level += 1
             layouts.append(profile_layout)
@@ -777,8 +777,10 @@ def _hls2hex(h, l, s):
                                     colorsys.hls_to_rgb(h, l, s)))
 def single2profile(tree, profiling_prop):
     all_values = sorted(list(set(flatten(children_prop_array(tree, profiling_prop)))))
-    presence = 'D' # #E60A0A red
-    absence = 'G' # #EBEBEB lightgrey
+    # presence = 'D' # #E60A0A red
+    # absence = 'G' # #EBEBEB lightgrey
+    presence = 'a' # #E60A0A red
+    absence = '-' # #EBEBEB lightgrey
     matrix = ''
     for leaf in tree.iter_leaves():
         matrix += '\n'+'>'+leaf.name+'\n'
