@@ -776,7 +776,7 @@ def _hls2hex(h, l, s):
     return '#%02x%02x%02x' %tuple(map(lambda x: int(x*255),
                                     colorsys.hls_to_rgb(h, l, s)))
 def single2profile(tree, profiling_prop):
-    all_values = sorted(list(set(flatten(children_prop_array(tree, profiling_prop)))), key=lambda x: x != 'NaN')
+    all_values = sorted(list(set(flatten(children_prop_array(tree, profiling_prop)))), key=lambda x: (x != 'NaN', x))
     # presence = 'D' # #E60A0A red
     # absence = 'G' # #EBEBEB lightgrey
     presence = 'a' # #E60A0A red
@@ -801,7 +801,7 @@ def single2profile(tree, profiling_prop):
     return matrix, all_values
     
 def multiple2profile(tree, profiling_prop):
-    all_values = sorted(list(set(flatten(children_prop_array(tree, profiling_prop)))), key=lambda x: x != 'NaN')
+    all_values = sorted(list(set(flatten(children_prop_array(tree, profiling_prop)))), key=lambda x: (x != 'NaN', x))
     # presence = 'D' # #E60A0A red
     # absence = 'G' # #EBEBEB lightgrey
     presence = 'a' # #E60A0A red
