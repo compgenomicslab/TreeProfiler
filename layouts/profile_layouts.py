@@ -67,12 +67,22 @@ gradientscolor = {
 
 class LayoutProfile(TreeLayout):
     def __init__(self, name="Profile", mode='simple',
-            alignment=None, seq_format='compactseq', profiles=None, width=1000, height=20,
+            alignment=None, seq_format='compactseq', profiles=None, width=None, poswidth=20, height=20,
             column=0, range=None, summarize_inner_nodes=False, value_range=[], value_color={}, legend=True):
         super().__init__(name)
         self.alignment = SeqGroup(alignment) if alignment else None
         self.mode = mode
-        self.width = width
+        
+        if width:
+            self.width = width
+        else:
+            self.width = poswidth * len(profiles)
+        #total_width = self.seqlength * self.poswidth
+        # if self.width:
+        #     self.w_scale = self.width / total_width
+        # else:
+        #     self.width = total_width
+        
         self.height = height
         self.column = column
         self.aligned_faces = True

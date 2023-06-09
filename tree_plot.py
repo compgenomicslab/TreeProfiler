@@ -87,7 +87,7 @@ def poplulate_plot_args(plot_args_p):
     )
     group.add_argument('--profiling_width',
         type=int,
-        default=1000,
+        default=None,
         help="customize profiling width of each profiling layout."
     )
     group.add_argument('--binary_layout',
@@ -146,10 +146,14 @@ def poplulate_plot_args(plot_args_p):
         type=lambda s: [item for item in s.split(',')],
         required=False,
         help="<col1,col2> names, column index which need to be plot as multi_profiling_layout for multiple values column")
-    group.add_argument('--numerical_profiling_layout',
+    group.add_argument('--categorical_matrix_layout',
         type=lambda s: [item for item in s.split(',')],
         required=False,
-        help="<col1,col2> names, column index which need to be plot as numerical_profiling_layout for numerical values column")
+        help="<col1,col2> names, column index which need to be plot as categorical_matrix_layout for categorical columns")
+    group.add_argument('--numerical_matrix_layout',
+        type=lambda s: [item for item in s.split(',')],
+        required=False,
+        help="<col1,col2> names, column index which need to be plot as numerical_matrix_layout for numerical values column")
 
     group = plot_args_p.add_argument_group(title='Output arguments',
         description="Output parameters")
@@ -328,16 +332,16 @@ def run(args):
                 layouts.append(profile_layout)
         
         # categorical matrix
-        # if layout == 'profiling_layout':
-        #     profiling_props = args.profiling_layout
-        #     matrix, value2color = props2matrix(tree, profiling_props, dtype=str)
-        #     profile_layout = profile_layouts.LayoutProfile(name='profiling_layout', mode='simple',
-        #         alignment=matrix, profiles=profiling_props, value_color=value2color, column=level, width=args.profiling_width)
-        #     level += 1
-        #     layouts.append(profile_layout)
+        if layout == 'categorical_matrix_layout':
+            profiling_props = args.categorical_matrix_layout
+            matrix, value2color = props2matrix(tree, profiling_props, dtype=str)
+            profile_layout = profile_layouts.LayoutProfile(name='profiling_layout', mode='simple',
+                alignment=matrix, profiles=profiling_props, value_color=value2color, column=level, width=args.profiling_width)
+            level += 1
+            layouts.append(profile_layout)
 
         # numerical matrix
-        if layout == 'numerical_profiling_layout':
+        if layout == 'numerical_matrix_layout':
             profiling_props = args.numerical_profiling_layout
             matrix, maxval, minval = props2matrix(tree, profiling_props)
             #profile_layout = TreeLayout(name='numerical_profiling_layout', ns=get_alnface(alignment, level), aligned_faces = True)
