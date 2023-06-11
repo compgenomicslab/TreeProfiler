@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import sys
 import os
 import time
 import random
@@ -293,9 +294,16 @@ def run_tree_annotate(tree, input_annotated_tree=False,
 
     # domain annotation before other annotation
     if emapper_pfam:
+        if not alignment:
+            print("Please provide alignment file using '--alignment' for pfam annotation.")
+            sys.exit(1)
+
         annot_tree_pfam_table(tree, emapper_pfam, alignment)
 
     if emapper_smart:
+        if not alignment:
+            print("Please provide alignment file using '--alignment' for smart annotation.")
+            sys.exit(1)
         annot_tree_smart_table(tree, emapper_smart, alignment)
 
 
@@ -428,8 +436,20 @@ def run(args):
     prop2type = {}
     metadata_dict = {}
 
-    # TODO: I want to change this into something like this:
-    #     tree, metada = args
+    # checking file and output exists
+    if not os.path.exists(args.tree):
+        print("Input tree {} does not exist.".format(args.tree))
+        sys.exit(1)
+    
+    if args.metadata:
+        for metadata_file in args.metadata:
+            if not os.path.exists(metadata_file):
+                print("Metadata {} does not exist.".format(metadata_file))
+                sys.exit(1)
+
+    if not os.path.exists(args.outdir):
+        print("Output directory {} does not exist.".format(args.outdir))
+        sys.exit(1)
 
     # parsing tree
     if args.tree:

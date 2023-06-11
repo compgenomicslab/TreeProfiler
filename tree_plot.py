@@ -186,6 +186,11 @@ def run(args):
     layouts = []
     level = 1 # level 1 is the leaf name
 
+    # checking file and output exists
+    if not os.path.exists(args.tree):
+        print("Input tree {} does not exist.".format(args.tree))
+        sys.exit(1)
+        
     #parse input tree
     if args.tree:
         if args.tree_type == 'newick':
