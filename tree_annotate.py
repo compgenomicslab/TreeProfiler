@@ -39,7 +39,7 @@ def populate_annotate_args(parser):
     add('--no_colnames', action='store_true',
         help="metadata table doesn't contain columns name")
     add('--aggregate_duplicate', action='store_true',
-        help="treeprofiler will aggregate duplicated metadata to a list as a property ignore if metadata contains duplicated row, otherwise it will ignore.")
+        help="treeprofiler will aggregate duplicated metadata to a list as a property if metadata contains duplicated row")
     add('--text_prop', type=csv_list,
         help=("<col1,col2> names, column index or index range of columns which "
               "need to be read as categorical data"))
@@ -60,9 +60,9 @@ def populate_annotate_args(parser):
         help="1,2,3 or [1-5] index columns which need to be read as numerical data")
     add('--bool_prop_idx',
         help="1,2,3 or [1-5] index columns which need to be read as boolean data")
-    add('--taxatree',
-        help=("<kingdom|phylum|class|order|family|genus|species|subspecies> "
-              "reference tree from taxonomic database"))
+    # add('--taxatree',
+    #     help=("<kingdom|phylum|class|order|family|genus|species|subspecies> "
+    #           "reference tree from taxonomic database"))
     add('--taxadb', default='GTDB',
         help="<NCBI|GTDB> for taxonomic profiling or fetch taxatree default [GTDB]")
     add('--taxon_column',
@@ -72,11 +72,11 @@ def populate_annotate_args(parser):
     add('--taxa_field', type=int, default=0,
         help="field of taxa name after delimiter. default 0")
     add('--emapper_annotations',
-        help="out.emapper.annotations")
+        help="attach eggNOG-mapper output out.emapper.annotations")
     add('--emapper_pfam',
-        help="out.emapper.pfams")
+        help="attach eggNOG-mapper pfam output out.emapper.pfams")
     add('--emapper_smart',
-        help="out.emapper.smart")
+        help="attach eggNOG-mapper smart output out.emapper.smart")
     add('--alignment',
         help="Sequence alignment, .fasta format")
 
@@ -87,27 +87,27 @@ def populate_annotate_args(parser):
         default=False,
         action='store_true',
         required=False,
-        help="Determine if you need taxonomic annotation on tree")
+        help="Activate taxonomic annotation on tree")
     group.add_argument('--num_stat',
         default='all',
         choices=['all', 'sum', 'avg', 'max', 'min', 'std', 'none'],
         type=str,
         required=False,
-        help="statistic calculation to perform for numerical data in internal nodes, [all, sum, avg, max, min, std, none] ")  
+        help="statistic calculation to perform for numerical data in internal nodes, [all, sum, avg, max, min, std, none]. If 'none' was chosen, numerical properties won't be summarized nor annotated in internal nodes")  
 
     group.add_argument('--counter_stat',
         default='raw',
         choices=['raw', 'relative', 'none'],
         type=str,
         required=False,
-        help="statistic calculation to perform for categorical data in internal nodes, raw count or in percentage [raw, relative, none] ")  
+        help="statistic calculation to perform for categorical data in internal nodes, raw count or in percentage [raw, relative, none]. If 'none' was chosen, categorical and boolean properties won't be summarized nor annotated in internal nodes")  
     
     group = parser.add_argument_group(title='OUTPUT options',
         description="")
     group.add_argument('-o', '--outdir',
         type=str,
         required=False,
-        help="output annotated tree")
+        help="Directory for annotated outputs.")
 
 
 def run_tree_annotate(tree, input_annotated_tree=False,
@@ -119,10 +119,6 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         taxonomic_profile=False, taxadb='GTDB', taxon_column='name',
         taxon_delimiter='.', taxa_field=0, rank_limit=None, pruned_by=None,
         outdir='./'):
-
-    # NOTE(JBC): The function has no docstring, and has a huge number of paramters.
-    # I'd suggest converting it into a few functions that do a single thing
-    # (and take few parameters and have docstrings that say what they do).
 
     total_color_dict = []
     layouts = []
@@ -333,8 +329,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
 
         #pre load node2leaves to save time
         node2leaves = annotated_tree.get_cached_content()
-        count = 0
-        for node in annotated_tree.traverse("postorder"):
+        for i, node in enumerate(annotated_tree.traverse("postorder")):
             internal_props = {}
             if not node.is_leaf():
                 if counter_stat != 'none':
@@ -427,6 +422,10 @@ def run_tree_annotate(tree, input_annotated_tree=False,
     if pruned_by: # need to be wrap with quotes
         condition_strings = pruned_by
         annotated_tree = conditional_prune(annotated_tree, condition_strings, prop2type)
+    
+    # name internal nodes
+    annotated_tree = name_nodes(annotated_tree)
+
     return annotated_tree, prop2type
 
 def run(args):
@@ -878,6 +877,15 @@ def merge_num_annotations(nodes, target_props, num_stat='all'):
 def add_suffix(name, suffix, delimiter='_'):
     return str(name) + delimiter + str(suffix)
 
+def name_nodes(tree):
+    for i, node in enumerate(tree.traverse("postorder")):
+        if not node.name:
+            if not node.is_root():
+                node.name = 'N'+str(i)
+            else:
+                node.name = 'root'
+    return tree
+
 def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field=0):
     global rank2values
     def return_spcode(leaf):
@@ -909,6 +917,7 @@ def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field
             pass
         else:
             n.name = n.props.get("sci_name", "")
+        
     return tree, rank2values
 
 def annotate_evol_events(tree, sp_delimiter='.', sp_field=0):

@@ -29,7 +29,7 @@ def populate_main_args(main_args_p):
     group.add_argument('--annotated_tree',
         default=False,
         action='store_true',
-        help="input tree already annotated by treeprofiler")
+        help="input tree already annotated by treeprofiler if you want to skip the annotate part.")
     group.add_argument('--tree_type',
         type=str,
         default='newick',
