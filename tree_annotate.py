@@ -878,16 +878,6 @@ def merge_num_annotations(nodes, target_props, num_stat='all'):
 def add_suffix(name, suffix, delimiter='_'):
     return str(name) + delimiter + str(suffix)
 
-# def children_prop_array(nodes, prop):
-#     #array = [n.props.get(prop) if n.props.get(prop) else 'NaN' for n in nodes]
-#     array = [n.props.get(prop) for n in nodes if n.props.get(prop) ]
-#     return array
-
-# def children_prop_array_missing(nodes, prop):
-#     array = [n.props.get(prop) if n.props.get(prop) else 'NaN' for n in nodes]
-#     #array = [n.props.get(prop) for n in nodes if n.props.get(prop) ]
-#     return array
-
 def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field=0):
     global rank2values
     def return_spcode(leaf):

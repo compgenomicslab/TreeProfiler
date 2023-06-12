@@ -190,7 +190,7 @@ def run(args):
     if not os.path.exists(args.tree):
         print("Input tree {} does not exist.".format(args.tree))
         sys.exit(1)
-        
+
     #parse input tree
     if args.tree:
         if args.tree_type == 'newick':
@@ -331,7 +331,7 @@ def run(args):
             profiling_props = args.multi_profiling_layout
             for profiling_prop in profiling_props:
                 matrix, all_values = multiple2profile(tree, profiling_prop)
-                profile_layout = profile_layouts.LayoutProfile(name=profiling_prop, mode='multi',
+                profile_layout = profile_layouts.LayoutProfile(name=f'Profiling_{profiling_prop}', mode='multi',
                 alignment=matrix, profiles=all_values, column=level, summarize_inner_nodes=False, width=args.profiling_width)
                 level += 1
                 layouts.append(profile_layout)
@@ -340,7 +340,7 @@ def run(args):
         if layout == 'categorical_matrix_layout':
             profiling_props = args.categorical_matrix_layout
             matrix, value2color = props2matrix(tree, profiling_props, dtype=str)
-            profile_layout = profile_layouts.LayoutProfile(name='profiling_layout', mode='simple',
+            profile_layout = profile_layouts.LayoutProfile(name='categorical_matrix_layout', mode='simple',
                 alignment=matrix, profiles=profiling_props, value_color=value2color, column=level, width=args.profiling_width)
             level += 1
             layouts.append(profile_layout)
@@ -363,7 +363,6 @@ def run(args):
             'COG_category',
             'Description',
             'Preferred_name',
-            'EC',
             ]
         #label_layouts, level, _ = get_layouts(text_props, 'rectangular', level, 'counter', prop2type=prop2type)
         label_layouts, level, _ = get_rectangular_layouts(text_props, level, prop2type=prop2type, column_width=args.column_width)
@@ -371,7 +370,7 @@ def run(args):
         layouts.extend(label_layouts)
         
         num_props = [
-            #'evalue',
+            'evalue',
             'score'
         ]
         #barplot_layouts, level, _ = get_layouts(num_props, 'barplot', level, internal_num_rep, prop2type=prop2type)
@@ -386,8 +385,7 @@ def run(args):
             'KEGG_Module', #M00118 
             'KEGG_Reaction', #R00497
             'KEGG_rclass', #RC00141
-
-            #cannot use kegg_get()
+            'EC', #1.18.6.1,1.3.7.14,1.3.7.15
             'BRITE', #ko00000,ko00001,ko03000
             'KEGG_TC', #3.A.1.133.1 
 
@@ -399,7 +397,7 @@ def run(args):
         
         for multiple_text_prop in multiple_text_props:
             matrix, all_values = multiple2profile(tree, multiple_text_prop)
-            multiple_text_prop_layout = profile_layouts.LayoutProfile(name=multiple_text_prop, 
+            multiple_text_prop_layout = profile_layouts.LayoutProfile(name="Profiling_"+multiple_text_prop, 
             mode='multi', alignment=matrix, profiles=all_values, column=level)
             level += 1
             layouts.append(multiple_text_prop_layout)
@@ -597,11 +595,6 @@ def get_barplot_layouts(props, level, prop2type, column_width=70, internal_rep='
         else:
             size_prop = prop+'_'+internal_rep
 
-        # if prop in prop2type and prop2type.get(prop) == float:
-        #     size_prop = prop+'_'+internal_rep # using internal prop to set the range in case rank_limit cut all the leaves
-        # else:
-        #     size_prop = prop
-
         if level > len(paried_color):
             barplot_color =  random_color(h=None)
         else:
@@ -782,8 +775,6 @@ def _hls2hex(h, l, s):
                                     colorsys.hls_to_rgb(h, l, s)))
 def single2profile(tree, profiling_prop):
     all_values = sorted(list(set(flatten(children_prop_array(tree, profiling_prop)))), key=lambda x: (x != 'NaN', x))
-    # presence = 'D' # #E60A0A red
-    # absence = 'G' # #EBEBEB lightgrey
     presence = 'a' # #E60A0A red
     absence = '-' # #EBEBEB lightgrey
     matrix = ''
@@ -795,20 +786,13 @@ def single2profile(tree, profiling_prop):
                     matrix += presence
                 else:
                     matrix += absence
-            # for index in range(len(all_values)):
-            #     val = all_values[index]
-            #     if val != 'NaN' and val in leaf.props.get(profiling_prop):
-            #         matrix += aa[index % len(aa)]
-            #     else:
-            #         matrix += '-'
+
         else:
             matrix += absence * len(all_values) +'\n'
     return matrix, all_values
     
 def multiple2profile(tree, profiling_prop):
     all_values = sorted(list(set(flatten(children_prop_array(tree, profiling_prop)))), key=lambda x: (x != 'NaN', x))
-    # presence = 'D' # #E60A0A red
-    # absence = 'G' # #EBEBEB lightgrey
     presence = 'a' # #E60A0A red
     absence = '-' # #EBEBEB lightgrey
     matrix = ''
@@ -820,105 +804,7 @@ def multiple2profile(tree, profiling_prop):
                     matrix += presence
                 else:
                     matrix += absence
-            # for index in range(len(all_values)):
-            #     val = all_values[index]
-            #     if val != 'NaN' and val in leaf.props.get(profiling_prop):
-            #         matrix += aa[index % len(aa)]
-            #     else:
-            #         matrix += '-'
         else:
             matrix += absence * len(all_values) +'\n'
     return matrix, all_values
       
-
-# def get_layouts(argv_inputs, layout_name, level, internal_rep, prop2type=None, column_width=70): 
-#     props = argv_inputs
-#     layouts = []
-#     prop_color_dict = {} # key = value, value = color id
-
-#     # load layout for each prop
-#     for idx, prop in enumerate(props):
-        
-#         color_dict = {} # key = value, value = color id
-
-#         # binary layout should be set width
-#         if layout_name in ['binary', 'revbinary']:
-            
-#             if columns:
-#                 prop_values = sorted(list(set(columns[prop])))
-#             else:
-#                 prop_values = sorted(list(set(children_prop_array(tree, prop))))
-#             nvals = len(prop_values)
-
-#             for i in range(0, nvals): # only positive, negative, NaN, three options
-#                 color_dict[prop_values[i]] = paried_color[i]
-            
-#             color = random_color(h=None)
-#             if layout_name == 'binary':
-#                 layout = conditional_layouts.LayoutBinary('Binary_'+prop, level, color, color_dict, prop, reverse=False)
-
-#             elif layout_name == 'revbinary':
-#                 layout = conditional_layouts.LayoutBinary('ReverseBinary_'+prop, level, color, color_dict, prop, reverse=True)
-#             internal_prop = prop + '_' + internal_rep
-#             prop_color_dict[internal_prop] = color_dict
-#             prop_color_dict[prop] = color
-
-#         # numerical layouts
-#         # elif layout_name == 'heatmap':
-#         #     layout =  staple_layouts.LayoutHeatmap('Heatmap_'+prop, level, internal_rep, prop)
-       
-#         elif layout_name == 'barplot':
-#             if prop in prop2type and eval(prop2type.get(prop)) == float:
-#                 size_prop = prop+'_'+internal_rep # using internal prop to set the range in case rank_limit cut all the leaves
-#             else:
-#                 size_prop = prop
-
-#             if level > len(paried_color):
-#                 barplot_color =  random_color(h=None)
-#             else:
-#                 barplot_color = paried_color[level]
-            
-#             layout =  staple_layouts.LayoutBarplot(name='Barplot_'+prop, prop=prop, 
-#                                         width=column_width, color=barplot_color, 
-#                                         size_prop=size_prop, column=level, 
-#                                         internal_rep=internal_rep,
-#                                         )
-
-#             prop_color_dict[prop] = barplot_color
-
-#         # categorical layouts should be set width
-#         elif layout_name in ['label','rectangular', 'colorbranch']:
-#             if prop2type and eval(prop2type.get(prop)) == list:
-#                 leaf_values = list(map(list,set(map(tuple,children_prop_array(tree, prop)))))    
-#                 prop_values = [val for sublist in leaf_values for val in sublist]
-#             else:
-#                 prop_values = sorted(list(set(children_prop_array(tree, prop))))
-            
-#             # normal text prop
-#             nvals = len(prop_values)            
-#             for i in range(0, nvals):
-#                 if nvals <= 14:
-#                     color_dict[prop_values[i]] = paried_color[i]
-#                 else:
-#                     color_dict[prop_values[i]] = random_color(h=None)
-#             if layout_name == 'label':
-#                 #longest_val =  len(max(prop_values, key = len))
-#                 layout = text_layouts.LayoutText(name='Label_'+prop, column=level, \
-#                     color_dict=color_dict, text_prop=prop, width=column_width)
-#                 #layout = TreeLayout(name=prop+'_'+layout_name, ns=text_layouts.text_layout(prop, level, color_dict, internal_rep))
-            
-#             elif layout_name == 'rectangular':
-#                 layout = text_layouts.LayoutRect(name='Rectangular_'+prop, column=level,  \
-#                     color_dict=color_dict, text_prop=prop,\
-#                     width=column_width)
-            
-#             elif layout_name == 'colorbranch':
-#                 layout = text_layouts.LayoutColorbranch(name='Colorbranch_'+prop, column=level, \
-#                     color_dict=color_dict, text_prop=prop, width=column_width)
-            
-#             prop_color_dict[prop] = color_dict
-        
-#         layouts.append(layout)
-#         level += 1
-        
-#     return layouts, level, prop_color_dict
