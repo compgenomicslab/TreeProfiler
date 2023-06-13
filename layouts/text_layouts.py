@@ -24,10 +24,6 @@ class LayoutText(TreeLayout):
         self.padding_x = 1
         self.padding_y = 0
 
-    # def set_tree_style(self, tree, tree_style):
-    #     super().set_tree_style(tree, tree_style)
-    #     text = TextFace(self.name, max_fsize=11, padding_x=2)
-    #     tree_style.aligned_panel_header.add_face(text, column=self.column)
     def set_tree_style(self, tree, tree_style):
         super().set_tree_style(tree, tree_style)
         text = TextFace(self.text_prop, min_fsize=self.min_fsize, max_fsize=self.max_fsize, padding_x=2, width=self.width, rotation=315)
@@ -55,16 +51,10 @@ class LayoutText(TreeLayout):
             node.add_face(prop_face, column=self.column, position="aligned")
             
         elif node.is_leaf() and node.props.get(self.internal_prop):
-            #piechart_face = get_piechartface(node, self.internal_prop, self.color_dict)
-            #node.add_face(piechart_face, column = self.column, position = "branch_top")
-            #node.add_face(piechart_face, column = self.column, position = "aligned", collapsed_only=False)
             stackedbar_face = get_stackedbarface(node, self.internal_prop, self.color_dict)
             node.add_face(stackedbar_face, column = self.column, position = "aligned", collapsed_only=False)
 
         elif node.props.get(self.internal_prop):
-            #piechart_face = get_piechartface(node, self.internal_prop, self.color_dict)
-            #node.add_face(piechart_face, column = self.column, position = "branch_top")
-            #node.add_face(piechart_face, column = self.column, position = "aligned", collapsed_only=True)
             stackedbar_face = get_stackedbarface(node, self.internal_prop, self.color_dict)
             node.add_face(stackedbar_face, column = self.column, position = "aligned", collapsed_only=True)
         else:
@@ -90,6 +80,8 @@ class LayoutColorbranch(TreeLayout):
 
     def set_tree_style(self, tree, tree_style):
         super().set_tree_style(tree, tree_style)
+        text = TextFace(self.text_prop, min_fsize=5, max_fsize=15, padding_x=2, width=self.width, rotation=315)
+        tree_style.aligned_panel_header.add_face(text, column=self.column)
         if self.legend:
             if self.color_dict:
                 tree_style.add_legend(title=self.text_prop,
@@ -106,27 +98,23 @@ class LayoutColorbranch(TreeLayout):
                 else:
                     pass
                 if self.color_dict:
+                    
                     node.add_face(TextFace(node.name, color = self.color_dict.get(prop_text,""), 
                     padding_x=2),column=0, position="branch_right")
                     node.sm_style["hz_line_color"] = self.color_dict.get(prop_text,"")
                     node.sm_style["hz_line_width"] = 2
+                    node.add_face(RectFace(width=self.width, height=None, color=self.absence_color, \
+                        padding_x=self.padding_x , padding_y=self.padding_y, tooltip=None),column=self.column, position="aligned")
             
         elif node.is_leaf() and node.props.get(self.internal_prop):
-            #piechart_face = get_piechartface(node, self.internal_prop, self.color_dict)
-            #node.add_face(piechart_face, column = self.column, position = "branch_top")
-            #node.add_face(piechart_face, column = self.column, position = "aligned", collapsed_only=False)
             stackedbar_face = get_stackedbarface(node, self.internal_prop, self.color_dict)
             node.add_face(stackedbar_face, column = self.column, position = "aligned", collapsed_only=False)
 
         elif node.props.get(self.internal_prop):
-            #piechart_face = get_piechartface(node, self.internal_prop, self.color_dict)
-            #node.add_face(piechart_face, column = self.column, position = "branch_top")
-            #node.add_face(piechart_face, column = self.column, position = "aligned", collapsed_only=True)
             stackedbar_face = get_stackedbarface(node, self.internal_prop, self.color_dict)
             node.add_face(stackedbar_face, column = self.column, position = "aligned", collapsed_only=True)
         
         else:
-            #prop_face = CircleFace(radius=self.radius, color='grey', padding_x=self.padding_x, padding_y=self.padding_y)
             prop_face = RectFace(width=self.width, height=self.height, color=self.absence_color, \
                     padding_x=self.padding_x , padding_y=self.padding_y, tooltip=None)
             node.add_face(prop_face, column=self.column, position="aligned", collapsed_only=True)
@@ -147,10 +135,7 @@ class LayoutRect(TreeLayout):
         self.max_fsize = 15
         self.padding_x = 1
         self.padding_y = 0
-    # def set_tree_style(self, tree, tree_style):
-    #     super().set_tree_style(tree, tree_style)
-    #     text = TextFace(self.name, max_fsize=11, padding_x=1)
-    #     tree_style.aligned_panel_header.add_face(text, column=self.column)
+    
     def set_tree_style(self, tree, tree_style):
         super().set_tree_style(tree, tree_style)
         text = TextFace(self.text_prop, min_fsize=self.min_fsize, max_fsize=self.max_fsize, padding_x=2, width=self.width, rotation=315)
@@ -194,21 +179,15 @@ class LayoutRect(TreeLayout):
                 node.add_face(prop_face, column=self.column, position="aligned")
         
         elif node.is_leaf() and node.props.get(self.internal_prop):
-            #piechart_face = get_piechartface(node, self.internal_prop, self.color_dict) #get_stackedbarface
-            #node.add_face(piechart_face, column = self.column, position = "branch_top")
-            #node.add_face(piechart_face, column = self.column, position = "aligned", collapsed_only=False)
             stackedbar_face = get_stackedbarface(node, self.internal_prop, self.color_dict)
             node.add_face(stackedbar_face, column = self.column, position = "aligned", collapsed_only=False)
 
         elif node.props.get(self.internal_prop):
-            #piechart_face = get_piechartface(node, self.internal_prop, self.color_dict)
-            #node.add_face(piechart_face, column = self.column, position = "branch_top")
-            #node.add_face(piechart_face, column = self.column, position = "aligned", collapsed_only=False)
             stackedbar_face = get_stackedbarface(node, self.internal_prop, self.color_dict)
             node.add_face(stackedbar_face, column = self.column, position = "aligned", collapsed_only=True)
 
         else:
-            #prop_face = CircleFace(radius=self.radius, color='grey', padding_x=self.padding_x, padding_y=self.padding_y)
+            
             prop_face = RectFace(width=self.width, height=self.height, color=self.absence_color, \
                     padding_x=self.padding_x , padding_y=self.padding_y, tooltip=None)
             node.add_face(prop_face, column=self.column, position="aligned", collapsed_only=True)

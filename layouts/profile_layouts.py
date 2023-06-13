@@ -14,7 +14,7 @@ import re
 Box = namedtuple('Box', 'x y dx dy')  # corner and size of a 2D shape
 
 profilecolors = {
-    'A':"#C8C8C8" ,
+    'A':"#301515" ,
     'R':"#145AFF" ,
     'N':"#00DCDC" ,
     'D':"#E60A0A" ,
@@ -40,39 +40,31 @@ profilecolors = {
     # '.':"#FFFFFF",
     '-':"#cccce8",
     }
-
 gradientscolor = {
-    'a': '#00008b',
-    'b': '#1a1a97',
-    'c': '#3333a2',
-    'd': '#4c4cae',
-    'e': '#6666b9',
-    'f': '#8080c5',
-    'g': '#9999d1',
-    'h': '#b2b2dc',
-    'i': '#cccce8',
-    'j': '#e6e6f3',
-    'k': '#ffffff',
-    'l': '#f3e6e6',
-    'm': '#e8cccc',
-    'n': '#dcb2b2',
-    'o': '#d19999',
-    'p': '#c58080',
-    'q': '#b96666',
-    'r': '#ae4d4d',
-    's': '#a23333',
-    't': '#971919',
-    '-': "#EBEBEB",
+    'a': '#F62D2D', 'b': '#F74444', 'c': '#F85B5B', 'd': '#F97373', 'e': '#FA8A8A', 'f': '#FBA1A1',
+    'g': '#FCB9B9', 'h': '#FDD0D0', 'i': '#FEE7E7', 'j': '#e6e6f3', 'k': '#FFFFFF', 'l': '#E4E8F5',
+    'm': '#C9D1EB', 'n': '#AFBBE1', 'o': '#94A4D7', 'p': '#7A8ECD', 'q': '#5F77C3', 'r': '#4561B9',
+    's': '#2A4AAF', 't': '#1034A6', '-': "#EBEBEB"
 }
 
 class LayoutProfile(TreeLayout):
     def __init__(self, name="Profile", mode='simple',
-            alignment=None, seq_format='compactseq', profiles=None, width=1000, height=20,
-            column=0, range=None, summarize_inner_nodes=True, value_range=[], value_color={}, legend=True):
+            alignment=None, seq_format='profiles', profiles=None, width=None, poswidth=20, height=20,
+            column=0, range=None, summarize_inner_nodes=False, value_range=[], value_color={}, legend=True):
         super().__init__(name)
         self.alignment = SeqGroup(alignment) if alignment else None
         self.mode = mode
-        self.width = width
+        
+        if width:
+            self.width = width
+        else:
+            self.width = poswidth * len(profiles)
+        #total_width = self.seqlength * self.poswidth
+        # if self.width:
+        #     self.w_scale = self.width / total_width
+        # else:
+        #     self.width = total_width
+        
         self.height = height
         self.column = column
         self.aligned_faces = True
@@ -97,7 +89,7 @@ class LayoutProfile(TreeLayout):
         if self.legend:
             if self.mode == 'numerical':
                 if self.value_range:
-                    color_gradient = [gradientscolor['a'], gradientscolor['t']]
+                    color_gradient = [gradientscolor['a'], gradientscolor['k'], gradientscolor['t']]
                     tree_style.add_legend(title=self.name,
                                     variable="continuous",
                                     value_range=self.value_range,
@@ -399,7 +391,7 @@ class TextScaleFace(Face):
                 
 class ProfileAlignmentFace(Face):
     def __init__(self, seq, bg=None,
-            gap_format='line', seqtype='aa', seq_format='compactseq',
+            gap_format='line', seqtype='aa', seq_format='profiles',
             width=None, height=None, # max height
             fgcolor='black', bgcolor='#bcc3d0', gapcolor='gray',
             gap_linewidth=0.2,
@@ -549,15 +541,24 @@ class ProfileAlignmentFace(Face):
             y, h = get_height(sm_x, y)
             sm_box = Box(sm_x+sm_x0, y, posw * len(seq), h)
             #yield [ f'pixi-gradients', sm_box, seq ]
-            yield ['array', sm_box, [gradientscolor[x] for x in seq] ]
+            yield ['array', sm_box, [gradientscolor[x] for x in seq]]
+        elif self.seq_format == "categories":
+            seq = self.get_seq(sm_start, sm_end)
+            sm_x = sm_x if drawer.TYPE == 'rect' else x0
+            y, h = get_height(sm_x, y)
+            sm_box = Box(sm_x+sm_x0, y, posw * len(seq), h)
+            #yield [ f'pixi-gradients', sm_box, seq ]
+            yield ['array', sm_box, [profilecolors[x] for x in seq]]
         else:
             seq = self.get_seq(sm_start, sm_end)
             sm_x = sm_x if drawer.TYPE == 'rect' else x0
             y, h = get_height(sm_x, y)
             sm_box = Box(sm_x+sm_x0, y, posw * len(seq), h)
-            if self.seq_format == 'compactseq' or posw * zx < self._min_fsize:
+            if self.seq_format == 'profiles' or posw * zx < self._min_fsize:
                 aa_type = "notext"
+                tooltip = f'<p>{seq}</p>'
+                yield ['array', sm_box, [gradientscolor[x] for x in seq], tooltip]
             else:
                 aa_type = "text"
-            yield [ f'pixi-aa_{aa_type}', sm_box, seq ]
+                yield [ f'pixi-aa_{aa_type}', sm_box, seq ]
             

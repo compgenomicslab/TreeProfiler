@@ -201,7 +201,3 @@ class LayoutBinary(TreeLayout):
         # else:
         #     prop_face = RectFace(width=self.width, height=self.height, text="NA", color=self.negative_color,  padding_x=self.padding_x, padding_y=self.padding_y, stroke_color=self.negative_color, tooltip=None)
         #     node.add_face(prop_face, column=self.column, position = "aligned")
-
-# hightlighted as rectangular
-
-# hightlighted as circle
