@@ -46,7 +46,7 @@ def populate_main_args(main_args_p):
     group.add_argument('--pruned_by',
         type=str,
         action='append',
-        help='target tree pruned by customized conditions')
+        help='target tree pruned by customized conditions, such as --pruned_by "name contains FALPE"')
 
 def main():
     desc = (f'treeprofiler.py (ver. {__version__} of {__date__}).'

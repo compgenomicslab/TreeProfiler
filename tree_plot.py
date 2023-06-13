@@ -49,12 +49,12 @@ def poplulate_plot_args(plot_args_p):
         type=str,
         required=False,
         action='append',
-        help='target tree collapsed by customized conditions')  
+        help='target tree nodes collapsed by customized conditions')  
     group.add_argument('--highlighted_by', 
         type=str,
         required=False,
         action='append',
-        help='target tree highlighted by customized conditions')
+        help='target tree nodes highlighted by customized conditions')
         
     # group = plot_args_p.add_argument_group(title='Basic treelayout arguments',
     #     description="treelayout parameters")
@@ -77,47 +77,47 @@ def poplulate_plot_args(plot_args_p):
         description="Prop layout parameters")
     group.add_argument('--column_width',
         type=int,
-        default=70,
-        help="customize column width of each layout."
+        default=20,
+        help="customize column width of each layout.[default: 20]"
     )
     group.add_argument('--barplot_width',
         type=int,
         default=200,
-        help="customize barplot width of barplot layout."
+        help="customize barplot width of barplot layout.[default: 200]"
     )
-    group.add_argument('--profiling_width',
-        type=int,
-        default=None,
-        help="customize profiling width of each profiling layout."
-    )
+    # group.add_argument('--profiling_width',
+    #     type=int,
+    #     default=None,
+    #     help="customize profiling width of each profiling layout."
+    # )
     group.add_argument('--binary_layout',
         type=lambda s: [item for item in s.split(',')],
         required=False,
-        help="<col1,col2> names, column index or index range of columns which need to be plot as binary_layout")
+        help="<prop1,prop2> names of properties which need to be plot as binary_layout which highlights the postives")
     group.add_argument('--revbinary_layout',
         type=lambda s: [item for item in s.split(',')],
         required=False,
-        help="<col1,col2> names, column index or index range of columns which need to be plot as revbinary_layout")
+        help="<prop1,prop2> names  of properties which need to be plot as revbinary_layout which highlights the negatives")
     group.add_argument('--colorbranch_layout',
         type=lambda s: [item for item in s.split(',')],
         required=False,
-        help="<col1,col2> names, column index or index range of columns which need to be plot as Textlayouts")
+        help="<prop1,prop2> names  of properties which need to be plot as Textlayouts")
     group.add_argument('--label_layout',
         type=lambda s: [item for item in s.split(',')],
         required=False,
-        help="<col1,col2> names, column index or index range of columns which need to be plot as label_layout")
+        help="<prop1,prop2> names  of properties which need to be plot as label_layout")
     group.add_argument('--rectangular_layout',
         type=lambda s: [item for item in s.split(',')],
         required=False,
-        help="<col1,col2> names, column index or index range of columns which need to be plot as rectangular_layout")
+        help="<prop1,prop2> names  of properties which need to be plot as rectangular_layout")
     group.add_argument('--heatmap_layout',
         type=lambda s: [item for item in s.split(',')],
         required=False,
-        help="<col1,col2> names, column index or index range of columns which need to be read as heatmap_layout")
+        help="<prop1,prop2> names  of properties which need to be read as heatmap_layout")
     group.add_argument('--barplot_layout',
         type=lambda s: [item for item in s.split(',')],
         required=False,
-        help="<col1,col2> names, column index or index range of columns which need to be read as barplot_layouts")
+        help="<prop1,prop2> names  of properties which need to be read as barplot_layouts")
     group.add_argument('--taxonclade_layout',
         default=False,
         action='store_true',
@@ -141,19 +141,19 @@ def poplulate_plot_args(plot_args_p):
     group.add_argument('--profiling_layout',
         type=lambda s: [item for item in s.split(',')],
         required=False,
-        help="<col1,col2> names, column index which need to be plot as profiling_layout for categorical columns")
+        help="<prop1,prop2> names of properties which need to be convert to presence-absence profiling matrix of each value")
     group.add_argument('--multi_profiling_layout',
         type=lambda s: [item for item in s.split(',')],
         required=False,
-        help="<col1,col2> names, column index which need to be plot as multi_profiling_layout for multiple values column")
+        help="<prop1,prop2> names of properties containing values as list which need to be convert to presence-absence profiling matrix")
     group.add_argument('--categorical_matrix_layout',
         type=lambda s: [item for item in s.split(',')],
         required=False,
-        help="<col1,col2> names, column index which need to be plot as categorical_matrix_layout for categorical columns")
+        help="<prop1,prop2> names which need to be plot as categorical_matrix_layout for categorical values")
     group.add_argument('--numerical_matrix_layout',
         type=lambda s: [item for item in s.split(',')],
         required=False,
-        help="<col1,col2> names, column index which need to be plot as numerical_matrix_layout for numerical values column")
+        help="<prop1,prop2> names which need to be plot as numerical_matrix_layout for numerical values ")
 
     group = plot_args_p.add_argument_group(title='Output arguments',
         description="Output parameters")
@@ -177,9 +177,9 @@ def poplulate_plot_args(plot_args_p):
 
 ### visualize tree
 def run(args):
-    global prop2type, columns, tree
+    global prop2type, properties, tree
     node_props=[]
-    columns = {}
+    properties = {}
     rank2values = {}
 
     total_color_dict = []
@@ -322,7 +322,7 @@ def run(args):
             for profiling_prop in profiling_props:
                 matrix, all_values = single2profile(tree, profiling_prop)
                 profile_layout = profile_layouts.LayoutProfile(name=f'Profiling_{profiling_prop}', mode='multi',
-                    alignment=matrix, profiles=all_values, column=level, summarize_inner_nodes=False, width=args.profiling_width)
+                    alignment=matrix, profiles=all_values, column=level, summarize_inner_nodes=False, poswidth=args.column_width)
                 level += 1
                 layouts.append(profile_layout)
         
@@ -332,7 +332,7 @@ def run(args):
             for profiling_prop in profiling_props:
                 matrix, all_values = multiple2profile(tree, profiling_prop)
                 profile_layout = profile_layouts.LayoutProfile(name=f'Profiling_{profiling_prop}', mode='multi',
-                alignment=matrix, profiles=all_values, column=level, summarize_inner_nodes=False, width=args.profiling_width)
+                alignment=matrix, profiles=all_values, column=level, summarize_inner_nodes=False, poswidth=args.column_width)
                 level += 1
                 layouts.append(profile_layout)
         
