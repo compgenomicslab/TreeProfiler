@@ -97,47 +97,47 @@ def poplulate_plot_args(plot_args_p):
     group.add_argument('--revbinary_layout',
         type=lambda s: [item for item in s.split(',')],
         required=False,
-        help="<prop1,prop2> names  of properties which need to be plot as revbinary_layout which highlights the negatives")
+        help="<prop1,prop2> names of properties which need to be plot as revbinary_layout which highlights the negatives")
     group.add_argument('--colorbranch_layout',
         type=lambda s: [item for item in s.split(',')],
         required=False,
-        help="<prop1,prop2> names  of properties which need to be plot as Textlayouts")
+        help="<prop1,prop2> names of properties where branches will be colored based on different values.")
     group.add_argument('--label_layout',
         type=lambda s: [item for item in s.split(',')],
         required=False,
-        help="<prop1,prop2> names  of properties which need to be plot as label_layout")
+        help="<prop1,prop2> names of properties where values will be displayed on the aligned panel.")
     group.add_argument('--rectangular_layout',
         type=lambda s: [item for item in s.split(',')],
         required=False,
-        help="<prop1,prop2> names  of properties which need to be plot as rectangular_layout")
+        help="<prop1,prop2> names  of properties where values will be label as rectangular color block on the aligned panel.")
     group.add_argument('--heatmap_layout',
         type=lambda s: [item for item in s.split(',')],
         required=False,
-        help="<prop1,prop2> names  of properties which need to be read as heatmap_layout")
+        help="<prop1,prop2> names of numerical properties which need to be read as heatmap_layout")
     group.add_argument('--barplot_layout',
         type=lambda s: [item for item in s.split(',')],
         required=False,
-        help="<prop1,prop2> names  of properties which need to be read as barplot_layouts")
+        help="<prop1,prop2> names of numericalproperties which need to be read as barplot_layouts")
     group.add_argument('--taxonclade_layout',
         default=False,
         action='store_true',
-        help="activate taxonclade_layout")
+        help="Activate taxonclade_layout which clades will be colored based on taxonomy of each node.")
     group.add_argument('--taxonrectangular_layout',
         default=False,
         action='store_true',
-        help="activate taxonrectangular_layout")
+        help="Activate taxonrectangular_layout which taxonomy of each node will be display as rectangular blocks in aligned panel.")
     group.add_argument('--emapper_layout',
         default=False,
         action='store_true',
-        help="activate emapper_layout") #domain_layout
+        help="Activate emapper_layout which display all the annotation from EggNOG-mapper.") #domain_layout
     group.add_argument('--domain_layout',
         default=False,
         action='store_true',
-        help="activate domain_layout") #domain_layout
+        help="Activate domain_layout which display protein domain annotation in sequence.") #domain_layout
     group.add_argument('--alignment_layout',
         default=False,
         action='store_true',
-        help="provide alignment file as fasta format")
+        help="Display Multiple Sequence Alignment layout in aligned panel.")
     group.add_argument('--profiling_layout',
         type=lambda s: [item for item in s.split(',')],
         required=False,
