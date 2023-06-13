@@ -49,7 +49,7 @@ gradientscolor = {
 
 class LayoutProfile(TreeLayout):
     def __init__(self, name="Profile", mode='simple',
-            alignment=None, seq_format='compactseq', profiles=None, width=None, poswidth=20, height=20,
+            alignment=None, seq_format='profiles', profiles=None, width=None, poswidth=20, height=20,
             column=0, range=None, summarize_inner_nodes=False, value_range=[], value_color={}, legend=True):
         super().__init__(name)
         self.alignment = SeqGroup(alignment) if alignment else None
@@ -98,7 +98,7 @@ class LayoutProfile(TreeLayout):
             if self.mode == 'simple':
                 color_dict = {}
                 for val, letter in self.value_color.items():
-                    color_dict[val] = gradientscolor[letter]
+                    color_dict[val] = profilecolors[letter]
                 tree_style.add_legend(title=self.name,
                                     variable='discrete',
                                     colormap=color_dict,
@@ -391,7 +391,7 @@ class TextScaleFace(Face):
                 
 class ProfileAlignmentFace(Face):
     def __init__(self, seq, bg=None,
-            gap_format='line', seqtype='aa', seq_format='compactseq',
+            gap_format='line', seqtype='aa', seq_format='profiles',
             width=None, height=None, # max height
             fgcolor='black', bgcolor='#bcc3d0', gapcolor='gray',
             gap_linewidth=0.2,
@@ -542,12 +542,19 @@ class ProfileAlignmentFace(Face):
             sm_box = Box(sm_x+sm_x0, y, posw * len(seq), h)
             #yield [ f'pixi-gradients', sm_box, seq ]
             yield ['array', sm_box, [gradientscolor[x] for x in seq]]
+        elif self.seq_format == "categories":
+            seq = self.get_seq(sm_start, sm_end)
+            sm_x = sm_x if drawer.TYPE == 'rect' else x0
+            y, h = get_height(sm_x, y)
+            sm_box = Box(sm_x+sm_x0, y, posw * len(seq), h)
+            #yield [ f'pixi-gradients', sm_box, seq ]
+            yield ['array', sm_box, [profilecolors[x] for x in seq]]
         else:
             seq = self.get_seq(sm_start, sm_end)
             sm_x = sm_x if drawer.TYPE == 'rect' else x0
             y, h = get_height(sm_x, y)
             sm_box = Box(sm_x+sm_x0, y, posw * len(seq), h)
-            if self.seq_format == 'compactseq' or posw * zx < self._min_fsize:
+            if self.seq_format == 'profiles' or posw * zx < self._min_fsize:
                 aa_type = "notext"
                 tooltip = f'<p>{seq}</p>'
                 yield ['array', sm_box, [gradientscolor[x] for x in seq], tooltip]

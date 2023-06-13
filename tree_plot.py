@@ -164,7 +164,7 @@ def poplulate_plot_args(plot_args_p):
     group.add_argument('--port',
         type=str,
         default=5000,
-        help="run interactive session on custom port")
+        help="run interactive session on custom port.[default: 5000]")
     group.add_argument('--plot',
         type=str,
         required=False,
@@ -322,7 +322,7 @@ def run(args):
             for profiling_prop in profiling_props:
                 matrix, all_values = single2profile(tree, profiling_prop)
                 profile_layout = profile_layouts.LayoutProfile(name=f'Profiling_{profiling_prop}', mode='multi',
-                    alignment=matrix, profiles=all_values, column=level, summarize_inner_nodes=False, poswidth=args.column_width)
+                    alignment=matrix, seq_format='profiles', profiles=all_values, column=level, summarize_inner_nodes=False, poswidth=args.column_width)
                 level += 1
                 layouts.append(profile_layout)
         
@@ -332,7 +332,7 @@ def run(args):
             for profiling_prop in profiling_props:
                 matrix, all_values = multiple2profile(tree, profiling_prop)
                 profile_layout = profile_layouts.LayoutProfile(name=f'Profiling_{profiling_prop}', mode='multi',
-                alignment=matrix, profiles=all_values, column=level, summarize_inner_nodes=False, poswidth=args.column_width)
+                alignment=matrix, seq_format='profiles', profiles=all_values, column=level, summarize_inner_nodes=False, poswidth=args.column_width)
                 level += 1
                 layouts.append(profile_layout)
         
@@ -341,7 +341,7 @@ def run(args):
             profiling_props = args.categorical_matrix_layout
             matrix, value2color = props2matrix(tree, profiling_props, dtype=str)
             profile_layout = profile_layouts.LayoutProfile(name='categorical_matrix_layout', mode='simple',
-                alignment=matrix, profiles=profiling_props, value_color=value2color, column=level, width=args.profiling_width)
+                alignment=matrix, seq_format='categories', profiles=profiling_props, value_color=value2color, column=level, poswidth=args.column_width)
             level += 1
             layouts.append(profile_layout)
 
@@ -351,7 +351,7 @@ def run(args):
             matrix, maxval, minval = props2matrix(tree, profiling_props)
             #profile_layout = TreeLayout(name='numerical_profiling_layout', ns=get_alnface(alignment, level), aligned_faces = True)
             profile_layout = profile_layouts.LayoutProfile(name='numerical_matrix_layout', mode='numerical', 
-                alignment=matrix, seq_format='gradients', profiles=profiling_props, value_range=[minval, maxval], column=level, width=args.profiling_width)
+                alignment=matrix, seq_format='gradients', profiles=profiling_props, value_range=[minval, maxval], column=level, poswidth=args.column_width)
             level += 1
             layouts.append(profile_layout)
 
