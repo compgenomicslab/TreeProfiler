@@ -955,23 +955,3 @@ treeprofiler.py plot --tree examples/emapper/7955.ENSDARP00000116736_annotated.e
 ![emapper example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/emapper_general_plot.jpeg?raw=true)
 ![emapper example2](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/emapper_keggpathway_plot.jpeg?raw=true)
 ![emapper example3](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/emapper_OGs_plot.jpeg?raw=true)
-
-## Demo3 Explore distribution of metallophores data in GTDB taxonomy
-Here we take a glance of `examples/gtdb_example2/taxonomy_and_metallophores.tsv`([Zachary L. Reitz, 2023](https://www.biorxiv.org/content/10.1101/2022.12.14.519525v1.full)). We would like to see distribution of metallophores dataset among bacteria taxonomy 
-
-```
-head examples/gtdb_example2/taxonomy_and_metallophores.tsv
-Assembly	NRP.met	NRPS	HYDROXAMATE	SALICYLATE	OHASP	OHHIS	PYOVERDINE	CATECHOL	GRAMININE	DMAQ	K	P	C	O	F	G
-RS_GCF_000067165.1	2	6	FALSE	FALSE	TRUE	FALSE	FALSE	TRUE	FALSE	FALSEBacteria	Myxococcota	Polyangia	Polyangiales	Polyangiaceae	Sorangium
-RS_GCF_001189295.1	0	12	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSEBacteria	Myxococcota	Polyangia	Polyangiales	Polyangiaceae	Chondromyces  
-```
-
-```
-# annotate tree
-treeprofiler.py annotate --tree examples/gtdb_example2/bac120.tree --metadata examples/gtdb_example2/taxonomy_and_metallophores.tsv -o examples/gtdb_example2/ --taxonomic_profile
-
-# plot tree
-treeprofiler.py plot --tree examples/gtdb_example2/bac120_annotated.ete --tree_type ete --barplot_layout NRP.met,NRPS --binary_layout HYDROXAMATE,SALICYLATE,OHASP,OHHIS,PYOVERDINE,CATECHOL,GRAMININE,DMAQ --rectangular_layout P
-```
-
-![bac120 example4](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/bac120_example.jpeg?raw=true)
