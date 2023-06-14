@@ -883,7 +883,7 @@ def name_nodes(tree):
             if not node.is_root():
                 node.name = 'N'+str(i)
             else:
-                node.name = 'root'
+                node.name = 'Root'
     return tree
 
 def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field=0):
