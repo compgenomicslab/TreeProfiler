@@ -48,7 +48,7 @@ gradientscolor = {
 }
 
 class LayoutProfile(TreeLayout):
-    def __init__(self, name="Profile", mode='simple',
+    def __init__(self, name="Profile", mode='single',
             alignment=None, seq_format='profiles', profiles=None, width=None, poswidth=20, height=20,
             column=0, range=None, summarize_inner_nodes=False, value_range=[], value_color={}, legend=True):
         super().__init__(name)
@@ -95,7 +95,7 @@ class LayoutProfile(TreeLayout):
                                     value_range=self.value_range,
                                     color_range=color_gradient,
                                     )
-            if self.mode == 'simple':
+            if self.mode == 'single':
                 color_dict = {}
                 for val, letter in self.value_color.items():
                     color_dict[val] = profilecolors[letter]
@@ -129,9 +129,12 @@ class LayoutProfile(TreeLayout):
             for leaf in node.iter_leaves():
                 matrix += ">"+leaf.name+"\n"
                 matrix += self._get_seq(leaf)+"\n"
+            
             try:
-                if self.mode =="numerical":
+                if self.mode == "numerical":
                     consensus_seq = get_consensus_seq(StringIO(matrix), 0.1)
+                elif self.mode == 'multi':
+                    consensus_seq = get_consensus_seq(StringIO(matrix), 0.7)
                 else:
                     consensus_seq = get_consensus_seq(StringIO(matrix), 0.7)
                 return str(consensus_seq)

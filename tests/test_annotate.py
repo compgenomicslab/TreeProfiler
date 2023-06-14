@@ -135,7 +135,6 @@ def test_annotate_06():
     expected_tree_no_root = '(A:1[&&NHX:alphabet_type=vowel],(B:1[&&NHX:alphabet_type=consonant],(E:1[&&NHX:alphabet_type=vowel],D:1[&&NHX:alphabet_type=consonant])N4:0.5[&&NHX:alphabet_type_counter=consonant--1||vowel--1])N5:0.5[&&NHX:alphabet_type_counter=consonant--2||vowel--1]);'
     expected_tree_with_root = '(A:1[&&NHX:alphabet_type=vowel],(B:1[&&NHX:alphabet_type=consonant],(E:1[&&NHX:alphabet_type=vowel],D:1[&&NHX:alphabet_type=consonant])N4:0.5[&&NHX:alphabet_type_counter=consonant--1||vowel--1])N5:0.5[&&NHX:alphabet_type_counter=consonant--2||vowel--1])Root:0[&&NHX:alphabet_type_counter=consonant--2||vowel--2];'
 
-
     test_tree_annotated, annotated_prop2type = tree_annotate.run_tree_annotate(test_tree, 
         metadata_dict=metadata_dict, node_props=node_props, 
         columns=columns, prop2type=prop2type)

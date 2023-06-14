@@ -509,6 +509,7 @@ def run(args):
             'PFAMs':list
         })
 
+    # start annotation
     annotated_tree, prop2type = run_tree_annotate(tree, input_annotated_tree=args.annotated_tree,
         metadata_dict=metadata_dict, node_props=node_props, columns=columns,
         prop2type=prop2type,

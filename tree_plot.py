@@ -322,7 +322,7 @@ def run(args):
             for profiling_prop in profiling_props:
                 matrix, all_values = single2profile(tree, profiling_prop)
                 profile_layout = profile_layouts.LayoutProfile(name=f'Profiling_{profiling_prop}', mode='multi',
-                    alignment=matrix, seq_format='profiles', profiles=all_values, column=level, summarize_inner_nodes=False, poswidth=args.column_width)
+                    alignment=matrix, seq_format='profiles', profiles=all_values, column=level, summarize_inner_nodes=True, poswidth=args.column_width)
                 level += 1
                 layouts.append(profile_layout)
         
@@ -773,6 +773,7 @@ def random_color(h=None):
 def _hls2hex(h, l, s):
     return '#%02x%02x%02x' %tuple(map(lambda x: int(x*255),
                                     colorsys.hls_to_rgb(h, l, s)))
+
 def single2profile(tree, profiling_prop):
     all_values = sorted(list(set(flatten(children_prop_array(tree, profiling_prop)))), key=lambda x: (x != 'NaN', x))
     presence = 'a' # #E60A0A red
@@ -786,7 +787,6 @@ def single2profile(tree, profiling_prop):
                     matrix += presence
                 else:
                     matrix += absence
-
         else:
             matrix += absence * len(all_values) +'\n'
     return matrix, all_values
