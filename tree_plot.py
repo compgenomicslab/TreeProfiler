@@ -340,7 +340,7 @@ def run(args):
         if layout == 'categorical_matrix_layout':
             profiling_props = args.categorical_matrix_layout
             matrix, value2color = props2matrix(tree, profiling_props, dtype=str)
-            profile_layout = profile_layouts.LayoutProfile(name='categorical_matrix_layout', mode='simple',
+            profile_layout = profile_layouts.LayoutProfile(name='categorical_matrix_layout', mode='single',
                 alignment=matrix, seq_format='categories', profiles=profiling_props, value_color=value2color, column=level, poswidth=args.column_width)
             level += 1
             layouts.append(profile_layout)
