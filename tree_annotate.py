@@ -80,7 +80,6 @@ def populate_annotate_args(parser):
     add('--alignment',
         help="Sequence alignment, .fasta format")
 
-
     group = parser.add_argument_group(title='Annotation arguments',
         description="Annotation parameters")
     group.add_argument('--taxonomic_profile',

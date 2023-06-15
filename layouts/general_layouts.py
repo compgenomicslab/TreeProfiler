@@ -98,7 +98,7 @@ def get_consensus_seq(filename: Path | str, threshold=0.7) -> SeqRecord:
     consensus = summary.dumb_consensus(threshold, "-")
     return consensus
 
-def get_stackedbarface(node, prop, colour_dict=None, width=70, height=None, tooltip=None):
+def get_stackedbarface(node, prop, colour_dict=None, width=70, height=None, padding_x=1, padding_y=0, tooltip=None):
     pair_delimiter = "--"
     item_seperator = "||"
     stackedbar_data = []
@@ -123,7 +123,7 @@ def get_stackedbarface(node, prop, colour_dict=None, width=70, height=None, tool
                 k, v = counter_prop.split(pair_delimiter)
                 tooltip += f'<b>{k}</b>:  {v}/{int(total)}<br>'
 
-        stackedbar_face = StackedBarFace(width=width, height=None, data=stackedbar_data, padding_x=1, tooltip=tooltip)
+        stackedbar_face = StackedBarFace(width=width, height=None, data=stackedbar_data, padding_x=padding_x, padding_y=padding_y, tooltip=tooltip)
         
         return stackedbar_face
     else:

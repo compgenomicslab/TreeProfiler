@@ -163,14 +163,14 @@ class LayoutBarplot(LayoutPlot):
     def __init__(self, name=None, prop=None, width=200, size_prop=None,
             color_prop=None, position="aligned", column=0, 
             color_gradient=None, color="red", colors=None, 
-            padding_x=10, scale=True, legend=True, active=True, 
+            padding_x=10, padding_y=0, scale=True, legend=True, active=True, 
             internal_rep='avg', scale_size=None, scale_range=None):
 
         name = name or f'Barplot_{size_prop}_{color_prop}'
         super().__init__(name=name, prop=prop, width=width, size_prop=size_prop,
                 color_prop=color_prop, position=position, column=column,
                 color_gradient=color_gradient, colors=colors, color=color,
-                padding_x=padding_x, scale=scale, legend=legend, active=active,
+                padding_x=padding_x, padding_y=padding_y,scale=scale, legend=legend, active=active,
                 internal_rep=internal_rep)
 
     def set_tree_style(self, tree, tree_style):
@@ -207,7 +207,7 @@ class LayoutBarplot(LayoutPlot):
             if self.color_prop:
                 tooltip += f'<br>{self.color_prop}: {color}<br>'
             face = RectFace(width, None, color=color, 
-                   tooltip=tooltip, padding_x=self.padding_x)
+                   tooltip=tooltip, padding_x=self.padding_x, padding_y=self.padding_y)
             node.add_face(face, position=self.position, column=self.column,
                     collapsed_only=False)
         
@@ -222,7 +222,7 @@ class LayoutBarplot(LayoutPlot):
             if self.color_prop:
                 tooltip += f'<br>{self.color_prop}: {color}<br>'
             face = RectFace(width, None, color=color, 
-                    tooltip=tooltip, padding_x=self.padding_x)
+                    tooltip=tooltip, padding_x=self.padding_x, padding_y=self.padding_y)
             node.add_face(face, position=self.position, column=self.column,
                     collapsed_only=False)
 
@@ -237,14 +237,14 @@ class LayoutBarplot(LayoutPlot):
             if self.color_prop:
                 tooltip += f'<br>{self.color_prop}: {color}<br>'
             face = RectFace(width, None, color=color, 
-                    tooltip=tooltip, padding_x=self.padding_x)
+                    tooltip=tooltip, padding_x=self.padding_x, padding_y=self.padding_y)
             node.add_face(face, position=self.position, column=self.column,
                     collapsed_only=True)
 
 class LayoutHeatmap(TreeLayout):
-    def __init__(self, name=None, column=0, width=70, height=None, internal_rep=None, \
-        prop=None, maxval=100, minval=0, min_color="#ffffff", max_color="#971919",\
-        legend=True):
+    def __init__(self, name=None, column=0, width=70, height=None, padding_x=1, padding_y=0, \
+        internal_rep=None, prop=None, maxval=100, minval=0, min_color="#ffffff", \
+        max_color="#971919", legend=True):
         super().__init__(name)
         self.aligned_faces = True
         self.num_prop = prop
@@ -257,8 +257,8 @@ class LayoutHeatmap(TreeLayout):
         self.internal_prop = prop+'_'+internal_rep
         self.width = width
         self.height = height
-        self.padding_x = 1
-        self.padding_y = 0
+        self.padding_x = padding_x
+        self.padding_y = padding_y
         self.min_fsize = 5
         self.max_fsize = 15
         

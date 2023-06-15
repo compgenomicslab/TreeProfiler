@@ -258,6 +258,38 @@ OUTPUT options:
   -o OUTDIR, --outdir OUTDIR
                         Directory for annotated outputs.
 ```
+### Annotate multiple metadata inputs into tree
+TreeProfiler allows user to annotate more than one metadata inputs to tree. It requires to seperated the input tsv files with `,` in the arguments `--metadata` or `-d`, such as `--metadata table1.tsv,table2.tsv`. Here is the example
+```
+tree examples/basic_example1/
+examples/basic_example1/
+├── basic_example1_metadata2.tsv
+├── basic_example1_miss.tsv
+├── basic_example1_null.tsv
+├── basic_example1.nw
+├── basic_example1.tsv
+└── unaligned_NUP62.fasta
+
+head -5 examples/basic_example1/basic_example1.tsv 
+#name	sample1	sample2	sample3	sample4	sample5	random_type	*bool_type	bool_type2
+Phy003I7ZJ_CHICK	0.05	0.12	0.86	0.01	0.69	medium	1	TRUE
+Phy0054BO3_MELGA	0.64	0.67	0.51	0.29	0.14	medium	1	TRUE
+Phy00508FR_NIPNI	0.89	0.38	0.97	0.49	0.26	low	1	FALSE
+Phy004O1E0_APTFO	0.1	0.09	0.38	0.31	0.41	medium	0	TRUE
+
+head -5 examples/basic_example1/basic_example1_metadata2.tsv
+#name	abs_data	list_data
+Phy003I7ZJ_CHICK	97	w,t,t
+Phy0054BO3_MELGA	16	r,q,s
+Phy00508FR_NIPNI	87	z,f,p
+Phy004O1E0_APTFO	6	z,t,b
+
+## *annotate tree with more than one metadata tsv, seperated by `,`
+treeprofiler.py annotate \
+--tree examples/basic_example1/basic_example1.nw \
+--metadata examples/basic_example1/basic_example1.tsv,examples/basic_example1/basic_example1_metadata2.tsv \
+-o examples/basic_example1/
+```
 
 ### Annotate metadata into tree internal nodes
 At the above example, we only mapped metadata to leaf nodes, in this example, we will also profile **internal nodes** annotation and analysis of their children nodes.
@@ -341,7 +373,6 @@ Although TreeProfiler can detect datatype of each column, users still can determ
 - `--num_prop` and `--num_prop_idx`, to determine columms which need to be read as numerical data
 
 - `--bool_prop` and `--bool_prop_idx`, to determine columms which need to be read as boolean data
-
 
 ### Mapping metadata without column names
 if metadata doesn't contain column names, please add `--no_colnames` as flag. TreeProfiler will automatically assign feature name by index order
@@ -526,6 +557,7 @@ Here we use `examples/basic_example1/` and `examples/basic_example2/`
 tree examples/basic_example1/
 examples/basic_example1/
 ├── basic_example1_metadata2.tsv
+├── basic_example1_miss.tsv
 ├── basic_example1_null.tsv
 ├── basic_example1.nw
 ├── basic_example1.tsv
@@ -615,7 +647,7 @@ treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.nw 
 treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.nw --profiling_layout random_type
 
 # Label all feature with retangular block in aligned panel using --categorical_matrix_layout
-treeprofiler.py plot --tree examples/basic_example2/MCC_FluA_H3_annotated.nw --profiling_layout PB2,PB1,PA,HA,NP,NA,M,NS
+treeprofiler.py plot --tree examples/basic_example2/MCC_FluA_H3_annotated.nw --categorical_matrix_layout PB2,PB1,PA,HA,NP,NA,M,NS
 ```
 ![label_layout example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_label_layout.jpeg?raw=true)
 ![colorbranch_layout example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_colorbranch_layout.jpeg?raw=true)
@@ -725,9 +757,9 @@ if metadata is pfam annotations from eggnog-mapper, using `--emapper_pfam` to an
 Once tree is annotated, using `--domain_layout` to visualize it.
 
 ```
-treeprofiler.py annotate --tree examples/emapper/7955.ENSDARP00000116736.nw --emapper_pfam examples/emapper/7955.out.emapper.pfam --alignment examples/emapper/7955.ENSDARP00000116736.aln.faa -o examples/emapper/
+treeprofiler.py annotate --tree examples/pratical_example/emapper/7955.ENSDARP00000116736.nw --emapper_pfam examples/pratical_example/emapper/7955.out.emapper.pfam --alignment examples/pratical_example/emapper/7955.ENSDARP00000116736.aln.faa -o examples/pratical_example/emapper/
 
-treeprofiler.py plot --tree examples/emapper/7955.ENSDARP00000116736_annotated.nw --domain_layout
+treeprofiler.py plot --tree examples/pratical_example/emapper/7955.ENSDARP00000116736_annotated.nw --domain_layout
 ```
 ![pfam example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_domain_layout.jpeg?raw=true)
 
@@ -737,9 +769,9 @@ if metadata is smart annotations from eggnog-mapper, using `--emapper_smart` to 
 Once tree is annotated, using `--domain_layout` to visualize it.
 
 ```
-treeprofiler.py annotate --tree examples/emapper/7955.ENSDARP00000116736.nw --emapper_smart examples/emapper/7955.out.emapper.smart.out --alignment examples/emapper/7955.ENSDARP00000116736.aln.faa -o examples/emapper/
+treeprofiler.py annotate --tree examples/pratical_example/emapper/7955.ENSDARP00000116736.nw --emapper_smart examples/pratical_example/emapper/7955.out.emapper.smart.out --alignment examples/pratical_example/emapper/7955.ENSDARP00000116736.aln.faa -o examples/pratical_example/emapper/
 
-treeprofiler.py plot --tree examples/emapper/7955.ENSDARP00000116736_annotated.nw --domain_layout
+treeprofiler.py plot --tree examples/pratical_example/emapper/7955.ENSDARP00000116736_annotated.nw --domain_layout
 ```
 
 ### Layouts for eggnog-mapper annotations
@@ -750,9 +782,9 @@ seed_ortholog	evalue	score	eggNOG_OGs	max_annot_lvl	COG_category	Description	Pre
 ```
 
 ```
-treeprofiler.py annotate --tree examples/emapper/7955.ENSDARP00000116736.nw --emapper_annotations examples/emapper/7955.out.emapper.annotations -o examples/emapper/
+treeprofiler.py annotate --tree examples/pratical_example/emapper/7955.ENSDARP00000116736.nw --emapper_annotations examples/pratical_example/emapper/7955.out.emapper.annotations -oexamples/pratical_example/emapper/
 
-treeprofiler.py plot --tree examples/emapper/7955.ENSDARP00000116736_annotated.ete --tree_type ete --emapper_layout
+treeprofiler.py plot --tree examples/pratical_example/emapper/7955.ENSDARP00000116736_annotated.ete --tree_type ete --emapper_layout
 ```
 [Check eggnogmapper example](#demo2-explore-eggnog-mapper-annotations-data-with-taxonomic-annotation)
 
