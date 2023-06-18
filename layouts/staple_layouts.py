@@ -48,7 +48,7 @@ def swap_pos(pos, angle):
 class LayoutPlot(TreeLayout):
     def __init__(self, name=None, prop=None, width=200, size_prop=None, 
             color_prop=None, color_gradient=None, color="red", colors=None,
-            position="aligned", column=0, padding_x=10, 
+            position="aligned", column=0, padding_x=10, padding_y=0,
             internal_rep='avg', scale=True, legend=True, active=True):
         super().__init__(name, 
                 aligned_faces=True if position == "aligned" else False,
@@ -60,6 +60,7 @@ class LayoutPlot(TreeLayout):
         
         self.scale = scale
         self.padding_x = padding_x
+        self.padding_y = padding_y
 
         self.internal_rep = internal_rep
         self.prop = prop
