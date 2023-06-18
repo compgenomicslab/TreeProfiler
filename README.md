@@ -977,13 +977,32 @@ treeprofiler.py plot --tree examples/progenome3/progenome3_annotated.ete --tree_
 ![progenome3 example](https://raw.githubusercontent.com/dengzq1234/treeprofiler_gallery/main/progenome_example.jpeg)
 
 ## Demo2 Explore eggnog-mapper annotations data with taxonomic annotation 
-
+Here we analyzed the nitrogenase iron protein NifH gene family across bacteria from EggNOG6 with EggNOG-mapper
 ```
-treeprofiler.py annotate --tree examples/emapper/7955.ENSDARP00000116736.nw --emapper_annotations examples/emapper/7955.out.emapper.annotations --taxon_delimiter . --taxa_field 0 --taxadb NCBI  --taxonomic_profile --emapper_pfam  examples/emapper/7955.out.emapper.pfam --alignment examples/emapper/7955.ENSDARP00000116736.aln.faa -o examples/emapper/
+treeprofiler.py annotate \
+--tree  examples/pratical_example/emapper/COG1348.tree \
+--emapper_annotation examples/pratical_example/emapper/COG1348.out.emapper.annotations \
+--emapper_pfam examples/pratical_example/emapper/COG1348.out.emapper.pfam \
+--alignment examples/pratical_example/emapper/COG1348.faa.aln \
+--taxonomic_profile \
+--taxadb NCBI \
+--taxon_delimiter . \
+--taxa_field 0 \
+-o examples/pratical_example/emapper/
 
-treeprofiler.py plot --tree examples/emapper/7955.ENSDARP00000116736_annotated.ete --tree_type ete --emapper_layout 
+treeprofiler.py plot \
+--tree examples/pratical_example/emapper/COG1348_annotated.ete \
+--tree_type ete \
+--emapper_layout \
+--domain_layout \
+--taxonclade_layout \
 ```
 
-![emapper example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/emapper_general_plot.jpeg?raw=true)
-![emapper example2](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/emapper_keggpathway_plot.jpeg?raw=true)
-![emapper example3](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/emapper_OGs_plot.jpeg?raw=true)
+visualization of `seed_orthologs`, `max_annot_lvl`, `COG_category`, `Description`, `Preferred_name`, `score`
+![emapper example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/emapper_nifh_v1.png?raw=true)
+visualization of `KEGG_Pathway` profiling
+![emapper example2](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/emapper_nifh_v2.png?raw=true)
+visualization of `KEGG_ko` profiling
+![emapper example3](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/emapper_nifh_v3.png?raw=true)
+visualization of `domain` annotation
+![emapper example4](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/emapper_nifh_v4.png?raw=true)
