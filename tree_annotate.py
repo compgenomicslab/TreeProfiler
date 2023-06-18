@@ -7,6 +7,7 @@ import random
 import math
 import re
 import csv
+import tarfile
 from io import StringIO
 from itertools import islice
 from collections import defaultdict, Counter
@@ -569,6 +570,14 @@ def check_missing(input_string):
     else:
         return False
 
+
+def check_tar_gz(file_path):
+    try:
+        with tarfile.open(file_path, 'r:gz') as tar:
+            return True
+    except tarfile.ReadError:
+        return False
+
 def parse_csv(input_files, delimiter='\t', no_colnames=False, aggregate_duplicate=False):
     """
     Takes tsv table as input
@@ -580,50 +589,38 @@ def parse_csv(input_files, delimiter='\t', no_colnames=False, aggregate_duplicat
     metadata = {}
     columns = defaultdict(list)
     prop2type = {}
-    for input_file in input_files:
-        with open(input_file, 'r') as f:
-            if no_colnames:
-                fields_len = len(next(f).split(delimiter))
-                headers = ['col'+str(i) for i in range(fields_len)]
-                reader = csv.DictReader(f, delimiter=delimiter, fieldnames=headers)
-            else:
-                reader = csv.DictReader(f, delimiter=delimiter)
-                headers = reader.fieldnames
-            node_header, node_props = headers[0], headers[1:]
+    def update_metadata(reader, node_header):
+        for row in reader:
+            nodename = row[node_header]
+            del row[node_header]
+            #row = {k: 'NaN' if (not v or v.lower() == 'none') else v for k, v in row.items() } ## replace empty to NaN
+            for k, v in row.items(): # replace missing value
+                if check_missing(v):
+                    row[k] = 'NaN'
+                else:
+                    row[k] = v
 
-            for row in reader:
-
-                nodename = row[node_header]
-                del row[node_header]
-
-                #row = {k: 'NaN' if (not v or v.lower() == 'none') else v for k, v in row.items() } ## replace empty to NaN
-
-                for k, v in row.items(): # replace missing value
-                    if check_missing(v):
-                        row[k] = 'NaN'
-                    else:
-                        row[k] = v
-
-                if nodename in metadata.keys():
-                    for prop, value in row.items():
-                        if aggregate_duplicate:
-                            if prop in metadata[nodename]:
-                                exisiting_value = metadata[nodename][prop]
-                                new_value = ','.join([exisiting_value,value])
-                                metadata[nodename][prop] = new_value
-                                columns[prop].append(new_value)
-                            else:
-                                metadata[nodename][prop] = value
-                                columns[prop].append(value)
+            if nodename in metadata.keys():
+                for prop, value in row.items():
+                    if aggregate_duplicate:
+                        if prop in metadata[nodename]:
+                            exisiting_value = metadata[nodename][prop]
+                            new_value = ','.join([exisiting_value,value])
+                            metadata[nodename][prop] = new_value
+                            columns[prop].append(new_value)
                         else:
                             metadata[nodename][prop] = value
                             columns[prop].append(value)
-                else:
-                    metadata[nodename] = dict(row)
-                    for (prop, value) in row.items(): # go over each column name and value
-                        columns[prop].append(value) # append the value into the appropriate list
-                                        # based on column name k
+                    else:
+                        metadata[nodename][prop] = value
+                        columns[prop].append(value)
+            else:
+                metadata[nodename] = dict(row)
+                for (prop, value) in row.items(): # go over each column name and value
+                    columns[prop].append(value) # append the value into the appropriate list
+                                    # based on column name k
 
+    def update_prop2type(node_props):
         for prop in node_props:
             if set(columns[prop])=={'NaN'}:
                 #prop2type[prop] = np.str_
@@ -631,6 +628,72 @@ def parse_csv(input_files, delimiter='\t', no_colnames=False, aggregate_duplicat
             else:
                 dtype = infer_dtype(columns[prop])
                 prop2type[prop] = dtype # get_type_convert(dtype)
+
+    for input_file in input_files:
+        # check file
+        if check_tar_gz(input_file):
+            with tarfile.open(input_file, 'r:gz') as tar:
+                for member in tar.getmembers():
+                    if member.isfile() and member.name.endswith('.tsv'):
+                        with tar.extractfile(member) as tsv_file:
+                            tsv_text = tsv_file.read().decode('utf-8').splitlines()
+                            if no_colnames:
+                                fields_len = len(tsv_text[0].split(delimiter))
+                                headers = ['col'+str(i) for i in range(fields_len)]
+                                reader = csv.DictReader(tsv_text, delimiter=delimiter,fieldnames=headers)
+                            else:
+                                reader = csv.DictReader(tsv_text, delimiter=delimiter)
+                                headers = reader.fieldnames
+                            node_header, node_props = headers[0], headers[1:]
+                            update_metadata(reader, node_header)
+                        
+                        update_prop2type(node_props)
+                            
+        else:          
+            with open(input_file, 'r') as f:
+                if no_colnames:
+                    fields_len = len(next(f).split(delimiter))
+                    headers = ['col'+str(i) for i in range(fields_len)]
+                    reader = csv.DictReader(f, delimiter=delimiter, fieldnames=headers)
+                else:
+                    reader = csv.DictReader(f, delimiter=delimiter)
+                    headers = reader.fieldnames
+                node_header, node_props = headers[0], headers[1:]
+
+                for row in reader:
+
+                    nodename = row[node_header]
+                    del row[node_header]
+
+                    #row = {k: 'NaN' if (not v or v.lower() == 'none') else v for k, v in row.items() } ## replace empty to NaN
+
+                    for k, v in row.items(): # replace missing value
+                        if check_missing(v):
+                            row[k] = 'NaN'
+                        else:
+                            row[k] = v
+
+                    if nodename in metadata.keys():
+                        for prop, value in row.items():
+                            if aggregate_duplicate:
+                                if prop in metadata[nodename]:
+                                    exisiting_value = metadata[nodename][prop]
+                                    new_value = ','.join([exisiting_value,value])
+                                    metadata[nodename][prop] = new_value
+                                    columns[prop].append(new_value)
+                                else:
+                                    metadata[nodename][prop] = value
+                                    columns[prop].append(value)
+                            else:
+                                metadata[nodename][prop] = value
+                                columns[prop].append(value)
+                    else:
+                        metadata[nodename] = dict(row)
+                        for (prop, value) in row.items(): # go over each column name and value
+                            columns[prop].append(value) # append the value into the appropriate list
+                                            # based on column name k
+            update_prop2type(node_props)
+
     return metadata, node_props, columns, prop2type
 
 def get_type_convert(np_type):
