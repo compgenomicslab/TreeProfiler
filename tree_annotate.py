@@ -68,8 +68,8 @@ def populate_annotate_args(parser):
         help="<NCBI|GTDB> for taxonomic profiling or fetch taxatree default [GTDB]")
     add('--taxon_column',
         help="<col1> name of columns which need to be read as taxon data")
-    add('--taxon_delimiter', default=';',
-        help="delimiter of taxa columns. default [;]")
+    add('--taxon_delimiter', default='',
+        help="delimiter of taxa columns. default none")
     add('--taxa_field', type=int, default=0,
         help="field of taxa name after delimiter. default 0")
     add('--emapper_annotations',
@@ -117,7 +117,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         bool_prop=[], bool_prop_idx=[], prop2type_file=None, alignment=None, emapper_pfam=None,
         emapper_smart=None, counter_stat='raw', num_stat='all',
         taxonomic_profile=False, taxadb='GTDB', taxon_column='name',
-        taxon_delimiter='.', taxa_field=0, rank_limit=None, pruned_by=None,
+        taxon_delimiter='', taxa_field=0, rank_limit=None, pruned_by=None,
         outdir='./'):
 
     total_color_dict = []
@@ -226,6 +226,11 @@ def run_tree_annotate(tree, input_annotated_tree=False,
             for key, dtype in prop2type.items():
                 if key in text_prop+multiple_text_prop+num_prop+bool_prop:
                     pass
+                
+                # taxon prop wouldn be process as numerical/text/bool/list value
+                elif (taxon_column and key in taxon_column):
+                    pass
+
                 else:
                     if dtype == list:
                         multiple_text_prop.append(key)
@@ -310,7 +315,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
     if not input_annotated_tree:
         if taxon_column: # to identify taxon column as taxa property from metadata
             #taxon_column.append(taxon_column)
-            annotated_tree = load_metadata_to_tree(tree, metadata_dict, prop2type=prop2type, taxon_column=taxon_column, taxon_delimiter=taxon_delimiter)
+            annotated_tree = load_metadata_to_tree(tree, metadata_dict, prop2type=prop2type, taxon_column=taxon_column, taxon_delimiter=taxon_delimiter, taxa_field=taxa_field)
         else:
             annotated_tree = load_metadata_to_tree(tree, metadata_dict, prop2type=prop2type)
     else:
@@ -744,7 +749,7 @@ def infer_dtype(column):
                 return dtype
         return None
 
-def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, taxon_delimiter=';'):
+def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, taxon_delimiter='', taxa_field=0):
     #name2leaf = {}
     multi_text_seperator = ','
 
@@ -761,7 +766,10 @@ def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, 
                 for key,value in props.items():
                     # taxa
                     if key == taxon_column:
-                        taxon_prop = value.split(taxon_delimiter)[-1]
+                        if taxon_delimiter:
+                            taxon_prop = value.split(taxon_delimiter)[taxa_field]
+                        else:
+                            taxon_prop = value
                         target_node.add_prop(key, taxon_prop)
                     # numerical
                     elif key in prop2type and prop2type[key]==float:
@@ -955,7 +963,7 @@ def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field
         #print(leaf.props.get(taxid_attr).split(sp_delimiter)[sp_field])
         try:
             return leaf.props.get(taxid_attr).split(sp_delimiter)[sp_field]
-        except IndexError:
+        except (IndexError, ValueError):
             return leaf.props.get(taxid_attr)
 
     if db == "GTDB":
@@ -987,7 +995,7 @@ def annotate_evol_events(tree, sp_delimiter='.', sp_field=0):
     def return_spcode(leaf):
         try:
             return leaf.name.split(sp_delimiter)[sp_field]
-        except IndexError:
+        except (IndexError, ValueError):
             return leaf.name
 
     tree.set_species_naming_function(return_spcode)
