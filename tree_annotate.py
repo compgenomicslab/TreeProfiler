@@ -106,7 +106,7 @@ def populate_annotate_args(parser):
         description="")
     group.add_argument('-o', '--outdir',
         type=str,
-        required=False,
+        required=True,
         help="Directory for annotated outputs.")
 
 
