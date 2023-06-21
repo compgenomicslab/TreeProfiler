@@ -2,7 +2,7 @@ from ete4.smartview import TreeStyle, NodeStyle, TreeLayout, PieChartFace
 from ete4.smartview  import (RectFace, CircleFace, SeqMotifFace, TextFace, OutlineFace, \
                             SelectedFace, SelectedCircleFace, SelectedRectFace, LegendFace,
                             SeqFace, Face, ScaleFace, AlignmentFace)
-from ete4.smartview.renderer.draw_helpers import *
+from ete4.smartview.renderer.draw_helpers import draw_text, draw_line, draw_array
 from ete4 import SeqGroup
 from layouts.general_layouts import get_piechartface, get_heatmapface, color_gradient
 from utils import get_consensus_seq
@@ -48,7 +48,7 @@ gradientscolor = {
 }
 
 class LayoutProfile(TreeLayout):
-    def __init__(self, name="Profile", mode='simple',
+    def __init__(self, name="Profile", mode='single',
             alignment=None, seq_format='profiles', profiles=None, width=None, poswidth=20, height=20,
             column=0, range=None, summarize_inner_nodes=False, value_range=[], value_color={}, legend=True):
         super().__init__(name)
@@ -95,7 +95,7 @@ class LayoutProfile(TreeLayout):
                                     value_range=self.value_range,
                                     color_range=color_gradient,
                                     )
-            if self.mode == 'simple':
+            if self.mode == 'single':
                 color_dict = {}
                 for val, letter in self.value_color.items():
                     color_dict[val] = profilecolors[letter]
@@ -129,9 +129,12 @@ class LayoutProfile(TreeLayout):
             for leaf in node.iter_leaves():
                 matrix += ">"+leaf.name+"\n"
                 matrix += self._get_seq(leaf)+"\n"
+            
             try:
-                if self.mode =="numerical":
+                if self.mode == "numerical":
                     consensus_seq = get_consensus_seq(StringIO(matrix), 0.1)
+                elif self.mode == 'multi':
+                    consensus_seq = get_consensus_seq(StringIO(matrix), 0.7)
                 else:
                     consensus_seq = get_consensus_seq(StringIO(matrix), 0.7)
                 return str(consensus_seq)
@@ -535,20 +538,23 @@ class ProfileAlignmentFace(Face):
                     box = Box(bx, by, (bend + 1 - bstart) * posw, bh)
                     
                     yield [ "pixi-block", box ]
+
         elif self.seq_format == "gradients":
             seq = self.get_seq(sm_start, sm_end)
             sm_x = sm_x if drawer.TYPE == 'rect' else x0
             y, h = get_height(sm_x, y)
             sm_box = Box(sm_x+sm_x0, y, posw * len(seq), h)
             #yield [ f'pixi-gradients', sm_box, seq ]
-            yield ['array', sm_box, [gradientscolor[x] for x in seq]]
+            yield draw_array(sm_box,[gradientscolor[x] for x in seq])
+
         elif self.seq_format == "categories":
             seq = self.get_seq(sm_start, sm_end)
             sm_x = sm_x if drawer.TYPE == 'rect' else x0
             y, h = get_height(sm_x, y)
             sm_box = Box(sm_x+sm_x0, y, posw * len(seq), h)
             #yield [ f'pixi-gradients', sm_box, seq ]
-            yield ['array', sm_box, [profilecolors[x] for x in seq]]
+            yield draw_array(sm_box, [profilecolors[x] for x in seq])
+
         else:
             seq = self.get_seq(sm_start, sm_end)
             sm_x = sm_x if drawer.TYPE == 'rect' else x0
@@ -557,7 +563,7 @@ class ProfileAlignmentFace(Face):
             if self.seq_format == 'profiles' or posw * zx < self._min_fsize:
                 aa_type = "notext"
                 tooltip = f'<p>{seq}</p>'
-                yield ['array', sm_box, [gradientscolor[x] for x in seq], tooltip]
+                yield draw_array(sm_box, [gradientscolor[x] for x in seq], tooltip=tooltip)
             else:
                 aa_type = "text"
                 yield [ f'pixi-aa_{aa_type}', sm_box, seq ]

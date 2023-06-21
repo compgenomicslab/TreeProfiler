@@ -25,6 +25,7 @@ def populate_main_args(main_args_p):
         description="Source tree input parameters")
     group.add_argument('-t', '--tree',
         type=str,
+        required=True,
         help="Input tree, .nw file, customized tree input")
     group.add_argument('--annotated_tree',
         default=False,

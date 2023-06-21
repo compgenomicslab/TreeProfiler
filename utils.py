@@ -74,6 +74,15 @@ def call(node, prop, datatype, operator_string, right_value):
             return operator_dict[operator_string](float(left_value), float(right_value))
         else:
             return False
+    
+    elif datatype == list:
+        if operator_string in num_operators:
+            return False
+        elif operator_string == 'contains':
+            left_value = node.props.get(prop)
+            if left_value:
+                return right_value in left_value 
+        
 
 def to_code(string):
     conditional_output = []
@@ -134,6 +143,7 @@ def ete4_parse(newick, parser='newick'):
 
 # pruning
 def taxatree_prune(tree, rank_limit='subspecies'):
+
     for node in tree.traverse("preorder"):
         if node.props.get('rank') == rank_limit:
             children = node.children.copy()
@@ -146,6 +156,7 @@ def conditional_prune(tree, conditions_input, prop2type):
     conditional_output = []
     for line in conditions_input:
         single_one = to_code(line)
+        
         conditional_output.append(single_one)
 
     ex = False
@@ -179,7 +190,6 @@ def conditional_prune(tree, conditions_input, prop2type):
                         else:
                             continue
                     if final_call:
-                        #print('cut', n.name)
                         n.detach()
                         ex = False
                     else:

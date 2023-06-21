@@ -1,7 +1,7 @@
 from ete4.smartview import TreeStyle, NodeStyle, TreeLayout, PieChartFace
 from ete4.smartview  import (RectFace, CircleFace, SeqMotifFace, TextFace, OutlineFace, \
                             SelectedFace, SelectedCircleFace, SelectedRectFace, LegendFace)
-from layouts.general_layouts import get_piechartface, get_heatmapface
+from layouts.general_layouts import get_heatmapface
 from utils import to_code, call, counter_call
 
 # branch thicken, background highlighted to purple
@@ -120,7 +120,7 @@ class LayoutBinary(TreeLayout):
 
     def set_tree_style(self, tree, tree_style):
         super().set_tree_style(tree, tree_style)
-        text = TextFace(self.bool_prop, min_fsize=10, max_fsize=15, padding_x=self.padding_x, width=70, rotation=315)
+        text = TextFace(self.bool_prop, min_fsize=10, max_fsize=15, padding_x=self.padding_x, width=self.width, rotation=315)
         tree_style.aligned_panel_header.add_face(text, column=self.column)
         if self.legend:
             if self.prop_colour_dict:
@@ -192,11 +192,11 @@ class LayoutBinary(TreeLayout):
                 node.add_face(prop_face, column=self.column, position = "aligned")
         
         elif node.is_leaf() and node.props.get(self.internal_prop):
-            heatmapFace = get_heatmapface(node, self.internal_prop, max_color=self.color, width=self.width, height=self.height)
+            heatmapFace = get_heatmapface(node, self.internal_prop, max_color=self.color, width=self.width, height=self.height, padding_x=self.padding_x,)
             node.add_face(heatmapFace, column = self.column, position = "aligned", collapsed_only=False)
 
         elif node.props.get(self.internal_prop):
-            heatmapFace = get_heatmapface(node, self.internal_prop, max_color=self.color, width=self.width, height=self.height)
+            heatmapFace = get_heatmapface(node, self.internal_prop, max_color=self.color, width=self.width, height=self.height, padding_x=self.padding_x,)
             node.add_face(heatmapFace, column = self.column, position = "aligned", collapsed_only=True)
         # else:
         #     prop_face = RectFace(width=self.width, height=self.height, text="NA", color=self.negative_color,  padding_x=self.padding_x, padding_y=self.padding_y, stroke_color=self.negative_color, tooltip=None)
