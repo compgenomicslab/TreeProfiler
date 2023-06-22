@@ -959,7 +959,11 @@ treeprofiler.py plot \
 OR condition will be used more than one arguments
 ```
 # select tree node where sample1 feature > 0.50 OR sample2 < 0.2
-treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.ete --tree_type ete --heatmap_layout sample1,sample2,sample3,sample4,sample5 --highlighted_by "sample1>0.50" --highlighted_by "sample2<0.2" 
+treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.ete \
+--tree_type ete \
+--heatmap_layout sample1,sample2,sample3,sample4,sample5 \
+--highlighted_by "sample1>0.50" \
+--highlighted_by "sample2<0.2" 
 ```
 
 ### conditional limit based on taxonomic level
