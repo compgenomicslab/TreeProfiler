@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# *Annotate multiple metadatas into tree, seperated by `,`
+# *Annotate multiple metadatas into tree, seperated by ,
 echo "Annotate example tree with two metadata tables"
 treeprofiler.py annotate \
 --tree basic_example1.nw \
@@ -9,7 +9,7 @@ treeprofiler.py annotate \
 -o ./
 
 # **Visualize categorical properties 'random_type' with differen layouts
-echo "visualize annotated example tree by showing categorical property `random_type` with label_layout, rectangular_layout and colorbranch_layout."
+echo "visualize annotated example tree by showing categorical property random_type with label_layout, rectangular_layout and colorbranch_layout."
 treeprofiler.py plot \
 --tree basic_example1_annotated.ete \
 --tree_type ete \
@@ -26,7 +26,7 @@ treeprofiler.py plot \
 
 
 # Visualize numerical data 
-echo "visualize annotated example tree by showing numerical property `sample[1-5]` with heatmap_layout, and `abs_data` with barplot_layout"
+echo "visualize annotated example tree by showing numerical property sample[1-5] with heatmap_layout, and abs_data with barplot_layout"
 treeprofiler.py plot \
 --tree basic_example1_annotated.ete \
 --tree_type ete \
@@ -34,7 +34,7 @@ treeprofiler.py plot \
 --barplot_layout abs_data
 
 # Visualize boolean data
-echo "visualize annotated example tree by showing boolean property `bool_type` with binary_layout and `bool_type2` with revbinary_layout."
+echo "visualize annotated example tree by showing boolean property bool_type with binary_layout and bool_type2 with revbinary_layout."
 treeprofiler.py plot \
 --tree basic_example1_annotated.ete \
 --tree_type ete \
@@ -42,7 +42,7 @@ treeprofiler.py plot \
 --revbinary_layout bool_type2 \
 
 # Visualize list data
-echo "visualize annotated example tree by showing presence-absence matrix of composition of each element of property `list_data` with multi_profiling_layout"
+echo "visualize annotated example tree by showing presence-absence matrix of composition of each element of property list_data with multi_profiling_layout"
 treeprofiler.py plot \
 --tree basic_example1_annotated.ete \
 --tree_type ete \

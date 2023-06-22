@@ -103,27 +103,54 @@ or
 treeprofiler.py plot --tree tree_annotated.ete --tree_type ete 
 ```
 
+### Run examples dataset
+TreeProfiler provide various example dataset for testing in `examples/`,
+each directory consists a tutorial script for quick starting different functions in TreeProfiler which alreadyh as annotate-plot pipeline of example data. For example,
+
+```
+cd examples/basic_example1/
+bash annotate_example1.sh
+
+Annotate example tree with two metadata tables
+start parsing...
+Time for parse_csv to run:  0.0024509429931640625
+Time for load_metadata_to_tree to run:  0.0003533363342285156
+Time for merge annotations to run:  0.05228090286254883
+Time for annotate_taxa to run:  4.76837158203125e-07
+visualize annotated example tree by showing categorical property random_type with label_layout, rectangular_layout and colorbranch_layout.
+Current trees in memory: 0
+Added tree example with id 0.
+ * Serving Flask app 'ete4.smartview.gui.server'
+ * Debug mode: on
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on http://127.0.0.1:5000
+Press CTRL+C to quit
+```
+
+As the session starts in local server http://127.0.0.1:5000, annotated tree and selected properties are visualized at the interactive session.
+
 
 # Using TreeProfiler
-In this Tutorial we will use TreeProfiler and demostrate basic usage with data in examples/
+In this Tutorial we will use TreeProfiler and demostrate basic usage with data in `examples/`
 
 
 ```
 tree examples
-examples/
+examples
 ├── basic_example1
+│   ├── annotate_example1.sh
 │   ├── basic_example1_metadata2.tsv
 │   ├── basic_example1_miss.tsv
+│   ├── basic_example1_null.tsv
 │   ├── basic_example1.nw
-│   ├── basic_example1.tsv
-│   └── unaligned_NUP62.fasta
+│   └── basic_example1.tsv
 ├── basic_example2
+│   ├── annotate_example2.sh
 │   ├── diauxic.array
 │   ├── diauxic.nw
 │   ├── FluA_H3_AA.fas
 │   ├── MCC_FluA_H3_Genotype.txt
-│   ├── MCC_FluA_H3.nw
-│   └── MCC_FluA_H3_prop2type.txt
+│   └── MCC_FluA_H3.nw
 ├── pratical_example
 │   ├── emapper
 │   │   ├── 7955.ENSDARP00000116736.aln.faa
@@ -131,22 +158,27 @@ examples/
 │   │   ├── 7955.out.emapper.annotations
 │   │   ├── 7955.out.emapper.pfam
 │   │   ├── 7955.out.emapper.smart.out
+│   │   ├── annotate_emapper.sh
 │   │   ├── COG1348.faa.aln
 │   │   ├── COG1348.out.emapper.annotations
 │   │   ├── COG1348.out.emapper.pfam
 │   │   └── COG1348.tree
 │   ├── gtdb_r202
-│   │   ├── gtdbv202_metadata.tsv
+│   │   ├── annotate_gtdbv202.sh
 │   │   ├── gtdbv202.nw
+│   │   ├── merge_gtdbtree.py
 │   │   └── progenome3.tsv
 │   └── progenome3
+│       ├── annotate_progenome.sh
 │       ├── progenome3.nw
 │       └── progenome3.tsv
 └── taxonomy_example
     ├── gtdb
+    │   ├── annotate_gtdb.sh
     │   ├── gtdb_example1.nw
     │   └── gtdb_example1.tsv
     └── ncbi
+        ├── annotate_spongilla.sh
         ├── spongilla_example.nw
         └── spongilla_example.tsv
 ```
