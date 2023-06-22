@@ -390,21 +390,33 @@ Excecute example data provided in `examples/`
 
 ```sh
 treeprofiler.py annotate \
-    --tree examples/basic_example1/basic_example1.nw \
-    --metadata examples/basic_example1/basic_example1.tsv \
-    --outdir ./examples/basic_example1/
+--tree examples/basic_example1/basic_example1.nw \
+--metadata examples/basic_example1/basic_example1.tsv \
+--outdir ./examples/basic_example1/
 ```
 
 ### Determine datatype in arguments
 Although TreeProfiler can detect datatype of each column, users still can determine the datatype using the following arguments using
 
-- `--text_prop` and `--text_prop_idx`, to determine columms which need to be read as categorical data
+- `--text_prop` and `--text_prop_idx`, to determine columms which need to be read as categorical data, example 
 
 - `--multiple_text_prop`, to determine columns which contains multiple values sperated by `,`, and will be process as list
 
 - `--num_prop` and `--num_prop_idx`, to determine columms which need to be read as numerical data
 
 - `--bool_prop` and `--bool_prop_idx`, to determine columms which need to be read as boolean data
+
+#### Missing value detection
+Metadata column which fullfills one of the following criterias will be consider as missing value:
+
+- Entirely non-word characters. Such as "+", "-", "~", ".", etc.
+- The exact strings "none", "None", "null", "Null", or "NaN".
+- An empty string (zero characters).
+
+Missing value will replaced by string 'NaN' in the corresponding property.
+
+#### Unmapped Tree leaf property detection
+If Metadata doesn't contain  
 
 ### Mapping metadata without column names
 if metadata doesn't contain column names, please add `--no_colnames` as flag. TreeProfiler will automatically assign feature name by index order

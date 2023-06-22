@@ -177,40 +177,40 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         bool_prop = []
 
     if text_prop_idx:
-        text_prop_idx = []
+        index_list = []
         for i in text_prop_idx.split(','):
             if i[0] == '[' and i[-1] == ']':
                 text_prop_start, text_prop_end = get_range(i)
                 for j in range(text_prop_start, text_prop_end+1):
-                    text_prop_idx.append(j)
+                    index_list.append(j)
             else:
-                text_prop_idx.append(int(i))
+                index_list.append(int(i))
 
-        text_prop = [node_props[index-1] for index in text_prop_idx]
+        text_prop = [node_props[index-1] for index in index_list]
 
     if num_prop_idx:
-        num_prop_idx = []
+        index_list = []
         for i in num_prop_idx.split(','):
             if i[0] == '[' and i[-1] == ']':
                 num_prop_start, num_prop_end = get_range(i)
                 for j in range(num_prop_start, num_prop_end+1):
-                    num_prop_idx.append(j)
+                    index_list.append(j)
             else:
-                num_prop_idx.append(int(i))
+                index_list.append(int(i))
 
-        num_prop = [node_props[index-1] for index in num_prop_idx]
+        num_prop = [node_props[index-1] for index in index_list]
 
     if bool_prop_idx:
-        bool_prop_idx = []
+        index_list = []
         for i in bool_prop_idx.split(','):
             if i[0] == '[' and i[-1] == ']':
                 bool_prop_start, bool_prop_end = get_range(i)
                 for j in range(bool_prop_start, bool_prop_end+1):
-                    bool_prop_idx.append(j)
+                    index_list.append(j)
             else:
-                bool_prop_idx.append(int(i))
+                index_list.append(int(i))
 
-        bool_prop = [node_props[index-1] for index in bool_prop_idx]
+        bool_prop = [node_props[index-1] for index in index_list]
 
     #rest_prop = []
     if prop2type_file:
@@ -561,8 +561,13 @@ def run(args):
     return
 
 def check_missing(input_string):
-
-    pattern = r'^(?:\W+|none|None|null|NaN|)$'
+    """
+    define missing:
+    1) One or more non-word characters at the beginning of the string.
+    2) The exact strings "none", "None", "null", or "NaN".
+    3) An empty string (zero characters).
+    """
+    pattern = r'^(?:\W+|none|None|null|Null|NaN|)$'
 
     if re.match(pattern, input_string):
         #print("Input contains only non-alphanumeric characters, 'none', a missing value, or an empty value.")
@@ -696,12 +701,12 @@ def parse_csv(input_files, delimiter='\t', no_colnames=False, aggregate_duplicat
 
     return metadata, node_props, columns, prop2type
 
-def get_type_convert(np_type):
-    """
-    convert np_type to python type
-    """
-    convert_type = type(np.zeros(1,np_type).tolist()[0])
-    return (np_type, convert_type)
+# def get_type_convert(np_type):
+#     """
+#     convert np_type to python type
+#     """
+#     convert_type = type(np.zeros(1,np_type).tolist()[0])
+#     return (np_type, convert_type)
 
 def get_comma_separated_values(lst):
     for item in lst:
@@ -918,6 +923,7 @@ def merge_num_annotations(nodes, target_props, num_stat='all'):
             elif num_stat == 'avg':
                 internal_props[add_suffix(target_prop, 'avg')] = sm
             elif num_stat == 'sum':
+                #print(target_prop)
                 internal_props[add_suffix(target_prop, 'sum')] = np.sum(prop_array)
             elif num_stat == 'max':
                 internal_props[add_suffix(target_prop, 'max')] = smax
@@ -1172,31 +1178,31 @@ def parse_fasta(fastafile):
     fasta_dict[head] = seq
     return fasta_dict
 
-def goslim_annotation(gos_input, relative=True):
-    """
-    deprecated
-    """
-    output_dict = {}
-    all_golsims_dict = {}
-    goslim_script = os.path.join(os.path.dirname(__file__), 'goslim_list.R')
-    output = subprocess.check_output([goslim_script,gos_input])
-    #output_list = [line.split(' \t ') for line in output.decode('utf-8').split('\n') if line ]
-    for line in output.decode('utf-8').split('\n'):
-        if line:
-            name, entries, desc, count = line.split(' \t ')
-            if entries != '-':
-                entries = entries.split(',')
-                desc = desc.split('|')
-                count = np.array(count.split('|')).astype(int)
-                if relative:
-                    count = [float(i)/sum(count) for i in count]
-            output_dict[name] = [entries, desc, count]
-            for i in range(len(entries)):
-                entry = entries[i]
-                single_desc = desc[i]
-                if entry not in all_golsims_dict:
-                    all_golsims_dict[entry] = single_desc
-    return output_dict, all_golsims_dict
+# def goslim_annotation(gos_input, relative=True):
+#     """
+#     deprecated
+#     """
+#     output_dict = {}
+#     all_golsims_dict = {}
+#     goslim_script = os.path.join(os.path.dirname(__file__), 'goslim_list.R')
+#     output = subprocess.check_output([goslim_script,gos_input])
+#     #output_list = [line.split(' \t ') for line in output.decode('utf-8').split('\n') if line ]
+#     for line in output.decode('utf-8').split('\n'):
+#         if line:
+#             name, entries, desc, count = line.split(' \t ')
+#             if entries != '-':
+#                 entries = entries.split(',')
+#                 desc = desc.split('|')
+#                 count = np.array(count.split('|')).astype(int)
+#                 if relative:
+#                     count = [float(i)/sum(count) for i in count]
+#             output_dict[name] = [entries, desc, count]
+#             for i in range(len(entries)):
+#                 entry = entries[i]
+#                 single_desc = desc[i]
+#                 if entry not in all_golsims_dict:
+#                     all_golsims_dict[entry] = single_desc
+#     return output_dict, all_golsims_dict
 
 def tree2table(tree, internal_node=True, props=[], outfile='tree2table.csv'):
     node2leaves = {}
