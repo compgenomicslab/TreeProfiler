@@ -423,7 +423,6 @@ treeprofiler.py annotate \
 #### Identify taxon property in metadata
 When Taxon properties are embeded in different column or field in metadata, treeprofiler provides `--taxon_column`, `--taxon_delimiter` and `--taxa_field` to identify taxon term in order to process taxonomic annotation sucessfully. Here is summary of different cases with corresponding setting.
 
-
 | metadata |taxon to be identified |       command line setting  | 
 |----------|-------------   | ----|
 | `#leafname col1`<br>`9598 wt`     | 9598|     `default` | 
