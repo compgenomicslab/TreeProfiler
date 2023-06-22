@@ -10,7 +10,8 @@
       - [Annotate metadata into tree internal nodes](#annotate-metadata-into-tree-internal-nodes)
       - [Determine datatype in arguments](#determine-datatype-in-arguments)
       - [Mapping metadata without column names](#mapping-metadata-without-column-names)
-      - [Taxonomic profiling](#taxonomic-profiling)
+      - [Taxonomic annotation](#taxonomic-annotation)
+          - [Identify taxon property in metadata](#identify-taxon-property-in-metadata)
           - [Basic usage on GTDB](#basic-usage-on-GTDB)
           - [Basic usage on NCBI](#basic-usage-on-NCBI)
       - [Annotation from eggnog-mapper output](#annotation-from-eggnog-mapper-output)
@@ -34,35 +35,33 @@
       - [AND and OR conditions](#and-and-or-conditions)
       - [Conditional pruning based on taxonomic level](#conditional-limit-based-on-taxonomic-level)
 - [Demo1 Explore progenome data](#demo1-explore-progenome-data)
-- [Demo2 Explore eggnog-mapper annotations data with taxonomic annotation](#demo2-explore-eggnog-mapper-annotations-data-with-taxonomic-annotation)
-- [Demo3 Explore distribution of metallophores data in GTDB taxonomy](#demo3-explore-distribution-of-metallophores-data-in-gtdb-taxonomy)
+- [Demo2 Explore Nif gene family tree with functional annotations data using eggnog-mapper with taxonomic annotation](#demo2-explore-eggnog-mapper-annotations-data-with-taxonomic-annotation)
+ - [Demo3 explore ]
 ## Introduction
 TreeProfiler is command-line tool for profiling metadata table into phylogenetic tree with descriptive analysis and output visualization
 
 ## Installation
-TreeProfiler requires to install ete4 toolkit
+TreeProfiler requires to install ete4 toolkit v4
+
+### Installation of ETE v4
+To install ETE you can follow these steps:
+ - Clone this repository (git clone https://github.com/etetoolkit/ete.git)
+ - Install dependecies
+    - If you are using conda: 
+    `conda install -c conda-forge cython flask flask-cors flask-httpauth flask-restful flask-compress numpy matplotlib pyqt`
+    - Otherwise, you can install them with 
+    `pip install <dependencies>`
+  - Build and install ete4 from the repository's root directory: `pip install -e .`
+
+(In Linux there may be some cases where the gcc library must be installed, which can be done with `conda install -c conda-forge gcc_linux-64`)
+
+### Install TreeProfiler
+Install dependencies
 ```
-# install ete4 dependencies Cython
-conda install -c anaconda cython
-pip install Flask
-pip install Flask-RESTful Flask-HTTPAuth Flask-Compress Flask-Cors
-conda install six numpy scipy
-
-# install ete4
-git clone https://github.com/etetoolkit/ete.git
-cd ete/
-git branch checkout ete4
-pip install -e .
-
-# install BioPython via pip
-pip install biopython
-# or conda
-conda install -c conda-forge biopython
-
-# install selenium via pip 
-pip install selenium
-# or conda
-conda install -c conda-forge selenium
+# install BioPython, selenium, scipy via conda
+conda install -c conda-forge biopython selenium scipy
+# or pip
+pip install biopython selenium
 ```
 
 Install TreeProfiler
@@ -379,16 +378,16 @@ Although TreeProfiler can detect datatype of each column, users still can determ
 if metadata doesn't contain column names, please add `--no_colnames` as flag. TreeProfiler will automatically assign feature name by index order
 
 
-### Taxonomic profiling
+### Taxonomic annotation
 If input metadada containcs taxon data, TreeProfiler allows users to process taxonomic annotation with either GTDB or NCBI database.
 
 - `--taxadb`, `NCBI` or `GTDB`, choose the Taxonomic Database for annotation
-- `--taxon_column`, choose the column in metadata which representa taxon
 - `--taxonomic_profile`, activate taxonomic annotation
-- `--taxon_delimiter`, delimiter of taxa columns. default `.`
+- `--taxon_column`, choose the column in metadata which representa taxon. default is the first column which should be column of leaf_name
+- `--taxon_delimiter`, delimiter of taxa columns. default `''`
 - `--taxa_field`, field of taxa name after delimiter. default `0`
 
-
+ 
 #### Basic usage on GTDB 
 Here we demonstrate with `examples/gtdb_example1/gtdb_example1.nw` and `examples/gtdb_example1/gtdb_example1.tsv`. Taxonomic accesion IDs are located in the first column which should be the names of leaf. If accesions are located in different columns, using `--taxon_column <column name>` to locate the the column. 
 
@@ -420,6 +419,18 @@ treeprofiler.py annotate \
 --taxa_field 0  \
 --outdir ./examples/taxonomy_example/ncbi/
 ```
+
+#### Identify taxon property in metadata
+When Taxon properties are embeded in different column or field in metadata, treeprofiler provides `--taxon_column`, `--taxon_delimiter` and `--taxa_field` to identify taxon term in order to process taxonomic annotation sucessfully. Here is summary of different cases with corresponding setting.
+
+| metadata |taxon to be identified |       command line setting  | 
+|----------|-------------   | ----|
+| `#leafname col1`<br>`9598 wt`     | 9598|     `default` | 
+| `#leafname col1`<br>`7739.XP_002609184.1 wt`     |   7739|   `--taxon_column <default> --taxon_delimiter . --taxa_field 0`   | 
+| `#leafname ncbi_id`<br>`leaf_A 7739`    | 7739|     `--taxon_column ncbi_id --taxon_delimiter <default> --taxa_field <default> `    | 
+| `#leafname ncbi_id`<br>`leaf_A 7739.XP_002609184.1`     |   7739|      `--taxon_column ncbi_id --taxon_delimiter . --taxa_field 0`    | 
+|`#leafname col1`<br> `RS_GCF_001560035.1 wt`   | RS_GCF_001560035.1|     `default`   |
+| `#leafname gtdb_id`<br>`leaf_A d__Archaea;p__Asgardarchaeota;c__Heimdallarchaeia;o__UBA460;f__Kariarchaeaceae;g__LC-2;s__LC-2 sp001940725`      | s__LC-2 sp001940725|     `--taxon_column gtdb_id --taxon_delimiter ; --taxa_field -1`   |
 
 ### Annotation from eggnog-mapper output
 
@@ -611,6 +622,15 @@ treeprofiler.py annotate --tree examples/basic_example2/MCC_FluA_H3.nw --metadat
 ```
 
 *if bool value is 1 or 0, treeprofiler will infer it as numerical data, hence we determine it as boolean value by using `--bool_prop` arguments
+
+### Basic options of visualizing layouts
+Selected properties of tree will be visualized at the aligned panel alongside with the tree, here is some basic parameters for layouts.
+- `--column_width` column width of each property in layout. [default: 20]. 
+- `--barplot_width` width of total scale of barplot layout.[default: 200]
+- `--padding_x` customize horizontal column padding distance of each
+layout.[default: 1]
+- `--padding_y` customize vertical padding distance of each layout.[default: 0]
+
 
 ### Layouts for categorical data
 Users can add the following flag to activate layouts for categorical data

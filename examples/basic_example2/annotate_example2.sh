@@ -4,14 +4,14 @@
 echo "annotate diauxic tree with diauxic numerical matrix metadata"
 treeprofiler.py annotate \
 --tree diauxic.nw \
---metadata examples/basic_example2/diauxic.array \
+--metadata diauxic.array \
 --outdir ./
 
 # visualize annotated diauxic tree by showing numerical data from col1-col7 with numerical matrix
 echo "visualize annotated diauxic tree by showing numerical data from col1-col7 with numerical matrix"
 treeprofiler.py plot \
 --tree diauxic_annotated.ete \
---tree_type ete\
+--tree_type ete \
 --numerical_matrix_layout col1,col2,col3,col4,col5,col6,col7
 
 

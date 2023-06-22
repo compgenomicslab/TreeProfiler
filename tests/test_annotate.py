@@ -1,4 +1,3 @@
-# NOTE(JBC): All tests fail. It should be the opposite.
 
 import sys
 import os
@@ -187,9 +186,10 @@ def test_annotate_08():
 
 def test_annotate_taxnomic_NCBI_01():
     # taxid in the leaf name
+    sp_delimiter = ''
+    sp_field = ''
     test_tree = tree_annotate.ete4_parse("((9598, 9606), 10090);", parser='newick')
-    test_tree_annotated, rank2values = tree_annotate.annotate_taxa(test_tree, db='NCBI', taxid_attr="name", sp_delimiter='.', sp_field=0)
-
+    test_tree_annotated, rank2values = tree_annotate.annotate_taxa(test_tree, db='NCBI', taxid_attr="name", sp_delimiter=sp_delimiter, sp_field=sp_field)
     expected_tree = "((9598:1[&&NHX:common_name=Pan troglodytes:lineage=1|131567|2759|33154|33208|6072|33213|33511|7711|89593|7742|7776|117570|117571|8287|1338369|32523|32524|40674|32525|9347|1437010|314146|9443|376913|314293|9526|314295|9604|207598|9596|9598:named_lineage=root|cellular organisms|Eukaryota|Opisthokonta|Metazoa|Eumetazoa|Bilateria|Deuterostomia|Chordata|Craniata|Vertebrata|Gnathostomata|Teleostomi|Euteleostomi|Sarcopterygii|Dipnotetrapodomorpha|Tetrapoda|Amniota|Mammalia|Theria|Eutheria|Boreoeutheria|Euarchontoglires|Primates|Haplorrhini|Simiiformes|Catarrhini|Hominoidea|Hominidae|Homininae|Pan|Pan troglodytes:rank=species:sci_name=Pan troglodytes:taxid=9598],9606:1[&&NHX:common_name=Homo sapiens:lineage=1|131567|2759|33154|33208|6072|33213|33511|7711|89593|7742|7776|117570|117571|8287|1338369|32523|32524|40674|32525|9347|1437010|314146|9443|376913|314293|9526|314295|9604|207598|9605|9606:named_lineage=root|cellular organisms|Eukaryota|Opisthokonta|Metazoa|Eumetazoa|Bilateria|Deuterostomia|Chordata|Craniata|Vertebrata|Gnathostomata|Teleostomi|Euteleostomi|Sarcopterygii|Dipnotetrapodomorpha|Tetrapoda|Amniota|Mammalia|Theria|Eutheria|Boreoeutheria|Euarchontoglires|Primates|Haplorrhini|Simiiformes|Catarrhini|Hominoidea|Hominidae|Homininae|Homo|Homo sapiens:rank=species:sci_name=Homo sapiens:taxid=9606])Homininae:1[&&NHX:common_name=:lineage=1|131567|2759|33154|33208|6072|33213|33511|7711|89593|7742|7776|117570|117571|8287|1338369|32523|32524|40674|32525|9347|1437010|314146|9443|376913|314293|9526|314295|9604|207598:named_lineage=root|cellular organisms|Eukaryota|Opisthokonta|Metazoa|Eumetazoa|Bilateria|Deuterostomia|Chordata|Craniata|Vertebrata|Gnathostomata|Teleostomi|Euteleostomi|Sarcopterygii|Dipnotetrapodomorpha|Tetrapoda|Amniota|Mammalia|Theria|Eutheria|Boreoeutheria|Euarchontoglires|Primates|Haplorrhini|Simiiformes|Catarrhini|Hominoidea|Hominidae|Homininae:rank=subfamily:sci_name=Homininae:taxid=207598],10090:1[&&NHX:common_name=Mus musculus:lineage=1|131567|2759|33154|33208|6072|33213|33511|7711|89593|7742|7776|117570|117571|8287|1338369|32523|32524|40674|32525|9347|1437010|314146|314147|9989|1963758|337687|10066|39107|10088|862507|10090:named_lineage=root|cellular organisms|Eukaryota|Opisthokonta|Metazoa|Eumetazoa|Bilateria|Deuterostomia|Chordata|Craniata|Vertebrata|Gnathostomata|Teleostomi|Euteleostomi|Sarcopterygii|Dipnotetrapodomorpha|Tetrapoda|Amniota|Mammalia|Theria|Eutheria|Boreoeutheria|Euarchontoglires|Glires|Rodentia|Myomorpha|Muroidea|Muridae|Murinae|Mus|Mus|Mus musculus:rank=species:sci_name=Mus musculus:taxid=10090]);"
     assert test_tree_annotated.write(properties=[], format=1) == expected_tree
 
