@@ -129,7 +129,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         metadata_dict.update(emapper_metadata_dict)
         node_props.extend(emapper_node_props)
         columns.update(emapper_columns)
-
+    
         prop2type.update({
             'name': str,
             'dist': float,
@@ -241,8 +241,8 @@ def run_tree_annotate(tree, input_annotated_tree=False,
                             pass
                     if dtype == float:
                         num_prop.append(key)
-                    if dtype == bool:
-                        bool_prop.append(key)
+                    # if dtype == bool:
+                    #     bool_prop.append(key)
 
         # paramemters can over write the default
         if emapper_annotations:
@@ -904,41 +904,41 @@ def merge_multitext_annotations(nodes, target_props, counter_stat='raw'):
 def merge_num_annotations(nodes, target_props, num_stat='all'):
     internal_props = {}
     for target_prop in target_props:
+        if target_prop != 'dist' and target_prop != 'support':
+            prop_array = np.array(children_prop_array(nodes, target_prop),dtype=np.float64)
+            prop_array = prop_array[~np.isnan(prop_array)] # remove nan data
+            if prop_array.any():
+                n, (smin, smax), sm, sv, ss, sk = stats.describe(prop_array)
 
-        prop_array = np.array(children_prop_array(nodes, target_prop),dtype=np.float64)
-        prop_array = prop_array[~np.isnan(prop_array)] # remove nan data
-        if prop_array.any():
-            n, (smin, smax), sm, sv, ss, sk = stats.describe(prop_array)
+                if num_stat == 'all':
+                    internal_props[add_suffix(target_prop, 'avg')] = sm
+                    internal_props[add_suffix(target_prop, 'sum')] = np.sum(prop_array)
+                    internal_props[add_suffix(target_prop, 'max')] = smax
+                    internal_props[add_suffix(target_prop, 'min')] = smin
+                    if math.isnan(sv) == False:
+                        internal_props[add_suffix(target_prop, 'std')] = sv
+                    else:
+                        internal_props[add_suffix(target_prop, 'std')] = 0
 
-            if num_stat == 'all':
-                internal_props[add_suffix(target_prop, 'avg')] = sm
-                internal_props[add_suffix(target_prop, 'sum')] = np.sum(prop_array)
-                internal_props[add_suffix(target_prop, 'max')] = smax
-                internal_props[add_suffix(target_prop, 'min')] = smin
-                if math.isnan(sv) == False:
-                    internal_props[add_suffix(target_prop, 'std')] = sv
+                elif num_stat == 'avg':
+                    internal_props[add_suffix(target_prop, 'avg')] = sm
+                elif num_stat == 'sum':
+                    #print(target_prop)
+                    internal_props[add_suffix(target_prop, 'sum')] = np.sum(prop_array)
+                elif num_stat == 'max':
+                    internal_props[add_suffix(target_prop, 'max')] = smax
+                elif num_stat == 'min':
+                    internal_props[add_suffix(target_prop, 'min')] = smin
+                elif num_stat == 'std':
+                    if math.isnan(sv) == False:
+                        internal_props[add_suffix(target_prop, 'std')] = sv
+                    else:
+                        internal_props[add_suffix(target_prop, 'std')] = 0
                 else:
-                    internal_props[add_suffix(target_prop, 'std')] = 0
-
-            elif num_stat == 'avg':
-                internal_props[add_suffix(target_prop, 'avg')] = sm
-            elif num_stat == 'sum':
-                #print(target_prop)
-                internal_props[add_suffix(target_prop, 'sum')] = np.sum(prop_array)
-            elif num_stat == 'max':
-                internal_props[add_suffix(target_prop, 'max')] = smax
-            elif num_stat == 'min':
-                internal_props[add_suffix(target_prop, 'min')] = smin
-            elif num_stat == 'std':
-                if math.isnan(sv) == False:
-                    internal_props[add_suffix(target_prop, 'std')] = sv
-                else:
-                    internal_props[add_suffix(target_prop, 'std')] = 0
+                    print('Invalid stat method')
+                    pass
             else:
-                print('Invalid stat method')
                 pass
-        else:
-            pass
 
     if internal_props:
         return internal_props
@@ -1045,7 +1045,6 @@ def parse_emapper_annotations(input_file, delimiter='\t', no_colnames=False):
             reader = csv.DictReader(f, delimiter=delimiter, fieldnames=headers)
         else:
             lines_count = len(f.readlines())
-
             skip_header = 4
             skip_footer = 3
             f.seek(0) # using f twice
@@ -1106,9 +1105,7 @@ def annot_tree_pfam_table(post_tree, pfam_table, alg_fasta):
 
     for n in post_tree.traverse():
         if not n.is_leaf():
-            random_seq_name = random.choice(n.get_leaf_names())
-            random_node = post_tree.search_nodes(name=random_seq_name)[0]
-            random_node_domains = random_node.props.get('dom_arq', 'none@none@none')
+            random_node_domains = n.get_closest_leaf()[0].props.get('dom_arq', 'none@none@none')
             n.add_prop('dom_arq', random_node_domains)
 
     # for n in post_tree.traverse():
@@ -1151,9 +1148,7 @@ def annot_tree_smart_table(post_tree, smart_table, alg_fasta):
 
     for n in post_tree.traverse():
         if not n.is_leaf():
-            random_seq_name = random.choice(n.get_leaf_names())
-            random_node = post_tree.search_nodes(name=random_seq_name)[0]
-            random_node_domains = random_node.props.get('dom_arq', 'none@none@none')
+            random_node_domains = n.get_closest_leaf()[0].props.get('dom_arq', 'none@none@none')
             n.add_prop('dom_arq', random_node_domains)
 
     # for n in post_tree.traverse():
