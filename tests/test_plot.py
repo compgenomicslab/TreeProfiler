@@ -6,12 +6,10 @@ import requests
 import time
 import json
 from collections import defaultdict
-
-from io import StringIO, BytesIO
+import pytest
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__) + '/..'))
 
-from tempfile import NamedTemporaryFile, TemporaryDirectory
 from multiprocessing import Process
 import tree_plot
 from layouts import (
@@ -368,3 +366,5 @@ def test_plot_13():
     get_parallel(test_tree, layouts, expected_draw, expected_config)
     layout_dict = layouts[0].__dict__
     assert str(layout_dict) == expected_layout
+
+#pytest.main(['-v'])

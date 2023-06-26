@@ -2,6 +2,7 @@
 import sys
 import os
 from io import StringIO
+import pytest
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__) + '/..'))
 
@@ -164,3 +165,5 @@ def test_pruned_by_06():
     pruned_tree = utils.conditional_prune(test_tree_annotated, condition_inputs, prop2type)
     
     assert pruned_tree.write(properties=[], format=1, format_root_node=True) == expected_tree
+
+#pytest.main(['-v'])

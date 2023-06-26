@@ -1,6 +1,7 @@
 import sys
 import os
 from io import StringIO
+import pytest
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__) + '/..'))
 
@@ -137,3 +138,5 @@ def test_rank_limit():
     
     assert pruned_tree.write(properties=[], format=1) == expected_tree_no_root
     assert pruned_tree.write(properties=[], format=1, format_root_node=True) == expected_tree_with_root
+
+#pytest.main(['-v'])

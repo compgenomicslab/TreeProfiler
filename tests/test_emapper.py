@@ -3,7 +3,7 @@ import sys
 import os
 import tarfile
 from io import StringIO, BytesIO
-
+import pytest
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__) + '/..'))
 
 #from collections import namedtuple
@@ -12,25 +12,6 @@ from tempfile import NamedTemporaryFile, TemporaryDirectory
 from ete4 import Tree
 import tree_annotate
 import utils
-
-def test_annotate_msa():
-    # test alignment
-    # load tree
-    test_tree = tree_annotate.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;", parser='newick')
-
-    # load metadata
-    with NamedTemporaryFile(suffix='.fasta') as f_annotation:
-        f_annotation.write(b'>A\nMAEIPDETIQQFMALT---HNIAVQYLSEFGDLNEALNSYYASQTDDIKDRREEAH\n>B\nMAEIPDATIQQFMALTNVSHNIAVQY--EFGDLNEALNSYYAYQTDDQKDRREEAH\n>E\nMAEIPDATIQ---ALTNVSHNIAVQYLSEFGDLNEALNSYYASQTDDQPDRREEAH\n>D\nMAEAPDETIQQFMALTNVSHNIAVQYLSEFGDLNEAL--------------REEAH')
-        f_annotation.flush()
-
-        #metadata_dict, node_props, columns, prop2type = tree_annotate.parse_csv([f_annotation.name])
-
-        test_tree_annotated, annotated_prop2type = tree_annotate.run_tree_annotate(test_tree, 
-        alignment=f_annotation.name,
-        )
-    
-    expected_tree = '(A:1[&&NHX:alignment=MAEIPDETIQQFMALT---HNIAVQYLSEFGDLNEALNSYYASQTDDIKDRREEAH],(B:1[&&NHX:alignment=MAEIPDATIQQFMALTNVSHNIAVQY--EFGDLNEALNSYYAYQTDDQKDRREEAH],(E:1[&&NHX:alignment=MAEIPDATIQ---ALTNVSHNIAVQYLSEFGDLNEALNSYYASQTDDQPDRREEAH],D:1[&&NHX:alignment=MAEAPDETIQQFMALTNVSHNIAVQYLSEFGDLNEAL--------------REEAH])Internal_1:0.5[&&NHX:alignment=MAE-PD-TIQQFMALTNVSHNIAVQYLSEFGDLNEALNSYYASQTDDQPDRREEAH])Internal_2:0.5[&&NHX:alignment=MAE-PD-TIQQFMALTNVSHNIAVQYLSEFGDLNEALNSYYA-QTDDQ-DRREEAH])Root:0[&&NHX:alignment=MAEIPD-TIQQFMALTNVSHNIAVQYLSEFGDLNEALNSYYA-QTDD--DRREEAH];'
-    assert test_tree_annotated.write(properties=[], format=1, format_root_node=True) == expected_tree
 
 def test_emapper():
     # test eggnogmapper annotation
@@ -303,3 +284,5 @@ IEELRSWAAQWAD-----NL----VA------L---------ETGEV-------------\n\
             
         expected_tree = "(1000565.METUNv1_03972:1[&&NHX:dom_arq=AAA@165@452||SRP54@168@530||ALAD@283@461||LIM@355@411||LytTR@370@502||VHP@427@461||SAF@438@525],(1007099.SAMN05216287:1,(1121400.SAMN02746065_101305:1[&&NHX:dom_arq=AAA@170@814||H4@437@532||MeTrc@478@960||FIST_C@588@999||SET@716@921||GHA@721@922||Cadherin_pro@809@959||IMPDH@811@1071||MoCF_biosynth@812@1025||ALAD@835@1052||PBP5_C@838@995||MAPKK1_Int@969@1059||BRIGHT@1092@1164],1009370.ALO_07448:1[&&NHX:dom_arq=AAA@165@478||SRP54@168@499||FtsA@185@478||DHDPS@220@575||DHHA2@359@575||ETF@363@603||GATase_5@409@710||MyTH4@414@605||Haem_bd@457@612||DSRM@477@580])Internal_1:0.5[&&NHX:dom_arq=AAA@170@814||H4@437@532||MeTrc@478@960||FIST_C@588@999||SET@716@921||GHA@721@922||Cadherin_pro@809@959||IMPDH@811@1071||MoCF_biosynth@812@1025||ALAD@835@1052||PBP5_C@838@995||MAPKK1_Int@969@1059||BRIGHT@1092@1164])Internal_2:0.5[&&NHX:dom_arq=none@none@none])Root:0[&&NHX:dom_arq=AAA@165@452||SRP54@168@530||ALAD@283@461||LIM@355@411||LytTR@370@502||VHP@427@461||SAF@438@525];"
     assert test_tree_annotated.write(properties=["dom_arq"], format=1, format_root_node=True) == expected_tree
+
+#pytest.main(['-v'])

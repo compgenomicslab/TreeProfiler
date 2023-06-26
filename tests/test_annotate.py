@@ -3,6 +3,7 @@ import sys
 import os
 import tarfile
 from io import StringIO, BytesIO
+import pytest
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__) + '/..'))
 
@@ -460,3 +461,5 @@ def test_annotate_tar():
 
 # def test_error():
 #     assert 1 == 0, 'Not implemented yet.'
+
+#pytest.main(['-v'])
