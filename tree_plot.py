@@ -695,7 +695,7 @@ def props2matrix(tree, profiling_props, dtype=float):
     # gain all values from metadata
     if dtype == float:
         all_values = list(set(flatten([sublist for sublist in leaf2matrix.values()])))
-        all_values = list(filter(lambda x: x is not None and not math.isnan(x), all_values))
+        all_values = sorted(list(filter(lambda x: x is not None and not math.isnan(x), all_values)))
         maxval = max(all_values)
         minval = min(all_values)
         num = len(gradients)
@@ -716,7 +716,7 @@ def props2matrix(tree, profiling_props, dtype=float):
     
     elif dtype == str:
         value2color = {}
-        all_values = list(set(flatten([sublist for sublist in leaf2matrix.values()])))
+        all_values = sorted(list(set(flatten([sublist for sublist in leaf2matrix.values()]))))
         for i in range(len(all_values)):
             val = all_values[i]
             if val != 'NaN':
@@ -732,45 +732,45 @@ def props2matrix(tree, profiling_props, dtype=float):
         
         return matrix, value2color
   
-def categorical2profile(tree, profiling_prop):
-    aa = [
-        'A', 'R', 'N',
-        'D', 'C', 'Q',
-        'E', 'H',
-        'I', 'S', 'K',
-        'M', 'F', 'P',
-        'L', 'T', 'W',
-        'Z', 'V', 'B',
-        'Y', 'X'
-    ]
-    absence_color = 'G'
+# def categorical2profile(tree, profiling_prop):
+#     aa = [
+#         'A', 'R', 'N',
+#         'D', 'C', 'Q',
+#         'E', 'H',
+#         'I', 'S', 'K',
+#         'M', 'F', 'P',
+#         'L', 'T', 'W',
+#         'Z', 'V', 'B',
+#         'Y', 'X'
+#     ]
+#     absence_color = 'G'
 
-    leaf2matrix = {}
-    for node in tree.traverse():
-        if node.is_leaf():
-            leaf2matrix[node.name] = []
-            #for profiling_prop in profiling_props:
-            if node.props.get(profiling_prop):
-                val = node.props.get(profiling_prop)
-                leaf2matrix[node.name].append(val)
-            else:
-                leaf2matrix[node.name].append(None)
+#     leaf2matrix = {}
+#     for node in tree.traverse():
+#         if node.is_leaf():
+#             leaf2matrix[node.name] = []
+#             #for profiling_prop in profiling_props:
+#             if node.props.get(profiling_prop):
+#                 val = node.props.get(profiling_prop)
+#                 leaf2matrix[node.name].append(val)
+#             else:
+#                 leaf2matrix[node.name].append(None)
 
-    value2color = {}
-    all_values = list(set(flatten([sublist for sublist in leaf2matrix.values()])))
-    for i in range(len(all_values)):
-        val = all_values[i]
-        if val != 'NaN':
-            value2color[val] = aa[i]
-        else:
-            value2color[val] = absence_color
+#     value2color = {}
+#     all_values = list(set(flatten([sublist for sublist in leaf2matrix.values()])))
+#     for i in range(len(all_values)):
+#         val = all_values[i]
+#         if val != 'NaN':
+#             value2color[val] = aa[i]
+#         else:
+#             value2color[val] = absence_color
     
-    matrix = ''
-    for leaf, prop in leaf2matrix.items():
-        matrix += '\n'+'>'+leaf+'\n'
-        for item in prop:
-            matrix += value2color[item]
-    return matrix, value2color
+#     matrix = ''
+#     for leaf, prop in leaf2matrix.items():
+#         matrix += '\n'+'>'+leaf+'\n'
+#         for item in prop:
+#             matrix += value2color[item]
+#     return matrix, value2color
 
 def random_color(h=None):
     """Generates a random color in RGB format."""
