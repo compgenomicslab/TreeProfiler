@@ -1115,7 +1115,8 @@ treeprofiler.py plot \
 --heatmap_layout gc_percentage \
 --binary_layout aquatic_habitat,host_associated,soil_habitat \
 --rectangular_layout ncbi_assembly_level,ncbi_genome_category \
---taxonclade_layout
+--taxonclade_layout \
+--column_width 70
 ```
 
 ![progenome3 example](https://raw.githubusercontent.com/dengzq1234/treeprofiler_gallery/main/progenome_example.jpeg)
@@ -1145,6 +1146,7 @@ treeprofiler.py plot \
 --emapper_layout \
 --domain_layout \
 --taxonclade_layout \
+--column_width 70
 ```
 
 visualization of `seed_orthologs`, `max_annot_lvl`, `COG_category`, `Description`, `Preferred_name`, `score`

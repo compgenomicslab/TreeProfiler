@@ -22,3 +22,4 @@ treeprofiler.py plot \
 --emapper_layout \
 --domain_layout \
 --taxonclade_layout \
+--column_width 70
