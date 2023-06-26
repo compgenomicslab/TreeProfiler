@@ -32,6 +32,7 @@ treeprofiler.py plot \
 --heatmap_layout gc_percentage \
 --binary_layout aquatic_habitat,host_associated,soil_habitat \
 --rectangular_layout ncbi_assembly_level,ncbi_genome_category \
---taxonclade_layout
+--taxonclade_layout \
+--column_width 70
 
 

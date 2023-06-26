@@ -78,8 +78,11 @@ TreeProfiler takes following file types as input
 
 | Input    |      Filetype  | 
 |----------|-------------   |
-| Tree     |      Newick    | 
-| Metadata |      TSV       |
+| Tree     |      Newick, ete    | 
+| Metadata |      tar.gz, tsv       |
+
+- ete format is a novel format developed to solve the situation we encounter in the previous step, annotated tree can be recover easily with all the annotated data without changing the data type. Besides, the ete format optimized the tree file size after mapped with its associated data. Hence it's very handy for programers in their own script. At this moment we can only view the ete format in treeprofiler, but we will make the ete format more universal to other phylogenetic software.
+- Metadata input could be single or multiple files, either tar.gz compressed file(s) which contains multiple .tsv or plain .tsv file(s). 
 
 ### Quick Start
 TreeProfiler has two main subcommand:
@@ -103,27 +106,54 @@ or
 treeprofiler.py plot --tree tree_annotated.ete --tree_type ete 
 ```
 
+### Run examples dataset
+TreeProfiler provide various example dataset for testing in `examples/`,
+each directory consists a tutorial script for quick starting different functions in TreeProfiler which alreadyh as annotate-plot pipeline of example data. For example,
+
+```
+cd examples/basic_example1/
+bash annotate_example1.sh
+
+Annotate example tree with two metadata tables
+start parsing...
+Time for parse_csv to run:  0.0024509429931640625
+Time for load_metadata_to_tree to run:  0.0003533363342285156
+Time for merge annotations to run:  0.05228090286254883
+Time for annotate_taxa to run:  4.76837158203125e-07
+visualize annotated example tree by showing categorical property random_type with label_layout, rectangular_layout and colorbranch_layout.
+Current trees in memory: 0
+Added tree example with id 0.
+ * Serving Flask app 'ete4.smartview.gui.server'
+ * Debug mode: on
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on http://127.0.0.1:5000
+Press CTRL+C to quit
+```
+
+As the session starts in local server http://127.0.0.1:5000, annotated tree and selected properties are visualized at the interactive session.
+
 
 # Using TreeProfiler
-In this Tutorial we will use TreeProfiler and demostrate basic usage with data in examples/
+In this Tutorial we will use TreeProfiler and demostrate basic usage with data in `examples/`
 
 
 ```
 tree examples
-examples/
+examples
 ├── basic_example1
+│   ├── annotate_example1.sh
 │   ├── basic_example1_metadata2.tsv
 │   ├── basic_example1_miss.tsv
+│   ├── basic_example1_null.tsv
 │   ├── basic_example1.nw
-│   ├── basic_example1.tsv
-│   └── unaligned_NUP62.fasta
+│   └── basic_example1.tsv
 ├── basic_example2
+│   ├── annotate_example2.sh
 │   ├── diauxic.array
 │   ├── diauxic.nw
 │   ├── FluA_H3_AA.fas
 │   ├── MCC_FluA_H3_Genotype.txt
-│   ├── MCC_FluA_H3.nw
-│   └── MCC_FluA_H3_prop2type.txt
+│   └── MCC_FluA_H3.nw
 ├── pratical_example
 │   ├── emapper
 │   │   ├── 7955.ENSDARP00000116736.aln.faa
@@ -131,22 +161,27 @@ examples/
 │   │   ├── 7955.out.emapper.annotations
 │   │   ├── 7955.out.emapper.pfam
 │   │   ├── 7955.out.emapper.smart.out
+│   │   ├── annotate_emapper.sh
 │   │   ├── COG1348.faa.aln
 │   │   ├── COG1348.out.emapper.annotations
 │   │   ├── COG1348.out.emapper.pfam
 │   │   └── COG1348.tree
 │   ├── gtdb_r202
-│   │   ├── gtdbv202_metadata.tsv
+│   │   ├── annotate_gtdbv202.sh
 │   │   ├── gtdbv202.nw
+│   │   ├── merge_gtdbtree.py
 │   │   └── progenome3.tsv
 │   └── progenome3
+│       ├── annotate_progenome.sh
 │       ├── progenome3.nw
 │       └── progenome3.tsv
 └── taxonomy_example
     ├── gtdb
+    │   ├── annotate_gtdb.sh
     │   ├── gtdb_example1.nw
     │   └── gtdb_example1.tsv
     └── ncbi
+        ├── annotate_spongilla.sh
         ├── spongilla_example.nw
         └── spongilla_example.tsv
 ```
@@ -358,21 +393,33 @@ Excecute example data provided in `examples/`
 
 ```sh
 treeprofiler.py annotate \
-    --tree examples/basic_example1/basic_example1.nw \
-    --metadata examples/basic_example1/basic_example1.tsv \
-    --outdir ./examples/basic_example1/
+--tree examples/basic_example1/basic_example1.nw \
+--metadata examples/basic_example1/basic_example1.tsv \
+--outdir ./examples/basic_example1/
 ```
 
 ### Determine datatype in arguments
 Although TreeProfiler can detect datatype of each column, users still can determine the datatype using the following arguments using
 
-- `--text_prop` and `--text_prop_idx`, to determine columms which need to be read as categorical data
+- `--text_prop` and `--text_prop_idx`, to determine columms which need to be read as categorical data, example 
 
 - `--multiple_text_prop`, to determine columns which contains multiple values sperated by `,`, and will be process as list
 
 - `--num_prop` and `--num_prop_idx`, to determine columms which need to be read as numerical data
 
 - `--bool_prop` and `--bool_prop_idx`, to determine columms which need to be read as boolean data
+
+#### Missing value detection
+Metadata column which fullfills one of the following criterias will be consider as missing value:
+
+- Entirely non-word characters. Such as "+", "-", "~", ".", etc.
+- The exact strings "none", "None", "null", "Null", or "NaN".
+- An empty string (zero characters).
+
+Missing value will replaced by string 'NaN' in the corresponding property.
+
+#### Unmapped Tree leaf property detection
+If Metadata doesn't contain  
 
 ### Mapping metadata without column names
 if metadata doesn't contain column names, please add `--no_colnames` as flag. TreeProfiler will automatically assign feature name by index order
@@ -432,10 +479,54 @@ When Taxon properties are embeded in different column or field in metadata, tree
 |`#leafname col1`<br> `RS_GCF_001560035.1 wt`   | RS_GCF_001560035.1|     `default`   |
 | `#leafname gtdb_id`<br>`leaf_A d__Archaea;p__Asgardarchaeota;c__Heimdallarchaeia;o__UBA460;f__Kariarchaeaceae;g__LC-2;s__LC-2 sp001940725`      | s__LC-2 sp001940725|     `--taxon_column gtdb_id --taxon_delimiter ; --taxa_field -1`   |
 
-### Annotation from eggnog-mapper output
+### Annotation from EggNOG-mapper output
+[EggNOG-mapper](http://eggnog-mapper.embl.de/), is a tool for fast functional annotation of novel sequences. It uses precomputed orthologous groups and phylogenies from the eggNOG database (http://eggnog5.embl.de) to transfer functional information from fine-grained orthologs only. 
+
+It generates three kind of ouput file, 
+
+1) Raw standard output, `*.out.emapper.annotations`, that contains functional annotations and prthology predictions, for example:
+```
+## Mon Feb 27 09:05:50 2023
+## emapper-2.1.9
+## /data/shared/home/emapper/miniconda3/envs/eggnog-mapper-2.1/bin/emapper.py --cpu 20 --mp_start_method forkserver --data_dir /dev/shm/ -o out --output_dir /emapper_web_jobs/emapper_jobs/user_data/MM_knn6rw6j --temp_dir /emapper_web_jobs/emapper_jobs/user_data/MM_knn6rw6j --override -m diamond --dmnd_ignore_warnings --dmnd_algo ctg -i /emapper_web_jobs/emapper_jobs/user_data/MM_knn6rw6j/queries.fasta --evalue 0.001 --score 60 --pident 40 --query_cover 20 --subject_cover 20 --itype proteins --tax_scope auto --target_orthologs all --go_evidence non-electronic --pfam_realign denovo --num_servers 2 --report_orthologs --decorate_gff yes --excel
+##
+#query	seed_ortholog	evalue	score	eggNOG_OGs	max_annot_lvl	COG_category	Description	Preferred_name	GOs	EC	KEGG_ko	KEGG_Pathway	KEGG_Module	KEGG_Reaction	KEGG_rclass	BRITE	KEGG_TC	CAZy	BiGG_Reaction	PFAMs
+....
+## 272 queries scanned
+## Total time (seconds): 45.73449420928955
+## Rate: 5.95 q/s
+```
+2) [Pfam](http://pfam.xfam.org/) domain annotations, `*.out.emapper.pfam`, for example:
+```
+## Mon Feb 27 09:05:52 2023
+## emapper-2.1.9
+## /data/shared/home/emapper/miniconda3/envs/eggnog-mapper-2.1/bin/emapper.py --cpu 20 --mp_start_method forkserver --data_dir /dev/shm/ -o out --output_dir /emapper_web_jobs/emapper_jobs/user_data/MM_knn6rw6j --temp_dir /emapper_web_jobs/emapper_jobs/user_data/MM_knn6rw6j --override -m diamond --dmnd_ignore_warnings --dmnd_algo ctg -i /emapper_web_jobs/emapper_jobs/user_data/MM_knn6rw6j/queries.fasta --evalue 0.001 --score 60 --pident 40 --query_cover 20 --subject_cover 20 --itype proteins --tax_scope auto --target_orthologs all --go_evidence non-electronic --pfam_realign denovo --num_servers 2 --report_orthologs --decorate_gff yes --excel
+##
+# query_name	hit	evalue	sum_score	query_length	hmmfrom	hmmto	seqfrom	seqto	query_coverage
+...
+## 272 queries scanned
+## Total time (seconds): 28.74908423423767
+## Rate: 9.46 q/s
+```
+
+3) [SMART](http://smart.embl-heidelberg.de/) domain annotation, `*.out.emapper.smart.out`, for example:
+```
+10020.ENSDORP00000023664	MAGE_N	10	63	220000.115599899
+10020.ENSDORP00000023664	PTN	44	128	683.160049964146
+10020.ENSDORP00000023664	Ephrin_rec_like	73	117	248282.169266432
+10020.ENSDORP00000023664	PreSET	87	186	494.036044144428
+....
+```
+
+TreeProfiler allows users annotate EggNOG-mapper  standard output to target tree with following arguments
+ - `--emapper_annotations`, attach eggNOG-mapper output `out.emapper.annotations`.
+ - `--emapper_pfam`, attach eggNOG-mapper pfam output `out.emapper.pfams`.
+ - `--emapper_smart`, attach eggNOG-mapper smart output `out.emapper.smart`.
+
+ [check EggNOG-mapper annotation example](#demo2-explore-eggnog-mapper-annotations-data-with-taxonomic-annotation)
 
 ### **Annotate tree format**
-treeprofiler `annotate` subcommand will generate the following output file
+TreeProfiler `annotate` subcommand will generate the following output file
 
 1) `<input_tree>` + *_annotated.nw*, newick format with annotated tree
 2) `<input_tree>` + *_annotated.ete*, ete format with annotated tree
@@ -981,28 +1072,59 @@ treeprofiler.py plot --tree examples/taxonomy_example/gtdb/gtdb_example1_annotat
 treeprofiler.py plot --tree examples/taxonomy_example/ncbi/spongilla_example_annotated.nw --rank_limit phylum --taxonclade_layout
 ```
 
-## Demo1 Explore progenome data
-We store progenome v3 data in examples/ directory for exploration,
+## Demo1 Explore GTDB taxonomic tree with metadata and habitat information of progenome3
+To illustrate the easiness and flexibility of TreeProfiler, we use it to annotate and visualize the version 202 of the GTDB prokaryotic phylogeny, which represents a species tree with 60,000 representative bacterial and archaeal species in [here](https://data.gtdb.ecogenomic.org/releases/release202/). GTDB provides the tree in plain newick format and massive datatable with various associated to such species. Apart from the metadata provided by the GTDB, here we also include annotations of genomes and species clusters to habitats from proGenomes3([Fullam et al. 2023](https://progenomes.embl.de/)). Example can be found in directory `./examples/pratical/gtdb_r202/`
 
-A glance of metadata
+1) A glance of habitat information of progenome3
 ```
-head -2 examples/progenome3.tsv
+head -2 examples/pratical/gtdb_r202/progenome3.tsv
 name    GC      GCA     aquatic_habitat host_associated size    soil_habitat    GCF
 2486577.SAMN10347832.GCA_004210275.1    40.8    GCA_004210275.1 0       1       1375759 0       RS_GCF_004210275.1
 2759495.SAMN15595193.GCA_014116815.1    34.3    GCA_014116815.1                 1928597         GB_GCA_014116815.1
 ```
 
-Here we will conduct the profiling with two command line
+2) Download metadata of archaea and bacteria from gtdb
 ```
-treeprofiler.py annotate --tree examples/progenome3/progenome3.nw --metadata examples/progenome3/progenome3.tsv --taxonomic_profile --taxadb NCBI --taxon_delimiter . --taxa_field 0 --num_prop GC,size --bool_prop aquatic_habitat,host_associated,soil_habitat --outdir examples/progenome3/
+wget -P examples/pratical/gtdb_r202/ https://data.gtdb.ecogenomic.org/releases/release202/202.0/ar122_metadata_r202.tar.gz
+wget -P examples/pratical/gtdb_r202/ https://data.gtdb.ecogenomic.org/releases/release202/202.0/bac120_metadata_r202.tar.gz
+```
 
-treeprofiler.py plot --tree examples/progenome3/progenome3_annotated.ete --tree_type ete --barplot_layout GC,size --binary_layout aquatic_habitat,host_associated,soil_habitat --taxonclade_layout 
+3)Here we will conduct the profiling with two command line
+
+Annotate metadatas to taxonomic tree(this step may take a few minutes)
+```
+treeprofiler.py annotate \
+--tree examples/pratical_example/gtdb_r202/gtdbv202.nw \
+--metadata \
+examples/pratical_example/gtdb_r202/ar122_metadata_r202.tar.gz,\
+examples/pratical_example/gtdb_r202/bac120_metadata_r202.tar.gz,\
+examples/pratical_example/gtdb_r202/progenome3.tsv \
+--bool_prop aquatic_habitat,host_associated,soil_habitat \
+--taxonomic_profile \
+--taxadb GTDB \
+-o examples/pratical_example/gtdb_r202/
+
+```
+
+Visualizing annotated GTDB tree with GTDB metadata, which are genome_size, protein_count, gc_percentage, ncbi_assembly_level, ncbi_genome_category and progenome3 habitat information aquatic_habitat, host_associated, soil_habitat.
+```
+treeprofiler.py plot \
+--tree examples/pratical_example/gtdb_r202/gtdbv202_annotated.ete \
+--tree_type ete \
+--barplot_layout genome_size,protein_count \
+--heatmap_layout gc_percentage \
+--binary_layout aquatic_habitat,host_associated,soil_habitat \
+--rectangular_layout ncbi_assembly_level,ncbi_genome_category \
+--taxonclade_layout \
+--column_width 70
 ```
 
 ![progenome3 example](https://raw.githubusercontent.com/dengzq1234/treeprofiler_gallery/main/progenome_example.jpeg)
 
-## Demo2 Explore eggnog-mapper annotations data with taxonomic annotation 
-Here we analyzed the nitrogenase iron protein NifH gene family across bacteria from EggNOG6 with EggNOG-mapper
+## Demo2 Explore large NifH gene trees with functional and taxonomic information
+Here we analyzed the nitrogenase iron protein NifH gene family across bacteria from EggNOG6 with EggNOG-mapper, a tool for functional annotation based on precomputed orthology assignments. TreeProfiler provides options which allows users to directly map EggNOG-mapper outputs including functional annotations and pfam/smart domain predictions. Hence are then able to map these functional annotations to their respective phylogenetic gene trees and them with the evolutionary history, tracing from leaf to root level.
+
+Map emapper annotation, pfam annotation and taxonomic annotation to target tree 
 ```
 treeprofiler.py annotate \
 --tree  examples/pratical_example/emapper/COG1348.tree \
@@ -1014,13 +1136,17 @@ treeprofiler.py annotate \
 --taxon_delimiter . \
 --taxa_field 0 \
 -o examples/pratical_example/emapper/
+```
 
+Visualize annotations of emapper, pfam domain and ncbi taxonomy
+```
 treeprofiler.py plot \
 --tree examples/pratical_example/emapper/COG1348_annotated.ete \
 --tree_type ete \
 --emapper_layout \
 --domain_layout \
 --taxonclade_layout \
+--column_width 70
 ```
 
 visualization of `seed_orthologs`, `max_annot_lvl`, `COG_category`, `Description`, `Preferred_name`, `score`
