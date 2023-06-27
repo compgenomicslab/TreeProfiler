@@ -45,14 +45,19 @@ TreeProfiler requires to install ete4 toolkit v4
 
 ### Installation of ETE v4
 To install ETE you can follow these steps:
- - Clone this repository (git clone https://github.com/etetoolkit/ete.git)
+ - Download this repository (https://github.com/etetoolkit/ete/releases/tag/treeprofiler)
  - Install dependecies
     - If you are using conda: 
-    `conda install -c conda-forge cython flask flask-cors flask-httpauth flask-restful flask-compress numpy matplotlib pyqt`
+    `conda install -c conda-forge cython flask flask-cors flask-httpauth flask-restful flask-compress numpy matplotlib pyqt lap`
     - Otherwise, you can install them with 
     `pip install <dependencies>`
-  - Build and install ete4 from the repository's root directory: `pip install -e .`
-
+  - Build and install ete4 from the repository's root directory with following command: 
+  ```
+  wget https://github.com/etetoolkit/ete/archive/refs/tags/treeprofiler.tar.gz
+  tar -zxvf treeprofiler.tar.gz
+  cd ete-treeprofiler/
+  pip install -e .
+  ```
 (In Linux there may be some cases where the gcc library must be installed, which can be done with `conda install -c conda-forge gcc_linux-64`)
 
 ### Install TreeProfiler
@@ -61,7 +66,7 @@ Install dependencies
 # install BioPython, selenium, scipy via conda
 conda install -c conda-forge biopython selenium scipy
 # or pip
-pip install biopython selenium
+pip install biopython selenium scipy
 ```
 
 Install TreeProfiler
