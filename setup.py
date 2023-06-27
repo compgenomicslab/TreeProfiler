@@ -32,6 +32,8 @@ setup(
     package_data = { 
         'treeprofiler' : [
             'treeprofiler/*',
+            'layouts/pfam2color.json',
+            'layouts/smart2color.json',
             ],
         },
     #scripts=['treeprofiler.py'],
@@ -40,7 +42,7 @@ setup(
     },
     data_files=[
         ('examples', example_files),
-        ('tests', test_files)
+        ('tests', test_files),
     ],
     install_requires=install_requires,
     keywords = "tree annotation, tree visualization, phylogeny, phylogenetics, phylogenomics",
