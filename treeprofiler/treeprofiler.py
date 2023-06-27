@@ -3,15 +3,15 @@
 import sys
 import argparse as ap
 
-import tree_annotate
-import tree_plot
+from treeprofiler import tree_annotate
+from treeprofiler import tree_plot
 
 
 __author__ = 'Ziqi DENG'
-__license__ = "GPL v2"
+__license__ = "GPL v3"
 __email__ = 'dengziqi1234@gmail.com'
-__version__ = '0.0.1'
-__date__ = '01-11-2022'
+__version__ = '1.0.0'
+__date__ = '27-06-2023'
 __description__ = ('A program for profiling metadata on target '
                     'tree and conduct summary analysis')
 
@@ -75,6 +75,10 @@ def main():
     plot_args_p.set_defaults(func=tree_plot.run)
 
     ## - RUN -
+    if len(sys.argv[1:]) < 1:
+        print(parser.print_usage())
+        return
+    
     args = parser.parse_args(sys.argv[1:])
     args.func(args)
 

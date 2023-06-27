@@ -11,18 +11,18 @@ from itertools import islice
 from io import StringIO
 import numpy as np
 
-import b64pickle
 
 from ete4.parser.newick import NewickError
 from ete4 import Tree, PhyloTree
 from ete4 import GTDBTaxa
 from ete4 import NCBITaxa
 from ete4.smartview import TreeStyle, NodeStyle, TreeLayout
-from tree_image import get_image
-from layouts import (
+from treeprofiler.tree_image import get_image
+from treeprofiler.layouts import (
     text_layouts, taxon_layouts, staple_layouts, 
     conditional_layouts, seq_layouts, profile_layouts)
-from utils import (
+from treeprofiler.src import b64pickle
+from treeprofiler.src.utils import (
     ete4_parse, taxatree_prune, conditional_prune,
     children_prop_array, children_prop_array_missing, 
     flatten, get_consensus_seq)

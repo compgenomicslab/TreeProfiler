@@ -1,8 +1,10 @@
 from ete4.smartview import TreeStyle, NodeStyle, TreeLayout, PieChartFace
 from ete4.smartview  import (RectFace, CircleFace, SeqMotifFace, TextFace, OutlineFace, \
                             SelectedFace, SelectedCircleFace, SelectedRectFace, LegendFace)
-from layouts.general_layouts import get_heatmapface
-from utils import to_code, call, counter_call
+from treeprofiler.layouts.general_layouts import get_heatmapface
+from treeprofiler.src.utils import to_code, call, counter_call, check_nan
+# for boolean layouts
+from distutils.util import strtobool
 
 # branch thicken, background highlighted to purple
 def highlight_layout(conditions, level, prop2type={}, color='purple'):
@@ -86,10 +88,6 @@ def collapsed_by_layout(conditions, level, prop2type={}, color='red'):
                 node.sm_style["outline_color"] = color
     return layout_fn
     return
-
-# for boolean layouts
-from distutils.util import strtobool
-from utils import check_nan
 
 class LayoutBinary(TreeLayout):
     def __init__(self, name=None, level=1, color='#E60A0A', prop_colour_dict=None, \

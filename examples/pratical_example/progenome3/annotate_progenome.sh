@@ -1,6 +1,6 @@
 # annotate tree of progenome with habitat information and taxonomic annotation with NCBI database
 echo "Annotate GTDB tree with progenome3 habitat information"
-treeprofiler.py annotate \
+treeprofiler annotate \
 --tree progenome3.nw \
 --metadata progenome3.tsv \
 --taxonomic_profile \
@@ -12,7 +12,7 @@ treeprofiler.py annotate \
 
 # visualize annotated trees with all features
 echo "Visualizing annotated GTDB tree with progenome3 habitat information aquatic_habitat, host_associated, soil_habitat"
-treeprofiler.py plot \
+treeprofiler plot \
 --tree progenome3_annotated.ete \
 --tree_type ete \
 --barplot_layout GC,size \

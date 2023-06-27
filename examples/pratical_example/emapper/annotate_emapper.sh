@@ -2,7 +2,7 @@
 
 # annotate tree of COG1348 with eggNOG-mapper annotations and taxonomic annotations
 echo "Start mapping tree with annotation metadata"
-treeprofiler.py annotate \
+treeprofiler annotate \
 --tree  COG1348.tree \
 --emapper_annotation COG1348.out.emapper.annotations  \
 --emapper_pfam COG1348.out.emapper.pfam \
@@ -16,7 +16,7 @@ treeprofiler.py annotate \
 
 # visualize annotated trees with all eggnog mapper features
 echo "Visualizing annotated tree with all eggnog mapper features......"
-treeprofiler.py plot \
+treeprofiler plot \
 --tree COG1348_annotated.ete \
 --tree_type ete \
 --emapper_layout \

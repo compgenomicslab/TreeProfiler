@@ -10,8 +10,8 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__) + '/..'))
 #from collections import namedtuple
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
-import tree_annotate
-import utils
+from treeprofiler import tree_annotate
+from treeprofiler.src import utils
 
 def test_annotate_01():
     # basic annotate categorical data

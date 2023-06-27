@@ -11,11 +11,11 @@ import pytest
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__) + '/..'))
 
 from multiprocessing import Process
-import tree_plot
-from layouts import (
+from treeprofiler import tree_plot
+from treeprofiler.layouts import (
     text_layouts, taxon_layouts, staple_layouts, 
     conditional_layouts, seq_layouts, profile_layouts)
-import utils
+from treeprofiler.src import utils
 
 paried_color = ["red", "darkblue", "lightgreen", "sienna", "lightCoral", "violet", "mediumturquoise",   "lightSkyBlue", "indigo", "tan", "coral", "olivedrab", "teal", "darkyellow"]
 

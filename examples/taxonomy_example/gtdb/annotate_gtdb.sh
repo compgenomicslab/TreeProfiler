@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Annotate tree with GTDB taxonomic annotation
-treeprofiler.py annotate \
+treeprofiler annotate \
 --tree gtdb_example1.nw \
 --metadata gtdb_example1.tsv \
 --taxon_column name \
@@ -10,7 +10,7 @@ treeprofiler.py annotate \
 --outdir ./
 
 # Visualize tree with colored taxonclade
-treeprofiler.py plot \
+treeprofiler plot \
 --tree gtdb_example1_annotated.nw \
 --taxonrectangular_layout \
 --taxonclade_layout

@@ -1,1 +1,9 @@
 *.pyc
+dist/
+dist/*
+build/
+build/*
+*.egg-info/
+__pycache__/
+__pycache__/*
+.covarage

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Annotate tree with NCBI taxonomic annotation
-treeprofiler.py annotate \
+treeprofiler annotate \
 --tree spongilla_example.nw \
 --metadata spongilla_example.tsv \
 --taxonomic_profile \
@@ -12,6 +12,6 @@ treeprofiler.py annotate \
 --outdir ./
 
 # Visualize tree with colored taxonclade
-treeprofiler.py plot \
+treeprofiler plot \
 --tree spongilla_example_annotated.nw \
 --taxonclade_layout

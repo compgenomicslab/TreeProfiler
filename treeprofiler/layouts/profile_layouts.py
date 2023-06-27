@@ -1,15 +1,17 @@
+from io import StringIO 
+from collections import OrderedDict, namedtuple
+import numpy as np
+import re
+
 from ete4.smartview import TreeStyle, NodeStyle, TreeLayout, PieChartFace
 from ete4.smartview  import (RectFace, CircleFace, SeqMotifFace, TextFace, OutlineFace, \
                             SelectedFace, SelectedCircleFace, SelectedRectFace, LegendFace,
                             SeqFace, Face, ScaleFace, AlignmentFace)
 from ete4.smartview.renderer.draw_helpers import draw_text, draw_line, draw_array
 from ete4 import SeqGroup
-from layouts.general_layouts import get_piechartface, get_heatmapface, color_gradient
-from utils import get_consensus_seq
-from io import StringIO 
-from collections import OrderedDict, namedtuple
-import numpy as np
-import re
+from treeprofiler.layouts.general_layouts import get_piechartface, get_heatmapface, color_gradient
+from treeprofiler.src.utils import get_consensus_seq
+
 
 Box = namedtuple('Box', 'x y dx dy')  # corner and size of a 2D shape
 

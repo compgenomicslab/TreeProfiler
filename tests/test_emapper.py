@@ -10,8 +10,8 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__) + '/..'))
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
 from ete4 import Tree
-import tree_annotate
-import utils
+from treeprofiler import tree_annotate
+from treeprofiler.src import utils
 
 def test_emapper():
     # test eggnogmapper annotation
