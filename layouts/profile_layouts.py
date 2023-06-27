@@ -5,7 +5,7 @@ from ete4.smartview  import (RectFace, CircleFace, SeqMotifFace, TextFace, Outli
 from ete4.smartview.renderer.draw_helpers import draw_text, draw_line, draw_array
 from ete4 import SeqGroup
 from layouts.general_layouts import get_piechartface, get_heatmapface, color_gradient
-from utils import get_consensus_seq
+from src.utils import get_consensus_seq
 from io import StringIO 
 from collections import OrderedDict, namedtuple
 import numpy as np

@@ -8,8 +8,7 @@ import numpy as np
 from distutils.util import strtobool
 import matplotlib as mpl
 from itertools import chain
-from utils import to_code, call, counter_call
-from utils import check_nan
+from src.utils import to_code, call, counter_call, check_nan
 from ete4.smartview.renderer.draw_helpers import *
 Box = namedtuple('Box', 'x y dx dy')  # corner and size of a 2D shape
 
