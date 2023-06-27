@@ -44,6 +44,5 @@ setup(
     ],
     install_requires=install_requires,
     keywords = "tree annotation, tree visualization, phylogeny, phylogenetics, phylogenomics",
-    
 )
 

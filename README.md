@@ -72,10 +72,10 @@ pip install biopython selenium scipy
 Install TreeProfiler
 ```
 # install TreeProfiler
-git clone https://github.com/dengzq1234/MetaTreeDrawer
+git clone https://github.com/compgenomicslab/MetaTreeDrawer
 cd MetaTreeDrawer/
-# add treeprofiler to path
-export PATH=$PATH:$(pwd)
+python setup.py install
+
 ```
 
 ### Input files
