@@ -97,18 +97,18 @@ TreeProfiler has two main subcommand:
 The first one `annotate` is used to annotate your input tree and corresponding metadata, TreeProfiler will map all the metadata into corresponding tree node. In this step, annotated tree will be generated in newick and ete format
 
 ```
-treeprofiler.py annotate --tree tree.nw --metadata metadata.tsv --outdir ./
+treeprofiler annotate --tree tree.nw --metadata metadata.tsv --outdir ./
 ```
 
 The second subcommand `plot` is used to visualize tree with associated metadata. By default, treeprofiler will launch an interactive session at localhost for user to explore input tree.
 
 ```
-treeprofiler.py plot --tree tree_annotated.nw --tree_type newick 
+treeprofiler plot --tree tree_annotated.nw --tree_type newick 
 ```
 or
 
 ```
-treeprofiler.py plot --tree tree_annotated.ete --tree_type ete 
+treeprofiler plot --tree tree_annotated.ete --tree_type ete 
 ```
 
 ### Run examples dataset
@@ -193,8 +193,8 @@ examples
 
 ## `annotate`, Annotate metadata into tree 
 ```
-treeprofiler.py annotate -h
-usage: treeprofiler.py annotate [-h] [-t TREE] [--annotated_tree] [--tree_type TREE_TYPE]
+treeprofiler annotate -h
+usage: treeprofiler annotate [-h] [-t TREE] [--annotated_tree] [--tree_type TREE_TYPE]
                                 [--prop2type PROP2TYPE] [--rank_limit RANK_LIMIT]
                                 [--pruned_by PRUNED_BY] [-d METADATA] [--no_colnames]
                                 [--aggregate_duplicate] [--text_prop TEXT_PROP]
@@ -325,7 +325,7 @@ Phy00508FR_NIPNI	87	z,f,p
 Phy004O1E0_APTFO	6	z,t,b
 
 ## *annotate tree with more than one metadata tsv, seperated by `,`
-treeprofiler.py annotate \
+treeprofiler annotate \
 --tree examples/basic_example1/basic_example1.nw \
 --metadata examples/basic_example1/basic_example1.tsv,examples/basic_example1/basic_example1_metadata2.tsv \
 -o examples/basic_example1/
@@ -397,7 +397,7 @@ In our demo, it would be:
 Excecute example data provided in `examples/`
 
 ```sh
-treeprofiler.py annotate \
+treeprofiler annotate \
 --tree examples/basic_example1/basic_example1.nw \
 --metadata examples/basic_example1/basic_example1.tsv \
 --outdir ./examples/basic_example1/
@@ -451,7 +451,7 @@ RS_GCF_001560035.1	0.05	0.12	0.86	0.01	0.69	medium	1	True
 RS_GCF_001560635.1	0.64	0.67	0.51	0.29	0.14	medium	1	True
 
 # annotate tree with gtdb taxonomic annotation
-treeprofiler.py annotate \
+treeprofiler annotate \
 --tree examples/taxonomy_example/gtdb/gtdb_example1.nw \
 --metadata examples/taxonomy_example/gtdb/gtdb_example1.tsv --taxonomic_profile \
 --taxadb GTDB \
@@ -462,7 +462,7 @@ treeprofiler.py annotate \
 For instance of `examples/spongilla_example/spongilla_example.nw` and `examples/spongilla_example/spongilla_example.tsv`, it contains accession ID such as `83887.comp22273_c0_seq2_m.43352`, hence using `--taxon_delimiter` and `--taxa_field` to locate the taxonomic accession.
 
 ```
-treeprofiler.py annotate \
+treeprofiler annotate \
 --tree examples/taxonomy_example/ncbi/spongilla_example.nw \
 --metadata examples/taxonomy_example/ncbi/spongilla_example.tsv --taxonomic_profile \
 --taxon_column name \
@@ -547,8 +547,8 @@ In the following `plot` step, users can use either `.nw` or `.ete` by putting `-
 ## `plot`, Plot annotated tree with layouts
 TreeProfiler provides a several of layout options for visualize features in metadata along with tree, depends on their datatype
 ```
-treeprofiler.py plot -h
-usage: treeprofiler.py plot [-h] [-t TREE] [--annotated_tree] [--tree_type TREE_TYPE]
+treeprofiler plot -h
+usage: treeprofiler plot [-h] [-t TREE] [--annotated_tree] [--tree_type TREE_TYPE]
                             [--prop2type PROP2TYPE] [--rank_limit RANK_LIMIT]
                             [--pruned_by PRUNED_BY] [--internal_plot_measure INTERNAL_PLOT_MEASURE]
                             [--collapsed_by COLLAPSED_BY] [--highlighted_by HIGHLIGHTED_BY]
@@ -706,15 +706,15 @@ A/Swine/Binh_Duong/03_10/2010	trig	trig	trig	HuH3N2	trig	HuH3N2	trig	trig
 A/Swine/Binh_Duong/03_08/2010	trig	trig	trig	HuH3N2	trig	HuH3N2	trig	trig
 
 ## *annotate tree with more than one metadata tsv, seperated by `,`
-treeprofiler.py annotate \
+treeprofiler annotate \
 --tree examples/basic_example1/basic_example1.nw \
 --metadata examples/basic_example1/basic_example1.tsv,examples/basic_example1/basic_example1_metadata2.tsv \
 --bool_prop bool_type \
 -o examples/basic_example1/
 
-treeprofiler.py annotate --tree examples/basic_example2/diauxic.nw --metadata examples/basic_example2/diauxic.array --outdir examples/basic_example2/
+treeprofiler annotate --tree examples/basic_example2/diauxic.nw --metadata examples/basic_example2/diauxic.array --outdir examples/basic_example2/
 
-treeprofiler.py annotate --tree examples/basic_example2/MCC_FluA_H3.nw --metadata examples/basic_example2/MCC_FluA_H3_Genotype.txt --outdir examples/basic_example2/
+treeprofiler annotate --tree examples/basic_example2/MCC_FluA_H3.nw --metadata examples/basic_example2/MCC_FluA_H3_Genotype.txt --outdir examples/basic_example2/
 ```
 
 *if bool value is 1 or 0, treeprofiler will infer it as numerical data, hence we determine it as boolean value by using `--bool_prop` arguments
@@ -752,19 +752,19 @@ example
 
 ## target column "random_type" in examples/basic_example1/basic_example1.tsv
 # List random_type feature as text in aligned panel using label_layout
-treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.nw --label_layout random_type 
+treeprofiler plot --tree examples/basic_example1/basic_example1_annotated.nw --label_layout random_type 
 
 # Label random_type feature on branch with different colors in aligned panel  using --colorbranch_layout
-treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.nw  --colorbranch_layout random_type 
+treeprofiler plot --tree examples/basic_example1/basic_example1_annotated.nw  --colorbranch_layout random_type 
 
 # Label random_type feature with retangular block in aligned panel using --rectangular_layout
-treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.nw  --rectangular_layout random_type 
+treeprofiler plot --tree examples/basic_example1/basic_example1_annotated.nw  --rectangular_layout random_type 
 
 # Convert random_type feature into presence-absence profiling matrix using --profiling_layout
-treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.nw --profiling_layout random_type
+treeprofiler plot --tree examples/basic_example1/basic_example1_annotated.nw --profiling_layout random_type
 
 # Label all feature with retangular block in aligned panel using --categorical_matrix_layout
-treeprofiler.py plot --tree examples/basic_example2/MCC_FluA_H3_annotated.nw --categorical_matrix_layout PB2,PB1,PA,HA,NP,NA,M,NS
+treeprofiler plot --tree examples/basic_example2/MCC_FluA_H3_annotated.nw --categorical_matrix_layout PB2,PB1,PA,HA,NP,NA,M,NS
 ```
 ![label_layout example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_label_layout.jpeg?raw=true)
 ![colorbranch_layout example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_colorbranch_layout.jpeg?raw=true)
@@ -785,10 +785,10 @@ Users can add the following flag to activate layouts for Boolean data
 ```
 ## target column "bool_type", "bool_type2" in examples/basic_example1/basic_example1.tsv
 # List postive bool_type feature in aligned panel using binary_layout
-treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.nw  --binary_layout bool_type
+treeprofiler plot --tree examples/basic_example1/basic_example1_annotated.nw  --binary_layout bool_type
 
 # List negative bool_type feature in aligned panel using binary_layout
-treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.nw  --revbinary_layout bool_type2
+treeprofiler plot --tree examples/basic_example1/basic_example1_annotated.nw  --revbinary_layout bool_type2
 
 ```
 ![binary example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_binary_layout.jpeg?raw=true)
@@ -797,7 +797,7 @@ treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.nw 
 *Boolean data can be also visualized by categorical layouts, such as 
 ```
 # multiple columns seperated by ','
-treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.nw  --rectangular_layout bool_type
+treeprofiler plot --tree examples/basic_example1/basic_example1_annotated.nw  --rectangular_layout bool_type
 ```
 
 ### Layouts for Numerical data
@@ -813,14 +813,14 @@ Users can add the following flag to activate layouts for Numerical data
 ```
 ## target column 'sample[1-5]' feature in examples/basic_example1/basic_example1.tsv
 # visualize sample1 feature in Barplot
-treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.nw  --barplot_layout sample1,sample2,sample3,sample4,sample5
+treeprofiler plot --tree examples/basic_example1/basic_example1_annotated.nw  --barplot_layout sample1,sample2,sample3,sample4,sample5
 
 # visualize sample1-sample5 in Heatmap
-treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.nw --heatmap_layout sample1,sample2,sample3,sample4,sample5
+treeprofiler plot --tree examples/basic_example1/basic_example1_annotated.nw --heatmap_layout sample1,sample2,sample3,sample4,sample5
 
 # visualize col1-col7 in diauxic_annotated.nw with numerical profiling
 
-treeprofiler.py plot --tree examples/basic_example2/diauxic_annotated.nw --numerical_matrix_layout col1,col2,col3,col4,col5,col6,col7
+treeprofiler plot --tree examples/basic_example2/diauxic_annotated.nw --numerical_matrix_layout col1,col2,col3,col4,col5,col6,col7
 ```
 ![barplot example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_barplot_layout.jpeg?raw=true)
 ![heatmap example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_heatmap_layout.jpeg?raw=true)
@@ -839,7 +839,7 @@ Phy004O1E0_APTFO	6	z,t,b
 Phy004PA1B_ANAPL	72	z,r,p
 
 ## annotate tree first
-treeprofiler.py annotate \
+treeprofiler annotate \
 --tree examples/basic_example1/basic_example1.nw \
 --metadata examples/basic_example1/basic_example1_metadata2.tsv \
 -o examples/basic_example1/
@@ -849,7 +849,7 @@ Column `list_data` contain multiple elements value which can be process as list 
 
 ```
 # visualize using multi_profiling_layout
-treeprofiler.py plot \
+treeprofiler plot \
 --tree examples/basic_example1/basic_example1_annotated.ete \
 --tree_type ete \
 --multi_profiling_layout list_data
@@ -861,10 +861,10 @@ In order to visualize multiple sequence alignment alongside with the tree, first
 
 ```
 # annotate
-treeprofiler.py annotate --tree examples/basic_example2/MCC_FluA_H3.nw --alignment  ./examples/basic_example2/FluA_H3_AA.fas --outdir examples/basic_example2/
+treeprofiler annotate --tree examples/basic_example2/MCC_FluA_H3.nw --alignment  ./examples/basic_example2/FluA_H3_AA.fas --outdir examples/basic_example2/
 
 # visualize
-treeprofiler.py plot --tree examples/basic_example2/MCC_FluA_H3_annotated.nw --alignment_layout
+treeprofiler plot --tree examples/basic_example2/MCC_FluA_H3_annotated.nw --alignment_layout
 ```
 ![alignment example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_alignment_layout.jpeg?raw=true)
 
@@ -874,9 +874,9 @@ if metadata is pfam annotations from eggnog-mapper, using `--emapper_pfam` to an
 Once tree is annotated, using `--domain_layout` to visualize it.
 
 ```
-treeprofiler.py annotate --tree examples/pratical_example/emapper/7955.ENSDARP00000116736.nw --emapper_pfam examples/pratical_example/emapper/7955.out.emapper.pfam --alignment examples/pratical_example/emapper/7955.ENSDARP00000116736.aln.faa -o examples/pratical_example/emapper/
+treeprofiler annotate --tree examples/pratical_example/emapper/7955.ENSDARP00000116736.nw --emapper_pfam examples/pratical_example/emapper/7955.out.emapper.pfam --alignment examples/pratical_example/emapper/7955.ENSDARP00000116736.aln.faa -o examples/pratical_example/emapper/
 
-treeprofiler.py plot --tree examples/pratical_example/emapper/7955.ENSDARP00000116736_annotated.nw --domain_layout
+treeprofiler plot --tree examples/pratical_example/emapper/7955.ENSDARP00000116736_annotated.nw --domain_layout
 ```
 ![pfam example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_domain_layout.jpeg?raw=true)
 
@@ -886,9 +886,9 @@ if metadata is smart annotations from eggnog-mapper, using `--emapper_smart` to 
 Once tree is annotated, using `--domain_layout` to visualize it.
 
 ```
-treeprofiler.py annotate --tree examples/pratical_example/emapper/7955.ENSDARP00000116736.nw --emapper_smart examples/pratical_example/emapper/7955.out.emapper.smart.out --alignment examples/pratical_example/emapper/7955.ENSDARP00000116736.aln.faa -o examples/pratical_example/emapper/
+treeprofiler annotate --tree examples/pratical_example/emapper/7955.ENSDARP00000116736.nw --emapper_smart examples/pratical_example/emapper/7955.out.emapper.smart.out --alignment examples/pratical_example/emapper/7955.ENSDARP00000116736.aln.faa -o examples/pratical_example/emapper/
 
-treeprofiler.py plot --tree examples/pratical_example/emapper/7955.ENSDARP00000116736_annotated.nw --domain_layout
+treeprofiler plot --tree examples/pratical_example/emapper/7955.ENSDARP00000116736_annotated.nw --domain_layout
 ```
 
 ### Layouts for eggnog-mapper annotations
@@ -899,9 +899,9 @@ seed_ortholog	evalue	score	eggNOG_OGs	max_annot_lvl	COG_category	Description	Pre
 ```
 
 ```
-treeprofiler.py annotate --tree examples/pratical_example/emapper/7955.ENSDARP00000116736.nw --emapper_annotations examples/pratical_example/emapper/7955.out.emapper.annotations -oexamples/pratical_example/emapper/
+treeprofiler annotate --tree examples/pratical_example/emapper/7955.ENSDARP00000116736.nw --emapper_annotations examples/pratical_example/emapper/7955.out.emapper.annotations -oexamples/pratical_example/emapper/
 
-treeprofiler.py plot --tree examples/pratical_example/emapper/7955.ENSDARP00000116736_annotated.ete --tree_type ete --emapper_layout
+treeprofiler plot --tree examples/pratical_example/emapper/7955.ENSDARP00000116736_annotated.ete --tree_type ete --emapper_layout
 ```
 [Check eggnogmapper example](#demo2-explore-eggnog-mapper-annotations-data-with-taxonomic-annotation)
 
@@ -925,7 +925,7 @@ Internal nodes of numerical data are process descriptive statistic analysis by d
 example
 ```
 # select max instead of avg as internal node ploting representative
-treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.nw  --heatmap_layout sample1,sample2,sample3,sample4,sample5 --internal_plot_measure max 
+treeprofiler plot --tree examples/basic_example1/basic_example1_annotated.nw  --heatmap_layout sample1,sample2,sample3,sample4,sample5 --internal_plot_measure max 
 ```
 Before collapsed
 ![heatmap_uncollapsed](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_heatmap_uncollapsed.jpeg?raw=true)
@@ -941,7 +941,7 @@ Activate Taxonomic layout using `--taxonclade_layout` or `--taxonrectangular_lay
 ```
 ## Annotate
 # GTDB
-treeprofiler.py annotate \
+treeprofiler annotate \
 --tree examples/taxonomy_example/gtdb/gtdb_example1.nw \
 --metadata examples/taxonomy_example/gtdb/gtdb_example1.tsv \
 --taxon_column name \
@@ -950,14 +950,14 @@ treeprofiler.py annotate \
 --outdir ./examples/taxonomy_example/gtdb/
 
 # NCBI
-treeprofiler.py annotate --tree examples/taxonomy_example/ncbi/spongilla_example.nw --metadata examples/taxonomy_example/ncbi/spongilla_example.tsv --taxonomic_profile --taxon_delimiter .  --taxa_field 0 --taxadb NCBI --outdir ./examples/taxonomy_example/ncbi/
+treeprofiler annotate --tree examples/taxonomy_example/ncbi/spongilla_example.nw --metadata examples/taxonomy_example/ncbi/spongilla_example.tsv --taxonomic_profile --taxon_delimiter .  --taxa_field 0 --taxadb NCBI --outdir ./examples/taxonomy_example/ncbi/
 
 
 ## Visualize 
-treeprofiler.py plot \
+treeprofiler plot \
 --tree ./examples/taxonomy_example/gtdb/gtdb_example1_annotated.nw \ --taxonrectangular_layout
 
-treeprofiler.py plot \
+treeprofiler plot \
 --tree examples/taxonomy_example/ncbi/spongilla_example_annotated.nw \ --taxonclade_layout
 ```
 ![taxarect_collapsed](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_taxarect.jpeg?raw=true)
@@ -997,7 +997,7 @@ All the conditional query shared the same syntax, a standard query consists the 
 Example 
 ```
 ## annotate tree 
-treeprofiler.py annotate \
+treeprofiler annotate \
 --tree examples/basic_example1/basic_example1.nw \
 --metadata examples/basic_example1/basic_example1.tsv \
 --bool_prop bool_type,bool_type2 \
@@ -1005,17 +1005,17 @@ treeprofiler.py annotate \
 -o examples/basic_example1/ 
 
 # Conditional pruning, prune leaf node whose name contain "FALPE"
-treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.nw --pruned_by "name contains FALPE"
+treeprofiler plot --tree examples/basic_example1/basic_example1_annotated.nw --pruned_by "name contains FALPE"
 
 # Conditional highlight
 # select tree node whose name contains `FALPE` character
-treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.nw --highlighted_by "name contains FALPE"
+treeprofiler plot --tree examples/basic_example1/basic_example1_annotated.nw --highlighted_by "name contains FALPE"
 
 # select tree node whose sample1 feature > 0.50, here we using ete format which can resume the datatype 
-treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.ete --tree_type ete --highlighted_by "sample1 > 0.50"
+treeprofiler plot --tree examples/basic_example1/basic_example1_annotated.ete --tree_type ete --highlighted_by "sample1 > 0.50"
 
 # if use tree in newick format, we need to attach the prop2type file which can resume the datatype
-treeprofiler.py plot \
+treeprofiler plot \
 --tree examples/basic_example1/basic_example1_annotated.nw \
 --tree_type newick \
 --prop2type examples/basic_example1/ basic_example1_prop2type.txt \ --highlighted_by "sample1 > 0.50"
@@ -1027,13 +1027,13 @@ Query in internal nodes' properties is also available, in this case, `left_value
 Example
 ```
 # select tree internal node where sample1_avg feature < 0.50
-treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.ete --tree_type ete --heatmap_layout sample1 --collapsed_by "sample1_avg < 0.50" 
+treeprofiler plot --tree examples/basic_example1/basic_example1_annotated.ete --tree_type ete --heatmap_layout sample1 --collapsed_by "sample1_avg < 0.50" 
 ```
 
 Syntax for internal node counter data
 ```
 # collapse tree internal nodes, where `high` relative counter > 0.35 in random_type_counter property
-treeprofiler.py plot \
+treeprofiler plot \
 --tree examples/basic_example1/basic_example1_annotated.ete \
 --tree_type ete \
 --collapsed_by "random_type_counter:high > 0.35"
@@ -1045,7 +1045,7 @@ The syntax for the AND condition and OR condition in TreeProfiler is:
 AND condition will be under one argument, syntax seperated by `,`, such as 
 ```
 # select tree  node where sample1 feature > 0.50 AND sample2 < 0.2
-treeprofiler.py plot \
+treeprofiler plot \
 --tree examples/basic_example1/basic_example1_annotated.ete \
 --tree_type ete \
 --heatmap_layout sample1,sample2,sample3,sample4,sample5 \
@@ -1055,7 +1055,7 @@ treeprofiler.py plot \
 OR condition will be used more than one arguments
 ```
 # select tree node where sample1 feature > 0.50 OR sample2 < 0.2
-treeprofiler.py plot --tree examples/basic_example1/basic_example1_annotated.ete \
+treeprofiler plot --tree examples/basic_example1/basic_example1_annotated.ete \
 --tree_type ete \
 --heatmap_layout sample1,sample2,sample3,sample4,sample5 \
 --highlighted_by "sample1>0.50" \
@@ -1069,12 +1069,12 @@ Prune taxonomic annotated tree based on following taxonomic rank level,
 # Case in GTDB
 
 # prune tree in visualization, rank limit to family level
-treeprofiler.py plot --tree examples/taxonomy_example/gtdb/gtdb_example1_annotated.nw  --rank_limit family --taxonclade_layout  
+treeprofiler plot --tree examples/taxonomy_example/gtdb/gtdb_example1_annotated.nw  --rank_limit family --taxonclade_layout  
 
 # Case in NCBI
 
 # prune tree in visualization, rank limit to phylum level
-treeprofiler.py plot --tree examples/taxonomy_example/ncbi/spongilla_example_annotated.nw --rank_limit phylum --taxonclade_layout
+treeprofiler plot --tree examples/taxonomy_example/ncbi/spongilla_example_annotated.nw --rank_limit phylum --taxonclade_layout
 ```
 
 ## Demo1 Explore GTDB taxonomic tree with metadata and habitat information of progenome3
@@ -1098,7 +1098,7 @@ wget -P examples/pratical/gtdb_r202/ https://data.gtdb.ecogenomic.org/releases/r
 
 Annotate metadatas to taxonomic tree(this step may take a few minutes)
 ```
-treeprofiler.py annotate \
+treeprofiler annotate \
 --tree examples/pratical_example/gtdb_r202/gtdbv202.nw \
 --metadata \
 examples/pratical_example/gtdb_r202/ar122_metadata_r202.tar.gz,\
@@ -1113,7 +1113,7 @@ examples/pratical_example/gtdb_r202/progenome3.tsv \
 
 Visualizing annotated GTDB tree with GTDB metadata, which are genome_size, protein_count, gc_percentage, ncbi_assembly_level, ncbi_genome_category and progenome3 habitat information aquatic_habitat, host_associated, soil_habitat.
 ```
-treeprofiler.py plot \
+treeprofiler plot \
 --tree examples/pratical_example/gtdb_r202/gtdbv202_annotated.ete \
 --tree_type ete \
 --barplot_layout genome_size,protein_count \
@@ -1131,7 +1131,7 @@ Here we analyzed the nitrogenase iron protein NifH gene family across bacteria f
 
 Map emapper annotation, pfam annotation and taxonomic annotation to target tree 
 ```
-treeprofiler.py annotate \
+treeprofiler annotate \
 --tree  examples/pratical_example/emapper/COG1348.tree \
 --emapper_annotation examples/pratical_example/emapper/COG1348.out.emapper.annotations \
 --emapper_pfam examples/pratical_example/emapper/COG1348.out.emapper.pfam \
@@ -1145,7 +1145,7 @@ treeprofiler.py annotate \
 
 Visualize annotations of emapper, pfam domain and ncbi taxonomy
 ```
-treeprofiler.py plot \
+treeprofiler plot \
 --tree examples/pratical_example/emapper/COG1348_annotated.ete \
 --tree_type ete \
 --emapper_layout \
