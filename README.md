@@ -464,9 +464,10 @@ For instance of `examples/spongilla_example/spongilla_example.nw` and `examples/
 ```
 treeprofiler annotate \
 --tree examples/taxonomy_example/ncbi/spongilla_example.nw \
---metadata examples/taxonomy_example/ncbi/spongilla_example.tsv --taxonomic_profile \
+--metadata examples/taxonomy_example/ncbi/spongilla_example.tsv \
+--taxonomic_profile \
 --taxon_column name \
---taxadb NCBI \ 
+--taxadb NCBI \
 --taxon_delimiter . \
 --taxa_field 0  \
 --outdir ./examples/taxonomy_example/ncbi/
@@ -1018,7 +1019,7 @@ treeprofiler plot --tree examples/basic_example1/basic_example1_annotated.ete --
 treeprofiler plot \
 --tree examples/basic_example1/basic_example1_annotated.nw \
 --tree_type newick \
---prop2type examples/basic_example1/ basic_example1_prop2type.txt \
+--prop2type examples/basic_example1/basic_example1_prop2type.txt \
 --highlighted_by "sample1 > 0.50"
 ```
 
