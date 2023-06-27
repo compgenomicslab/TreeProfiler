@@ -8,8 +8,8 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__) + '/..'))
 #from collections import namedtuple
 from tempfile import NamedTemporaryFile
 
-import tree_annotate
-import utils
+from treeprofiler import tree_annotate
+from treeprofiler.src import utils
 
 def test_annotate_taxnomic_NCBI_01():
     # taxid in the leaf name

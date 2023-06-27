@@ -1,5 +1,4 @@
 from __future__ import annotations
-from ete4.smartview import TreeStyle, NodeStyle, TreeLayout, PieChartFace, LegendFace, RectFace
 import Bio
 from Bio import AlignIO
 from Bio.Align import MultipleSeqAlignment
@@ -8,8 +7,12 @@ import numpy as np
 from distutils.util import strtobool
 import matplotlib as mpl
 from itertools import chain
-from src.utils import to_code, call, counter_call, check_nan
+
+from ete4.smartview import TreeStyle, NodeStyle, TreeLayout, PieChartFace, LegendFace, RectFace
 from ete4.smartview.renderer.draw_helpers import *
+
+from treeprofiler.src.utils import to_code, call, counter_call, check_nan
+
 Box = namedtuple('Box', 'x y dx dy')  # corner and size of a 2D shape
 
 def get_piechartface(node, prop, colour_dict=None, radius=20, tooltip=None):

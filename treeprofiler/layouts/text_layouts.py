@@ -1,6 +1,6 @@
 from ete4.smartview import TreeStyle, NodeStyle, TreeLayout, PieChartFace
 from ete4.smartview  import RectFace, CircleFace, SeqMotifFace, TextFace, OutlineFace
-from layouts.general_layouts import get_piechartface, get_stackedbarface
+from treeprofiler.layouts.general_layouts import get_piechartface, get_stackedbarface
 
 """
 label_layout, colorbranch_layout, rectangular_layout   

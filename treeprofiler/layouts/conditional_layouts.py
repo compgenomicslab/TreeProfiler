@@ -1,8 +1,8 @@
 from ete4.smartview import TreeStyle, NodeStyle, TreeLayout, PieChartFace
 from ete4.smartview  import (RectFace, CircleFace, SeqMotifFace, TextFace, OutlineFace, \
                             SelectedFace, SelectedCircleFace, SelectedRectFace, LegendFace)
-from layouts.general_layouts import get_heatmapface
-from src.utils import to_code, call, counter_call, check_nan
+from treeprofiler.layouts.general_layouts import get_heatmapface
+from treeprofiler.src.utils import to_code, call, counter_call, check_nan
 # for boolean layouts
 from distutils.util import strtobool
 

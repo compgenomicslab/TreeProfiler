@@ -14,13 +14,14 @@ from collections import defaultdict, Counter
 import numpy as np
 from scipy import stats
 
-from src import b64pickle
+
 from ete4.parser.newick import NewickError
 from ete4.coretype.seqgroup import SeqGroup
 from ete4 import Tree, PhyloTree
 from ete4 import GTDBTaxa
 from ete4 import NCBITaxa
-from src.utils import (
+from treeprofiler.src import b64pickle
+from treeprofiler.src.utils import (
     ete4_parse, taxatree_prune, conditional_prune,
     children_prop_array, children_prop_array_missing,
     flatten, get_consensus_seq)
