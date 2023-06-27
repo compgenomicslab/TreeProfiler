@@ -75,6 +75,10 @@ def main():
     plot_args_p.set_defaults(func=tree_plot.run)
 
     ## - RUN -
+    if len(sys.argv[1:]) < 1:
+        print(parser.print_usage())
+        return
+    
     args = parser.parse_args(sys.argv[1:])
     args.func(args)
 

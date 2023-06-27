@@ -5,7 +5,7 @@ import os
 
 def get_files(directory):
     file_list = []
-    for root, dirs, files in os.walk('examples/'):
+    for root, dirs, files in os.walk(directory):
         for file in files:
             file_path = os.path.join(root, file)
             file_list.append(file_path)
@@ -14,6 +14,7 @@ def get_files(directory):
 VERSION = '1.0.0-beta'
 install_requires = ['ete4', 'selenium', 'biopython','scipy']
 example_files = get_files('examples/')
+test_files = get_files('tests/')
 
 setup(
     name='TreeProfiler',
@@ -25,20 +26,21 @@ setup(
     maintainer = 'Ziqi Deng',
     maintainer_email = 'dengziqi1234@gmail.com',
     url="https://github.com/compgenomicslab/MetaTreeDrawer",
-    packages=find_packages(),
+    
     #package_dir = {'treeprofiler' : '' },
+    packages=find_packages(),
     package_data = { 
         'treeprofiler' : [
             'treeprofiler/*',
             ],
-        'tests': ['tests/*'],
         },
-    #scripts=['treeprofiler/treeprofiler.py'],
+    #scripts=['treeprofiler.py'],
     entry_points = {
         'console_scripts': ['treeprofiler=treeprofiler.treeprofiler:main']
     },
     data_files=[
-        ('examples', example_files)
+        ('examples', example_files),
+        ('tests', test_files)
     ],
     install_requires=install_requires,
     keywords = "tree annotation, tree visualization, phylogeny, phylogenetics, phylogenomics",
