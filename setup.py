@@ -42,8 +42,7 @@ setup(
     },
     data_files=[
         ('examples', example_files),
-        ('tests', test_files),
-        ('treeprofiler', ['layouts/pfam2color.json','layouts/smart2color.json'])
+        ('tests', test_files)
     ],
     install_requires=install_requires,
     keywords = "tree annotation, tree visualization, phylogeny, phylogenetics, phylogenomics",
