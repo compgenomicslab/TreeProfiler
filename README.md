@@ -1018,7 +1018,8 @@ treeprofiler plot --tree examples/basic_example1/basic_example1_annotated.ete --
 treeprofiler plot \
 --tree examples/basic_example1/basic_example1_annotated.nw \
 --tree_type newick \
---prop2type examples/basic_example1/ basic_example1_prop2type.txt \ --highlighted_by "sample1 > 0.50"
+--prop2type examples/basic_example1/ basic_example1_prop2type.txt \
+--highlighted_by "sample1 > 0.50"
 ```
 
 #### Query in internal nodes
