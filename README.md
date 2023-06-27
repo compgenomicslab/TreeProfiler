@@ -34,9 +34,9 @@
       - [Query in internal nodes](#query-in-internal-nodes)
       - [AND and OR conditions](#and-and-or-conditions)
       - [Conditional pruning based on taxonomic level](#conditional-limit-based-on-taxonomic-level)
-- [Demo1 Explore progenome data](#demo1-explore-progenome-data)
-- [Demo2 Explore Nif gene family tree with functional annotations data using eggnog-mapper with taxonomic annotation](#demo2-explore-eggnog-mapper-annotations-data-with-taxonomic-annotation)
- - [Demo3 explore ]
+- [Demo1 Explore progenome data](#demo1-explore-gtdb-taxonomic-tree-with-metadata-and-habitat-information-of-progenome3)
+- [Demo2 Explore Nif gene family tree with functional annotations data using eggnog-mapper with taxonomic annotation](#demo2-explore-large-nifh-gene-tree-with-functional-and-taxonomic-information)
+
 ## Introduction
 TreeProfiler is command-line tool for profiling metadata table into phylogenetic tree with descriptive analysis and output visualization
 
@@ -1121,7 +1121,7 @@ treeprofiler.py plot \
 
 ![progenome3 example](https://raw.githubusercontent.com/dengzq1234/treeprofiler_gallery/main/progenome_example.jpeg)
 
-## Demo2 Explore large NifH gene trees with functional and taxonomic information
+## Demo2 Explore large NifH gene tree with functional and taxonomic information
 Here we analyzed the nitrogenase iron protein NifH gene family across bacteria from EggNOG6 with EggNOG-mapper, a tool for functional annotation based on precomputed orthology assignments. TreeProfiler provides options which allows users to directly map EggNOG-mapper outputs including functional annotations and pfam/smart domain predictions. Hence are then able to map these functional annotations to their respective phylogenetic gene trees and them with the evolutionary history, tracing from leaf to root level.
 
 Map emapper annotation, pfam annotation and taxonomic annotation to target tree 
