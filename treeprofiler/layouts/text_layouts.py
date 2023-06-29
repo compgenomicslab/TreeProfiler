@@ -37,7 +37,7 @@ class LayoutText(TreeLayout):
                                     )
 
     def set_node_style(self, node):
-        if node.is_leaf() and node.props.get(self.text_prop):
+        if node.is_leaf and node.props.get(self.text_prop):
             prop_text = node.props.get(self.text_prop)
             if prop_text:
                 if type(prop_text) == list:
@@ -50,7 +50,7 @@ class LayoutText(TreeLayout):
                     prop_face = TextFace(prop_text, color='black', min_fsize=self.min_fsize, max_fsize=self.max_fsize, padding_x=self.padding_x, width=self.width )
             node.add_face(prop_face, column=self.column, position="aligned")
             
-        elif node.is_leaf() and node.props.get(self.internal_prop):
+        elif node.is_leaf and node.props.get(self.internal_prop):
             stackedbar_face = get_stackedbarface(node, self.internal_prop, self.color_dict, width=self.width, padding_x=self.padding_x, padding_y=self.padding_y)
             node.add_face(stackedbar_face, column = self.column, position = "aligned", collapsed_only=False)
 
