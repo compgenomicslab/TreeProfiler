@@ -113,11 +113,23 @@ treeprofiler plot --tree tree_annotated.ete --tree_type ete
 
 ### Run examples dataset
 TreeProfiler provide various example dataset for testing in `examples/`,
-each directory consists a tutorial script for quick starting different functions in TreeProfiler which alreadyh as annotate-plot pipeline of example data. For example,
+each directory consists a demo script `*_demo.sh` for quick starting different functions in TreeProfiler which alreadyh as annotate-plot pipeline of example data. User can fast explore different example tree with different visualizations. Here is the demonstration:
 
 ```
+# display demo script of each example
+find ./examples/ -name "*.sh"
+./examples/basic_example1/example1_demo.sh
+./examples/basic_example2/example2_demo.sh
+./examples/taxonomy_example/ncbi/ncbi_demo.sh
+./examples/taxonomy_example/gtdb/gtdb_demo.sh
+./examples/pratical_example/progenome3/progenome_demo.sh
+./examples/pratical_example/gtdb_r202/gtdbv202full_demo.sh
+./examples/pratical_example/gtdb_r202/gtdbv202lite_demo.sh
+./examples/pratical_example/emapper/emapper_demo.sh
+
+# execute demo scrip of example1
 cd examples/basic_example1/
-bash annotate_example1.sh
+sh ./example1_demo.sh
 
 Annotate example tree with two metadata tables
 start parsing...
@@ -135,27 +147,26 @@ WARNING: This is a development server. Do not use it in a production deployment.
 Press CTRL+C to quit
 ```
 
-As the session starts in local server http://127.0.0.1:5000, annotated tree and selected properties are visualized at the interactive session.
+As the session starts in local server http://127.0.0.1:5000, annotated tree and selected properties are visualized at the interactive session. Here is more information of interactive session of visualization([here]())
 
 
 # Using TreeProfiler
 In this Tutorial we will use TreeProfiler and demostrate basic usage with data in `examples/`
 
-
 ```
-tree examples
-examples
+tree examples/
+examples/
 ├── basic_example1
-│   ├── annotate_example1.sh
 │   ├── basic_example1_metadata2.tsv
 │   ├── basic_example1_miss.tsv
 │   ├── basic_example1_null.tsv
 │   ├── basic_example1.nw
-│   └── basic_example1.tsv
+│   ├── basic_example1.tsv
+│   └── example1_demo.sh
 ├── basic_example2
-│   ├── annotate_example2.sh
 │   ├── diauxic.array
 │   ├── diauxic.nw
+│   ├── example2_demo.sh
 │   ├── FluA_H3_AA.fas
 │   ├── MCC_FluA_H3_Genotype.txt
 │   └── MCC_FluA_H3.nw
@@ -166,29 +177,30 @@ examples
 │   │   ├── 7955.out.emapper.annotations
 │   │   ├── 7955.out.emapper.pfam
 │   │   ├── 7955.out.emapper.smart.out
-│   │   ├── annotate_emapper.sh
 │   │   ├── COG1348.faa.aln
 │   │   ├── COG1348.out.emapper.annotations
 │   │   ├── COG1348.out.emapper.pfam
-│   │   └── COG1348.tree
+│   │   ├── COG1348.tree
+│   │   └── emapper_demo.sh
 │   ├── gtdb_r202
-│   │   ├── annotate_gtdbv202.sh
+│   │   ├── gtdbv202_demo.sh
 │   │   ├── gtdbv202.nw
 │   │   ├── merge_gtdbtree.py
 │   │   └── progenome3.tsv
 │   └── progenome3
-│       ├── annotate_progenome.sh
 │       ├── progenome3.nw
-│       └── progenome3.tsv
+│       ├── progenome3.tsv
+│       └── progenome_demo.sh
 └── taxonomy_example
     ├── gtdb
-    │   ├── annotate_gtdb.sh
+    │   ├── gtdb_demo.sh
     │   ├── gtdb_example1.nw
     │   └── gtdb_example1.tsv
     └── ncbi
-        ├── annotate_spongilla.sh
+        ├── ncbi_demo.sh
         ├── spongilla_example.nw
         └── spongilla_example.tsv
+
 ```
 
 ## `annotate`, Annotate metadata into tree 
@@ -1080,43 +1092,78 @@ treeprofiler plot --tree examples/taxonomy_example/ncbi/spongilla_example_annota
 ```
 
 ## Demo1 Explore GTDB taxonomic tree with metadata and habitat information of progenome3
-To illustrate the easiness and flexibility of TreeProfiler, we use it to annotate and visualize the version 202 of the GTDB prokaryotic phylogeny, which represents a species tree with 60,000 representative bacterial and archaeal species in [here](https://data.gtdb.ecogenomic.org/releases/release202/). GTDB provides the tree in plain newick format and massive datatable with various associated to such species. Apart from the metadata provided by the GTDB, here we also include annotations of genomes and species clusters to habitats from proGenomes3([Fullam et al. 2023](https://progenomes.embl.de/)). Example can be found in directory `./examples/pratical/gtdb_r202/`
+To illustrate the easiness and flexibility of TreeProfiler, we use it to annotate and visualize the version 202 of the GTDB prokaryotic phylogeny, which represents a species tree with 60,000 representative bacterial and archaeal species in [here](https://data.gtdb.ecogenomic.org/releases/release202/). GTDB provides the tree in plain newick format and massive datatable with various associated to such species. Apart from the metadata provided by the GTDB, here we also include annotations of genomes and species clusters to habitats from proGenomes3([Fullam et al. 2023](https://progenomes.embl.de/)). 
+
+Example can be found in directory `./examples/pratical/gtdb_r202/`. We already prepared the gtdb v202 taxonomic tree `gtdbv202.nw` by merging Bacteria and Archaea trees, detailed steps are included in `merge_gtdbtree.py`. Based on the difference of computational capacity, complete steps and pipeline can be found in `gtdbv202full_demo.sh` and `gtdbv202lite_demo.sh`. 
 
 1) A glance of habitat information of progenome3
 ```
-head -2 examples/pratical/gtdb_r202/progenome3.tsv
-name    GC      GCA     aquatic_habitat host_associated size    soil_habitat    GCF
-2486577.SAMN10347832.GCA_004210275.1    40.8    GCA_004210275.1 0       1       1375759 0       RS_GCF_004210275.1
-2759495.SAMN15595193.GCA_014116815.1    34.3    GCA_014116815.1                 1928597         GB_GCA_014116815.1
+cd examples/pratical/gtdb_r202/
+
+zcat progenome3.tar.gz|head -n 4
+progenome3.tsv0000664000175000017500000343216414447266674012351 0ustar  dengdenggtdb_genome_representative	aquatic_habitat	host_associated	soil_habitat
+RS_GCF_004210275.1	f	t	f
+GB_GCA_014116815.1			
+RS_GCF_000730245.1	f	t	f
+
 ```
 
 2) Download metadata of archaea and bacteria from gtdb
 ```
-wget -P examples/pratical/gtdb_r202/ https://data.gtdb.ecogenomic.org/releases/release202/202.0/ar122_metadata_r202.tar.gz
-wget -P examples/pratical/gtdb_r202/ https://data.gtdb.ecogenomic.org/releases/release202/202.0/bac120_metadata_r202.tar.gz
+wget https://data.gtdb.ecogenomic.org/releases/release202/202.0/ar122_metadata_r202.tar.gz
+wget https://data.gtdb.ecogenomic.org/releases/release202/202.0/bac120_metadata_r202.tar.gz
 ```
 
-3)Here we will conduct the profiling with two command line
+3) GTDB metadata annotation
 
-Annotate metadatas to taxonomic tree(this step may take a few minutes)
+Considering the size of GTDB metadata and phylogeney, here we provide two pipelines for user to choose base on their computational resources. 
+
+- GTDB partial annotation (lightweight), which we will extract only a few of columns from metadata for annotation
+
 ```
+# Extract genome_size, protein_count, gc_percentage, ncbi_assembly_level, ncbi_genome_category columns from GTDB metadata
+tar -xf ar122_metadata_r202.tar.gz -O | cut -f1,14,89,13,46,56 > ar122_metadata_r202_lite.tsv
+tar -xf bac120_metadata_r202.tar.gz -O | cut -f1,14,89,13,46,56 > bac120_metadata_r202_lite.tsv
+
+# start annotation
 treeprofiler annotate \
---tree examples/pratical_example/gtdb_r202/gtdbv202.nw \
+--tree gtdbv202.nw \
 --metadata \
-examples/pratical_example/gtdb_r202/ar122_metadata_r202.tar.gz,\
-examples/pratical_example/gtdb_r202/bac120_metadata_r202.tar.gz,\
-examples/pratical_example/gtdb_r202/progenome3.tsv \
---bool_prop aquatic_habitat,host_associated,soil_habitat \
+ar122_metadata_r202_lite.tsv,bac120_metadata_r202_lite.tsv,progenome3.tar.gz \
 --taxonomic_profile \
 --taxadb GTDB \
--o examples/pratical_example/gtdb_r202/
+-o ./
+```  
+
+
+- GTDB full annotation, which requires **>6G disk space and >15G RAM memory**. 
+```
+# Annotate metadatas to taxonomic tree(this step may take a few minutes)
+treeprofiler annotate \
+--tree gtdbv202.nw \
+--metadata \
+ar122_metadata_r202.tar.gz,bac120_metadata_r202.tar.gz,progenome3.tar.gz \
+--taxonomic_profile \
+--taxadb GTDB \
+-o ./
 
 ```
 
-Visualizing annotated GTDB tree with GTDB metadata, which are genome_size, protein_count, gc_percentage, ncbi_assembly_level, ncbi_genome_category and progenome3 habitat information aquatic_habitat, host_associated, soil_habitat.
+4) Visualizing annotated GTDB tree with GTDB metadata, which are 
+- `genome_size`
+- `protein_count`
+- `gc_percentage` 
+- `ncbi_assembly_level` 
+- `ncbi_genome_category` 
+
+  and progenome3 habitat information 
+- `aquatic_habitat` 
+- `host_associated` 
+- `soil_habitat`
+
 ```
 treeprofiler plot \
---tree examples/pratical_example/gtdb_r202/gtdbv202_annotated.ete \
+--tree gtdbv202_annotated.ete \
 --tree_type ete \
 --barplot_layout genome_size,protein_count \
 --heatmap_layout gc_percentage \
@@ -1125,6 +1172,7 @@ treeprofiler plot \
 --taxonclade_layout \
 --column_width 70
 ```
+
 
 ![progenome3 example](https://raw.githubusercontent.com/dengzq1234/treeprofiler_gallery/main/progenome_example.jpeg)
 
