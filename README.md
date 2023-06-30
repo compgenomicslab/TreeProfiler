@@ -17,6 +17,8 @@
       - [Annotation from eggnog-mapper output](#annotation-from-eggnog-mapper-output)
       - [Annotated tree format](#annotate-tree-format)
   - [Plot annotated tree with layouts](#plot-plot-annotated-tree-with-layouts)
+      - [Interactive visualization interface](#interactive-visualization-interface)
+      - [Basic options of visualizing layouts](#basic-options-of-visualizing-layouts)
       - [Layouts for categorical data](#layouts-for-categorical-data)
       - [Layouts for boolean data](#layouts-for-boolean-data)
       - [Layouts for numerical data](#layouts-for-numerical-data)
@@ -133,22 +135,24 @@ sh ./example1_demo.sh
 
 Annotate example tree with two metadata tables
 start parsing...
-Time for parse_csv to run:  0.0024509429931640625
-Time for load_metadata_to_tree to run:  0.0003533363342285156
-Time for merge annotations to run:  0.05228090286254883
+Time for parse_csv to run:  0.001968860626220703
+Time for load_metadata_to_tree to run:  0.0003094673156738281
+Time for merge annotations to run:  0.05160331726074219
 Time for annotate_taxa to run:  4.76837158203125e-07
-visualize annotated example tree by showing categorical property random_type with label_layout, rectangular_layout and colorbranch_layout.
+Visualize properties categorical data random_type in rectangular_layout, numerical data sample1, sample2 in heatmap_layout and barplot_layout.
 Current trees in memory: 0
 Added tree example with id 0.
- * Serving Flask app 'ete4.smartview.gui.server'
+ * Serving Flask app 'ete4.smartview.gui.server' (lazy loading)
+ * Environment: production
+   WARNING: This is a development server. Do not use it in a production deployment.
+   Use a production WSGI server instead.
  * Debug mode: on
-WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
- * Running on http://127.0.0.1:5000
-Press CTRL+C to quit
+ * Running on http://127.0.0.1:5000/ (Press CTRL+C to quit)
 ```
 
-As the session starts in local server http://127.0.0.1:5000, annotated tree and selected properties are visualized at the interactive session. Here is more information of interactive session of visualization([here]())
-
+As the session starts in local server http://127.0.0.1:5000, annotated tree and selected properties are visualized at the interactive session.
+![treeprofiler interface](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/treeprofiler_gallery2-1.png?raw=true)
+Here is detailed introduction of interactive session of visualization([here](#interactive-visualization-interface))
 
 # Using TreeProfiler
 In this Tutorial we will use TreeProfiler and demostrate basic usage with data in `examples/`
@@ -557,6 +561,7 @@ In the following `plot` step, users can use either `.nw` or `.ete` by putting `-
 
  - ete format is a novel format developed to solve the situation we encounter in the previous step, annotated tree can be **recover easily with all the annotated data without changing the data type**. Besides, the ete format optimized the tree file size after mapped with its associated data. Hence it's very handy for programers in their own script. At this moment we can only view the ete format in treeprofiler, but we will make the ete format more universal to other phylogenetic software. 
 
+
 ## `plot`, Plot annotated tree with layouts
 TreeProfiler provides a several of layout options for visualize features in metadata along with tree, depends on their datatype
 ```
@@ -732,6 +737,13 @@ treeprofiler annotate --tree examples/basic_example2/MCC_FluA_H3.nw --metadata e
 
 *if bool value is 1 or 0, treeprofiler will infer it as numerical data, hence we determine it as boolean value by using `--bool_prop` arguments
 
+### Interactive visualization interface
+TreeProfiler uses the new visualization framework implemented in [ETE 4.0](https://github.com/etetoolkit/ete/tree/ete4), which allows for the interactive exploration of huge phylogenies based on a context-based adaptive zooming strategy(Fig xx).
+
+Figure xx.
+![treeprofiler interface](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/treeprofiler_gallery2-1.png?raw=true)
+Overview of the TreeProfiler visualization interface. (A) The control panel allows users to customise visualization layout and features, and to perform text-based searches. (B) An annotated example tree, from `examples/basic_example1/` after `annotate`, is launched with command `plot`. Support values (red) and branch distance (grey) are displayed on top of branches. The properties of one of the nodes are shown on the top. The minimap (bottom right) facilitates navigation. (C) The node editor panel provides access to node-specific actions, such as creating subtrees, collapsing, pruning, rooting and more. (D) Visualized properties categorical data `random_type` in `rectangular_layout`, numerical data `sample1`, `sample2` in `heatmap_layout` and `barplot_layout`. Layouts are shown with the order as input argument order from command line. Names of properties are shown as title on the top of each layout. (E) Legends each layout are shown on top right corner with the same order as the layouts.  
+
 ### Basic options of visualizing layouts
 Selected properties of tree will be visualized at the aligned panel alongside with the tree, here is some basic parameters for layouts.
 - `--column_width` column width of each property in layout. [default: 20]. 
@@ -784,6 +796,7 @@ treeprofiler plot --tree examples/basic_example2/MCC_FluA_H3_annotated.nw --cate
 ![rectangular_layout example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_rectangular_layout.jpeg?raw=true)
 ![profiling_layout example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_profiling_layout.png?raw=true)
 ![categorical_matrix_layout example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/cateforical_matrix_layout.png?raw=true)
+https://datadryad.org/stash/dataset/doi:10.5061/dryad.v15v0
 
 ### Layouts for boolean data
 Users can add the following flag to activate layouts for Boolean data
@@ -987,8 +1000,7 @@ TreeProfiler allows users to perform conditional process based on different circ
     - `--collapsed_by`, collapse tree branches whose nodes if the conditions, mainly on internal nodes
 - Conditional highlight, conditional highlight works in `plot` subcommand, allow users to highlight tree nodes under customized conditions
     - `--highlighted_by`, select tree nodes which fit the conditions
-
-
+ 
 ### Query Syntax
 #### Basic Query
 All the conditional query shared the same syntax, a standard query consists the following 
