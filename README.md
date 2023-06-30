@@ -792,11 +792,20 @@ treeprofiler plot --tree examples/basic_example1/basic_example1_annotated.nw --p
 treeprofiler plot --tree examples/basic_example2/MCC_FluA_H3_annotated.nw --categorical_matrix_layout PB2,PB1,PA,HA,NP,NA,M,NS
 ```
 ![label_layout example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_label_layout.jpeg?raw=true)
+`label_layout` displays the corresponding value of selected property
+of each leaf and categorized with colors. 
+
 ![colorbranch_layout example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_colorbranch_layout.jpeg?raw=true)
+`colorbranch_layout` categorize values of selected property by coloring the leaf nodes.
+
 ![rectangular_layout example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_rectangular_layout.jpeg?raw=true)
+`rectangular_layout` categorizes values of selected property by displaying rectangular color block alongside the corresponing leaf node.
+
 ![profiling_layout example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_profiling_layout.png?raw=true)
+`profiling_layout` convert categorical data of the selected property to presence-absence matrix.
+
 ![categorical_matrix_layout example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/cateforical_matrix_layout.png?raw=true)
-https://datadryad.org/stash/dataset/doi:10.5061/dryad.v15v0
+`categorical_matrix_layout` convert multiple categorical properties into categorical matrix, each value will be represent in different color. In this example we use `MCC_FluA_H3.tree`, time-scaled phylogenetic tree of H3 influenza viruses inferred by BEAST using molecular clock model and `MCC_FluA_H3_Genotype.txt`, Genotype table of the H3 influenza viruses([Yu, Guangchuang et al. (2017)](https://doi.org/10.5061/dryad.v15v0)). 8 gene segments `PB2`,`PB1`,`PA`,`HA`,`NP`,`NA`,`M`,`NS` as properties, and virus strain `trig`, `pdm` and `HuH3N2` are categorized with different colors in the matrix.
 
 ### Layouts for boolean data
 Users can add the following flag to activate layouts for Boolean data
@@ -806,7 +815,6 @@ Users can add the following flag to activate layouts for Boolean data
 --revbinary_layout REVBINARYLAYOUT
                         <col1,col2> names, column index or index range of columns which need to be plot as revbinary_layout, label shown only negative value
 ```                      
-
 
 ```
 ## target column "bool_type", "bool_type2" in examples/basic_example1/basic_example1.tsv
@@ -818,7 +826,10 @@ treeprofiler plot --tree examples/basic_example1/basic_example1_annotated.nw  --
 
 ```
 ![binary example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_binary_layout.jpeg?raw=true)
+`binary_layout` displays postive value as colored block and negative value as grey block
+
 ![revbinary example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_revbinary_layout.jpeg?raw=true)
+`binary_layout` displays negative value as colored block and postive value as grey block
 
 *Boolean data can be also visualized by categorical layouts, such as 
 ```
@@ -849,8 +860,14 @@ treeprofiler plot --tree examples/basic_example1/basic_example1_annotated.nw --h
 treeprofiler plot --tree examples/basic_example2/diauxic_annotated.nw --numerical_matrix_layout col1,col2,col3,col4,col5,col6,col7
 ```
 ![barplot example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_barplot_layout.jpeg?raw=true)
+`barplot_layout` display numerical data to barplot with scale, users can change the length of scale by using argument `--barplot_width [default: 200]`
 ![heatmap example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_heatmap_layout.jpeg?raw=true)
+`heatmap_layout` display numerical data to heatmap, which will automatically scale the minimum and maximum value from white to red.
+
 ![numerical profiling example](https://raw.githubusercontent.com/dengzq1234/treeprofiler_gallery/main/plot_numerical_profiling_layout.jpeg)
+
+`numerical_profiling_layout` display multiple numerical data column to numerical data trix, which will automatically scale the minimum and maximum value from blue to red. Comparing to `heatmap_layout`, `numerical_profiling_layout` can afford more data columns with faster memory.  
+
 
 ### Layouts for list data
 here we use example in `examples/basic_example1/basic_example1_metadata2.tsv`
