@@ -904,12 +904,18 @@ In order to visualize multiple sequence alignment alongside with the tree, first
 
 ```
 # annotate
-treeprofiler annotate --tree examples/basic_example2/MCC_FluA_H3.nw --alignment  ./examples/basic_example2/FluA_H3_AA.fas --outdir examples/basic_example2/
+treeprofiler annotate \
+--tree examples/basic_example2/MCC_FluA_H3.nw \
+--alignment  ./examples/basic_example2/FluA_H3_AA.fas \
+--outdir examples/basic_example2/
 
 # visualize
-treeprofiler plot --tree examples/basic_example2/MCC_FluA_H3_annotated.nw --alignment_layout
+treeprofiler plot \
+--tree examples/basic_example2/MCC_FluA_H3_annotated.nw \
+--alignment_layout
 ```
 ![alignment example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_alignment_layout.jpeg?raw=true)
+`alignment_layout` displays multiple sequence alignments with a tree. Whole MSA sequences were visualized with a tree in rectangular layout. Sacle of sequence with position roadmark located at the top.
 
 ### Layouts for eggnog-mapper pfam annotations
 if metadata is pfam annotations from eggnog-mapper, using `--emapper_pfam` to annotate domain information in target tree and **MUST** be with the alignment using `--alignment` to attach corresponding file.
@@ -917,11 +923,18 @@ if metadata is pfam annotations from eggnog-mapper, using `--emapper_pfam` to an
 Once tree is annotated, using `--domain_layout` to visualize it.
 
 ```
-treeprofiler annotate --tree examples/pratical_example/emapper/7955.ENSDARP00000116736.nw --emapper_pfam examples/pratical_example/emapper/7955.out.emapper.pfam --alignment examples/pratical_example/emapper/7955.ENSDARP00000116736.aln.faa -o examples/pratical_example/emapper/
+treeprofiler annotate \
+--tree examples/pratical_example/emapper/7955.ENSDARP00000116736.nw \
+--emapper_pfam examples/pratical_example/emapper/7955.out.emapper.pfam \
+--alignment examples/pratical_example/emapper/7955.ENSDARP00000116736.aln.faa \
+-o examples/pratical_example/emapper/
 
-treeprofiler plot --tree examples/pratical_example/emapper/7955.ENSDARP00000116736_annotated.nw --domain_layout
+treeprofiler plot \
+--tree examples/pratical_example/emapper/7955.ENSDARP00000116736_annotated.nw \
+--domain_layout
 ```
 ![pfam example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_domain_layout.jpeg?raw=true)
+`domain_layout` displays domain annotation with a tree. It requires sequence infomration `--alignment` in `annotate` step from MSA sequences to locate domain start and end position. 
 
 ### Layouts for eggnog-mapper smart annotations
 if metadata is smart annotations from eggnog-mapper, using `--emapper_smart` to annotate domain information in target tree and must be with the alignment using `--alignment` to attach corresponding file.
@@ -929,10 +942,17 @@ if metadata is smart annotations from eggnog-mapper, using `--emapper_smart` to 
 Once tree is annotated, using `--domain_layout` to visualize it.
 
 ```
-treeprofiler annotate --tree examples/pratical_example/emapper/7955.ENSDARP00000116736.nw --emapper_smart examples/pratical_example/emapper/7955.out.emapper.smart.out --alignment examples/pratical_example/emapper/7955.ENSDARP00000116736.aln.faa -o examples/pratical_example/emapper/
+treeprofiler annotate \
+--tree examples/pratical_example/emapper/7955.ENSDARP00000116736.nw \
+--emapper_smart examples/pratical_example/emapper/7955.out.emapper.smart.out \
+--alignment examples/pratical_example/emapper/7955.ENSDARP00000116736.aln.faa \
+-o examples/pratical_example/emapper/
 
-treeprofiler plot --tree examples/pratical_example/emapper/7955.ENSDARP00000116736_annotated.nw --domain_layout
+treeprofiler plot \
+--tree examples/pratical_example/emapper/7955.ENSDARP00000116736_annotated.nw \
+--domain_layout
 ```
+
 
 ### Layouts for eggnog-mapper annotations
 If metadata is output from eggnog-mapper, using `--emapper_annotations` automatically parse all information as metadata. Program will parse data of all the columns from emapper output. Once tree is annotated, using `--emapper_layout` to visualize tree with all the metadata
@@ -942,9 +962,15 @@ seed_ortholog	evalue	score	eggNOG_OGs	max_annot_lvl	COG_category	Description	Pre
 ```
 
 ```
-treeprofiler annotate --tree examples/pratical_example/emapper/7955.ENSDARP00000116736.nw --emapper_annotations examples/pratical_example/emapper/7955.out.emapper.annotations -oexamples/pratical_example/emapper/
+treeprofiler annotate \
+--tree examples/pratical_example/emapper/7955.ENSDARP00000116736.nw \
+--emapper_annotations examples/pratical_example/emapper/7955.out.emapper.annotations \
+-o examples/pratical_example/emapper/
 
-treeprofiler plot --tree examples/pratical_example/emapper/7955.ENSDARP00000116736_annotated.ete --tree_type ete --emapper_layout
+treeprofiler plot \
+--tree examples/pratical_example/emapper/7955.ENSDARP00000116736_annotated.ete \
+--tree_type ete \
+--emapper_layout
 ```
 [Check eggnogmapper example](#demo2-explore-eggnog-mapper-annotations-data-with-taxonomic-annotation)
 
@@ -954,21 +980,33 @@ If internal nodes are annotated, TreeProfiler is also able to visualize annotate
 #### Internal nodes of categorical and boolean data
 As internal nodes of categorical and boolean data are annotated as counter, for categorical data it generates a stacked bar of counter summary at the top of each internal node. And for boolean data, it generates a heatmap where represent positive(or negative) percentage of total data of each internal node.
 
+**Categorical data**
+
 Before collapsed
 ![text_uncollapsed](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_text_uncollapsed.jpeg?raw=true)
-![bool_uncollapsed](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_bool_uncollapsed.jpeg?raw=true)
-
 After collapsed
 ![text_collapsed](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_text_collapsed.jpeg?raw=true)
+In this example, collapsed internal node shows a stacked bar which summarize categorical counter data of children nodes. 1/6 is red, 2/6 is blue and 3/6 is green.
+
+
+**Boolean data**
+
+Before collapsed
+![bool_uncollapsed](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_bool_uncollapsed.jpeg?raw=true)
+After collapsed
 ![bool_collapsed](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_bool_collapsed.jpeg?raw=true)
+In this example, collapsed internal node shows a heatmap which represent the gradient level of positive/total ratio.
 
 #### Internal nodes of numerical data
 Internal nodes of numerical data are process descriptive statistic analysis by default, hence when users collapse any branch, barplot_layout or heatmap_layout will demonstrate representative value, `avg` by default. representative value can be changed by using `--internal_plot_measure`
 
-example
+**Numerical data**
 ```
 # select max instead of avg as internal node ploting representative
-treeprofiler plot --tree examples/basic_example1/basic_example1_annotated.nw  --heatmap_layout sample1,sample2,sample3,sample4,sample5 --internal_plot_measure max 
+treeprofiler plot \
+--tree examples/basic_example1/basic_example1_annotated.nw \
+--heatmap_layout sample1,sample2,sample3,sample4,sample5 \
+--internal_plot_measure max 
 ```
 Before collapsed
 ![heatmap_uncollapsed](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_heatmap_uncollapsed.jpeg?raw=true)
@@ -980,7 +1018,8 @@ max as itnernal plot measure
 ![heatmap_max_collapsed](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_heatmap_collapsed_max.jpeg?raw=true)
 
 ### Layouts for Taxonomic data
-Activate Taxonomic layout using `--taxonclade_layout` or `--taxonrectangular_layout`
+If target tree was annotated with `--taxonomic_profiler` in previous `annotate` step successfully, now activate Taxonomic layout using `--taxonclade_layout` or `--taxonrectangular_layout` to visualize taxonomic classification. All rank levels will be generated separately and users can switch each of them on/off.
+
 ```
 ## Annotate
 # GTDB
@@ -993,7 +1032,14 @@ treeprofiler annotate \
 --outdir ./examples/taxonomy_example/gtdb/
 
 # NCBI
-treeprofiler annotate --tree examples/taxonomy_example/ncbi/spongilla_example.nw --metadata examples/taxonomy_example/ncbi/spongilla_example.tsv --taxonomic_profile --taxon_delimiter .  --taxa_field 0 --taxadb NCBI --outdir ./examples/taxonomy_example/ncbi/
+treeprofiler annotate \
+--tree examples/taxonomy_example/ncbi/spongilla_example.nw \
+--metadata examples/taxonomy_example/ncbi/spongilla_example.tsv \
+--taxonomic_profile \
+--taxon_delimiter .  \
+--taxa_field 0 \
+--taxadb NCBI \
+--outdir ./examples/taxonomy_example/ncbi/
 
 
 ## Visualize 
@@ -1003,8 +1049,12 @@ treeprofiler plot \
 treeprofiler plot \
 --tree examples/taxonomy_example/ncbi/spongilla_example_annotated.nw \ --taxonclade_layout
 ```
+
 ![taxarect_collapsed](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_taxarect.jpeg?raw=true)
+`taxonrectangular_layout` shows taxonomic classification as rectangular block from root to leaf.
+
 ![taxaclade_collapsed](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_taxaclade.jpeg?raw=true)
+`taxonclade_layout` color associated clade of each category of each rank. 
 
 ## Conditional query in annotated tree
 TreeProfiler allows users to perform conditional process based on different circumstances
@@ -1047,14 +1097,21 @@ treeprofiler annotate \
 -o examples/basic_example1/ 
 
 # Conditional pruning, prune leaf node whose name contain "FALPE"
-treeprofiler plot --tree examples/basic_example1/basic_example1_annotated.nw --pruned_by "name contains FALPE"
+treeprofiler plot \
+--tree examples/basic_example1/basic_example1_annotated.nw \
+--pruned_by "name contains FALPE"
 
 # Conditional highlight
 # select tree node whose name contains `FALPE` character
-treeprofiler plot --tree examples/basic_example1/basic_example1_annotated.nw --highlighted_by "name contains FALPE"
+treeprofiler plot \
+--tree examples/basic_example1/basic_example1_annotated.nw \
+--highlighted_by "name contains FALPE"
 
 # select tree node whose sample1 feature > 0.50, here we using ete format which can resume the datatype 
-treeprofiler plot --tree examples/basic_example1/basic_example1_annotated.ete --tree_type ete --highlighted_by "sample1 > 0.50"
+treeprofiler plot \
+--tree examples/basic_example1/basic_example1_annotated.ete \
+--tree_type ete \
+--highlighted_by "sample1 > 0.50"
 
 # if use tree in newick format, we need to attach the prop2type file which can resume the datatype
 treeprofiler plot \
@@ -1070,7 +1127,11 @@ Query in internal nodes' properties is also available, in this case, `left_value
 Example
 ```
 # select tree internal node where sample1_avg feature < 0.50
-treeprofiler plot --tree examples/basic_example1/basic_example1_annotated.ete --tree_type ete --heatmap_layout sample1 --collapsed_by "sample1_avg < 0.50" 
+treeprofiler plot \
+--tree examples/basic_example1/basic_example1_annotated.ete \
+--tree_type ete \
+--heatmap_layout sample1 \
+--collapsed_by "sample1_avg < 0.50" 
 ```
 
 Syntax for internal node counter data
@@ -1112,7 +1173,10 @@ Prune taxonomic annotated tree based on following taxonomic rank level,
 # Case in GTDB
 
 # prune tree in visualization, rank limit to family level
-treeprofiler plot --tree examples/taxonomy_example/gtdb/gtdb_example1_annotated.nw  --rank_limit family --taxonclade_layout  
+treeprofiler plot \
+--tree examples/taxonomy_example/gtdb/gtdb_example1_annotated.nw \
+--rank_limit family \
+--taxonclade_layout  
 
 # Case in NCBI
 
@@ -1202,8 +1266,14 @@ treeprofiler plot \
 --column_width 70
 ```
 
+![gtdbv202_general](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/gtdb_v4.png?raw=true)
+Here we show the GTDB v202 taxonomy tree (bacteria+archaea, 47894 leaves) in rectangular tree layout, with selected annotated properties which are displayed by order in aligned panel. Numerical data `genome_size` and `protein_count` are visualized as barplot, `gc_percentage` is shown as heatmap. Habitat information of progenome3, `aquatic_habitat`, `host_associated` and `soil_habitat` are shown as binary layout. Two categorical data `ncbi_assembly_level` and `ncbi_genome_category` are visualized as rectangular layout. In order to improve memory effiency, tree has default collapse level (10) hence multiple leaf nodes are collapsed as default, if nodes are collapsed, aligned layouts represented corresponding values of each property of annotated internal nodes. In this level, `taxonclade_layout` of the highest classification `kingdom` is activated, which demonstrate `bacteria` in salmon, `archaea` in blue. 
+
+![gtdbv202_closeup](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/gtdb_v5.png?raw=true)
+Once zoom into smaller view in tree, collapse level reduces automatically (or manually) to 1, then leaf nodes are dynamically displayed and rendered. Therefore associated layouts are shown as represending values of annotated leaves. `taxonclade_layout` colored leaf nodes in `specie` rank level.
 
 ![progenome3 example](https://raw.githubusercontent.com/dengzq1234/treeprofiler_gallery/main/progenome_example.jpeg)
+Annotated tree and layouts can be shown as circular tree layout.
 
 ## Demo2 Explore large NifH gene tree with functional and taxonomic information
 Here we analyzed the nitrogenase iron protein NifH gene family across bacteria from EggNOG6 with EggNOG-mapper, a tool for functional annotation based on precomputed orthology assignments. TreeProfiler provides options which allows users to directly map EggNOG-mapper outputs including functional annotations and pfam/smart domain predictions. Hence are then able to map these functional annotations to their respective phylogenetic gene trees and them with the evolutionary history, tracing from leaf to root level.
@@ -1233,11 +1303,16 @@ treeprofiler plot \
 --column_width 70
 ```
 
-visualization of `seed_orthologs`, `max_annot_lvl`, `COG_category`, `Description`, `Preferred_name`, `score`
+
 ![emapper example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/emapper_nifh_v1.png?raw=true)
-visualization of `KEGG_Pathway` profiling
+visualization of categorical data `seed_orthologs`, `max_annot_lvl`, `COG_category`, `Description`, `Preferred_name`, and numerical data `score`
+
 ![emapper example2](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/emapper_nifh_v2.png?raw=true)
-visualization of `KEGG_ko` profiling
+visualization of `KEGG_Pathway` profiling
+
+
 ![emapper example3](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/emapper_nifh_v3.png?raw=true)
-visualization of `domain` annotation
+visualization of `KEGG_ko` profiling
+
 ![emapper example4](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/emapper_nifh_v4.png?raw=true)
+visualization of `domain` annotation
