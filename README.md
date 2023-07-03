@@ -36,7 +36,7 @@
       - [Query in internal nodes](#query-in-internal-nodes)
       - [AND and OR conditions](#and-and-or-conditions)
       - [Conditional pruning based on taxonomic level](#conditional-limit-based-on-taxonomic-level)
-- [Demo1 Explore progenome data](#demo1-explore-gtdb-taxonomic-tree-with-metadata-and-habitat-information-of-progenome3)
+- [Demo1 Explore GTDB and Progenome data](#demo1-explore-gtdb-taxonomic-tree-with-metadata-and-habitat-information-of-progenome3)
 - [Demo2 Explore Nif gene family tree with functional annotations data using eggnog-mapper with taxonomic annotation](#demo2-explore-large-nifh-gene-tree-with-functional-and-taxonomic-information)
 
 ## Introduction
