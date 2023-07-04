@@ -12,10 +12,10 @@ echo "Visualize properties categorical data random_type in rectangular_layout, n
 treeprofiler plot \
 --tree basic_example1_annotated.ete \
 --tree_type ete \
---profiling_layout random_type \
 --rectangular_layout random_type \
 --heatmap_layout sample1,sample2,sample3 \
 --barplot_layout sample4,sample5 \
+--profiling_layout random_type \
 --column_width 40 \
 --padding_x 3
 
