@@ -36,7 +36,7 @@
       - [Query in internal nodes](#query-in-internal-nodes)
       - [AND and OR conditions](#and-and-or-conditions)
       - [Conditional pruning based on taxonomic level](#conditional-limit-based-on-taxonomic-level)
-- [Demo1 Explore progenome data](#demo1-explore-gtdb-taxonomic-tree-with-metadata-and-habitat-information-of-progenome3)
+- [Demo1 Explore GTDB and Progenome data](#demo1-explore-gtdb-taxonomic-tree-with-metadata-and-habitat-information-of-progenome3)
 - [Demo2 Explore Nif gene family tree with functional annotations data using eggnog-mapper with taxonomic annotation](#demo2-explore-large-nifh-gene-tree-with-functional-and-taxonomic-information)
 
 ## Introduction
@@ -77,6 +77,9 @@ Install TreeProfiler
 git clone https://github.com/compgenomicslab/MetaTreeDrawer
 cd MetaTreeDrawer/
 python setup.py install
+
+# or install directly
+pip install https://github.com/dengzq1234/MetaTreeDrawer/archive/refs/tags/v1.0.0-beta.tar.gz
 
 ```
 
@@ -151,7 +154,7 @@ Added tree example with id 0.
 ```
 
 As the session starts in local server http://127.0.0.1:5000, annotated tree and selected properties are visualized at the interactive session.
-![treeprofiler interface](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/treeprofiler_gallery2-1.png?raw=true)
+![treeprofiler interface](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/control_panel_page-0001.jpg?raw=true)
 Here is detailed introduction of interactive session of visualization([here](#interactive-visualization-interface))
 
 # Using TreeProfiler
@@ -741,8 +744,10 @@ treeprofiler annotate --tree examples/basic_example2/MCC_FluA_H3.nw --metadata e
 TreeProfiler uses the new visualization framework implemented in [ETE 4.0](https://github.com/etetoolkit/ete/tree/ete4), which allows for the interactive exploration of huge phylogenies based on a context-based adaptive zooming strategy(Fig xx).
 
 Figure xx.
-![treeprofiler interface](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/treeprofiler_gallery2-1.png?raw=true)
-Overview of the TreeProfiler visualization interface. (A) The control panel allows users to customise visualization layout and features, and to perform text-based searches. (B) An annotated example tree, from `examples/basic_example1/` after `annotate`, is launched with command `plot`. Support values (red) and branch distance (grey) are displayed on top of branches. The properties of one of the nodes are shown on the top. The minimap (bottom right) facilitates navigation. (C) The node editor panel provides access to node-specific actions, such as creating subtrees, collapsing, pruning, rooting and more. (D) Visualized properties categorical data `random_type` in `rectangular_layout`, numerical data `sample1`, `sample2` in `heatmap_layout` and `barplot_layout`. Layouts are shown with the order as input argument order from command line. Names of properties are shown as title on the top of each layout. (E) Legends each layout are shown on top right corner with the same order as the layouts.  
+![treeprofiler interface](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/control_panel_page-0001.jpg?raw=true)
+
+Overview of the TreeProfiler visualization interface. (A) The control panel allows users to customize visualization layout and features, and to perform text-based searches. (B) An annotated example tree, from `examples/basic_example1/` after `annotate`, is launched with a command `plot`. Support values (red) and branch distance (grey) are displayed on top of branches. The properties of one of the nodes are shown on the top. The minimap (bottom right) facilitates navigation. (C) The node editor panel provides access to node-specific actions, such as creating subtrees, collapsing, pruning, rooting and more. (D) Visualized properties by order are, categorical data `random_type` in `rectangular_layout`, numerical data `sample1`, `sample2`, `sample3` in `heatmap_layout` and `sample4`, `sample5` in `barplot_layout`, categorical data `random_type` in `profiling_layout` shown as presence-absence matrix. Layouts are shown with the order as input argument order from the command line. Names of properties are shown as titles on the top of each layout. (E) Legends each layout is shown on the top right corner with the same order as the layouts.
+  
 
 ### Basic options of visualizing layouts
 Selected properties of tree will be visualized at the aligned panel alongside with the tree, here is some basic parameters for layouts.
@@ -861,7 +866,7 @@ treeprofiler plot --tree examples/basic_example2/diauxic_annotated.nw --numerica
 ```
 ![barplot example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_barplot_layout.jpeg?raw=true)
 `barplot_layout` display numerical data to barplot with scale, users can change the length of scale by using argument `--barplot_width [default: 200]`
-![heatmap example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_heatmap_layout.jpeg?raw=true)
+![heatmap example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_heatmap_layout.png?raw=true)
 `heatmap_layout` display numerical data to heatmap, which will automatically scale the minimum and maximum value from white to red.
 
 ![numerical profiling example](https://raw.githubusercontent.com/dengzq1234/treeprofiler_gallery/main/plot_numerical_profiling_layout.jpeg)
