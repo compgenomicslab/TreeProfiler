@@ -275,7 +275,7 @@ class LayoutHeatmap(TreeLayout):
                                     variable='continuous',
                                     colormap=colormap,
                                     value_range=[self.minval, self.maxval],
-                                    color_range=[self.min_color, self.max_color]
+                                    color_range=[self.max_color, self.min_color ]
                                     )
 
     def set_node_style(self, node):
