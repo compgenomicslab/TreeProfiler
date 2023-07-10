@@ -471,7 +471,7 @@ def run(args):
     if args.plot:
         get_image(tree, layouts, args.port, os.path.abspath(args.plot))
     else:
-        tree.explore(daemon=False, compress=True, quiet=False, layouts=layouts, port=args.port, include_props=sorted(popup_prop_keys))
+        tree.explore(daemon=False, compress=False, quiet=False, layouts=layouts, port=args.port, include_props=sorted(popup_prop_keys))
     
     return
 
