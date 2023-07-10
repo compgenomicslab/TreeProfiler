@@ -7,7 +7,7 @@ paried_color = ["red", "darkblue", "darkgreen", "darkyellow", "violet", "mediumt
 #collapse in layout
 #kingdom, phylum, class, order, family, genus, species, subspecies
 def get_level(node, level=0):
-    if node.is_root():
+    if node.is_root:
         return level
     else:
         return get_level(node.up, level + 1)
@@ -21,7 +21,7 @@ def first_name(tree):
     
     sci_names = []
     for node in tree.traverse('preorder'):
-        if node.is_leaf():
+        if node.is_leaf:
             sci_name = node.props.get('sci_name')
             sci_names.append(sci_name)
 
@@ -48,7 +48,7 @@ class TaxaClade(TreeLayout):
                                     )
 
     # def set_node_style(self, node):
-    #     if not node.is_root() and node.props.get('rank') == self.rank:
+    #     if not node.is_root and node.props.get('rank') == self.rank:
     #         if node.props.get('sci_name'):
     #             node.sm_style["bgcolor"] = self.color_dict[node.props.get('sci_name')] # highligh clade
 
@@ -66,7 +66,7 @@ class TaxaClade(TreeLayout):
                     break
 
 
-        # if not node.is_root() and node.props.get('rank') == self.rank: 
+        # if not node.is_root and node.props.get('rank') == self.rank: 
         #     if node.props.get('sci_name'):
         #         color = self.color_dict[node.props.get('sci_name')]
         #         node.sm_style["hz_line_color"] = color
@@ -85,7 +85,7 @@ class LayoutSciName(TreeLayout):
         self.color_dict = color_dict
 
     def set_node_style(self, node):
-        if node.is_leaf():
+        if node.is_leaf:
             sci_name = node.props.get('sci_name')
             prot_id = node.name
 
@@ -185,7 +185,7 @@ class LayoutEvolEvents(TreeLayout):
                     colormap=colormap)
 
     def set_node_style(self, node):
-        if not node.is_leaf():
+        if not node.is_leaf:
             if node.props.get(self.prop, "") == "S":
                 node.sm_style["fgcolor"] = self.speciation_color
                 node.sm_style["size"] = self.node_size

@@ -83,7 +83,7 @@ def collapsed_by_layout(conditions, level, prop2type={}, color='red'):
             else:
                 continue
         if final_call:
-            if not node.is_root():
+            if not node.is_root:
                 node.sm_style["draw_descendants"] = False
                 node.sm_style["outline_color"] = color
     return layout_fn
@@ -151,7 +151,7 @@ class LayoutBinary(TreeLayout):
                 
 
     def set_node_style(self, node):
-        if node.is_leaf():
+        if node.is_leaf:
             if node.props.get(self.bool_prop):
                 prop_bool = node.props.get(self.bool_prop)
                 
@@ -189,7 +189,7 @@ class LayoutBinary(TreeLayout):
                 prop_face = RectFace(width=self.width, height=self.height, text="NA", color=self.negative_color,  padding_x=self.padding_x, padding_y=self.padding_y, stroke_color=self.negative_color, tooltip=None)
                 node.add_face(prop_face, column=self.column, position = "aligned")
         
-        elif node.is_leaf() and node.props.get(self.internal_prop):
+        elif node.is_leaf and node.props.get(self.internal_prop):
             heatmapFace = get_heatmapface(node, self.internal_prop, max_color=self.color, width=self.width, height=self.height, padding_x=self.padding_x,)
             node.add_face(heatmapFace, column = self.column, position = "aligned", collapsed_only=False)
 

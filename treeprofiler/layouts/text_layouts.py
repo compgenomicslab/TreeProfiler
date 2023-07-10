@@ -90,7 +90,7 @@ class LayoutColorbranch(TreeLayout):
                                     )
 
     def set_node_style(self, node):
-        if node.is_leaf() and node.props.get(self.text_prop):
+        if node.is_leaf and node.props.get(self.text_prop):
             prop_text = node.props.get(self.text_prop)
             if prop_text:
                 if type(prop_text) == list:
@@ -106,7 +106,7 @@ class LayoutColorbranch(TreeLayout):
                     node.add_face(RectFace(width=self.width, height=None, color=self.absence_color, \
                         padding_x=self.padding_x , padding_y=self.padding_y, tooltip=None),column=self.column, position="aligned")
             
-        elif node.is_leaf() and node.props.get(self.internal_prop):
+        elif node.is_leaf and node.props.get(self.internal_prop):
             stackedbar_face = get_stackedbarface(node, self.internal_prop, self.color_dict, width=self.width, padding_x=self.padding_x, padding_y=self.padding_y)
             node.add_face(stackedbar_face, column = self.column, position = "aligned", collapsed_only=False)
 
@@ -154,7 +154,7 @@ class LayoutRect(TreeLayout):
                                     colormap={'NA':self.absence_color}
                                     )
     def set_node_style(self, node):
-        if node.is_leaf():
+        if node.is_leaf:
             prop_text = node.props.get(self.text_prop)
             if prop_text:
                 if type(prop_text) == list:
@@ -178,7 +178,7 @@ class LayoutRect(TreeLayout):
                         padding_x=self.padding_x , padding_y=self.padding_y, tooltip=None)
                 node.add_face(prop_face, column=self.column, position="aligned")
         
-        elif node.is_leaf() and node.props.get(self.internal_prop):
+        elif node.is_leaf and node.props.get(self.internal_prop):
             stackedbar_face = get_stackedbarface(node, self.internal_prop, self.color_dict, width=self.width, padding_x=self.padding_x, padding_y=self.padding_y)
             node.add_face(stackedbar_face, column = self.column, position = "aligned", collapsed_only=False)
 

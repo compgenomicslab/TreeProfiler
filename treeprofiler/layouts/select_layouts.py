@@ -5,7 +5,7 @@ from ete4.smartview  import (RectFace, CircleFace, SeqMotifFace, TextFace, Outli
 # branch thicken, background highlighted to purple
 def select_layout(prop, level, color='purple'):
     def layout_fn(node):
-        if node.is_leaf() and node.props.get(prop):
+        if node.is_leaf and node.props.get(prop):
             
             prop_text = node.props.get(prop)
             #prop_face = SelectedCircleFace(name='prop')
