@@ -47,7 +47,7 @@ class LayoutAlignment(TreeLayout):
         #     return node.props.get(alignment_prop, None)
 
     def get_seq(self, node):
-        if node.is_leaf():
+        if node.is_leaf:
             return self._get_seq(node)
 
         if self.summarize_inner_nodes:
@@ -60,15 +60,16 @@ class LayoutAlignment(TreeLayout):
         seq = self.get_seq(node)
 
         if seq:
+            seq = str(seq) # convert Bio.seq.seq to string seq
             seqFace = AlignmentFace(seq, seq_format=self.format, bgcolor='grey',
                     width=self.width, height=self.height)
             node.add_face(seqFace, column=self.column, position='aligned',
-                    collapsed_only=(not node.is_leaf())) 
+                    collapsed_only=(not node.is_leaf)) 
 
 
 def get_alnface(seq_prop, level):
     def layout_fn(node):
-        if node.is_leaf():
+        if node.is_leaf:
             seq = node.props.get(seq_prop)
             seq_face = AlignmentFace(seq, seqtype='aa',
             gap_format='line', seq_format='[]',
@@ -101,7 +102,7 @@ class LayoutDomain(TreeLayout):
         pair_delimiter = "@"
         item_seperator = "||"
         dom_list = []
-        if node.is_leaf():
+        if node.is_leaf:
             dom_prop = node.props.get(self.prop, [])
             if dom_prop:
                 
@@ -134,4 +135,4 @@ class LayoutDomain(TreeLayout):
                         height=30)
                 node.add_face(seqFace, column=self.column, 
                         position="aligned",
-                        collapsed_only=(not node.is_leaf()))
+                        collapsed_only=(not node.is_leaf))
