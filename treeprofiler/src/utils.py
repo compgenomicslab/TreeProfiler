@@ -143,7 +143,6 @@ def ete4_parse(newick, parser='newick'):
 
 # pruning
 def taxatree_prune(tree, rank_limit='subspecies'):
-
     for node in tree.traverse("preorder"):
         if node.props.get('rank') == rank_limit:
             children = node.children.copy()
@@ -194,9 +193,9 @@ def conditional_prune(tree, conditions_input, prop2type):
                         ex = False
                     else:
                         pass
-            else:
-                if n.dist == 0: 
-                    n.dist = 1
+            # else:
+            #     if n.dist == 0: 
+            #         n.dist = 1
     return tree
 
 
