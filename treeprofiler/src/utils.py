@@ -165,7 +165,7 @@ def conditional_prune(tree, conditions_input, prop2type):
     while not ex:
         ex = True
         for n in tree.traverse():
-            if not n.is_root():
+            if not n.is_root:
                 final_call = False
                 for or_condition in conditional_output:
                     for condition in or_condition:

@@ -1116,14 +1116,16 @@ treeprofiler plot \
 treeprofiler plot \
 --tree examples/basic_example1/basic_example1_annotated.ete \
 --tree_type ete \
---highlighted_by "sample1 > 0.50"
+--highlighted_by "sample1 > 0.50" \
+--heatmap_layout sample1
 
 # if use tree in newick format, we need to attach the prop2type file which can resume the datatype
 treeprofiler plot \
 --tree examples/basic_example1/basic_example1_annotated.nw \
 --tree_type newick \
 --prop2type examples/basic_example1/basic_example1_prop2type.txt \
---highlighted_by "sample1 > 0.50"
+--highlighted_by "sample1 > 0.50" \
+--heatmap_layout sample1
 ```
 
 #### Query in internal nodes

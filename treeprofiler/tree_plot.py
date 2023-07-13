@@ -470,8 +470,9 @@ def run(args):
         wrtie_color(total_color_dict)
     if args.plot:
         get_image(tree, layouts, args.port, os.path.abspath(args.plot))
-    else:
-        tree.explore(daemon=False, compress=False, quiet=False, layouts=layouts, port=args.port, include_props=sorted(popup_prop_keys))
+    else:  
+        # --verbose is quiet
+        tree.explore(daemon=False, quiet=False, layouts=layouts, port=args.port, include_props=sorted(popup_prop_keys))
     
     return
 
@@ -680,7 +681,7 @@ def props2matrix(tree, profiling_props, dtype=float):
 
     leaf2matrix = {}
     for node in tree.traverse():
-        if node.is_leaf():
+        if node.is_leaf:
             leaf2matrix[node.name] = []
             for profiling_prop in profiling_props:
                 if node.props.get(profiling_prop):
@@ -747,7 +748,7 @@ def props2matrix(tree, profiling_props, dtype=float):
 
 #     leaf2matrix = {}
 #     for node in tree.traverse():
-#         if node.is_leaf():
+#         if node.is_leaf:
 #             leaf2matrix[node.name] = []
 #             #for profiling_prop in profiling_props:
 #             if node.props.get(profiling_prop):
@@ -789,7 +790,7 @@ def single2profile(tree, profiling_prop):
     presence = 'a' # #E60A0A red
     absence = '-' # #EBEBEB lightgrey
     matrix = ''
-    for leaf in tree.iter_leaves():
+    for leaf in tree.leaves():
         matrix += '\n'+'>'+leaf.name+'\n'
         if leaf.props.get(profiling_prop):
             for val in all_values:
@@ -806,7 +807,7 @@ def multiple2profile(tree, profiling_prop):
     presence = 'a' # #E60A0A red
     absence = '-' # #EBEBEB lightgrey
     matrix = ''
-    for leaf in tree.iter_leaves():
+    for leaf in tree.leaves():
         matrix += '\n'+'>'+leaf.name+'\n'
         if leaf.props.get(profiling_prop):
             for val in all_values:

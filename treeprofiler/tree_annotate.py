@@ -530,7 +530,7 @@ def run(args):
         out_tsv = base+'_annotated.tsv'
 
         ### out newick
-        annotated_tree.write(outfile=os.path.join(args.outdir, out_newick), props=None, format_root_node=True)
+        annotated_tree.write(outfile=os.path.join(args.outdir, out_newick), props=None, format_root_node=True, parser=1)
         ### output prop2type
         with open(os.path.join(args.outdir, base+'_prop2type.txt'), "w") as f:
             #f.write(first_line + "\n")
@@ -551,7 +551,7 @@ def run(args):
                 'named_lineage'
             ])
         if args.annotated_tree:
-            tree2table(annotated_tree, internal_node=True, props=[], outfile=os.path.join(args.outdir, out_tsv))
+            tree2table(annotated_tree, internal_node=True, props=None, outfile=os.path.join(args.outdir, out_tsv))
         else:
             tree2table(annotated_tree, internal_node=True, props=prop_keys, outfile=os.path.join(args.outdir, out_tsv))
 
@@ -1189,7 +1189,7 @@ def parse_fasta(fastafile):
 #                     all_golsims_dict[entry] = single_desc
 #     return output_dict, all_golsims_dict
 
-def tree2table(tree, internal_node=True, props=[], outfile='tree2table.csv'):
+def tree2table(tree, internal_node=True, props=None, outfile='tree2table.csv'):
     node2leaves = {}
     leaf2annotations = {}
     if not props:

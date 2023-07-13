@@ -128,7 +128,7 @@ class LayoutProfile(TreeLayout):
         if self.summarize_inner_nodes:
             # TODO: summarize inner node's seq
             matrix = ''
-            for leaf in node.iter_leaves():
+            for leaf in node.leaves():
                 matrix += ">"+leaf.name+"\n"
                 matrix += self._get_seq(leaf)+"\n"
             
@@ -143,7 +143,7 @@ class LayoutProfile(TreeLayout):
             except ValueError:
                 return None
         else:
-            first_leaf = next(node.iter_leaves())
+            first_leaf = next(node.leaves())
             return self._get_seq(first_leaf)
     
     def set_node_style(self, node):
