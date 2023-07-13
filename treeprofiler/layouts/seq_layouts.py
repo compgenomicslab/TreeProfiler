@@ -60,6 +60,7 @@ class LayoutAlignment(TreeLayout):
         seq = self.get_seq(node)
 
         if seq:
+            seq = str(seq) # convert Bio.seq.seq to string seq
             seqFace = AlignmentFace(seq, seq_format=self.format, bgcolor='grey',
                     width=self.width, height=self.height)
             node.add_face(seqFace, column=self.column, position='aligned',
