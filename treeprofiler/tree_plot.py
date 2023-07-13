@@ -165,12 +165,16 @@ def poplulate_plot_args(plot_args_p):
         required=False,
         help="<prop1,prop2> names which need to be plot as numerical_matrix_layout for numerical values ")
 
-    group = plot_args_p.add_argument_group(title='Output arguments',
-        description="Output parameters")
+    group = plot_args_p.add_argument_group(title='Visualizing output arguments',
+        description="Visualizing output parameters")
     # group.add_argument('--interactive',
     #     default=False,
     #     action='store_true',
     #     help="run interactive session")
+    group.add_argument('--verbose',
+        action="store_false", 
+        required=False,
+        help="show detail on prompt when visualizing taget tree.")
     group.add_argument('--port',
         type=str,
         default=5000,
@@ -203,9 +207,9 @@ def run(args):
     #parse input tree
     if args.tree:
         if args.tree_type == 'newick':
-            tree = ete4_parse(args.tree, parser='newick')
+            tree = ete4_parse(open(args.tree))
         elif args.tree_type == 'nexus':
-            tree = ete4_parse(args.tree, parser='nexus')
+            tree = ete4_parse(open(args.tree))
         elif args.tree_type == 'ete':
             with open(args.tree, 'r') as f:
                 file_content = f.read()
@@ -471,8 +475,7 @@ def run(args):
     if args.plot:
         get_image(tree, layouts, args.port, os.path.abspath(args.plot))
     else:  
-        # --verbose is quiet
-        tree.explore(daemon=False, quiet=False, layouts=layouts, port=args.port, include_props=sorted(popup_prop_keys))
+        tree.explore(daemon=False, compress=False, quiet=args.verbose, layouts=layouts, port=args.port, include_props=sorted(popup_prop_keys))
     
     return
 

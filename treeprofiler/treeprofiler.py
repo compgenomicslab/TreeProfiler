@@ -31,10 +31,17 @@ def populate_main_args(main_args_p):
         default=False,
         action='store_true',
         help="input tree already annotated by treeprofiler if you want to skip the annotate part.")
+    group.add_argument('--internal_parser',
+        default="name",
+        choices=["name", "support"],
+        type=str,
+        required=False,
+        help="To specify how to interpret internal nodes in newick format.")
     group.add_argument('--tree_type',
         type=str,
         default='newick',
-        help="statistic calculation to perform for numerical data in internal nodes, [newick, ete]")
+        choices=["newick", "ete"],
+        help="Specify input tree format. [newick, ete]")
     group.add_argument('--prop2type',
         type=str,
         help="config tsv file where determine the datatype of target properties, if your input tree type is .ete, it's note necessary")
