@@ -453,9 +453,9 @@ def run(args):
 
     # parsing tree
     if args.tree:
-        if args.tree_type == 'newick':
-            tree = ete4_parse(open(args.tree))
-        elif args.tree_type == 'ete':
+        if args.input_type == 'newick':
+            tree = ete4_parse(open(args.tree), internal_parser=args.internal_parser)
+        elif args.input_type == 'ete':
             with open(tree, 'r') as f:
                 file_content = f.read()
                 tree = b64pickle.loads(file_content, encoder='pickle', unpack=False)
@@ -530,7 +530,7 @@ def run(args):
         out_tsv = base+'_annotated.tsv'
 
         ### out newick
-        annotated_tree.write(outfile=os.path.join(args.outdir, out_newick), props=None, format_root_node=True, parser=1)
+        annotated_tree.write(outfile=os.path.join(args.outdir, out_newick), props=None, format_root_node=True)
         ### output prop2type
         with open(os.path.join(args.outdir, base+'_prop2type.txt'), "w") as f:
             #f.write(first_line + "\n")

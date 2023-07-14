@@ -17,6 +17,6 @@ treeprofiler plot \
 --barplot_layout genome_size,protein_count \
 --heatmap_layout gc_percentage \
 --binary_layout aquatic_habitat,host_associated,soil_habitat \
---rectangular_layout ncbi_assembly_level,ncbi_genome_category \
+--rectangle_layout ncbi_assembly_level,ncbi_genome_category \
 --taxonclade_layout \
 --column_width 70

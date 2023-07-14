@@ -37,9 +37,9 @@ def populate_main_args(main_args_p):
         type=str,
         required=False,
         help="To specify how to interpret internal nodes in newick format.")
-    group.add_argument('--tree_type',
+    group.add_argument('--input_type',
         type=str,
-        default='newick',
+        default="ete",
         choices=["newick", "ete"],
         help="Specify input tree format. [newick, ete]")
     group.add_argument('--prop2type',

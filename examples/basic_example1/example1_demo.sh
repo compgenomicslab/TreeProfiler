@@ -8,11 +8,11 @@ treeprofiler annotate \
 --bool_prop bool_type \
 -o ./
 
-echo "Visualize properties categorical data random_type in rectangular_layout, numerical data sample1, sample2 in heatmap_layout and barplot_layout."
+echo "Visualize properties categorical data random_type in rectangle_layout, numerical data sample1, sample2 in heatmap_layout and barplot_layout."
 treeprofiler plot \
 --tree basic_example1_annotated.ete \
 --tree_type ete \
---rectangular_layout random_type \
+--rectangle_layout random_type \
 --heatmap_layout sample1,sample2,sample3 \
 --barplot_layout sample4,sample5 \
 --profiling_layout random_type \
@@ -20,11 +20,11 @@ treeprofiler plot \
 --padding_x 3
 
 # **Visualize categorical properties 'random_type' with differen layouts
-echo "Visualize annotated example tree by showing categorical property random_type with label_layout, rectangular_layout and colorbranch_layout."
+echo "Visualize annotated example tree by showing categorical property random_type with label_layout, rectangle_layout and colorbranch_layout."
 treeprofiler plot \
 --tree basic_example1_annotated.ete \
 --tree_type ete \
---rectangular_layout random_type \
+--rectangle_layout random_type \
 --colorbranch_layout random_type \
 --label_layout random_type \
 

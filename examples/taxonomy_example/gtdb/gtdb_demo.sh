@@ -12,5 +12,5 @@ treeprofiler annotate \
 # Visualize tree with colored taxonclade
 treeprofiler plot \
 --tree gtdb_example1_annotated.nw \
---taxonrectangular_layout \
+--taxonrectangle_layout \
 --taxonclade_layout

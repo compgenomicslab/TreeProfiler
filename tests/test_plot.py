@@ -38,14 +38,14 @@ def exam_tree(expected_draw, expected_config):
 
 def tree_session(tree, layouts):
     #t = Tree(TREEFILE, format=1)
-    tree.explore(tree_name='example', layouts=layouts, show_leaf_name=True, 
+    tree.explore(layouts=layouts, show_leaf_name=True, 
                 show_branch_length=True, show_branch_support=True, port=5000,
                 custom_api={}, custom_route={}) 
 
 def test_plot_01():
     # basic annotate categorical data
     # load tree
-    test_tree = tree_plot.ete4_parse('(a);', parser='newick')
+    test_tree = tree_plot.ete4_parse('(a);')
     layouts = []
     expected_config = "{'default': {'Branch length': True, 'Branch support': True, 'Leaf name': True, 'Number of leaves': False}}"
     expected_draw = "[['line', [0, 0.5], [1.0, 0.5], '', [], {'stroke': '#000000', 'stroke-width': 0.5, 'fill': '#e5e5e5', 'fill-opacity': 0.3, 'type': 'solid'}], ['nodebox', [0, 0, 1.0, 1.0], '', {'name': '', 'dist': 0.0, 'support': 1.0}, [], [], {'fill': 'transparent'}]]"
@@ -54,7 +54,7 @@ def test_plot_01():
 def test_plot_02():
     # label_layout
     newick = "(A:1[&&NHX:alphabet_type=vowel],(B:1[&&NHX:alphabet_type=consonant],(E:1[&&NHX:alphabet_type=vowel],D:1[&&NHX:alphabet_type=consonant])Internal_1:0.5[&&NHX:alphabet_type_counter=consonant--1||vowel--1])Internal_2:0.5[&&NHX:alphabet_type_counter=consonant--2||vowel--1]);"
-    test_tree = tree_plot.ete4_parse(newick, parser='newick')
+    test_tree = tree_plot.ete4_parse(newick)
     level = 1
     prop2type = {# start with leaf name
                 'name':str,
@@ -83,7 +83,7 @@ def test_plot_02():
 def test_plot_03():
     # label_layout
     newick = "(A:1[&&NHX:alphabet_type=vowel],(B:1[&&NHX:alphabet_type=consonant],(E:1[&&NHX:alphabet_type=vowel],D:1[&&NHX:alphabet_type=consonant])Internal_1:0.5[&&NHX:alphabet_type_counter=consonant--1||vowel--1])Internal_2:0.5[&&NHX:alphabet_type_counter=consonant--2||vowel--1]);"
-    test_tree = tree_plot.ete4_parse(newick, parser='newick')
+    test_tree = tree_plot.ete4_parse(newick)
     level = 1
     prop2type = {# start with leaf name
                 'name':str,
@@ -112,7 +112,7 @@ def test_plot_03():
 def test_plot_04():
     # label_layout
     newick = "(A:1[&&NHX:alphabet_type=vowel],(B:1[&&NHX:alphabet_type=consonant],(E:1[&&NHX:alphabet_type=vowel],D:1[&&NHX:alphabet_type=consonant])Internal_1:0.5[&&NHX:alphabet_type_counter=consonant--1||vowel--1])Internal_2:0.5[&&NHX:alphabet_type_counter=consonant--2||vowel--1]);"
-    test_tree = tree_plot.ete4_parse(newick, parser='newick')
+    test_tree = tree_plot.ete4_parse(newick)
     level = 1
     prop2type = {# start with leaf name
                 'name':str,
@@ -129,7 +129,7 @@ def test_plot_04():
                 }
     #popup_prop_keys = list(prop2type.keys()) 
 
-    rectangular_layouts, level, color_dict = tree_plot.get_rectangular_layouts(test_tree, ["alphabet_type"], level, prop2type=prop2type)
+    rectangular_layouts, level, color_dict = tree_plot.get_rectangle_layouts(test_tree, ["alphabet_type"], level, prop2type=prop2type)
     layouts = []
     layouts.extend(rectangular_layouts)
     expected_config = "{'default': {'Branch length': True, 'Branch support': True, 'Leaf name': True, 'Number of leaves': False, 'Rectangular_alphabet_type': True}}"
@@ -140,7 +140,7 @@ def test_plot_04():
 
 def test_plot_05():
     newick = '(A:1[&&NHX:bool_type=True],(B:1[&&NHX:bool_type=False],(E:1[&&NHX:bool_type=False],D:1[&&NHX:bool_type=True])N4:0.5[&&NHX:bool_type_counter=False--1||True--1])N5:0.5[&&NHX:bool_type_counter=False--2||True--1]);'
-    test_tree = tree_plot.ete4_parse(newick, parser='newick')
+    test_tree = tree_plot.ete4_parse(newick)
     level = 1
     prop2type = {# start with leaf name
                 'name':str,
@@ -166,7 +166,7 @@ def test_plot_05():
 
 def test_plot_06():
     newick = "(A:1[&&NHX:col1=1.0],(B:1[&&NHX:col1=2.0],(E:1[&&NHX:col1=4.0],D:1[&&NHX:col1=3.0])Internal_1:0.5[&&NHX:col1_avg=3.5:col1_max=4.0:col1_min=3.0:col1_std=0.5:col1_sum=7.0])Internal_2:0.5[&&NHX:col1_avg=3.0:col1_max=4.0:col1_min=2.0:col1_std=1.0:col1_sum=9.0]);"
-    test_tree = tree_plot.ete4_parse(newick, parser='newick')
+    test_tree = tree_plot.ete4_parse(newick)
     level = 1
     prop2type = {# start with leaf name
                 'name':str,
@@ -192,7 +192,7 @@ def test_plot_06():
 
 def test_plot_07():
     newick = "(A:1[&&NHX:col1=1.0],(B:1[&&NHX:col1=2.0],(E:1[&&NHX:col1=4.0],D:1[&&NHX:col1=3.0])Internal_1:0.5[&&NHX:col1_avg=3.5:col1_max=4.0:col1_min=3.0:col1_std=0.5:col1_sum=7.0])Internal_2:0.5[&&NHX:col1_avg=3.0:col1_max=4.0:col1_min=2.0:col1_std=1.0:col1_sum=9.0]);"
-    test_tree = tree_plot.ete4_parse(newick, parser='newick')
+    test_tree = tree_plot.ete4_parse(newick)
     level = 1
     prop2type = {# start with leaf name
                 'name':str,
@@ -218,7 +218,7 @@ def test_plot_07():
 
 def test_plot_08():
     newick = '(A:1[&&NHX:alignment=MAEIPDETIQQFMALT---HNIAVQYLSEFGDLNEALNSYYASQTDDIKDRREEAH],(B:1[&&NHX:alignment=MAEIPDATIQQFMALTNVSHNIAVQY--EFGDLNEALNSYYAYQTDDQKDRREEAH],(E:1[&&NHX:alignment=MAEIPDATIQ---ALTNVSHNIAVQYLSEFGDLNEALNSYYASQTDDQPDRREEAH],D:1[&&NHX:alignment=MAEAPDETIQQFMALTNVSHNIAVQYLSEFGDLNEAL--------------REEAH])Internal_1:0.5[&&NHX:alignment=MAE-PD-TIQQFMALTNVSHNIAVQYLSEFGDLNEALNSYYASQTDDQPDRREEAH])Internal_2:0.5[&&NHX:alignment=MAE-PD-TIQQFMALTNVSHNIAVQYLSEFGDLNEALNSYYA-QTDDQ-DRREEAH])Root:0[&&NHX:alignment=MAEIPD-TIQQFMALTNVSHNIAVQYLSEFGDLNEALNSYYA-QTDD--DRREEAH];'
-    test_tree = tree_plot.ete4_parse(newick, parser='newick')
+    test_tree = tree_plot.ete4_parse(newick)
     level = 1
     lengh = len(max(utils.children_prop_array(test_tree, 'alignment'),key=len))
     aln_layout = seq_layouts.LayoutAlignment(name='Alignment_layout', 
@@ -235,7 +235,7 @@ def test_plot_08():
 def test_plot_09():
     # label_layout
     newick = "(A:1[&&NHX:alphabet_type=vowel],(B:1[&&NHX:alphabet_type=consonant],(E:1[&&NHX:alphabet_type=vowel],D:1[&&NHX:alphabet_type=consonant])Internal_1:0.5[&&NHX:alphabet_type_counter=consonant--1||vowel--1])Internal_2:0.5[&&NHX:alphabet_type_counter=consonant--2||vowel--1]);"
-    test_tree = tree_plot.ete4_parse(newick, parser='newick')
+    test_tree = tree_plot.ete4_parse(newick)
     level = 1
     layouts = []
     profiling_prop = 'alphabet_type'
@@ -253,7 +253,7 @@ def test_plot_09():
 def test_plot_10():
     # seqgroup is wrong
     newick = '(A:1[&&NHX:list_data=a|b|c],(B:1[&&NHX:list_data=c|d],(E:1[&&NHX:list_data=e|d|b],D:1[&&NHX:list_data=a|c|d|e])N4:0.5[&&NHX:list_data_counter=a--1||b--1||c--1||d--2||e--2])N5:0.5[&&NHX:list_data_counter=a--1||b--1||c--2||d--3||e--2]);'
-    test_tree = tree_plot.ete4_parse(newick, parser='newick')
+    test_tree = tree_plot.ete4_parse(newick)
     level = 1
     layouts = []
     profiling_prop = 'list_data'
@@ -273,7 +273,7 @@ def test_plot_10():
 def test_plot_11():
     # categorical to matrix
     newick = '(A:1[&&NHX:col1=vowel:col2=vowel:col3=1.0:col4=1.0:col5=True:col6=True:col7=a|b|c],(B:1[&&NHX:col1=consonant:col2=consonant:col3=2.0:col4=2.0:col5=False:col6=False:col7=c|d],(E:1[&&NHX:col1=vowel:col2=vowel:col3=4.0:col4=4.0:col5=False:col6=False:col7=e|d|b],D:1[&&NHX:col1=consonant:col2=consonant:col3=3.0:col4=3.0:col5=True:col6=True:col7=a|c|d|e])Internal_1:0.5[&&NHX:col1_counter=consonant--1||vowel--1:col2_counter=consonant--1||vowel--1:col3_avg=3.5:col3_max=4.0:col3_min=3.0:col3_std=0.5:col3_sum=7.0:col4_avg=3.5:col4_max=4.0:col4_min=3.0:col4_std=0.5:col4_sum=7.0:col5_counter=False--1||True--1:col6_counter=False--1||True--1:col7_counter=a--1||b--1||c--1||d--2||e--2])Internal_2:0.5[&&NHX:col1_counter=consonant--2||vowel--1:col2_counter=consonant--2||vowel--1:col3_avg=3.0:col3_max=4.0:col3_min=2.0:col3_std=1.0:col3_sum=9.0:col4_avg=3.0:col4_max=4.0:col4_min=2.0:col4_std=1.0:col4_sum=9.0:col5_counter=False--2||True--1:col6_counter=False--2||True--1:col7_counter=a--1||b--1||c--2||d--3||e--2])Root:0[&&NHX:col1_counter=consonant--2||vowel--2:col2_counter=consonant--2||vowel--2:col3_avg=2.5:col3_max=4.0:col3_min=1.0:col3_std=1.6666666666666667:col3_sum=10.0:col4_avg=2.5:col4_max=4.0:col4_min=1.0:col4_std=1.6666666666666667:col4_sum=10.0:col5_counter=False--2||True--2:col6_counter=False--2||True--2:col7_counter=a--2||b--2||c--3||d--3||e--2];'
-    test_tree = tree_plot.ete4_parse(newick, parser='newick')
+    test_tree = tree_plot.ete4_parse(newick)
     level = 1
     layouts = []
     profiling_props = ['col1', 'col2'] 
@@ -294,7 +294,7 @@ def test_plot_11():
 def test_plot_12():
     # categorical to matrix
     newick = '(A:1[&&NHX:col1=vowel:col2=vowel:col3=1.0:col4=1.0:col5=True:col6=True:col7=a|b|c],(B:1[&&NHX:col1=consonant:col2=consonant:col3=2.0:col4=2.0:col5=False:col6=False:col7=c|d],(E:1[&&NHX:col1=vowel:col2=vowel:col3=4.0:col4=4.0:col5=False:col6=False:col7=e|d|b],D:1[&&NHX:col1=consonant:col2=consonant:col3=3.0:col4=3.0:col5=True:col6=True:col7=a|c|d|e])Internal_1:0.5[&&NHX:col1_counter=consonant--1||vowel--1:col2_counter=consonant--1||vowel--1:col3_avg=3.5:col3_max=4.0:col3_min=3.0:col3_std=0.5:col3_sum=7.0:col4_avg=3.5:col4_max=4.0:col4_min=3.0:col4_std=0.5:col4_sum=7.0:col5_counter=False--1||True--1:col6_counter=False--1||True--1:col7_counter=a--1||b--1||c--1||d--2||e--2])Internal_2:0.5[&&NHX:col1_counter=consonant--2||vowel--1:col2_counter=consonant--2||vowel--1:col3_avg=3.0:col3_max=4.0:col3_min=2.0:col3_std=1.0:col3_sum=9.0:col4_avg=3.0:col4_max=4.0:col4_min=2.0:col4_std=1.0:col4_sum=9.0:col5_counter=False--2||True--1:col6_counter=False--2||True--1:col7_counter=a--1||b--1||c--2||d--3||e--2])Root:0[&&NHX:col1_counter=consonant--2||vowel--2:col2_counter=consonant--2||vowel--2:col3_avg=2.5:col3_max=4.0:col3_min=1.0:col3_std=1.6666666666666667:col3_sum=10.0:col4_avg=2.5:col4_max=4.0:col4_min=1.0:col4_std=1.6666666666666667:col4_sum=10.0:col5_counter=False--2||True--2:col6_counter=False--2||True--2:col7_counter=a--2||b--2||c--3||d--3||e--2];'
-    test_tree = tree_plot.ete4_parse(newick, parser='newick')
+    test_tree = tree_plot.ete4_parse(newick)
     level = 1
     layouts = []
     profiling_props = ['col3', 'col4'] 
@@ -315,7 +315,7 @@ def test_plot_12():
 def test_plot_13():
     # taxonomic layouts
     newick = "((9598.abc:1[&&NHX:common_name=Pan troglodytes:lineage=1|131567|2759|33154|33208|6072|33213|33511|7711|89593|7742|7776|117570|117571|8287|1338369|32523|32524|40674|32525|9347|1437010|314146|9443|376913|314293|9526|314295|9604|207598|9596|9598:named_lineage=root|cellular organisms|Eukaryota|Opisthokonta|Metazoa|Eumetazoa|Bilateria|Deuterostomia|Chordata|Craniata|Vertebrata|Gnathostomata|Teleostomi|Euteleostomi|Sarcopterygii|Dipnotetrapodomorpha|Tetrapoda|Amniota|Mammalia|Theria|Eutheria|Boreoeutheria|Euarchontoglires|Primates|Haplorrhini|Simiiformes|Catarrhini|Hominoidea|Hominidae|Homininae|Pan|Pan troglodytes:rank=species:sci_name=Pan troglodytes:taxid=9598],9606.nca:1[&&NHX:common_name=Homo sapiens:lineage=1|131567|2759|33154|33208|6072|33213|33511|7711|89593|7742|7776|117570|117571|8287|1338369|32523|32524|40674|32525|9347|1437010|314146|9443|376913|314293|9526|314295|9604|207598|9605|9606:named_lineage=root|cellular organisms|Eukaryota|Opisthokonta|Metazoa|Eumetazoa|Bilateria|Deuterostomia|Chordata|Craniata|Vertebrata|Gnathostomata|Teleostomi|Euteleostomi|Sarcopterygii|Dipnotetrapodomorpha|Tetrapoda|Amniota|Mammalia|Theria|Eutheria|Boreoeutheria|Euarchontoglires|Primates|Haplorrhini|Simiiformes|Catarrhini|Hominoidea|Hominidae|Homininae|Homo|Homo sapiens:rank=species:sci_name=Homo sapiens:taxid=9606])Homininae:1[&&NHX:common_name=:lineage=1|131567|2759|33154|33208|6072|33213|33511|7711|89593|7742|7776|117570|117571|8287|1338369|32523|32524|40674|32525|9347|1437010|314146|9443|376913|314293|9526|314295|9604|207598:named_lineage=root|cellular organisms|Eukaryota|Opisthokonta|Metazoa|Eumetazoa|Bilateria|Deuterostomia|Chordata|Craniata|Vertebrata|Gnathostomata|Teleostomi|Euteleostomi|Sarcopterygii|Dipnotetrapodomorpha|Tetrapoda|Amniota|Mammalia|Theria|Eutheria|Boreoeutheria|Euarchontoglires|Primates|Haplorrhini|Simiiformes|Catarrhini|Hominoidea|Hominidae|Homininae:rank=subfamily:sci_name=Homininae:taxid=207598],10090.abd:1[&&NHX:common_name=Mus musculus:lineage=1|131567|2759|33154|33208|6072|33213|33511|7711|89593|7742|7776|117570|117571|8287|1338369|32523|32524|40674|32525|9347|1437010|314146|314147|9989|1963758|337687|10066|39107|10088|862507|10090:named_lineage=root|cellular organisms|Eukaryota|Opisthokonta|Metazoa|Eumetazoa|Bilateria|Deuterostomia|Chordata|Craniata|Vertebrata|Gnathostomata|Teleostomi|Euteleostomi|Sarcopterygii|Dipnotetrapodomorpha|Tetrapoda|Amniota|Mammalia|Theria|Eutheria|Boreoeutheria|Euarchontoglires|Glires|Rodentia|Myomorpha|Muroidea|Muridae|Murinae|Mus|Mus|Mus musculus:rank=species:sci_name=Mus musculus:taxid=10090]);"
-    test_tree = tree_plot.ete4_parse(newick, parser='newick')
+    test_tree = tree_plot.ete4_parse(newick)
     level = 1
     layouts = []
     taxon_color_dict = {}

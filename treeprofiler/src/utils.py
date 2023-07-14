@@ -119,8 +119,12 @@ def get_consensus_seq(filename: Path | str, threshold=0.7) -> SeqRecord:
 
 
 # parse ete4 Tree
-def ete4_parse(newick, parser=1):
-    tree = PhyloTree(newick, parser=parser)
+def ete4_parse(newick, internal_parser="name"):
+    if internal_parser == "name":
+        tree = PhyloTree(newick, parser=1)
+    elif internal_parser == "support":
+        tree = PhyloTree(newick, parser=0)
+        
     # Correct 0-dist trees
     has_dist = False
     for n in tree.traverse(): 

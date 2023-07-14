@@ -116,7 +116,7 @@ def poplulate_plot_args(plot_args_p):
         type=lambda s: [item for item in s.split(',')],
         required=False,
         help="<prop1,prop2> names of properties where values will be displayed on the aligned panel.")
-    group.add_argument('--rectangular_layout',
+    group.add_argument('--rectangle_layout',
         type=lambda s: [item for item in s.split(',')],
         required=False,
         help="<prop1,prop2> names  of properties where values will be label as rectangular color block on the aligned panel.")
@@ -127,15 +127,15 @@ def poplulate_plot_args(plot_args_p):
     group.add_argument('--barplot_layout',
         type=lambda s: [item for item in s.split(',')],
         required=False,
-        help="<prop1,prop2> names of numericalproperties which need to be read as barplot_layouts")
+        help="<prop1,prop2> names of numerical properties which need to be read as barplot_layouts")
     group.add_argument('--taxonclade_layout',
         default=False,
         action='store_true',
         help="Activate taxonclade_layout which clades will be colored based on taxonomy of each node.")
-    group.add_argument('--taxonrectangular_layout',
+    group.add_argument('--taxonrectangle_layout',
         default=False,
         action='store_true',
-        help="Activate taxonrectangular_layout which taxonomy of each node will be display as rectangular blocks in aligned panel.")
+        help="Activate taxonrectangle_layout which taxonomy of each node will be display as rectangular blocks in aligned panel.")
     group.add_argument('--emapper_layout',
         default=False,
         action='store_true',
@@ -206,11 +206,11 @@ def run(args):
 
     #parse input tree
     if args.tree:
-        if args.tree_type == 'newick':
-            tree = ete4_parse(open(args.tree))
-        elif args.tree_type == 'nexus':
-            tree = ete4_parse(open(args.tree))
-        elif args.tree_type == 'ete':
+        if args.input_type == 'newick':
+            tree = ete4_parse(open(args.tree), internal_parser=args.internal_parser)
+        elif args.input_type == 'nexus':
+            tree = ete4_parse(open(args.tree), internal_parser=args.internal_parser)
+        elif args.input_type == 'ete':
             with open(args.tree, 'r') as f:
                 file_content = f.read()
                 tree = b64pickle.loads(file_content, encoder='pickle', unpack=False)
@@ -242,7 +242,7 @@ def run(args):
                 }
         popup_prop_keys = list(prop2type.keys()) 
 
-        if args.tree_type == 'ete':
+        if args.input_type == 'ete':
             leafa, _, leafb, _ = tree._get_farthest_and_closest_leaves()
             leaf_prop2type = get_prop2type(leafa)
             leaf_prop2type.update(get_prop2type(leafb))
@@ -250,7 +250,7 @@ def run(args):
             prop2type.update(leaf_prop2type)
             prop2type.update(internal_node_prop2type)
         
-        # elif args.tree_type == 'newick':
+        # elif args.input_type == 'newick':
         #     popup_prop_keys = list(prop2type.keys()) 
     
     
@@ -297,9 +297,9 @@ def run(args):
             layouts.extend(colorbranch_layouts)
             total_color_dict.append(color_dict)
 
-        if layout == 'rectangular_layout':
-            rectangular_layouts, level, color_dict = get_rectangular_layouts(tree, args.rectangular_layout, level, prop2type=prop2type, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y)
-            layouts.extend(rectangular_layouts)
+        if layout == 'rectangle_layout':
+            rectangle_layouts, level, color_dict = get_rectangle_layouts(tree, args.rectangle_layout, level, prop2type=prop2type, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y)
+            layouts.extend(rectangle_layouts)
             total_color_dict.append(color_dict)
 
         if layout == 'binary_layout':
@@ -378,7 +378,7 @@ def run(args):
             'Preferred_name',
             ]
         #label_layouts, level, _ = get_layouts(tree, text_props, 'rectangular', level, 'counter', prop2type=prop2type)
-        label_layouts, level, _ = get_rectangular_layouts(tree, text_props, level, prop2type=prop2type, column_width=args.column_width)
+        label_layouts, level, _ = get_rectangle_layouts(tree, text_props, level, prop2type=prop2type, column_width=args.column_width)
             
         layouts.extend(label_layouts)
         
@@ -416,7 +416,7 @@ def run(args):
             layouts.append(multiple_text_prop_layout)
             
     # Taxa layouts
-    if args.taxonclade_layout or args.taxonrectangular_layout:
+    if args.taxonclade_layout or args.taxonrectangle_layout:
         taxon_color_dict = {}
         taxa_layouts = []
         
@@ -443,7 +443,7 @@ def run(args):
                 taxa_layout = taxon_layouts.TaxaClade(name='TaxaClade_'+rank, level=level, rank = rank, color_dict=color_dict)
                 taxa_layouts.append(taxa_layout)
 
-            if args.taxonrectangular_layout:
+            if args.taxonrectangle_layout:
                 taxa_layout = taxon_layouts.TaxaRectangular(name = "TaxaRect_"+rank, rank=rank ,color_dict=color_dict, column=level)
                 taxa_layouts.append(taxa_layout)
                 #level += 1
@@ -546,7 +546,7 @@ def get_colorbranch_layouts(tree, props, level, prop2type, column_width=70, padd
         level += 1
     return layouts, level, prop_color_dict
 
-def get_rectangular_layouts(tree, props, level, prop2type, column_width=70, padding_x=1, padding_y=0):
+def get_rectangle_layouts(tree, props, level, prop2type, column_width=70, padding_x=1, padding_y=0):
     prop_color_dict = {}
     layouts = []
     for prop in props:
