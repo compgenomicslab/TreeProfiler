@@ -14,6 +14,7 @@ treeprofiler plot \
 --tree basic_example1_annotated.ete \
 --input_type ete \
 --rectangle_layout random_type \
+--binary_layout bool_type \
 --heatmap_layout sample1,sample2,sample3 \
 --barplot_layout sample4,sample5 \
 --profiling_layout random_type \
