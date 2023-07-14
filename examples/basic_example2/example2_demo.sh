@@ -4,6 +4,7 @@
 echo "annotate diauxic tree with diauxic numerical matrix metadata"
 treeprofiler annotate \
 --tree diauxic.nw \
+--input_type newick \
 --metadata diauxic.array \
 --outdir ./
 
@@ -11,7 +12,7 @@ treeprofiler annotate \
 echo "visualize annotated diauxic tree by showing numerical data from col1-col7 with numerical matrix"
 treeprofiler plot \
 --tree diauxic_annotated.ete \
---tree_type ete \
+--input_type ete \
 --numerical_matrix_layout col1,col2,col3,col4,col5,col6,col7
 
 
@@ -19,6 +20,8 @@ treeprofiler plot \
 echo "annotate MCC_FluA_H3 tree with MCC_FluA_H3_Genotype metadata and MCC_FluA_H3 multiple sequence alignment"
 treeprofiler annotate \
 --tree MCC_FluA_H3.nw \
+--input_type newick \
+--internal_parser support \
 --metadata MCC_FluA_H3_Genotype.txt \
 --alignment FluA_H3_AA.fas \
 --outdir ./
@@ -27,10 +30,12 @@ treeprofiler annotate \
 echo "visualize annotated MCC_FluA_H3 tree all feature with retangular block"
 treeprofiler plot \
 --tree MCC_FluA_H3_annotated.nw \
+--input_type newick \
 --categorical_matrix_layout PB2,PB1,PA,HA,NP,NA,M,NS
 
 # visualize MCC_FluA_H3 MSA 
 echo "visualize MCC_FluA_H3 tree with MSA "
 treeprofiler plot \
 --tree MCC_FluA_H3_annotated.nw \
+--input_type newick \
 --alignment_layout

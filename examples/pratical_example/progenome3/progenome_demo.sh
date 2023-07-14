@@ -2,6 +2,7 @@
 echo "Annotate GTDB tree with progenome3 habitat information"
 treeprofiler annotate \
 --tree progenome3.nw \
+--input_type newick \
 --metadata progenome3.tsv \
 --taxonomic_profile \
 --taxadb NCBI \
@@ -14,7 +15,7 @@ treeprofiler annotate \
 echo "Visualizing annotated GTDB tree with progenome3 habitat information aquatic_habitat, host_associated, soil_habitat"
 treeprofiler plot \
 --tree progenome3_annotated.ete \
---tree_type ete \
+--input_type ete \
 --barplot_layout GC,size \
 --binary_layout aquatic_habitat,host_associated,soil_habitat \
 --taxonclade_layout 

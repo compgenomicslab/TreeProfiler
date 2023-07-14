@@ -4,6 +4,7 @@
 echo "Annotate example tree with two metadata tables"
 treeprofiler annotate \
 --tree basic_example1.nw \
+--input_type newick \
 --metadata basic_example1.tsv,basic_example1_metadata2.tsv \
 --bool_prop bool_type \
 -o ./
@@ -11,7 +12,7 @@ treeprofiler annotate \
 echo "Visualize properties categorical data random_type in rectangle_layout, numerical data sample1, sample2 in heatmap_layout and barplot_layout."
 treeprofiler plot \
 --tree basic_example1_annotated.ete \
---tree_type ete \
+--input_type ete \
 --rectangle_layout random_type \
 --heatmap_layout sample1,sample2,sample3 \
 --barplot_layout sample4,sample5 \
@@ -23,7 +24,7 @@ treeprofiler plot \
 echo "Visualize annotated example tree by showing categorical property random_type with label_layout, rectangle_layout and colorbranch_layout."
 treeprofiler plot \
 --tree basic_example1_annotated.ete \
---tree_type ete \
+--input_type ete \
 --rectangle_layout random_type \
 --colorbranch_layout random_type \
 --label_layout random_type \
@@ -32,7 +33,7 @@ treeprofiler plot \
 echo "Visualize random_type into presence-absence profiling matrix"
 treeprofiler plot \
 --tree basic_example1_annotated.ete \
---tree_type ete \
+--input_type ete \
 --profiling_layout random_type
 
 
@@ -40,7 +41,7 @@ treeprofiler plot \
 echo "Visualize annotated example tree by showing numerical property sample[1-5] with heatmap_layout, and abs_data with barplot_layout"
 treeprofiler plot \
 --tree basic_example1_annotated.ete \
---tree_type ete \
+--input_type ete \
 --heatmap_layout sample1,sample2,sample3,sample4,sample5 \
 --barplot_layout abs_data
 
@@ -48,7 +49,7 @@ treeprofiler plot \
 echo "Visualize annotated example tree by showing boolean property bool_type with binary_layout and bool_type2 with revbinary_layout."
 treeprofiler plot \
 --tree basic_example1_annotated.ete \
---tree_type ete \
+--input_type ete \
 --binary_layout bool_type \
 --revbinary_layout bool_type2 \
 
@@ -56,7 +57,7 @@ treeprofiler plot \
 echo "Visualize annotated example tree by showing presence-absence matrix of composition of each element of property list_data with multi_profiling_layout"
 treeprofiler plot \
 --tree basic_example1_annotated.ete \
---tree_type ete \
+--input_type ete \
 --multi_profiling_layout list_data
 
 #

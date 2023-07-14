@@ -3,7 +3,8 @@
 # annotate tree of COG1348 with eggNOG-mapper annotations and taxonomic annotations
 echo "Start mapping tree with annotation metadata"
 treeprofiler annotate \
---tree  COG1348.tree \
+--tree  COG1348.nw \
+--input_type newick \
 --emapper_annotation COG1348.out.emapper.annotations  \
 --emapper_pfam COG1348.out.emapper.pfam \
 --alignment COG1348.faa.aln \
@@ -18,7 +19,7 @@ treeprofiler annotate \
 echo "Visualizing annotated tree with all eggnog mapper features......"
 treeprofiler plot \
 --tree COG1348_annotated.ete \
---tree_type ete \
+--input_type ete \
 --emapper_layout \
 --domain_layout \
 --taxonclade_layout \
