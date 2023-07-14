@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# annotate tree of COG1348 with eggNOG-mapper annotations and taxonomic annotations
+# annotate tree of nifH with eggNOG-mapper annotations and taxonomic annotations
 echo "Start mapping tree with annotation metadata"
 treeprofiler annotate \
---tree  COG1348.nw \
+--tree  nifH.nw \
 --input_type newick \
---emapper_annotation COG1348.out.emapper.annotations  \
---emapper_pfam COG1348.out.emapper.pfam \
---alignment COG1348.faa.aln \
+--emapper_annotation nifH.out.emapper.annotations  \
+--emapper_pfam nifH.out.emapper.pfam \
+--alignment nifH.faa.aln \
 --taxonomic_profile \
 --taxadb NCBI \
 --taxon_delimiter . \
@@ -18,7 +18,7 @@ treeprofiler annotate \
 # visualize annotated trees with all eggnog mapper features
 echo "Visualizing annotated tree with all eggnog mapper features......"
 treeprofiler plot \
---tree COG1348_annotated.ete \
+--tree nifH_annotated.ete \
 --input_type ete \
 --emapper_layout \
 --domain_layout \
