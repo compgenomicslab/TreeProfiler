@@ -66,13 +66,13 @@ def populate_annotate_args(parser):
     #     help=("<kingdom|phylum|class|order|family|genus|species|subspecies> "
     #           "reference tree from taxonomic database"))
     add('--taxadb', default='GTDB',
-        help="<NCBI|GTDB> for taxonomic profiling or fetch taxatree default [GTDB]")
+        help="<NCBI|GTDB> for taxonomic profiling or fetch taxatree [default: GTDB]")
     add('--taxon_column',
         help="<col1> name of columns which need to be read as taxon data")
     add('--taxon_delimiter', default='',
-        help="delimiter of taxa columns. default none")
+        help="delimiter of taxa columns. [default: None]")
     add('--taxa_field', type=int, default=0,
-        help="field of taxa name after delimiter. default 0")
+        help="field of taxa name after delimiter. [default: 0]")
     add('--emapper_annotations',
         help="attach eggNOG-mapper output out.emapper.annotations")
     add('--emapper_pfam',
@@ -94,14 +94,14 @@ def populate_annotate_args(parser):
         choices=['all', 'sum', 'avg', 'max', 'min', 'std', 'none'],
         type=str,
         required=False,
-        help="statistic calculation to perform for numerical data in internal nodes, [all, sum, avg, max, min, std, none]. If 'none' was chosen, numerical properties won't be summarized nor annotated in internal nodes")  
+        help="statistic calculation to perform for numerical data in internal nodes, [all, sum, avg, max, min, std, none]. If 'none' was chosen, numerical properties won't be summarized nor annotated in internal nodes. [default: all]")  
 
     group.add_argument('--counter_stat',
         default='raw',
         choices=['raw', 'relative', 'none'],
         type=str,
         required=False,
-        help="statistic calculation to perform for categorical data in internal nodes, raw count or in percentage [raw, relative, none]. If 'none' was chosen, categorical and boolean properties won't be summarized nor annotated in internal nodes")  
+        help="statistic calculation to perform for categorical data in internal nodes, raw count or in percentage [raw, relative, none]. If 'none' was chosen, categorical and boolean properties won't be summarized nor annotated in internal nodes [default: raw]")  
     
     group = parser.add_argument_group(title='OUTPUT options',
         description="")
@@ -454,11 +454,20 @@ def run(args):
     # parsing tree
     if args.tree:
         if args.input_type == 'newick':
-            tree = ete4_parse(open(args.tree), internal_parser=args.internal_parser)
+            try:
+                tree = ete4_parse(open(args.tree), internal_parser=args.internal_parser)
+            except Exception as e:
+                print(e)
+                sys.exit(1)
         elif args.input_type == 'ete':
-            with open(tree, 'r') as f:
-                file_content = f.read()
-                tree = b64pickle.loads(file_content, encoder='pickle', unpack=False)
+            try:
+                with open(args.tree, 'r') as f:
+                    file_content = f.read()
+                    tree = b64pickle.loads(file_content, encoder='pickle', unpack=False)
+            except ValueError as e:
+                print(e)
+                print("In valid ete format.")
+                sys.exit(1)
     # if refer tree from taxadb, input tree will be ignored
     elif taxatree and taxadb:
         tree = ''

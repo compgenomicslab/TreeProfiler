@@ -207,13 +207,26 @@ def run(args):
     #parse input tree
     if args.tree:
         if args.input_type == 'newick':
-            tree = ete4_parse(open(args.tree), internal_parser=args.internal_parser)
-        elif args.input_type == 'nexus':
-            tree = ete4_parse(open(args.tree), internal_parser=args.internal_parser)
+            try:
+                tree = ete4_parse(open(args.tree), internal_parser=args.internal_parser)
+            except Exception as e:
+                print(e)
+                sys.exit(1)
+        # elif args.input_type == 'nexus':
+        #    try:
+        #         tree = ete4_parse(open(args.tree), internal_parser=args.internal_parser)
+        #     except Exception as e:
+        #         print(e)
+        #         sys.exit(1)
         elif args.input_type == 'ete':
-            with open(args.tree, 'r') as f:
-                file_content = f.read()
-                tree = b64pickle.loads(file_content, encoder='pickle', unpack=False)
+            try:
+                with open(args.tree, 'r') as f:
+                    file_content = f.read()
+                    tree = b64pickle.loads(file_content, encoder='pickle', unpack=False)
+            except ValueError as e:
+                print(e)
+                print("In valid ete format.")
+                sys.exit(1)
     
     #rest_prop = []
     if args.prop2type:

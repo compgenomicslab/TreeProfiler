@@ -36,12 +36,12 @@ def populate_main_args(main_args_p):
         choices=["name", "support"],
         type=str,
         required=False,
-        help="To specify how to interpret internal nodes in newick format.")
+        help="To specify how to interpret internal nodes in newick format. [default: name]")
     group.add_argument('--input_type',
         type=str,
         default="ete",
         choices=["newick", "ete"],
-        help="Specify input tree format. [newick, ete]")
+        help="Specify input tree format. [newick, ete]. [default: ete]")
     group.add_argument('--prop2type',
         type=str,
         help="config tsv file where determine the datatype of target properties, if your input tree type is .ete, it's note necessary")
