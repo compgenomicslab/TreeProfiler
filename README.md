@@ -58,10 +58,14 @@ To install ETE you can follow these steps:
     `pip install <dependencies>`
   - Build and install ete4 from the repository's root directory with following command: 
   ```
-  wget https://github.com/etetoolkit/ete/archive/refs/tags/treeprofiler.tar.gz
-  tar -zxvf treeprofiler.tar.gz
-  cd ete-treeprofiler/
-  pip install -e .
+  wget https://github.com/etetoolkit/ete/archive/refs/tags/4.1.0-beta.tar.gz
+  tar -zxvf 4.1.0-beta.tar.gz
+  cd 4.1.0-beta/
+  python setup.py install
+  ```
+  or 
+  ```
+  pip install https://github.com/etetoolkit/ete/archive/refs/tags/4.1.0-beta.tar.gz
   ```
 (In Linux there may be some cases where the gcc library must be installed, which can be done with `conda install -c conda-forge gcc_linux-64`)
 
@@ -80,9 +84,11 @@ Install TreeProfiler
 git clone https://github.com/compgenomicslab/MetaTreeDrawer
 cd MetaTreeDrawer/
 python setup.py install
-
-# or install directly
-pip install https://github.com/dengzq1234/MetaTreeDrawer/archive/refs/tags/v1.0.0-beta.tar.gz
+```
+Or 
+```
+# install directly
+pip install https://github.com/dengzq1234/MetaTreeDrawer/archive/refs/tags/v1.1.0.tar.gz
 
 ```
 
