@@ -10,8 +10,8 @@ from treeprofiler import tree_plot
 __author__ = 'Ziqi DENG'
 __license__ = "GPL v3"
 __email__ = 'dengziqi1234@gmail.com'
-__version__ = '1.0.0'
-__date__ = '27-06-2023'
+__version__ = '1.1.0'
+__date__ = '14-07-2023'
 __description__ = ('A program for profiling metadata on target '
                     'tree and conduct summary analysis')
 
@@ -31,10 +31,17 @@ def populate_main_args(main_args_p):
         default=False,
         action='store_true',
         help="input tree already annotated by treeprofiler if you want to skip the annotate part.")
-    group.add_argument('--tree_type',
+    group.add_argument('--internal_parser',
+        default="name",
+        choices=["name", "support"],
         type=str,
-        default='newick',
-        help="statistic calculation to perform for numerical data in internal nodes, [newick, ete]")
+        required=False,
+        help="To specify how to interpret internal nodes in newick format. [default: name]")
+    group.add_argument('--input_type',
+        type=str,
+        default="ete",
+        choices=["newick", "ete"],
+        help="Specify input tree format. [newick, ete]. [default: ete]")
     group.add_argument('--prop2type',
         type=str,
         help="config tsv file where determine the datatype of target properties, if your input tree type is .ete, it's note necessary")

@@ -66,13 +66,13 @@ def populate_annotate_args(parser):
     #     help=("<kingdom|phylum|class|order|family|genus|species|subspecies> "
     #           "reference tree from taxonomic database"))
     add('--taxadb', default='GTDB',
-        help="<NCBI|GTDB> for taxonomic profiling or fetch taxatree default [GTDB]")
+        help="<NCBI|GTDB> for taxonomic profiling or fetch taxatree [default: GTDB]")
     add('--taxon_column',
         help="<col1> name of columns which need to be read as taxon data")
     add('--taxon_delimiter', default='',
-        help="delimiter of taxa columns. default none")
+        help="delimiter of taxa columns. [default: None]")
     add('--taxa_field', type=int, default=0,
-        help="field of taxa name after delimiter. default 0")
+        help="field of taxa name after delimiter. [default: 0]")
     add('--emapper_annotations',
         help="attach eggNOG-mapper output out.emapper.annotations")
     add('--emapper_pfam',
@@ -94,14 +94,14 @@ def populate_annotate_args(parser):
         choices=['all', 'sum', 'avg', 'max', 'min', 'std', 'none'],
         type=str,
         required=False,
-        help="statistic calculation to perform for numerical data in internal nodes, [all, sum, avg, max, min, std, none]. If 'none' was chosen, numerical properties won't be summarized nor annotated in internal nodes")  
+        help="statistic calculation to perform for numerical data in internal nodes, [all, sum, avg, max, min, std, none]. If 'none' was chosen, numerical properties won't be summarized nor annotated in internal nodes. [default: all]")  
 
     group.add_argument('--counter_stat',
         default='raw',
         choices=['raw', 'relative', 'none'],
         type=str,
         required=False,
-        help="statistic calculation to perform for categorical data in internal nodes, raw count or in percentage [raw, relative, none]. If 'none' was chosen, categorical and boolean properties won't be summarized nor annotated in internal nodes")  
+        help="statistic calculation to perform for categorical data in internal nodes, raw count or in percentage [raw, relative, none]. If 'none' was chosen, categorical and boolean properties won't be summarized nor annotated in internal nodes [default: raw]")  
     
     group = parser.add_argument_group(title='OUTPUT options',
         description="")
@@ -291,7 +291,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
     if alignment:
         alignment_prop = 'alignment'
         name2seq = parse_fasta(alignment)
-        for leaf in tree.iter_leaves():
+        for leaf in tree.leaves():
             leaf.add_prop(alignment_prop, name2seq.get(leaf.name,''))
 
     # domain annotation before other annotation
@@ -334,7 +334,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         node2leaves = annotated_tree.get_cached_content()
         for i, node in enumerate(annotated_tree.traverse("postorder")):
             internal_props = {}
-            if not node.is_leaf():
+            if not node.is_leaf:
                 if counter_stat != 'none':
                     if text_prop:
                         internal_props_text = merge_text_annotations(node2leaves[node], text_prop, counter_stat=counter_stat)
@@ -367,7 +367,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
 
                 if alignment:
                     matrix = ''
-                    for leaf in node.iter_leaves():
+                    for leaf in node.leaves():
                         if name2seq.get(leaf.name):
                             matrix += ">"+leaf.name+"\n"
                             matrix += name2seq.get(leaf.name)+"\n"
@@ -453,14 +453,21 @@ def run(args):
 
     # parsing tree
     if args.tree:
-        if args.tree_type == 'newick':
-            tree = ete4_parse(args.tree, parser='newick')
-        elif args.tree_type == 'nexus':
-            tree = ete4_parse(args.tree, parser='nexus')
-        elif args.tree_type == 'ete':
-            with open(tree, 'r') as f:
-                file_content = f.read()
-                tree = b64pickle.loads(file_content, encoder='pickle', unpack=False)
+        if args.input_type == 'newick':
+            try:
+                tree = ete4_parse(open(args.tree), internal_parser=args.internal_parser)
+            except Exception as e:
+                print(e)
+                sys.exit(1)
+        elif args.input_type == 'ete':
+            try:
+                with open(args.tree, 'r') as f:
+                    file_content = f.read()
+                    tree = b64pickle.loads(file_content, encoder='pickle', unpack=False)
+            except ValueError as e:
+                print(e)
+                print("In valid ete format.")
+                sys.exit(1)
     # if refer tree from taxadb, input tree will be ignored
     elif taxatree and taxadb:
         tree = ''
@@ -532,7 +539,7 @@ def run(args):
         out_tsv = base+'_annotated.tsv'
 
         ### out newick
-        annotated_tree.write(outfile=os.path.join(args.outdir, out_newick), properties = [], format=1, format_root_node=True)
+        annotated_tree.write(outfile=os.path.join(args.outdir, out_newick), props=None, format_root_node=True)
         ### output prop2type
         with open(os.path.join(args.outdir, base+'_prop2type.txt'), "w") as f:
             #f.write(first_line + "\n")
@@ -553,7 +560,7 @@ def run(args):
                 'named_lineage'
             ])
         if args.annotated_tree:
-            tree2table(annotated_tree, internal_node=True, props=[], outfile=os.path.join(args.outdir, out_tsv))
+            tree2table(annotated_tree, internal_node=True, props=None, outfile=os.path.join(args.outdir, out_tsv))
         else:
             tree2table(annotated_tree, internal_node=True, props=prop_keys, outfile=os.path.join(args.outdir, out_tsv))
 
@@ -724,15 +731,6 @@ def convert_column_data(column, np_dtype):
         return None
     #data.astype(np.float)
 
-# def multiple_text_profile(tree, profiling_prop):
-#     all_gos = children_prop_array(tree, profiling_prop)
-#     all_gos = flatten(all_gos)
-
-#     for go in all_gos:
-#         for n in tree.iter_leaves():
-#             print(n.props.get(profiling_prop))
-#     return
-
 def infer_dtype(column):
     if get_comma_separated_values(column):
         return list
@@ -756,7 +754,7 @@ def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, 
 
     name2leaf = defaultdict(list)
     # preload all leaves to save time instead of search in tree
-    for leaf in tree.iter_leaves():
+    for leaf in tree.leaves():
         name2leaf[leaf.name].append(leaf)
 
     # load all metadata to leaf nodes
@@ -953,7 +951,7 @@ def add_suffix(name, suffix, delimiter='_'):
 def name_nodes(tree):
     for i, node in enumerate(tree.traverse("postorder")):
         if not node.name:
-            if not node.is_root():
+            if not node.is_root:
                 node.name = 'N'+str(i)
             else:
                 node.name = 'Root'
@@ -1105,7 +1103,7 @@ def annot_tree_pfam_table(post_tree, pfam_table, alg_fasta):
             l.add_prop('dom_arq', domains_string)
 
     for n in post_tree.traverse():
-        if not n.is_leaf():
+        if not n.is_leaf:
             random_node_domains = n.get_closest_leaf()[0].props.get('dom_arq', 'none@none@none')
             n.add_prop('dom_arq', random_node_domains)
 
@@ -1148,7 +1146,7 @@ def annot_tree_smart_table(post_tree, smart_table, alg_fasta):
             l.add_prop('dom_arq', domains_string)
 
     for n in post_tree.traverse():
-        if not n.is_leaf():
+        if not n.is_leaf:
             random_node_domains = n.get_closest_leaf()[0].props.get('dom_arq', 'none@none@none')
             n.add_prop('dom_arq', random_node_domains)
 
@@ -1200,7 +1198,7 @@ def parse_fasta(fastafile):
 #                     all_golsims_dict[entry] = single_desc
 #     return output_dict, all_golsims_dict
 
-def tree2table(tree, internal_node=True, props=[], outfile='tree2table.csv'):
+def tree2table(tree, internal_node=True, props=None, outfile='tree2table.csv'):
     node2leaves = {}
     leaf2annotations = {}
     if not props:
@@ -1222,7 +1220,7 @@ def tree2table(tree, internal_node=True, props=[], outfile='tree2table.csv'):
                 # if '_speciesFunction' in node.props:
                 #     node.del_prop('_speciesFunction')
 
-                if node.is_leaf():
+                if node.is_leaf:
                     output_row = dict(node.props)
                     for k, prop in output_row.items():
                         if type(prop) == list:

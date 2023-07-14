@@ -197,7 +197,7 @@ class LayoutBarplot(LayoutPlot):
         
     def set_node_style(self, node):
         internal_prop = self.prop + '_' + self.internal_rep  
-        if node.is_leaf() and node.props.get(self.prop):
+        if node.is_leaf and node.props.get(self.prop):
             width = self.get_size(node, self.prop)
             color = self.color
             tooltip = ""
@@ -212,7 +212,7 @@ class LayoutBarplot(LayoutPlot):
             node.add_face(face, position=self.position, column=self.column,
                     collapsed_only=False)
         
-        elif node.is_leaf() and node.props.get(internal_prop):
+        elif node.is_leaf and node.props.get(internal_prop):
             width = self.get_size(node, internal_prop)
             color = self.color
             tooltip = ""
@@ -281,7 +281,7 @@ class LayoutHeatmap(TreeLayout):
     def set_node_style(self, node):
         c1 = self.min_color
         c2 = self.max_color #red
-        if node.is_leaf() and node.props.get(self.num_prop):
+        if node.is_leaf and node.props.get(self.num_prop):
             # heatmap
             
             tooltip = ""
@@ -302,7 +302,7 @@ class LayoutHeatmap(TreeLayout):
 
             node.add_face(identF, column = self.column,  position = 'aligned')
         
-        elif node.is_leaf() and node.props.get(self.internal_prop):
+        elif node.is_leaf and node.props.get(self.internal_prop):
             # heatmap
             tooltip = ""
             if node.name:

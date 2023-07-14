@@ -2,8 +2,9 @@
 
 # Annotate tree with NCBI taxonomic annotation
 treeprofiler annotate \
---tree spongilla_example.nw \
---metadata spongilla_example.tsv \
+--tree ncbi_example.nw \
+--input_type newick \
+--metadata ncbi_example.tsv \
 --taxonomic_profile \
 --taxadb NCBI \
 --taxon_column name \
@@ -13,5 +14,6 @@ treeprofiler annotate \
 
 # Visualize tree with colored taxonclade
 treeprofiler plot \
---tree spongilla_example_annotated.nw \
+--tree ncbi_example_annotated.nw \
+--input_type newick \
 --taxonclade_layout

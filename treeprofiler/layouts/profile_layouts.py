@@ -123,12 +123,12 @@ class LayoutProfile(TreeLayout):
         return node.props.get("seq", None)
 
     def get_seq(self, node):
-        if node.is_leaf():
+        if node.is_leaf:
             return self._get_seq(node)
         if self.summarize_inner_nodes:
             # TODO: summarize inner node's seq
             matrix = ''
-            for leaf in node.iter_leaves():
+            for leaf in node.leaves():
                 matrix += ">"+leaf.name+"\n"
                 matrix += self._get_seq(leaf)+"\n"
             
@@ -143,7 +143,7 @@ class LayoutProfile(TreeLayout):
             except ValueError:
                 return None
         else:
-            first_leaf = next(node.iter_leaves())
+            first_leaf = next(node.leaves())
             return self._get_seq(first_leaf)
     
     def set_node_style(self, node):
@@ -163,7 +163,7 @@ class LayoutProfile(TreeLayout):
             max_fsize=12, ftype='sans-serif', 
             padding_x=0, padding_y=0)
             node.add_face(seqFace, column=self.column, position='aligned', 
-                    collapsed_only=(not node.is_leaf())) 
+                    collapsed_only=(not node.is_leaf)) 
 
 class LayoutGOslim(TreeLayout):
     def __init__(self, name=None, column=1, min_color="#ffffff", max_color="red", go_propfile=[], goslim_prop=None, padding_x=2, padding_y=2, legend=True):
@@ -191,7 +191,7 @@ class LayoutGOslim(TreeLayout):
     
     def set_node_style(self, node):
         entry, desc = self.go_propfile
-        if node.is_leaf():
+        if node.is_leaf:
             tooltip = ""
             if node.name:
                 tooltip += f'<b>{node.name}</b><br>'

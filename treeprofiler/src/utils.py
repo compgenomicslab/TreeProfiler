@@ -119,31 +119,25 @@ def get_consensus_seq(filename: Path | str, threshold=0.7) -> SeqRecord:
 
 
 # parse ete4 Tree
-def ete4_parse(newick, parser='newick'):
-    #parse tree via ete4
-    try:
-        tree = PhyloTree(newick, parser=parser)
-    except NewickError:
-        try:
-            tree = PhyloTree(newick, format=1,parser=parser)            
-        except NewickError:
-            tree = PhyloTree(newick, format=1, parser=parser, quoted_node_names=True)
-
+def ete4_parse(newick, internal_parser="name"):
+    if internal_parser == "name":
+        tree = PhyloTree(newick, parser=1)
+    elif internal_parser == "support":
+        tree = PhyloTree(newick, parser=0)
+        
     # Correct 0-dist trees
     has_dist = False
     for n in tree.traverse(): 
-        if float(n.dist) > 0: 
+        if n.dist and float(n.dist) > 0: 
             has_dist = True
             break
     if not has_dist: 
-        for n in tree.iter_descendants(): 
+        for n in tree.descendants(): 
             n.dist = 1
-
     return tree
 
 # pruning
 def taxatree_prune(tree, rank_limit='subspecies'):
-
     for node in tree.traverse("preorder"):
         if node.props.get('rank') == rank_limit:
             children = node.children.copy()
@@ -163,7 +157,7 @@ def conditional_prune(tree, conditions_input, prop2type):
     while not ex:
         ex = True
         for n in tree.traverse():
-            if not n.is_root():
+            if not n.is_root:
                 final_call = False
                 for or_condition in conditional_output:
                     for condition in or_condition:
@@ -194,9 +188,9 @@ def conditional_prune(tree, conditions_input, prop2type):
                         ex = False
                     else:
                         pass
-            else:
-                if n.dist == 0: 
-                    n.dist = 1
+            # else:
+            #     if n.dist == 0: 
+            #         n.dist = 1
     return tree
 
 
