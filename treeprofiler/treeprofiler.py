@@ -10,8 +10,8 @@ from treeprofiler import tree_plot
 __author__ = 'Ziqi DENG'
 __license__ = "GPL v3"
 __email__ = 'dengziqi1234@gmail.com'
-__version__ = '1.0.0'
-__date__ = '27-06-2023'
+__version__ = '1.1.0'
+__date__ = '14-07-2023'
 __description__ = ('A program for profiling metadata on target '
                     'tree and conduct summary analysis')
 
