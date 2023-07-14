@@ -60,7 +60,7 @@ To install ETE you can follow these steps:
   ```
   wget https://github.com/etetoolkit/ete/archive/refs/tags/4.1.0-beta.tar.gz
   tar -zxvf 4.1.0-beta.tar.gz
-  cd 4.1.0-beta/
+  cd ete-4.1.0-beta/
   python setup.py install
   ```
   or 
@@ -89,7 +89,6 @@ Or
 ```
 # install directly
 pip install https://github.com/dengzq1234/MetaTreeDrawer/archive/refs/tags/v1.1.0.tar.gz
-
 ```
 
 ### Input files
