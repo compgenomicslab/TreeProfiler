@@ -64,7 +64,7 @@ pip install https://github.com/compgenomicslab/MetaTreeDrawer/archive/refs/tags/
 ```
 
 ### Quick Start with examples dataset
-TreeProfiler provide various example dataset for testing in `examples/`,
+TreeProfiler provide various example dataset for testing in `examples/` or https://github.com/compgenomicslab/MetaTreeDrawer/tree/main/examples,
 each directory consists a demo script `*_demo.sh` for quick starting different functions in TreeProfiler which alreadyh as annotate-plot pipeline of example data. User can fast explore different example tree with different visualizations. Here is the demonstration:
 
 ```
