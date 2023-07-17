@@ -2,7 +2,7 @@
 ## Table of Contents
 - [Introduction](#introduction)
 - [Installation](#installation)
-    - [Qucik install](#quick-install-via-pip)
+    - [Quick install](#quick-install-via-pip)
     - [Quick Start](#quick-start-with-examples-dataset)
     - [Manual installation](#,anual-installation)
     - [Input files](#input-files)
