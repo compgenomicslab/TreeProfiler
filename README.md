@@ -48,9 +48,22 @@ TreeProfiler is command-line tool for profiling metadata table into phylogenetic
 ## Installation
 TreeProfiler requires to install ete4 toolkit v4
 
+#### Quick install via pip
+```
+# Install ETE Toolkit v4
+pip install https://github.com/etetoolkit/ete/archive/refs/tags/4.1.0-beta.tar.gz
+
+# Install dependencies
+pip install biopython selenium scipy matplotlib
+# Install TreeProfiler
+pip install https://github.com/dengzq1234/MetaTreeDrawer/archive/refs/tags/v1.1.0.tar.gz
+
+```
+
 ### Installation of ETE v4
+#### Manual installation
 To install ETE you can follow these steps:
- - Download this repository (https://github.com/etetoolkit/ete/releases/tag/treeprofiler)
+ - Download this repository (https://github.com/etetoolkit/ete/releases)
  - Install dependecies
     - If you are using conda: 
     `conda install -c conda-forge cython flask flask-cors flask-httpauth flask-restful flask-compress numpy matplotlib pyqt lap`
@@ -69,7 +82,7 @@ To install ETE you can follow these steps:
   ```
 (In Linux there may be some cases where the gcc library must be installed, which can be done with `conda install -c conda-forge gcc_linux-64`)
 
-### Install TreeProfiler
+### Manual Install TreeProfiler
 Install dependencies
 ```
 # install BioPython, selenium, scipy via conda
@@ -124,23 +137,12 @@ or
 treeprofiler plot --tree tree_annotated.ete --input_type ete 
 ```
 
-### Run examples dataset
+### Quick Start with examples dataset
 TreeProfiler provide various example dataset for testing in `examples/`,
 each directory consists a demo script `*_demo.sh` for quick starting different functions in TreeProfiler which alreadyh as annotate-plot pipeline of example data. User can fast explore different example tree with different visualizations. Here is the demonstration:
 
 ```
-# display demo script of each example
-find ./examples/ -name "*.sh"
-./examples/basic_example1/example1_demo.sh
-./examples/basic_example2/example2_demo.sh
-./examples/taxonomy_example/ncbi/ncbi_demo.sh
-./examples/taxonomy_example/gtdb/gtdb_demo.sh
-./examples/pratical_example/progenome3/progenome_demo.sh
-./examples/pratical_example/gtdb_r202/gtdbv202full_demo.sh
-./examples/pratical_example/gtdb_r202/gtdbv202lite_demo.sh
-./examples/pratical_example/emapper/emapper_demo.sh
-
-# execute demo scrip of example1
+# execute demo script of example1
 cd examples/basic_example1/
 sh ./example1_demo.sh
 
@@ -160,10 +162,26 @@ Added tree example with id 0.
  * Debug mode: on
  * Running on http://127.0.0.1:5000/ (Press CTRL+C to quit)
 ```
-
 As the session starts in local server http://127.0.0.1:5000, annotated tree and selected properties are visualized at the interactive session.
-![treeprofiler interface](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/control_panel_page-0001.jpg?raw=true)
+![treeprofiler interface](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/figure1_all.png?raw=true)
 Here is detailed introduction of interactive session of visualization([here](#interactive-visualization-interface))
+
+Check other tutorial scripts
+```
+# display demo script of each example
+find ./examples/ -name "*.sh"
+./examples/basic_example1/example1_demo.sh
+./examples/basic_example2/example2_demo.sh
+./examples/taxonomy_example/ncbi/ncbi_demo.sh
+./examples/taxonomy_example/gtdb/gtdb_demo.sh
+./examples/pratical_example/progenome3/progenome_demo.sh
+./examples/pratical_example/gtdb_r202/gtdbv202full_demo.sh
+./examples/pratical_example/gtdb_r202/gtdbv202lite_demo.sh
+./examples/pratical_example/emapper/emapper_demo.sh
+```
+
+
+
 
 # Using TreeProfiler
 In this Tutorial we will use TreeProfiler and demostrate basic usage with data in `examples/`
