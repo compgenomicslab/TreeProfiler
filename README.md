@@ -56,7 +56,7 @@ pip install https://github.com/etetoolkit/ete/archive/refs/tags/4.1.0-beta.tar.g
 # Install dependencies
 pip install biopython selenium scipy matplotlib
 # Install TreeProfiler
-pip install https://github.com/dengzq1234/MetaTreeDrawer/archive/refs/tags/v1.1.0.tar.gz
+pip install https://github.com/compgenomicslab/MetaTreeDrawer/archive/refs/tags/v1.1.0.tar.gz
 
 ```
 
