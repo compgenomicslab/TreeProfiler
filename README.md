@@ -3,9 +3,10 @@
 - [Introduction](#introduction)
 - [Installation](#installation)
     - [Qucik install](#quick-install-via-pip)
+    - [Quick Start](#quick-start-with-examples-dataset)
+    - [Manual installation](#,anual-installation)
     - [Input files](#input-files)
-    - [Quick Start](#quick-start)
-    - [Quick Start with examples](#quick-start-with-examples-dataset)
+    - [Basic Usage](#basic-usage)
 - [Using TreeProfiler](#using-treeprofiler) 
   - [Parsing Input tree](#parsing-input-tree)
     - [Tree format](#tree-format)
@@ -62,83 +63,6 @@ pip install biopython selenium scipy matplotlib
 pip install https://github.com/compgenomicslab/MetaTreeDrawer/archive/refs/tags/v1.1.0.tar.gz
 ```
 
-### Installation of ETE v4
-#### Manual installation
-To install ETE you can follow these steps:
- - Download this repository (https://github.com/etetoolkit/ete/releases)
- - Install dependecies
-    - If you are using conda: 
-    `conda install -c conda-forge cython flask flask-cors flask-httpauth flask-restful flask-compress numpy matplotlib pyqt lap`
-    - Otherwise, you can install them with 
-    `pip install <dependencies>`
-  - Build and install ete4 from the repository's root directory with following command: 
-  ```
-  wget https://github.com/etetoolkit/ete/archive/refs/tags/4.1.0-beta.tar.gz
-  tar -zxvf 4.1.0-beta.tar.gz
-  cd ete-4.1.0-beta/
-  python setup.py install
-  ```
-  or 
-  ```
-  pip install https://github.com/etetoolkit/ete/archive/refs/tags/4.1.0-beta.tar.gz
-  ```
-(In Linux there may be some cases where the gcc library must be installed, which can be done with `conda install -c conda-forge gcc_linux-64`)
-
-### Manual Install TreeProfiler
-Install dependencies
-```
-# install BioPython, selenium, scipy via conda
-conda install -c conda-forge biopython selenium scipy
-# or pip
-pip install biopython selenium scipy
-```
-
-Install TreeProfiler
-```
-# install TreeProfiler
-git clone https://github.com/compgenomicslab/MetaTreeDrawer
-cd MetaTreeDrawer/
-python setup.py install
-```
-Or 
-```
-# install directly
-pip install https://github.com/dengzq1234/MetaTreeDrawer/archive/refs/tags/v1.1.0.tar.gz
-```
-
-### Input files
-TreeProfiler takes following file types as input 
-
-| Input    |      Filetype  | 
-|----------|-------------   |
-| Tree     |      newick, ete    | 
-| Metadata |      tar.gz, tsv       |
-
-- ete format is a novel format developed to solve the situation we encounter in the previous step, annotated tree can be recover easily with all the annotated data without changing the data type. Besides, the ete format optimized the tree file size after mapped with its associated data. Hence it's very handy for programers in their own script. At this moment we can only view the ete format in treeprofiler, but we will make the ete format more universal to other phylogenetic software.
-- Metadata input could be single or multiple files, either tar.gz compressed file(s) which contains multiple .tsv or plain .tsv file(s). 
-
-### Quick Start
-TreeProfiler has two main subcommand:
- - annotate
- - plot
-
-The first one `annotate` is used to annotate your input tree and corresponding metadata, TreeProfiler will map all the metadata into corresponding tree node. In this step, annotated tree will be generated in newick and ete format
-
-```
-treeprofiler annotate --tree tree.nw --input_type newick --metadata metadata.tsv --outdir ./
-```
-
-The second subcommand `plot` is used to visualize tree with associated metadata. By default, treeprofiler will launch an interactive session at localhost for user to explore input tree.
-
-```
-treeprofiler plot --tree tree_annotated.nw --input_type newick 
-```
-or
-
-```
-treeprofiler plot --tree tree_annotated.ete --input_type ete 
-```
-
 ### Quick Start with examples dataset
 TreeProfiler provide various example dataset for testing in `examples/`,
 each directory consists a demo script `*_demo.sh` for quick starting different functions in TreeProfiler which alreadyh as annotate-plot pipeline of example data. User can fast explore different example tree with different visualizations. Here is the demonstration:
@@ -171,8 +95,10 @@ Here is detailed introduction of interactive session of visualization([here](#in
 Check other tutorial scripts
 ```
 # display demo script of each example
-find ./examples/ -name "*.sh"
 ./examples/basic_example1/example1_demo.sh
+./examples/automatic_query/highlight_demo.sh
+./examples/automatic_query/collapse_demo.sh
+./examples/automatic_query/prune_demo.sh
 ./examples/basic_example2/example2_demo.sh
 ./examples/taxonomy_example/ncbi/ncbi_demo.sh
 ./examples/taxonomy_example/gtdb/gtdb_demo.sh
@@ -183,6 +109,83 @@ find ./examples/ -name "*.sh"
 ```
 
 
+### Manual installation
+#### Install ETE v4
+To install ETE you can follow these steps:
+ - Download this repository (https://github.com/etetoolkit/ete/releases)
+ - Install dependecies
+    - If you are using conda: 
+    `conda install -c conda-forge cython flask flask-cors flask-httpauth flask-restful flask-compress numpy matplotlib pyqt lap`
+    - Otherwise, you can install them with 
+    `pip install <dependencies>`
+  - Build and install ete4 from the repository's root directory with following command: 
+  ```
+  wget https://github.com/etetoolkit/ete/archive/refs/tags/4.1.0-beta.tar.gz
+  tar -zxvf 4.1.0-beta.tar.gz
+  cd ete-4.1.0-beta/
+  python setup.py install
+  ```
+  or 
+  ```
+  pip install https://github.com/etetoolkit/ete/archive/refs/tags/4.1.0-beta.tar.gz
+  ```
+(In Linux there may be some cases where the gcc library must be installed, which can be done with `conda install -c conda-forge gcc_linux-64`)
+
+#### Install TreeProfiler
+Install dependencies
+```
+# install BioPython, selenium, scipy via conda
+conda install -c conda-forge biopython selenium scipy
+# or pip
+pip install biopython selenium scipy
+```
+
+Install TreeProfiler
+```
+# install TreeProfiler
+git clone https://github.com/compgenomicslab/MetaTreeDrawer
+cd MetaTreeDrawer/
+python setup.py install
+```
+Or 
+```
+# install directly
+pip install https://github.com/dengzq1234/MetaTreeDrawer/archive/refs/tags/v1.1.0.tar.gz
+```
+
+### Input files
+TreeProfiler takes following file types as input 
+
+| Input    |      Filetype  | 
+|----------|-------------   |
+| Tree     |      newick, ete    | 
+| Metadata |      tar.gz, tsv       |
+
+- ete format is a novel format developed to solve the situation we encounter in the previous step, annotated tree can be recover easily with all the annotated data without changing the data type. Besides, the ete format optimized the tree file size after mapped with its associated data. Hence it's very handy for programers in their own script. At this moment we can only view the ete format in treeprofiler, but we will make the ete format more universal to other phylogenetic software.
+- Metadata input could be single or multiple files, either tar.gz compressed file(s) which contains multiple .tsv or plain .tsv file(s). 
+
+### Basic Usage
+TreeProfiler has two main subcommand:
+ - annotate
+ - plot
+
+The first one `annotate` is used to annotate your input tree and corresponding metadata, TreeProfiler will map all the metadata into corresponding tree node. In this step, annotated tree will be generated in newick and ete format
+
+```
+treeprofiler annotate --tree tree.nw --input_type newick --metadata metadata.tsv --outdir ./
+```
+
+The second subcommand `plot` is used to visualize tree with associated metadata. By default, treeprofiler will launch an interactive session at localhost for user to explore input tree.
+
+```
+treeprofiler plot --tree tree_annotated.nw --input_type newick 
+```
+or
+
+```
+treeprofiler plot --tree tree_annotated.ete --input_type ete 
+```
+
 
 
 # Using TreeProfiler
@@ -191,12 +194,16 @@ In this Tutorial we will use TreeProfiler and demostrate basic usage with data i
 ```
 tree examples/
 examples/
-├── basic_example1
-│   ├── basic_example1_metadata2.tsv
-│   ├── basic_example1_miss.tsv
-│   ├── basic_example1_null.tsv
+├── automatic_query
+│   ├── basic_example1_metadata1.tsv
 │   ├── basic_example1.nw
-│   ├── basic_example1.tsv
+│   ├── collapse_demo.sh
+│   ├── highlight_demo.sh
+│   └── prune_demo.sh
+├── basic_example1
+│   ├── basic_example1_metadata1.tsv
+│   ├── basic_example1_metadata2.tsv
+│   ├── basic_example1.nw
 │   └── example1_demo.sh
 ├── basic_example2
 │   ├── diauxic.array
@@ -212,16 +219,19 @@ examples/
 │   │   ├── 7955.out.emapper.annotations
 │   │   ├── 7955.out.emapper.pfam
 │   │   ├── 7955.out.emapper.smart.out
+│   │   ├── emapper_demo.sh
 │   │   ├── nifH.faa.aln
+│   │   ├── nifH.nw
 │   │   ├── nifH.out.emapper.annotations
-│   │   ├── nifH.out.emapper.pfam
-│   │   ├── nifH.tree
-│   │   └── emapper_demo.sh
+│   │   └── nifH.out.emapper.pfam
 │   ├── gtdb_r202
-│   │   ├── gtdbv202_demo.sh
+│   │   ├── ar122_metadata_r202_lite.tar.gz
+│   │   ├── bac120_metadata_r202_lite.tar.gz
+│   │   ├── gtdbv202full_demo.sh
+│   │   ├── gtdbv202lite_demo.sh
 │   │   ├── gtdbv202.nw
 │   │   ├── merge_gtdbtree.py
-│   │   └── progenome3.tsv
+│   │   └── progenome3.tar.gz
 │   └── progenome3
 │       ├── progenome3.nw
 │       ├── progenome3.tsv
@@ -233,8 +243,8 @@ examples/
     │   └── gtdb_example1.tsv
     └── ncbi
         ├── ncbi_demo.sh
-        ├── spongilla_example.nw
-        └── spongilla_example.tsv
+        ├── ncbi_example.nw
+        └── ncbi_example.tsv
 
 ```
 ## Parsing Input tree
@@ -368,10 +378,10 @@ examples/basic_example1/
 ├── basic_example1_miss.tsv
 ├── basic_example1_null.tsv
 ├── basic_example1.nw
-├── basic_example1.tsv
+├── basic_example1_metadata1.tsv
 └── example1_demo.sh
 
-head -5 examples/basic_example1/basic_example1.tsv 
+head -5 examples/basic_example1/basic_example1_metadata1.tsv 
 #name	sample1	sample2	sample3	sample4	sample5	random_type	*bool_type	bool_type2
 Phy003I7ZJ_CHICK	0.05	0.12	0.86	0.01	0.69	medium	1	TRUE
 Phy0054BO3_MELGA	0.64	0.67	0.51	0.29	0.14	medium	1	TRUE
@@ -392,7 +402,7 @@ Run `annotate` subcommand
 treeprofiler annotate \
 --tree examples/basic_example1/basic_example1.nw \
 --input_type newick \
---metadata examples/basic_example1/basic_example1.tsv,examples/basic_example1/basic_example1_metadata2.tsv \
+--metadata examples/basic_example1/basic_example1_metadata1.tsv,examples/basic_example1/basic_example1_metadata2.tsv \
 -o examples/basic_example1/
 ```
 
@@ -465,7 +475,7 @@ Excecute example data provided in `examples/`
 treeprofiler annotate \
 --tree examples/basic_example1/basic_example1.nw \
 --input_type newick \
---metadata examples/basic_example1/basic_example1.tsv \
+--metadata examples/basic_example1/basic_example1_metadata1.tsv \
 --outdir ./examples/basic_example1/
 ```
 
@@ -737,7 +747,7 @@ examples/basic_example1/
 ├── basic_example1_miss.tsv
 ├── basic_example1_null.tsv
 ├── basic_example1.nw
-├── basic_example1.tsv
+├── basic_example1_metadata1.tsv
 └── example1_demo.sh
 
 tree examples/basic_example2
@@ -750,7 +760,7 @@ examples/basic_example2
 └── MCC_FluA_H3.nw
 
 
-head -5 examples/basic_example1/basic_example1.tsv 
+head -5 examples/basic_example1/basic_example1_metadata1.tsv 
 #name	sample1	sample2	sample3	sample4	sample5	random_type	*bool_type	bool_type2
 Phy003I7ZJ_CHICK	0.05	0.12	0.86	0.01	0.69	medium	1	TRUE
 Phy0054BO3_MELGA	0.64	0.67	0.51	0.29	0.14	medium	1	TRUE
@@ -779,7 +789,7 @@ A/Swine/Binh_Duong/03_08/2010	trig	trig	trig	HuH3N2	trig	HuH3N2	trig	trig
 treeprofiler annotate \
 --tree examples/basic_example1/basic_example1.nw \
 --input_type newick \
---metadata examples/basic_example1/basic_example1.tsv,examples/basic_example1/basic_example1_metadata2.tsv \
+--metadata examples/basic_example1/basic_example1_metadata1.tsv,examples/basic_example1/basic_example1_metadata2.tsv \
 --bool_prop bool_type,bool_type2 \
 -o examples/basic_example1/
 
@@ -837,7 +847,7 @@ Users can add the following flag to activate layouts for categorical data
 example
 ```
 
-## target column "random_type" in examples/basic_example1/basic_example1.tsv
+## target column "random_type" in examples/basic_example1/basic_example1_metadata1.tsv
 # List random_type feature as text in aligned panel using label_layout
 treeprofiler plot --tree examples/basic_example1/basic_example1_annotated.ete --label_layout random_type 
 
@@ -879,7 +889,7 @@ Users can add the following flag to activate layouts for Boolean data
 ```                      
 
 ```
-## target column "bool_type", "bool_type2" in examples/basic_example1/basic_example1.tsv
+## target column "bool_type", "bool_type2" in examples/basic_example1/basic_example1_metadata1.tsv
 # List postive bool_type feature in aligned panel using binary_layout
 treeprofiler plot \
 --tree examples/basic_example1/basic_example1_annotated.ete \
@@ -916,7 +926,7 @@ Users can add the following flag to activate layouts for Numerical data
                         <prop1,prop2> names which need to be plot as numerical_matrix_layout for numerical values.
 ```
 ```
-## target column 'sample[1-5]' feature in examples/basic_example1/basic_example1.tsv
+## target column 'sample[1-5]' feature in examples/basic_example1/basic_example1_metadata1.tsv
 # visualize sample1 feature in Barplot
 treeprofiler plot \
 --tree examples/basic_example1/basic_example1_annotated.ete \
@@ -1172,7 +1182,7 @@ Example
 treeprofiler annotate \
 --tree examples/basic_example1/basic_example1.nw \
 --input_type newick \
---metadata examples/basic_example1/basic_example1.tsv \
+--metadata examples/basic_example1/basic_example1_metadata1.tsv \
 --bool_prop bool_type,bool_type2 \
 --counter_stat relative \
 -o examples/basic_example1/ 
@@ -1180,6 +1190,7 @@ treeprofiler annotate \
 # Conditional pruning, prune leaf node whose name contain "FALPE"
 treeprofiler plot \
 --tree examples/basic_example1/basic_example1_annotated.nw \
+--input_type newick \
 --pruned_by "name contains FALPE"
 ```
 Left panel is tree before prune, right panel is result after prune
@@ -1189,6 +1200,7 @@ Left panel is tree before prune, right panel is result after prune
 # select tree node whose name contains `FALPE` character
 treeprofiler plot \
 --tree examples/basic_example1/basic_example1_annotated.nw \
+--input_type newick \
 --highlighted_by "name contains FALPE"
 ```
 ![highlighted](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/highlighted.jpeg?raw=true)
@@ -1250,7 +1262,8 @@ treeprofiler plot \
 OR condition will be used more than one arguments
 ```
 # select tree node where sample1 feature > 0.50 OR sample2 < 0.2
-treeprofiler plot --tree examples/basic_example1/basic_example1_annotated.ete \
+treeprofiler plot \
+--tree examples/basic_example1/basic_example1_annotated.ete \
 --input_type ete \
 --heatmap_layout sample1,sample2,sample3,sample4,sample5 \
 --highlighted_by "sample1>0.50" \
@@ -1264,7 +1277,8 @@ Prune taxonomic annotated tree based on following taxonomic rank level,
 # Case in GTDB
 # before pruning
 treeprofiler plot \
---tree examples/taxonomy_example/gtdb/gtdb_example1_annotated.nw \
+--tree examples/taxonomy_example/gtdb/gtdb_example1_annotated.ete \
+--input_type ete \
 --taxonclade_layout 
 ```
 before rank limit
@@ -1273,7 +1287,8 @@ before rank limit
 ```
 # prune tree in visualization, rank limit to family level
 treeprofiler plot \
---tree examples/taxonomy_example/gtdb/gtdb_example1_annotated.nw \
+--tree examples/taxonomy_example/gtdb/gtdb_example1_annotated.ete \
+--input_type ete \
 --rank_limit class \
 --taxonclade_layout  
 ```

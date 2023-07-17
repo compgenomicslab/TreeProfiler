@@ -5,7 +5,7 @@ echo "Annotate example tree with two metadata tables"
 treeprofiler annotate \
 --tree basic_example1.nw \
 --input_type newick \
---metadata basic_example1.tsv,basic_example1_metadata2.tsv \
+--metadata basic_example1_metadata1.tsv,basic_example1_metadata2.tsv \
 --bool_prop bool_type \
 -o ./
 
