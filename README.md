@@ -2,8 +2,10 @@
 ## Table of Contents
 - [Introduction](#introduction)
 - [Installation](#installation)
+    - [Qucik install](#quick-install-via-pip)
     - [Input files](#input-files)
     - [Quick Start](#quick-start)
+    - [Quick Start with examples](#quick-start-with-examples-dataset)
 - [Using TreeProfiler](#using-treeprofiler) 
   - [Parsing Input tree](#parsing-input-tree)
     - [Tree format](#tree-format)
@@ -53,11 +55,11 @@ TreeProfiler requires to install ete4 toolkit v4
 # Install ETE Toolkit v4
 pip install https://github.com/etetoolkit/ete/archive/refs/tags/4.1.0-beta.tar.gz
 
-# Install dependencies
+
+# Install TreeProfilerdependencies
 pip install biopython selenium scipy matplotlib
 # Install TreeProfiler
 pip install https://github.com/compgenomicslab/MetaTreeDrawer/archive/refs/tags/v1.1.0.tar.gz
-
 ```
 
 ### Installation of ETE v4
@@ -123,7 +125,7 @@ TreeProfiler has two main subcommand:
 The first one `annotate` is used to annotate your input tree and corresponding metadata, TreeProfiler will map all the metadata into corresponding tree node. In this step, annotated tree will be generated in newick and ete format
 
 ```
-treeprofiler annotate --tree tree.nw --metadata metadata.tsv --outdir ./
+treeprofiler annotate --tree tree.nw --input_type newick --metadata metadata.tsv --outdir ./
 ```
 
 The second subcommand `plot` is used to visualize tree with associated metadata. By default, treeprofiler will launch an interactive session at localhost for user to explore input tree.
