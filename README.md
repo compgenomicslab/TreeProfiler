@@ -4,7 +4,7 @@
 - [Installation](#installation)
     - [Quick install](#quick-install-via-pip)
     - [Quick Start](#quick-start-with-examples-dataset)
-    - [Manual installation](#,anual-installation)
+    - [Manual installation](#manual-installation)
     - [Input files](#input-files)
     - [Basic Usage](#basic-usage)
 - [Using TreeProfiler](#using-treeprofiler) 
@@ -114,11 +114,6 @@ Check other tutorial scripts
 #### Install ETE v4
 To install ETE you can follow these steps:
  - Download this repository (https://github.com/etetoolkit/ete/releases)
- - Install dependecies
-    - If you are using conda: 
-    `conda install -c conda-forge cython flask flask-cors flask-httpauth flask-restful flask-compress numpy matplotlib pyqt lap`
-    - Otherwise, you can install them with 
-    `pip install <dependencies>`
   - Build and install ete4 from the repository's root directory with following command: 
   ```
   wget https://github.com/etetoolkit/ete/archive/refs/tags/4.1.0-beta.tar.gz
