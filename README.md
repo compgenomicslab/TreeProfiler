@@ -112,19 +112,19 @@ Check other tutorial scripts
 
 ### Manual installation
 #### Install ETE v4
-To install ETE you can follow these steps:
- - Download this repository (https://github.com/etetoolkit/ete/releases)
-  - Build and install ete4 from the repository's root directory with following command: 
-  ```
-  wget https://github.com/etetoolkit/ete/archive/refs/tags/4.1.0-beta.tar.gz
-  tar -zxvf 4.1.0-beta.tar.gz
-  cd ete-4.1.0-beta/
-  python setup.py install
-  ```
-  or 
-  ```
-  pip install https://github.com/etetoolkit/ete/archive/refs/tags/4.1.0-beta.tar.gz
-  ```
+Quick way
+```
+pip install https://github.com/etetoolkit/ete/archive/ete4.zip
+```
+For local development
+To install ETE in a local directory to help with the development, you can:
+
+- Clone this repository (git clone https://github.com/etetoolkit/ete.git)
+- Install dependecies
+  - If you are using conda: `conda install -c conda-forge cython bottle brotli numpy pyqt`
+  - Otherwise, you can install them with `pip install <dependencies>`
+  - Build and install ete4 from the repository's root directory: `pip install -e .`
+  
 (In Linux there may be some cases where the gcc library must be installed, which can be done with `conda install -c conda-forge gcc_linux-64`)
 
 #### Install TreeProfiler
