@@ -57,7 +57,7 @@ TreeProfiler requires to install ete4 toolkit v4
 pip install https://github.com/etetoolkit/ete/archive/refs/tags/4.1.0-beta.tar.gz
 
 
-# Install TreeProfilerdependencies
+# Install TreeProfiler dependencies
 pip install biopython selenium scipy matplotlib
 # Install TreeProfiler
 pip install https://github.com/compgenomicslab/TreeProfiler/archive/refs/tags/v1.1.0.tar.gz
