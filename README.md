@@ -124,16 +124,16 @@ To install ETE in a local directory to help with the development, you can:
   - If you are using conda: `conda install -c conda-forge cython bottle brotli numpy pyqt`
   - Otherwise, you can install them with `pip install <dependencies>`
   - Build and install ete4 from the repository's root directory: `pip install -e .`
-  
+
 (In Linux there may be some cases where the gcc library must be installed, which can be done with `conda install -c conda-forge gcc_linux-64`)
 
 #### Install TreeProfiler
 Install dependencies
 ```
 # install BioPython, selenium, scipy via conda
-conda install -c conda-forge biopython selenium scipy
+conda install -c conda-forge biopython selenium scipy matplotlib
 # or pip
-pip install biopython selenium scipy
+pip install biopython selenium scipy matplotlib
 ```
 
 Install TreeProfiler
