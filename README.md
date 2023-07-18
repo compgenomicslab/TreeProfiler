@@ -60,11 +60,12 @@ pip install https://github.com/etetoolkit/ete/archive/refs/tags/4.1.0-beta.tar.g
 # Install TreeProfilerdependencies
 pip install biopython selenium scipy matplotlib
 # Install TreeProfiler
-pip install https://github.com/compgenomicslab/MetaTreeDrawer/archive/refs/tags/v1.1.0.tar.gz
+pip install https://github.com/compgenomicslab/TreeProfiler/archive/refs/tags/v1.1.0.tar.gz
 ```
 
+
 ### Quick Start with examples dataset
-TreeProfiler provide various example dataset for testing in `examples/` or https://github.com/compgenomicslab/MetaTreeDrawer/tree/main/examples,
+TreeProfiler provide various example dataset for testing in `examples/` or https://github.com/compgenomicslab/TreeProfiler/tree/main/examples,
 each directory consists a demo script `*_demo.sh` for quick starting different functions in TreeProfiler which alreadyh as annotate-plot pipeline of example data. User can fast explore different example tree with different visualizations. Here is the demonstration:
 
 ```
@@ -143,14 +144,14 @@ pip install biopython selenium scipy
 Install TreeProfiler
 ```
 # install TreeProfiler
-git clone https://github.com/compgenomicslab/MetaTreeDrawer
-cd MetaTreeDrawer/
+git clone https://github.com/compgenomicslab/TreeProfiler
+cd TreeProfiler/
 python setup.py install
 ```
 Or 
 ```
 # install directly
-pip install https://github.com/dengzq1234/MetaTreeDrawer/archive/refs/tags/v1.1.0.tar.gz
+pip install https://github.com/dengzq1234/TreeProfiler/archive/refs/tags/v1.1.0.tar.gz
 ```
 
 ### Input files
