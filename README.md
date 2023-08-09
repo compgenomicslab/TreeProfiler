@@ -49,15 +49,22 @@
 TreeProfiler is command-line tool for profiling metadata table into phylogenetic tree with descriptive analysis and output visualization
 
 ## Installation
-TreeProfiler requires to install ete4 toolkit v4
-
-#### Quick install via pip
+### Dependencies
+TreeProfiler requires 
+  - Python version >= 3.7
+  - ETE Toolkit v4
+  - biopython
+  - selenium
+  - scipy
+  - matplotlib
+  
+### Quick install via pip
 ```
 # Install ETE Toolkit v4
 pip install https://github.com/etetoolkit/ete/archive/refs/tags/4.1.0-beta.tar.gz
 
 
-# Install TreeProfilerdependencies
+# Install TreeProfiler dependencies
 pip install biopython selenium scipy matplotlib
 # Install TreeProfiler
 pip install https://github.com/compgenomicslab/TreeProfiler/archive/refs/tags/v1.1.0.tar.gz
