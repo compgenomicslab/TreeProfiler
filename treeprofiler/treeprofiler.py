@@ -7,9 +7,9 @@ from treeprofiler import tree_annotate
 from treeprofiler import tree_plot
 
 
-__author__ = 'Ziqi DENG'
+__author__ = 'anonymous'
 __license__ = "GPL v3"
-__email__ = 'dengziqi1234@gmail.com'
+__email__ = 'anonymous@gmail.com'
 __version__ = '1.1.0'
 __date__ = '14-07-2023'
 __description__ = ('A program for profiling metadata on target '
