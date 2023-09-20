@@ -3,17 +3,17 @@
 # Annotate tree with NCBI taxonomic annotation
 treeprofiler annotate \
 --tree ncbi_example.nw \
---input_type newick \
+--input-type newick \
 --metadata ncbi_example.tsv \
---taxonomic_profile \
+--taxonomic-profile \
 --taxadb NCBI \
---taxon_column name \
---taxon_delimiter . \
---taxa_field 0  \
+--taxon-column name \
+--taxon-delimiter . \
+--taxa-field 0  \
 --outdir ./
 
 # Visualize tree with colored taxonclade
 treeprofiler plot \
 --tree ncbi_example_annotated.nw \
---input_type newick \
---taxonclade_layout
+--input-type newick \
+--taxonclade-layout

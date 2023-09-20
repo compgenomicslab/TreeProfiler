@@ -33,70 +33,68 @@ def populate_annotate_args(parser):
         title='METADATA TABLE parameters',
         description="Input parameters of METADATA")
 
-    csv_list = lambda txt: txt.split(',')
-
     add = gmeta.add_argument
-    add('-d', '--metadata', type=csv_list,
+    add('-d', '--metadata', nargs='+',
         help="<metadata.csv> .csv, .tsv. mandatory input")
     add('--no_colnames', action='store_true',
         help="metadata table doesn't contain columns name")
-    add('--aggregate_duplicate', action='store_true',
+    add('--aggregate-duplicate', action='store_true',
         help="treeprofiler will aggregate duplicated metadata to a list as a property if metadata contains duplicated row")
-    add('--text_prop', type=csv_list,
+    add('--text-prop', nargs='+',
         help=("<col1,col2> names, column index or index range of columns which "
               "need to be read as categorical data"))
-    add('--multiple_text_prop', type=csv_list,
+    add('--multiple-text-prop', nargs='+',
         help=("<col1,col2> names, column index or index range of columns which "
               "need to be read as categorical data which contains more than one"
               " value and seperate by ',' such "
               "as GO:0000003,GO:0000902,GO:0000904,GO:0003006"))
-    add('--num_prop', type=csv_list,
+    add('--num-prop', nargs='+',
         help=("<col1,col2> names, column index or index range of columns which "
               "need to be read as numerical data"))
-    add('--bool_prop', type=csv_list,
+    add('--bool-prop', nargs='+',
         help=("<col1,col2> names, column index or index range of columns which "
               "need to be read as boolean data"))
-    add('--text_prop_idx',
+    add('--text-prop-idx',
         help="1,2,3 or [1-5] index of columns which need to be read as categorical data")
-    add('--num_prop_idx',
+    add('--num-prop-idx',
         help="1,2,3 or [1-5] index columns which need to be read as numerical data")
-    add('--bool_prop_idx',
+    add('--bool-prop-idx',
         help="1,2,3 or [1-5] index columns which need to be read as boolean data")
     # add('--taxatree',
     #     help=("<kingdom|phylum|class|order|family|genus|species|subspecies> "
     #           "reference tree from taxonomic database"))
     add('--taxadb', default='GTDB',
         help="<NCBI|GTDB> for taxonomic profiling or fetch taxatree [default: GTDB]")
-    add('--taxon_column',
+    add('--taxon-column',
         help="<col1> name of columns which need to be read as taxon data")
-    add('--taxon_delimiter', default='',
+    add('--taxon-delimiter', default='',
         help="delimiter of taxa columns. [default: None]")
-    add('--taxa_field', type=int, default=0,
+    add('--taxa-field', type=int, default=0,
         help="field of taxa name after delimiter. [default: 0]")
-    add('--emapper_annotations',
+    add('--emapper-annotations',
         help="attach eggNOG-mapper output out.emapper.annotations")
-    add('--emapper_pfam',
+    add('--emapper-pfam',
         help="attach eggNOG-mapper pfam output out.emapper.pfams")
-    add('--emapper_smart',
+    add('--emapper-smart',
         help="attach eggNOG-mapper smart output out.emapper.smart")
     add('--alignment',
         help="Sequence alignment, .fasta format")
 
     group = parser.add_argument_group(title='Annotation arguments',
         description="Annotation parameters")
-    group.add_argument('--taxonomic_profile',
+    group.add_argument('--taxonomic-profile',
         default=False,
         action='store_true',
         required=False,
         help="Activate taxonomic annotation on tree")
-    group.add_argument('--num_stat',
+    group.add_argument('--num-stat',
         default='all',
         choices=['all', 'sum', 'avg', 'max', 'min', 'std', 'none'],
         type=str,
         required=False,
         help="statistic calculation to perform for numerical data in internal nodes, [all, sum, avg, max, min, std, none]. If 'none' was chosen, numerical properties won't be summarized nor annotated in internal nodes. [default: all]")  
 
-    group.add_argument('--counter_stat',
+    group.add_argument('--counter-stat',
         default='raw',
         choices=['raw', 'relative', 'none'],
         type=str,
@@ -179,7 +177,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
 
     if text_prop_idx:
         index_list = []
-        for i in text_prop_idx.split(','):
+        for i in text_prop_idx:
             if i[0] == '[' and i[-1] == ']':
                 text_prop_start, text_prop_end = get_range(i)
                 for j in range(text_prop_start, text_prop_end+1):
@@ -191,7 +189,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
 
     if num_prop_idx:
         index_list = []
-        for i in num_prop_idx.split(','):
+        for i in num_prop_idx:
             if i[0] == '[' and i[-1] == ']':
                 num_prop_start, num_prop_end = get_range(i)
                 for j in range(num_prop_start, num_prop_end+1):
@@ -203,7 +201,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
 
     if bool_prop_idx:
         index_list = []
-        for i in bool_prop_idx.split(','):
+        for i in bool_prop_idx:
             if i[0] == '[' and i[-1] == ']':
                 bool_prop_start, bool_prop_end = get_range(i)
                 for j in range(bool_prop_start, bool_prop_end+1):
