@@ -27,17 +27,17 @@ def populate_main_args(main_args_p):
         type=str,
         required=True,
         help="Input tree, .nw file, customized tree input")
-    group.add_argument('--annotated_tree',
+    group.add_argument('--annotated-tree',
         default=False,
         action='store_true',
         help="input tree already annotated by treeprofiler if you want to skip the annotate part.")
-    group.add_argument('--internal_parser',
+    group.add_argument('--internal-parser',
         default="name",
         choices=["name", "support"],
         type=str,
         required=False,
         help="To specify how to interpret internal nodes in newick format. [default: name]")
-    group.add_argument('--input_type',
+    group.add_argument('--input-type',
         type=str,
         default="ete",
         choices=["newick", "ete"],
@@ -48,10 +48,10 @@ def populate_main_args(main_args_p):
 
     group = main_args_p.add_argument_group(title='Pruning parameters',
         description="Auto pruning parameters")
-    group.add_argument('--rank_limit',
+    group.add_argument('--rank-limit',
         type=str,
         help="TAXONOMIC_LEVEL prune annotate tree by rank limit")
-    group.add_argument('--pruned_by',
+    group.add_argument('--pruned-by',
         type=str,
         action='append',
         help='target tree pruned by customized conditions, such as --pruned_by "name contains FALPE"')

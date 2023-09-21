@@ -17,9 +17,9 @@ wget https://data.gtdb.ecogenomic.org/releases/release202/202.0/bac120_metadata_
 echo "Annotate GTDB tree with ar122 metadata, bac120 metadata and progenome3 habitat information..."
 treeprofiler annotate \
 --tree gtdbv202.nw \
---input_type newick \
---metadata ar122_metadata_r202.tar.gz,bac120_metadata_r202.tar.gz,progenome3.tsv \
---taxonomic_profile \
+--input-type newick \
+--metadata ar122_metadata_r202.tar.gz bac120_metadata_r202.tar.gz progenome3.tsv \
+--taxonomic-profile \
 --taxadb GTDB \
 -o .
 
@@ -28,12 +28,12 @@ echo "Visualizing annotated GTDB tree with GTDB metadata, which are genome_size,
 echo "And progenome3 habitat information aquatic_habitat, host_associated, soil_habitat..."
 treeprofiler plot \
 --tree gtdbv202_annotated.ete \
---input_type ete \
---barplot_layout genome_size,protein_count \
---heatmap_layout gc_percentage \
---binary_layout aquatic_habitat,host_associated,soil_habitat \
---rectangle_layout ncbi_assembly_level,ncbi_genome_category \
---taxonclade_layout \
---column_width 70
+--input-type ete \
+--barplot-layout genome_size protein_count \
+--heatmap-layout gc_percentage \
+--binary-layout aquatic_habitat host_associated soil_habitat \
+--rectangle-layout ncbi_assembly_level ncbi_genome_category \
+--taxonclade-layout \
+--column-width 70
 
 
