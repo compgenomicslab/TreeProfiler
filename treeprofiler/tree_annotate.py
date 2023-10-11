@@ -574,8 +574,10 @@ def check_missing(input_string):
     3) An empty string (zero characters).
     """
     pattern = r'^(?:\W+|none|None|null|Null|NaN|)$'
-
-    if re.match(pattern, input_string):
+    
+    if input_string is None:
+        return True
+    elif re.match(pattern, input_string):
         #print("Input contains only non-alphanumeric characters, 'none', a missing value, or an empty value.")
         return True
     else:
