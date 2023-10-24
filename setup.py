@@ -11,16 +11,18 @@ def get_files(directory):
             file_list.append(file_path)
     return file_list
 
-VERSION = '1.1.0'
+VERSION = '1.2.0'
 install_requires = ['ete4', 'selenium', 'biopython','scipy']
 example_files = get_files('examples/')
 test_files = get_files('tests/')
-
+long_description = open("README.md").read()
 setup(
     name='TreeProfiler',
     version=VERSION,
     # metadata for upload to PyPI
     description='TreeProfiler is command-line tool for profiling metadata table into phylogenetic tree with descriptive analysis and output visualization',
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     author='Ziqi Deng, Jaime Huerta-Cepas',
     author_email='dengziqi1234@gmail.com, jhcepas@gmail.com',
     maintainer = 'Ziqi Deng',

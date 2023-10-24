@@ -39,18 +39,18 @@ def poplulate_plot_args(plot_args_p):
     group = plot_args_p.add_argument_group(title='Conditional display arguments',
         description="Conditional display  parameters")
     
-    group.add_argument('--internal_plot_measure',
+    group.add_argument('--internal-plot-measure',
         default='avg',
         type=str,
         required=False,
         help="statistic measures to be shown in numerical layout for internal nodes, [default: avg]")  
 
-    group.add_argument('--collapsed_by', 
+    group.add_argument('--collapsed-by', 
         type=str,
         required=False,
         action='append',
         help='target tree nodes collapsed by customized conditions')  
-    group.add_argument('--highlighted_by', 
+    group.add_argument('--highlighted-by', 
         type=str,
         required=False,
         action='append',
@@ -75,12 +75,12 @@ def poplulate_plot_args(plot_args_p):
 
     group = plot_args_p.add_argument_group(title="Properties' layout arguments",
         description="Prop layout parameters")
-    group.add_argument('--column_width',
+    group.add_argument('--column-width',
         type=int,
         default=20,
         help="customize column width of each layout.[default: 20]"
     )
-    group.add_argument('--barplot_width',
+    group.add_argument('--barplot-width',
         type=int,
         default=200,
         help="customize barplot width of barplot layout.[default: 200]"
@@ -90,78 +90,78 @@ def poplulate_plot_args(plot_args_p):
     #     default=None,
     #     help="customize profiling width of each profiling layout."
     # )
-    group.add_argument('--padding_x',
+    group.add_argument('--padding-x',
         type=int,
         default=1,
         help="customize horizontal column padding distance of each layout.[default: 1]"
     )
-    group.add_argument('--padding_y',
+    group.add_argument('--padding-y',
         type=int,
         default=0,
         help="customize vertical padding distance of each layout.[default: 0]"
     )
-    group.add_argument('--binary_layout',
-        type=lambda s: [item for item in s.split(',')],
+    group.add_argument('--binary-layout',
+        nargs='+',
         required=False,
-        help="<prop1,prop2> names of properties which need to be plot as binary_layout which highlights the postives")
-    group.add_argument('--revbinary_layout',
-        type=lambda s: [item for item in s.split(',')],
+        help="<prop1,prop2> names of properties which need to be plot as binary-layout which highlights the postives")
+    group.add_argument('--revbinary-layout',
+        nargs='+',
         required=False,
-        help="<prop1,prop2> names of properties which need to be plot as revbinary_layout which highlights the negatives")
-    group.add_argument('--colorbranch_layout',
-        type=lambda s: [item for item in s.split(',')],
+        help="<prop1,prop2> names of properties which need to be plot as revbinary-layout which highlights the negatives")
+    group.add_argument('--colorbranch-layout',
+        nargs='+',
         required=False,
         help="<prop1,prop2> names of properties where branches will be colored based on different values.")
-    group.add_argument('--label_layout',
-        type=lambda s: [item for item in s.split(',')],
+    group.add_argument('--label-layout',
+        nargs='+',
         required=False,
         help="<prop1,prop2> names of properties where values will be displayed on the aligned panel.")
-    group.add_argument('--rectangle_layout',
-        type=lambda s: [item for item in s.split(',')],
+    group.add_argument('--rectangle-layout',
+        nargs='+',
         required=False,
         help="<prop1,prop2> names  of properties where values will be label as rectangular color block on the aligned panel.")
-    group.add_argument('--heatmap_layout',
-        type=lambda s: [item for item in s.split(',')],
+    group.add_argument('--heatmap-layout',
+        nargs='+',
         required=False,
-        help="<prop1,prop2> names of numerical properties which need to be read as heatmap_layout")
-    group.add_argument('--barplot_layout',
-        type=lambda s: [item for item in s.split(',')],
+        help="<prop1,prop2> names of numerical properties which need to be read as heatmap-layout")
+    group.add_argument('--barplot-layout',
+        nargs='+',
         required=False,
         help="<prop1,prop2> names of numerical properties which need to be read as barplot_layouts")
-    group.add_argument('--taxonclade_layout',
+    group.add_argument('--taxonclade-layout',
         default=False,
         action='store_true',
         help="Activate taxonclade_layout which clades will be colored based on taxonomy of each node.")
-    group.add_argument('--taxonrectangle_layout',
+    group.add_argument('--taxonrectangle-layout',
         default=False,
         action='store_true',
-        help="Activate taxonrectangle_layout which taxonomy of each node will be display as rectangular blocks in aligned panel.")
-    group.add_argument('--emapper_layout',
+        help="Activate taxonrectangle-layout which taxonomy of each node will be display as rectangular blocks in aligned panel.")
+    group.add_argument('--emapper-layout',
         default=False,
         action='store_true',
         help="Activate emapper_layout which display all the annotation from EggNOG-mapper.") #domain_layout
-    group.add_argument('--domain_layout',
+    group.add_argument('--domain-layout',
         default=False,
         action='store_true',
         help="Activate domain_layout which display protein domain annotation in sequence.") #domain_layout
-    group.add_argument('--alignment_layout',
+    group.add_argument('--alignment-layout',
         default=False,
         action='store_true',
         help="Display Multiple Sequence Alignment layout in aligned panel.")
-    group.add_argument('--profiling_layout',
-        type=lambda s: [item for item in s.split(',')],
+    group.add_argument('--profiling-layout',
+        nargs='+',
         required=False,
         help="<prop1,prop2> names of properties which need to be convert to presence-absence profiling matrix of each value")
-    group.add_argument('--multi_profiling_layout',
-        type=lambda s: [item for item in s.split(',')],
+    group.add_argument('--multi-profiling-layout',
+        nargs='+',
         required=False,
         help="<prop1,prop2> names of properties containing values as list which need to be convert to presence-absence profiling matrix")
-    group.add_argument('--categorical_matrix_layout',
-        type=lambda s: [item for item in s.split(',')],
+    group.add_argument('--categorical-matrix-layout',
+        nargs='+',
         required=False,
         help="<prop1,prop2> names which need to be plot as categorical_matrix_layout for categorical values")
-    group.add_argument('--numerical_matrix_layout',
-        type=lambda s: [item for item in s.split(',')],
+    group.add_argument('--numerical-matrix-layout',
+        nargs='+',
         required=False,
         help="<prop1,prop2> names which need to be plot as numerical_matrix_layout for numerical values ")
 
@@ -183,7 +183,7 @@ def poplulate_plot_args(plot_args_p):
         type=str,
         required=False,
         help="output as pdf")
-    group.add_argument('--out_colordict',
+    group.add_argument('--out-colordict',
         action="store_true", 
         required=False,
         help="print color dictionary of each property")
@@ -296,41 +296,41 @@ def run(args):
             continue
     
     for layout in input_order:
-        if layout == 'heatmap_layout':
+        if layout == 'heatmap-layout':
             heatmap_layouts, level = get_heatmap_layouts(tree, args.heatmap_layout, level, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep)
             layouts.extend(heatmap_layouts)
 
-        if layout == 'label_layout':
+        if layout == 'label-layout':
             label_layouts, level, color_dict = get_label_layouts(tree, args.label_layout, level, prop2type=prop2type, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y)
             layouts.extend(label_layouts)
             total_color_dict.append(color_dict)
 
-        if layout == 'colorbranch_layout':
+        if layout == 'colorbranch-layout':
             colorbranch_layouts, level, color_dict = get_colorbranch_layouts(tree, args.colorbranch_layout, level, prop2type=prop2type, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y)
             layouts.extend(colorbranch_layouts)
             total_color_dict.append(color_dict)
 
-        if layout == 'rectangle_layout':
+        if layout == 'rectangle-layout':
             rectangle_layouts, level, color_dict = get_rectangle_layouts(tree, args.rectangle_layout, level, prop2type=prop2type, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y)
             layouts.extend(rectangle_layouts)
             total_color_dict.append(color_dict)
 
-        if layout == 'binary_layout':
+        if layout == 'binary-layout':
             label_layouts, level, color_dict = get_binary_layouts(tree, args.binary_layout, level, prop2type=prop2type, column_width=args.column_width, reverse=False, padding_x=args.padding_x, padding_y=args.padding_y)
             layouts.extend(label_layouts)
             total_color_dict.append(color_dict)
 
-        if layout == 'revbinary_layout':
+        if layout == 'revbinary-layout':
             label_layouts, level, color_dict = get_binary_layouts(tree, args.revbinary_layout, level, prop2type=prop2type, column_width=args.column_width, reverse=True,  padding_x=args.padding_x, padding_y=args.padding_y)
             layouts.extend(label_layouts)
             total_color_dict.append(color_dict)
         
-        if layout == 'barplot_layout':
+        if layout == 'barplot-layout':
             barplot_layouts, level,color_dict = get_barplot_layouts(tree, args.barplot_layout, level, prop2type, column_width=args.barplot_width, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep)
             layouts.extend(barplot_layouts)
             total_color_dict.append(color_dict)
 
-        if layout == 'alignment_layout':
+        if layout == 'alignment-layout':
             #fasta_file = args.alignment_layout
             lengh = len(max(children_prop_array(tree, 'alignment'),key=len))
             aln_layout = seq_layouts.LayoutAlignment(name='Alignment_layout', 
@@ -338,12 +338,12 @@ def run(args):
                         summarize_inner_nodes=True)
             layouts.append(aln_layout)
 
-        if layout == 'domain_layout':
+        if layout == 'domain-layout':
             domain_layout = seq_layouts.LayoutDomain(name="Domain_layout", prop='dom_arq')
             layouts.append(domain_layout)
         
         # presence-absence profiling based on categorical data
-        if layout == 'profiling_layout':
+        if layout == 'profiling-layout':
             profiling_props = args.profiling_layout
             for profiling_prop in profiling_props:
                 matrix, all_values = single2profile(tree, profiling_prop)
@@ -353,7 +353,7 @@ def run(args):
                 layouts.append(profile_layout)
         
         # presence-absence profiling based on list data
-        if layout == 'multi_profiling_layout':
+        if layout == 'multi-profiling-layout':
             profiling_props = args.multi_profiling_layout
             for profiling_prop in profiling_props:
                 matrix, all_values = multiple2profile(tree, profiling_prop)
@@ -363,7 +363,7 @@ def run(args):
                 layouts.append(profile_layout)
         
         # categorical matrix
-        if layout == 'categorical_matrix_layout':
+        if layout == 'categorical-matrix-layout':
             profiling_props = args.categorical_matrix_layout
             matrix, value2color = props2matrix(tree, profiling_props, dtype=str)
             profile_layout = profile_layouts.LayoutProfile(name='categorical_matrix_layout', mode='single',
@@ -372,7 +372,7 @@ def run(args):
             layouts.append(profile_layout)
 
         # numerical matrix
-        if layout == 'numerical_matrix_layout':
+        if layout == 'numerical-matrix-layout':
             profiling_props = args.numerical_matrix_layout
             matrix, maxval, minval = props2matrix(tree, profiling_props)
             #profile_layout = TreeLayout(name='numerical_profiling_layout', ns=get_alnface(alignment, level), aligned_faces = True)

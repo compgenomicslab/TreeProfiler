@@ -4,14 +4,14 @@
 echo "Start mapping tree with annotation metadata"
 treeprofiler annotate \
 --tree  nifH.nw \
---input_type newick \
---emapper_annotation nifH.out.emapper.annotations  \
---emapper_pfam nifH.out.emapper.pfam \
+--input-type newick \
+--emapper-annotation nifH.out.emapper.annotations  \
+--emapper-pfam nifH.out.emapper.pfam \
 --alignment nifH.faa.aln \
---taxonomic_profile \
+--taxonomic-profile \
 --taxadb NCBI \
---taxon_delimiter . \
---taxa_field 0 \
+--taxon-delimiter . \
+--taxa-field 0 \
 -o ./
 
 
@@ -19,8 +19,8 @@ treeprofiler annotate \
 echo "Visualizing annotated tree with all eggnog mapper features......"
 treeprofiler plot \
 --tree nifH_annotated.ete \
---input_type ete \
---emapper_layout \
---domain_layout \
---taxonclade_layout \
---column_width 70
+--input-type ete \
+--emapper-layout \
+--domain-layout \
+--taxonclade-layout \
+--column-width 70
