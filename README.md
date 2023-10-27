@@ -61,7 +61,7 @@ TreeProfiler requires
 ### Quick install via pip
 ```
 # Install ETE Toolkit v4
-pip install https://github.com/etetoolkit/ete/archive/refs/tags/4.1.0-beta.tar.gz
+pip install https://github.com/etetoolkit/ete/archive/ete4.zip
 
 
 # Install TreeProfiler dependencies
