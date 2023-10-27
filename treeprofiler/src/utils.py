@@ -1,6 +1,6 @@
 from __future__ import annotations
 from ete4.parser.newick import NewickError
-from ete4.smartview.renderer.gardening import remove
+from ete4.core.operations import remove
 from ete4 import Tree, PhyloTree
 from Bio import AlignIO
 from Bio.Align import MultipleSeqAlignment
