@@ -2,14 +2,32 @@ import sys
 import os
 from io import StringIO
 import pytest
+import requests
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__) + '/..'))
 
 #from collections import namedtuple
 from tempfile import NamedTemporaryFile
-
 from treeprofiler import tree_annotate
 from treeprofiler.src import utils
+from ete4 import GTDBTaxa
+
+GTDB_r202_url = "https://github.com/etetoolkit/ete-data/raw/main/gtdb_taxonomy/gtdb202/gtdb202dump.tar.gz"
+
+def update_gtdb_r202():
+    gtdb = GTDBTaxa()
+    fname = "gtdb202dump.tar.gz"
+    #utils.download_file(GTDB_r202_url, "gtdb202dump.tar.gz")
+    if not os.path.exists(fname):
+        print(f'Downloading {fname} from {GTDB_r202_url} ... for testing GTDB taxonomic annotation')
+        with open(fname, 'wb') as f:
+            f.write(requests.get(GTDB_r202_url).content)
+
+    gtdb.update_taxonomy_database("gtdb202dump.tar.gz")
+    os.remove(fname)
+
+# need gtdb release to be 202
+update_gtdb_r202()
 
 def test_annotate_taxnomic_NCBI_01():
     # taxid in the leaf name

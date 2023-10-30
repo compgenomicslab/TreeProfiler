@@ -39,8 +39,7 @@ def test_emapper():
     for leaf in test_tree_annotated.leaves():
         props = list(leaf.props.keys())
         props.remove("_speciesFunction")
-        
-        assert leaf.write(props=props,  format_root_node=True) == next(expected_tree.get_leaves_by_name(leaf.name)).write(props=props,  format_root_node=True)
+        assert leaf.write(props=props,  format_root_node=True) == expected_tree[leaf.name].write(props=props,  format_root_node=True)
 
 def test_pfam():
     # test alignment

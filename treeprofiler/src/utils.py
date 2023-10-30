@@ -1,11 +1,13 @@
 from __future__ import annotations
 from ete4.parser.newick import NewickError
-from ete4.smartview.renderer.gardening import remove
+from ete4.core.operations import remove
 from ete4 import Tree, PhyloTree
 from Bio import AlignIO
 from Bio.Align import MultipleSeqAlignment
 from Bio.Align.AlignInfo import SummaryInfo
 from itertools import chain
+import random
+import colorsys
 import operator
 import math
 import Bio
@@ -223,3 +225,47 @@ def flatten(nasted_list):
         else:
             list_of_lists.extend(nasted_list)
     return list_of_lists
+
+def random_color(h=None, l=None, s=None, num=None, sep=None, seed=None):
+    """Return the RGB code of a random color.
+
+    Hue (h), Lightness (l) and Saturation (s) of the generated color
+    can be specified as arguments.
+    """
+    def rgb2hex(rgb):
+        return '#%02x%02x%02x' % rgb
+
+    def hls2hex(h, l, s):
+        return rgb2hex( tuple([int(x*255) for x in colorsys.hls_to_rgb(h, l, s)]))
+
+    if not h:
+        if seed:
+            random.seed(seed)
+        color = 1.0 / random.randint(1, 360)
+    else:
+        color = h
+
+    if not num:
+        n = 1
+        sep = 1
+    else:
+        n = num
+
+    if not sep:
+        n = num
+        sep = (1.0/n)
+
+    evenly_separated_colors =  [color + (sep*n) for n in range(n)]
+
+    rcolors = []
+    for h in evenly_separated_colors:
+        if not s:
+            s = 0.5
+        if not l:
+            l = 0.5
+        rcolors.append(hls2hex(h, l, s))
+
+    if num:
+        return rcolors
+    else:
+        return rcolors[0]

@@ -1,5 +1,5 @@
 
-from ete4.coretype.seqgroup import SeqGroup
+from ete4.core.seqgroup import SeqGroup
 from ete4.smartview import TreeLayout
 from ete4.smartview import AlignmentFace, SeqMotifFace, ScaleFace
 from ete4.smartview.renderer import draw_helpers

@@ -4,7 +4,7 @@ import numpy as np
 from ete4.smartview import TreeStyle, NodeStyle, TreeLayout
 from ete4.smartview  import TextFace, Face, ScaleFace, LegendFace, RectFace
 from ete4.smartview.renderer.draw_helpers import *
-from ete4.treeview.svg_colors import random_color
+from treeprofiler.src.utils import random_color
 
 import colorsys
 

@@ -16,7 +16,7 @@ from scipy import stats
 
 
 from ete4.parser.newick import NewickError
-from ete4.coretype.seqgroup import SeqGroup
+from ete4.core.seqgroup import SeqGroup
 from ete4 import Tree, PhyloTree
 from ete4 import GTDBTaxa
 from ete4 import NCBITaxa
@@ -54,12 +54,12 @@ def populate_annotate_args(parser):
     add('--bool-prop', nargs='+',
         help=("<col1,col2> names, column index or index range of columns which "
               "need to be read as boolean data"))
-    add('--text-prop-idx',
-        help="1,2,3 or [1-5] index of columns which need to be read as categorical data")
-    add('--num-prop-idx',
-        help="1,2,3 or [1-5] index columns which need to be read as numerical data")
-    add('--bool-prop-idx',
-        help="1,2,3 or [1-5] index columns which need to be read as boolean data")
+    add('--text-prop-idx', nargs='+',
+        help="1 2 3 or [1-5] index of columns which need to be read as categorical data")
+    add('--num-prop-idx', nargs='+',
+        help="1 2 3 or [1-5] index columns which need to be read as numerical data")
+    add('--bool-prop-idx', nargs='+',
+        help="1 2 3 or [1-5] index columns which need to be read as boolean data")
     # add('--taxatree',
     #     help=("<kingdom|phylum|class|order|family|genus|species|subspecies> "
     #           "reference tree from taxonomic database"))
@@ -176,8 +176,10 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         bool_prop = []
 
     if text_prop_idx:
+
         index_list = []
         for i in text_prop_idx:
+
             if i[0] == '[' and i[-1] == ']':
                 text_prop_start, text_prop_end = get_range(i)
                 for j in range(text_prop_start, text_prop_end+1):
@@ -574,8 +576,10 @@ def check_missing(input_string):
     3) An empty string (zero characters).
     """
     pattern = r'^(?:\W+|none|None|null|Null|NaN|)$'
-
-    if re.match(pattern, input_string):
+    
+    if input_string is None:
+        return True
+    elif re.match(pattern, input_string):
         #print("Input contains only non-alphanumeric characters, 'none', a missing value, or an empty value.")
         return True
     else:
@@ -998,7 +1002,7 @@ def annotate_evol_events(tree, sp_delimiter='.', sp_field=0):
 
     tree.set_species_naming_function(return_spcode)
 
-    node2species = tree.get_cached_content(store_attr='species')
+    node2species = tree.get_cached_content('species')
     for n in tree.traverse():
         n.props['species'] = node2species[n]
         if len(n.children) == 2:
