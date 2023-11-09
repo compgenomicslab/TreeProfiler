@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 import numbers
 import math
-import colorsys
-import random
 import sys
 import os
 
@@ -25,7 +23,7 @@ from treeprofiler.src import b64pickle
 from treeprofiler.src.utils import (
     ete4_parse, taxatree_prune, conditional_prune,
     children_prop_array, children_prop_array_missing, 
-    flatten, get_consensus_seq)
+    flatten, get_consensus_seq, random_color)
 
 paried_color = ["red", "darkblue", "lightgreen", "sienna", "lightCoral", "violet", "mediumturquoise",   "lightSkyBlue", "indigo", "tan", "coral", "olivedrab", "teal", "darkyellow"]
 
@@ -488,7 +486,7 @@ def run(args):
     if args.plot:
         get_image(tree, layouts, args.port, os.path.abspath(args.plot))
     else:  
-        tree.explore(daemon=False, compress=False, quiet=args.verbose, layouts=layouts, port=args.port, include_props=sorted(popup_prop_keys))
+        tree.explore(keep_server=True, compress=False, quiet=args.verbose, layouts=layouts, port=args.port, include_props=sorted(popup_prop_keys))
     
     return
 
@@ -788,18 +786,6 @@ def props2matrix(tree, profiling_props, dtype=float):
 #         for item in prop:
 #             matrix += value2color[item]
 #     return matrix, value2color
-
-def random_color(h=None):
-    """Generates a random color in RGB format."""
-    if not h:
-        h = random.random()
-    s = 0.5
-    l = 0.5
-    return _hls2hex(h, l, s)
- 
-def _hls2hex(h, l, s):
-    return '#%02x%02x%02x' %tuple(map(lambda x: int(x*255),
-                                    colorsys.hls_to_rgb(h, l, s)))
 
 def single2profile(tree, profiling_prop):
     all_values = sorted(list(set(flatten(children_prop_array(tree, profiling_prop)))), key=lambda x: (x != 'NaN', x))

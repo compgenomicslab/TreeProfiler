@@ -246,9 +246,9 @@ def test_annotate_11():
 
         metadata_dict, node_props, columns, prop2type = tree_annotate.parse_csv([f_annotation.name])
 
-    text_prop_idx = '[1-2]'
-    num_prop_idx = '[3-4]'
-    bool_prop_idx = '[5-6]'
+    text_prop_idx = ['[1-2]']
+    num_prop_idx = ['[3-4]']
+    bool_prop_idx = ['[5-6]']
     multiple_text_prop = ['col7']
 
     test_tree_annotated, annotated_prop2type = tree_annotate.run_tree_annotate(test_tree, 
