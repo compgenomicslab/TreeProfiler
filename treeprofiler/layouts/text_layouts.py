@@ -5,7 +5,6 @@ from treeprofiler.layouts.general_layouts import get_piechartface, get_stackedba
 """
 label_layout, colorbranch_layout, rectangular_layout   
 """
-#paried_color = ["red", "darkblue", "darkgreen", "darkyellow", "violet", "mediumturquoise", "sienna", "lightCoral", "lightSkyBlue", "indigo", "tan", "coral", "olivedrab", "teal"]
 
 class LayoutText(TreeLayout):
     def __init__(self, name, column, color_dict, text_prop, width=70, min_fsize=5, max_fsize=15, padding_x=1, padding_y=0, legend=True, aligned_faces=True):

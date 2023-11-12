@@ -23,7 +23,7 @@ from treeprofiler.src import b64pickle
 from treeprofiler.src.utils import (
     ete4_parse, taxatree_prune, conditional_prune,
     children_prop_array, children_prop_array_missing, 
-    flatten, get_consensus_seq, random_color, assign_colors)
+    flatten, get_consensus_seq, random_color, assign_color_to_values)
 
 #paired_color = ["red", "darkblue", "lightgreen", "sienna", "lightCoral", "violet", "mediumturquoise",   "lightSkyBlue", "indigo", "tan", "coral", "olivedrab", "teal", "darkyellow"]
 paired_color = [
@@ -45,6 +45,7 @@ paired_color = [
     '#60e72e', '#d1941c', '#1045a8', '#c1b03a', '#0c62a5', '#7ac9b2',
     '#6bb9bd', '#cb30eb', '#26bad0', '#d9e557'
 ]
+
 DESC = "plot tree"
 
 def poplulate_plot_args(plot_args_p):
@@ -465,14 +466,8 @@ def run(args):
         
         # assign color for each value of each rank
         for rank, value in sorted(rank2values.items()):
-            color_dict = {} 
-            nvals = len(value)
-            for i in range(0, nvals):
-                if nvals <= 14:
-                    color_dict[value[i]] = paired_color[i]
-                else:
-                    color_dict[value[i]] = random_color(h=None)
-            
+            color_dict = assign_color_to_values(value, paired_color)
+
             if args.taxonclade_layout:
                 taxa_layout = taxon_layouts.TaxaClade(name='TaxaClade_'+rank, level=level, rank = rank, color_dict=color_dict)
                 taxa_layouts.append(taxa_layout)
@@ -541,7 +536,7 @@ def get_label_layouts(tree, props, level, prop2type, column_width=70, padding_x=
         else:
             prop_values = sorted(list(set(children_prop_array(tree, prop))))
 
-        color_dict = assign_colors(prop_values)
+        color_dict = assign_color_to_values(prop_values, paired_color)
         
         layout = text_layouts.LayoutText(name='Label_'+prop, column=level, 
         color_dict=color_dict, text_prop=prop, width=column_width, padding_x=padding_x, padding_y=padding_y)
@@ -561,12 +556,8 @@ def get_colorbranch_layouts(tree, props, level, prop2type, column_width=70, padd
             prop_values = sorted(list(set(children_prop_array(tree, prop))))
         
         # normal text prop
-        nvals = len(prop_values)            
-        for i in range(0, nvals):
-            if nvals <= 14:
-                color_dict[prop_values[i]] = paired_color[i]
-            else:
-                color_dict[prop_values[i]] = random_color(h=None)
+        color_dict = assign_color_to_values(prop_values, paired_color)
+
         layout = text_layouts.LayoutColorbranch(name='Colorbranch_'+prop, column=level, \
             color_dict=color_dict, text_prop=prop, width=column_width, \
                 padding_x=padding_x, padding_y=padding_y)
@@ -586,12 +577,8 @@ def get_rectangle_layouts(tree, props, level, prop2type, column_width=70, paddin
             prop_values = sorted(list(set(children_prop_array(tree, prop))))
         
         # normal text prop
-        nvals = len(prop_values)            
-        for i in range(0, nvals):
-            if nvals <= 14:
-                color_dict[prop_values[i]] = paired_color[i]
-            else:
-                color_dict[prop_values[i]] = random_color(h=None)
+        color_dict = assign_color_to_values(prop_values, paired_color)
+
         layout = text_layouts.LayoutRect(name='Rectangular_'+prop, column=level,
                     color_dict=color_dict, text_prop=prop,
                     width=column_width, padding_x=padding_x, padding_y=padding_y)
@@ -606,6 +593,7 @@ def get_binary_layouts(tree, props, level, prop2type, column_width=70, reverse=F
     for prop in props:
         color_dict = {} # key = value, value = color id
         prop_values = sorted(list(set(children_prop_array(tree, prop))))
+        
         nvals = len(prop_values)
 
         for i in range(0, nvals): # only positive, negative, NaN, three options
