@@ -32,7 +32,7 @@ def populate_main_args(main_args_p):
         action='store_true',
         help="input tree already annotated by treeprofiler if you want to skip the annotate part.")
     group.add_argument('--internal-parser',
-        default="name",
+        default="support",
         choices=["name", "support"],
         type=str,
         required=False,

@@ -17,6 +17,9 @@ from treeprofiler.src import utils
 def test_pruned_by_00():
     # test "contains" in leaf name
     # load tree
+    internal_parser = "name"
+    parser = utils.get_internal_parser(internal_parser)
+
     test_tree = tree_annotate.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;")
 
      # load metadata
@@ -35,11 +38,14 @@ def test_pruned_by_00():
     condition_inputs = ["name contains A"]
     pruned_tree = utils.conditional_prune(test_tree_annotated, condition_inputs, prop2type)
     
-    assert pruned_tree.write(props=props, format_root_node=True) == expected_tree
+    assert pruned_tree.write(props=props, parser=parser, format_root_node=True) == expected_tree
 
 def test_pruned_by_01():
     # test "contains" in leaf node in categorical data
     # load tree
+    internal_parser = "name"
+    parser = utils.get_internal_parser(internal_parser)
+
     test_tree = tree_annotate.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;")
 
      # load metadata
@@ -57,11 +63,14 @@ def test_pruned_by_01():
     props = ['alphabet_type', 'alphabet_type_counter']
     condition_inputs = ["alphabet_type=vowel"]
     pruned_tree = utils.conditional_prune(test_tree_annotated, condition_inputs, prop2type)
-    assert pruned_tree.write(props=props, format_root_node=True) == expected_tree
+    assert pruned_tree.write(props=props, parser=parser, format_root_node=True) == expected_tree
 
 def test_pruned_by_02():
     # test "contains" in internal node in categorical data
     # load tree
+    internal_parser = "name"
+    parser = utils.get_internal_parser(internal_parser)
+
     test_tree = tree_annotate.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;")
 
      # load metadata
@@ -79,11 +88,14 @@ def test_pruned_by_02():
     condition_inputs = ["alphabet_type_counter:consonant < 2"]
     pruned_tree = utils.conditional_prune(test_tree_annotated, condition_inputs, prop2type)
 
-    assert pruned_tree.write(props=props, format_root_node=True) == expected_tree
+    assert pruned_tree.write(props=props, parser=parser, format_root_node=True) == expected_tree
 
 def test_pruned_by_03():
     # test operators in leaf node in numerical data
     # load tree
+    internal_parser = "name"
+    parser = utils.get_internal_parser(internal_parser)
+
     test_tree = tree_annotate.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;")
 
      # load metadata
@@ -102,11 +114,14 @@ def test_pruned_by_03():
     condition_inputs = ["col1 < 3"]
     pruned_tree = utils.conditional_prune(test_tree_annotated, condition_inputs, prop2type)
 
-    assert pruned_tree.write(props=props, format_root_node=True) == expected_tree
+    assert pruned_tree.write(props=props, parser=parser, format_root_node=True) == expected_tree
 
 def test_pruned_by_04():
     # test operators in internal node in numerical data
     # load tree
+    internal_parser = "name"
+    parser = utils.get_internal_parser(internal_parser)
+
     test_tree = tree_annotate.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;")
 
      # load metadata
@@ -126,12 +141,16 @@ def test_pruned_by_04():
     condition_inputs = ["col1_avg < 3.5"]
     pruned_tree = utils.conditional_prune(test_tree_annotated, condition_inputs, prop2type)
 
-    assert pruned_tree.write(props=props, format_root_node=True) == expected_tree
+    assert pruned_tree.write(props=props, parser=parser, format_root_node=True) == expected_tree
 
 def test_pruned_by_05():
     # test "contains" in leaf node in list data
     # internal_nodes annotation list data
+    internal_parser = "name"
+    parser = utils.get_internal_parser(internal_parser)
+
     test_tree = tree_annotate.ete4_parse("(A:1,(B:1,(E:1,D:1):0.5):0.5);")
+
     with NamedTemporaryFile(suffix='.tsv') as f_annotation:
         f_annotation.write(b'#name\tlist_data\nA\ta,b,c\nB\tc,d\nD\ta,c,d,e\nE\te,d,b\n')
         f_annotation.flush()
@@ -146,11 +165,14 @@ def test_pruned_by_05():
     condition_inputs = ['list_data contains a']
     pruned_tree = utils.conditional_prune(test_tree_annotated, condition_inputs, prop2type)
 
-    assert pruned_tree.write(props=props, format_root_node=True) == expected_tree
+    assert pruned_tree.write(props=props, parser=parser, format_root_node=True) == expected_tree
 
 def test_pruned_by_06():
     # test "contains" in internal node in list data
     # load tree
+    internal_parser = "name"
+    parser = utils.get_internal_parser(internal_parser)
+
     test_tree = tree_annotate.ete4_parse("(A:1,(B:1,(E:1,D:1):0.5):0.5);")
     with NamedTemporaryFile(suffix='.tsv') as f_annotation:
         f_annotation.write(b'#name\tlist_data\nA\ta,b,c\nB\tc,d\nD\ta,c,d,e\nE\te,d,b\n')
@@ -166,6 +188,6 @@ def test_pruned_by_06():
     condition_inputs = ['list_data_counter:a<2']
     pruned_tree = utils.conditional_prune(test_tree_annotated, condition_inputs, prop2type)
 
-    assert pruned_tree.write(props=props, format_root_node=True) == expected_tree
+    assert pruned_tree.write(props=props, parser=parser, format_root_node=True) == expected_tree
 
 #pytest.main(['-v'])

@@ -6,6 +6,7 @@ from Bio import AlignIO
 from Bio.Align import MultipleSeqAlignment
 from Bio.Align.AlignInfo import SummaryInfo
 from itertools import chain
+import matplotlib.pyplot as plt
 import random
 import colorsys
 import operator
@@ -121,12 +122,14 @@ def get_consensus_seq(filename: Path | str, threshold=0.7) -> SeqRecord:
 
 
 # parse ete4 Tree
-def ete4_parse(newick, internal_parser="name"):
+def get_internal_parser(internal_parser="name"):
     if internal_parser == "name":
-        tree = PhyloTree(newick, parser=1)
+        return 1
     elif internal_parser == "support":
-        tree = PhyloTree(newick, parser=0)
-        
+        return 0
+         
+def ete4_parse(newick, internal_parser="name"):
+    tree = PhyloTree(newick, parser=get_internal_parser(internal_parser))
     # Correct 0-dist trees
     has_dist = False
     for n in tree.traverse(): 
@@ -269,3 +272,26 @@ def random_color(h=None, l=None, s=None, num=None, sep=None, seed=None):
         return rcolors
     else:
         return rcolors[0]
+
+def assign_color_to_values(values, paired_colors):
+    """Assigns colors to values, either from a predefined list or generates new ones."""
+    color_dict = {}
+
+    if len(values) <= len(paired_colors):
+        # Use predefined colors if enough are available
+        color_dict = {val: paired_colors[i] for i, val in enumerate(values)}
+    else:
+        # Use the assign_colors function to generate colors if not enough predefined colors
+        color_dict = assign_colors(values)
+
+    return dict(sorted(color_dict.items()))
+
+def rgba_to_hex(rgba):
+    """Convert RGBA to Hexadecimal."""
+    return '#{:02x}{:02x}{:02x}'.format(int(rgba[0]*255), int(rgba[1]*255), int(rgba[2]*255))
+
+def assign_colors(variables, cmap_name='tab20'):
+    """Assigns colors to variables using a matplotlib colormap."""
+    cmap = plt.cm.get_cmap(cmap_name, len(variables))  # Get the colormap
+    colors = [rgba_to_hex(cmap(i)) for i in range(cmap.N)]  # Generate colors in hex format
+    return dict(zip(variables, colors))

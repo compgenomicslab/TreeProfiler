@@ -7,8 +7,8 @@ import os
 from collections import defaultdict
 from itertools import islice
 from io import StringIO
+import matplotlib.pyplot as plt
 import numpy as np
-
 
 from ete4.parser.newick import NewickError
 from ete4 import Tree, PhyloTree
@@ -23,9 +23,28 @@ from treeprofiler.src import b64pickle
 from treeprofiler.src.utils import (
     ete4_parse, taxatree_prune, conditional_prune,
     children_prop_array, children_prop_array_missing, 
-    flatten, get_consensus_seq, random_color)
+    flatten, get_consensus_seq, random_color, assign_color_to_values)
 
-paried_color = ["red", "darkblue", "lightgreen", "sienna", "lightCoral", "violet", "mediumturquoise",   "lightSkyBlue", "indigo", "tan", "coral", "olivedrab", "teal", "darkyellow"]
+#paired_color = ["red", "darkblue", "lightgreen", "sienna", "lightCoral", "violet", "mediumturquoise",   "lightSkyBlue", "indigo", "tan", "coral", "olivedrab", "teal", "darkyellow"]
+paired_color = [
+    '#9a312f', '#9b57d0', '#f8ce9a', '#f16017', '#28fef9', '#53707a',
+    '#213b07', '#b5e5ac', '#9640b2', '#a9bd10', '#69e42b', '#b44d67',
+    '#b110c1', '#0b08a3', '#d07671', '#29e23b', '#3f2bf4', '#9b2a08',
+    '#b42b94', '#77566a', '#2dfee7', '#046904', '#e2835d', '#53db2b',
+    '#0b97e9', '#e0f6e9', '#ba46d1', '#4aba53', '#d4d6db', '#7a5d7c',
+    '#4b100e', '#9e6373', '#5f4945', '#7e057a', '#f8e372', '#209f87',
+    '#383f59', '#9d59e9', '#40c9fb', '#4cfc8b', '#d94769', '#20feba',
+    '#c53238', '#068b02', '#6b4c93', '#f1968e', '#86d720', '#076fa6',
+    '#0dbcfe', '#4d74b2', '#7b3dd2', '#286d26', '#a0faca', '#97505d',
+    '#159e7a', '#fc05df', '#5df454', '#9160e1', '#c2eb5e', '#304fce',
+    '#033379', '#54770f', '#271211', '#ab8479', '#37d9a0', '#f12205',
+    '#cdd7e2', '#578f56', '#5ad9be', '#8596e9', '#c999ee', '#5f6b8a',
+    '#f5c3a1', '#8e0603', '#cc21cf', '#65e7d0', '#97b3b6', '#d6220c',
+    '#29c1e1', '#a30139', '#c9a619', '#a19410', '#da874f', '#64246d',
+    '#66f35d', '#b8366c', '#116c95', '#bd851a', '#27f7cb', '#512ca4',
+    '#60e72e', '#d1941c', '#1045a8', '#c1b03a', '#0c62a5', '#7ac9b2',
+    '#6bb9bd', '#cb30eb', '#26bad0', '#d9e557'
+]
 
 DESC = "plot tree"
 
@@ -421,8 +440,13 @@ def run(args):
         
         for multiple_text_prop in multiple_text_props:
             matrix, all_values = multiple2profile(tree, multiple_text_prop)
-            multiple_text_prop_layout = profile_layouts.LayoutProfile(name="Profiling_"+multiple_text_prop, 
-            mode='multi', alignment=matrix, profiles=all_values, column=level)
+            multiple_text_prop_layout = profile_layouts.LayoutProfile(
+                name="Profiling_"+multiple_text_prop, 
+                mode='multi', 
+                alignment=matrix, 
+                profiles=all_values, 
+                active=False,
+                column=level)
             level += 1
             layouts.append(multiple_text_prop_layout)
             
@@ -442,14 +466,8 @@ def run(args):
         
         # assign color for each value of each rank
         for rank, value in sorted(rank2values.items()):
-            color_dict = {} 
-            nvals = len(value)
-            for i in range(0, nvals):
-                if nvals <= 14:
-                    color_dict[value[i]] = paried_color[i]
-                else:
-                    color_dict[value[i]] = random_color(h=None)
-            
+            color_dict = assign_color_to_values(value, paired_color)
+
             if args.taxonclade_layout:
                 taxa_layout = taxon_layouts.TaxaClade(name='TaxaClade_'+rank, level=level, rank = rank, color_dict=color_dict)
                 taxa_layouts.append(taxa_layout)
@@ -518,14 +536,8 @@ def get_label_layouts(tree, props, level, prop2type, column_width=70, padding_x=
         else:
             prop_values = sorted(list(set(children_prop_array(tree, prop))))
 
-        # normal text prop
-        nvals = len(prop_values)            
-        for i in range(0, nvals):
-            if nvals <= 14:
-                color_dict[prop_values[i]] = paried_color[i]
-            else:
-                color_dict[prop_values[i]] = random_color(h=None)
-
+        color_dict = assign_color_to_values(prop_values, paired_color)
+        
         layout = text_layouts.LayoutText(name='Label_'+prop, column=level, 
         color_dict=color_dict, text_prop=prop, width=column_width, padding_x=padding_x, padding_y=padding_y)
         layouts.append(layout)
@@ -544,12 +556,8 @@ def get_colorbranch_layouts(tree, props, level, prop2type, column_width=70, padd
             prop_values = sorted(list(set(children_prop_array(tree, prop))))
         
         # normal text prop
-        nvals = len(prop_values)            
-        for i in range(0, nvals):
-            if nvals <= 14:
-                color_dict[prop_values[i]] = paried_color[i]
-            else:
-                color_dict[prop_values[i]] = random_color(h=None)
+        color_dict = assign_color_to_values(prop_values, paired_color)
+
         layout = text_layouts.LayoutColorbranch(name='Colorbranch_'+prop, column=level, \
             color_dict=color_dict, text_prop=prop, width=column_width, \
                 padding_x=padding_x, padding_y=padding_y)
@@ -569,12 +577,8 @@ def get_rectangle_layouts(tree, props, level, prop2type, column_width=70, paddin
             prop_values = sorted(list(set(children_prop_array(tree, prop))))
         
         # normal text prop
-        nvals = len(prop_values)            
-        for i in range(0, nvals):
-            if nvals <= 14:
-                color_dict[prop_values[i]] = paried_color[i]
-            else:
-                color_dict[prop_values[i]] = random_color(h=None)
+        color_dict = assign_color_to_values(prop_values, paired_color)
+
         layout = text_layouts.LayoutRect(name='Rectangular_'+prop, column=level,
                     color_dict=color_dict, text_prop=prop,
                     width=column_width, padding_x=padding_x, padding_y=padding_y)
@@ -589,10 +593,11 @@ def get_binary_layouts(tree, props, level, prop2type, column_width=70, reverse=F
     for prop in props:
         color_dict = {} # key = value, value = color id
         prop_values = sorted(list(set(children_prop_array(tree, prop))))
+        
         nvals = len(prop_values)
 
         for i in range(0, nvals): # only positive, negative, NaN, three options
-            color_dict[prop_values[i]] = paried_color[i]
+            color_dict[prop_values[i]] = paired_color[i]
         
         color = random_color(h=None)
         if not reverse:
@@ -620,10 +625,10 @@ def get_barplot_layouts(tree, props, level, prop2type, column_width=70, padding_
         else:
             size_prop = prop+'_'+internal_rep
 
-        if level > len(paried_color):
+        if level > len(paired_color):
             barplot_color =  random_color(h=None)
         else:
-            barplot_color = paried_color[level]
+            barplot_color = paired_color[level]
         
         layout =  staple_layouts.LayoutBarplot(name='Barplot_'+prop, prop=prop, 
                                     width=column_width, color=barplot_color, 

@@ -20,8 +20,8 @@ def get_colormap():
 class LayoutAlignment(TreeLayout):
     def __init__(self, name="Alignment",
             alignment=None, alignment_prop=None, format='seq', width=700, height=15,
-            column=0, scale_range=None, summarize_inner_nodes=True):
-        super().__init__(name)
+            column=0, scale_range=None, summarize_inner_nodes=True, aligned_faces=True):
+        super().__init__(name, aligned_faces=aligned_faces)
         #self.alignment = SeqGroup(alignment) if alignment else None
         self.alignment_prop = alignment_prop
         self.width = width
