@@ -8,8 +8,8 @@ label_layout, colorbranch_layout, rectangular_layout
 #paried_color = ["red", "darkblue", "darkgreen", "darkyellow", "violet", "mediumturquoise", "sienna", "lightCoral", "lightSkyBlue", "indigo", "tan", "coral", "olivedrab", "teal"]
 
 class LayoutText(TreeLayout):
-    def __init__(self, name, column, color_dict, text_prop, width=70, min_fsize=5, max_fsize=15, padding_x=1, padding_y=0, legend=True):
-        super().__init__(name)
+    def __init__(self, name, column, color_dict, text_prop, width=70, min_fsize=5, max_fsize=15, padding_x=1, padding_y=0, legend=True, aligned_faces=True):
+        super().__init__(name, aligned_faces=aligned_faces)
         self.aligned_faces = True
         self.text_prop = text_prop
         self.column = column

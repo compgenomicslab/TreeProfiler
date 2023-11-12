@@ -121,12 +121,14 @@ def get_consensus_seq(filename: Path | str, threshold=0.7) -> SeqRecord:
 
 
 # parse ete4 Tree
-def ete4_parse(newick, internal_parser="name"):
+def get_internal_parser(internal_parser="name"):
     if internal_parser == "name":
-        tree = PhyloTree(newick, parser=1)
+        return 1
     elif internal_parser == "support":
-        tree = PhyloTree(newick, parser=0)
-        
+        return 0
+         
+def ete4_parse(newick, internal_parser="name"):
+    tree = PhyloTree(newick, parser=get_internal_parser(internal_parser))
     # Correct 0-dist trees
     has_dist = False
     for n in tree.traverse(): 
@@ -269,3 +271,13 @@ def random_color(h=None, l=None, s=None, num=None, sep=None, seed=None):
         return rcolors
     else:
         return rcolors[0]
+
+def rgba_to_hex(rgba):
+    """Convert RGBA to Hexadecimal."""
+    return '#{:02x}{:02x}{:02x}'.format(int(rgba[0]*255), int(rgba[1]*255), int(rgba[2]*255))
+
+def assign_colors(variables, cmap_name='tab20c'):
+    """Assigns colors to variables using a matplotlib colormap."""
+    cmap = plt.cm.get_cmap(cmap_name, len(variables))  # Get the colormap
+    colors = [rgba_to_hex(cmap(i)) for i in range(cmap.N)]  # Generate colors in hex format
+    return dict(zip(variables, colors))

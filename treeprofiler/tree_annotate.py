@@ -22,7 +22,7 @@ from ete4 import GTDBTaxa
 from ete4 import NCBITaxa
 from treeprofiler.src import b64pickle
 from treeprofiler.src.utils import (
-    ete4_parse, taxatree_prune, conditional_prune,
+    get_internal_parser, ete4_parse, taxatree_prune, conditional_prune,
     children_prop_array, children_prop_array_missing,
     flatten, get_consensus_seq)
 
@@ -539,7 +539,9 @@ def run(args):
         out_tsv = base+'_annotated.tsv'
 
         ### out newick
-        annotated_tree.write(outfile=os.path.join(args.outdir, out_newick), props=None, format_root_node=True)
+        annotated_tree.write(outfile=os.path.join(args.outdir, out_newick), props=None, 
+                    parser=get_internal_parser(args.internal_parser), format_root_node=True)
+        
         ### output prop2type
         with open(os.path.join(args.outdir, base+'_prop2type.txt'), "w") as f:
             #f.write(first_line + "\n")
