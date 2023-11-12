@@ -69,8 +69,8 @@ pip install biopython selenium scipy matplotlib
 
 # Install TreeProfiler tool via pip
 pip install TreeProfiler
-pip install --force-reinstall https://github.com/compgenomicslab/TreeProfiler/archive/main.zip
-# or 
+# or development mode
+pip install https://github.com/compgenomicslab/TreeProfiler/archive/main.zip
 ```
 
 
