@@ -63,7 +63,7 @@ def populate_annotate_args(parser):
     # add('--taxatree',
     #     help=("<kingdom|phylum|class|order|family|genus|species|subspecies> "
     #           "reference tree from taxonomic database"))
-    add('--taxadb', default='GTDB',
+    add('--taxadb', default='GTDB', type=str.upper,
         help="<NCBI|GTDB> for taxonomic profiling or fetch taxatree [default: GTDB]")
     add('--taxon-column',
         help="<col1> name of columns which need to be read as taxon data")
@@ -389,9 +389,9 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         else:
             if taxadb == 'GTDB':
                 if taxon_column:
-                    annotated_tree, rank2values = annotate_taxa(annotated_tree, db=taxadb, taxid_attr=taxon_column)
+                    annotated_tree, rank2values = annotate_taxa(annotated_tree, db=taxadb, taxid_attr=taxon_column, sp_delimiter=taxon_delimiter, sp_field=taxa_field)
                 else:
-                    annotated_tree, rank2values = annotate_taxa(annotated_tree, db=taxadb, taxid_attr="name")
+                    annotated_tree, rank2values = annotate_taxa(annotated_tree, db=taxadb, taxid_attr="name", sp_delimiter=taxon_delimiter, sp_field=taxa_field)
             elif taxadb == 'NCBI':
                 if taxon_column:
                     annotated_tree, rank2values = annotate_taxa(annotated_tree, db=taxadb, taxid_attr=taxon_column, sp_delimiter=taxon_delimiter, sp_field=taxa_field)
@@ -453,24 +453,32 @@ def run(args):
 
     # parsing tree
     if args.tree:
-        if args.input_type == 'newick':
-            try:
-                tree = ete4_parse(open(args.tree), internal_parser=args.internal_parser)
-            except Exception as e:
-                print(e)
-                sys.exit(1)
-        elif args.input_type == 'ete':
-            try:
+        tree = None  # Initialize tree to None
+        try:
+            if args.input_type == 'newick' or args.input_type == 'auto':
+                try:
+                    tree = ete4_parse(open(args.tree), internal_parser=args.internal_parser)
+                    # If parsing is successful, proceed
+                except Exception as e:
+                    if args.input_type == 'newick':
+                        print(e)
+                        sys.exit(1)
+                    # If it's 'auto', try the next format
+            if args.input_type == 'ete' or (args.input_type == 'auto' and tree is None):
                 with open(args.tree, 'r') as f:
                     file_content = f.read()
                     tree = b64pickle.loads(file_content, encoder='pickle', unpack=False)
-            except ValueError as e:
-                print(e)
-                print("In valid ete format.")
-                sys.exit(1)
+        except ValueError as e:
+            print(e)
+            if args.input_type == 'ete':
+                print("Invalid ete format.")
+            else:
+                print("Invalid tree format.")
+            sys.exit(1)
+
     # if refer tree from taxadb, input tree will be ignored
-    elif taxatree and taxadb:
-        tree = ''
+    # elif taxatree and taxadb:
+    #     tree = ''
     else:
         sys.exit('empty input')
 
@@ -961,22 +969,47 @@ def name_nodes(tree):
                 node.name = 'Root'
     return tree
 
+def gtdb_accession_to_taxid(accession):
+        """Given a GTDB accession number, returns its complete accession"""
+        if accession.startswith('GCA'):
+            prefix = 'GB_'
+            return prefix+accession
+        elif accession.startswith('GCF'):
+            prefix = 'RS_'
+            return prefix+accession
+        else:
+            return accession
+
 def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field=0):
     global rank2values
-    def return_spcode(leaf):
+
+    def return_spcode_ncbi(leaf):
         #print(leaf.props.get(taxid_attr).split(sp_delimiter)[sp_field])
         try:
             return leaf.props.get(taxid_attr).split(sp_delimiter)[sp_field]
         except (IndexError, ValueError):
             return leaf.props.get(taxid_attr)
 
+    def return_spcode_gtdb(leaf):
+        #print(leaf.props.get(taxid_attr).split(sp_delimiter)[sp_field])
+        try:
+            if sp_delimiter:
+                species_attribute = leaf.props.get(taxid_attr).split(sp_delimiter)[sp_field]
+                return gtdb_accession_to_taxid(species_attribute)
+            else:
+                return gtdb_accession_to_taxid(leaf.props.get(taxid_attr))
+        except (IndexError, ValueError):
+            return gtdb_accession_to_taxid(leaf.props.get(taxid_attr))
+
     if db == "GTDB":
         gtdb = GTDBTaxa()
-        gtdb.annotate_tree(tree,  taxid_attr=taxid_attr)
+        tree.set_species_naming_function(return_spcode_gtdb)
+        gtdb.annotate_tree(tree,  taxid_attr="species")
+
     elif db == "NCBI":
         ncbi = NCBITaxa()
         # extract sp codes from leaf names
-        tree.set_species_naming_function(return_spcode)
+        tree.set_species_naming_function(return_spcode_ncbi)
         ncbi.annotate_tree(tree, taxid_attr="species")
 
     # tree.annotate_gtdb_taxa(taxid_attr='name')

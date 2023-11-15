@@ -30,7 +30,7 @@ def populate_main_args(main_args_p):
     group.add_argument('--annotated-tree',
         default=False,
         action='store_true',
-        help="input tree already annotated by treeprofiler if you want to skip the annotate part.")
+        help="(deprecated) input tree already annotated by treeprofiler if you want to skip the annotate part.")
     group.add_argument('--internal-parser',
         default="support",
         choices=["name", "support"],
@@ -39,8 +39,8 @@ def populate_main_args(main_args_p):
         help="To specify how to interpret internal nodes in newick format. [default: name]")
     group.add_argument('--input-type',
         type=str,
-        default="ete",
-        choices=["newick", "ete"],
+        default="auto",
+        choices=["auto", "newick", "ete"],
         help="Specify input tree format. [newick, ete]. [default: ete]")
     group.add_argument('--prop2type',
         type=str,
