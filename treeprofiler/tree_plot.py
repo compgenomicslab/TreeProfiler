@@ -188,6 +188,14 @@ def poplulate_plot_args(plot_args_p):
     #     default=False,
     #     action='store_true',
     #     help="run interactive session")
+
+    group.add_argument('--hide-leaf-name', action='store_false',
+        help='Hide the leaf names in the tree view.')
+    group.add_argument('--hide-branch-support', action='store_false',
+        help='Hide the branch support values in the tree view.')
+    group.add_argument('--hide-branch-distance', action='store_false',
+        help='Hide the branch distances in the tree view.')
+
     group.add_argument('--verbose',
         action="store_false", 
         required=False,
@@ -223,27 +231,28 @@ def run(args):
 
     #parse input tree
     if args.tree:
-        if args.input_type == 'newick':
-            try:
-                tree = ete4_parse(open(args.tree), internal_parser=args.internal_parser)
-            except Exception as e:
-                print(e)
-                sys.exit(1)
-        # elif args.input_type == 'nexus':
-        #    try:
-        #         tree = ete4_parse(open(args.tree), internal_parser=args.internal_parser)
-        #     except Exception as e:
-        #         print(e)
-        #         sys.exit(1)
-        elif args.input_type == 'ete':
-            try:
+        tree = None  # Initialize tree to None
+        try:
+            if args.input_type == 'newick' or args.input_type == 'auto':
+                try:
+                    tree = ete4_parse(open(args.tree), internal_parser=args.internal_parser)
+                    # If parsing is successful, proceed
+                except Exception as e:
+                    if args.input_type == 'newick':
+                        print(e)
+                        sys.exit(1)
+                    # If it's 'auto', try the next format
+            if args.input_type == 'ete' or (args.input_type == 'auto' and tree is None):
                 with open(args.tree, 'r') as f:
                     file_content = f.read()
                     tree = b64pickle.loads(file_content, encoder='pickle', unpack=False)
-            except ValueError as e:
-                print(e)
-                print("In valid ete format.")
-                sys.exit(1)
+        except ValueError as e:
+            print(e)
+            if args.input_type == 'ete':
+                print("Invalid ete format.")
+            else:
+                print("Invalid tree format.")
+            sys.exit(1)
     
     #rest_prop = []
     if args.prop2type:
@@ -482,7 +491,7 @@ def run(args):
         taxa_layouts.append(taxon_layouts.LayoutSciName(name = 'Taxa Scientific name', color_dict=taxon_color_dict))
         taxa_layouts.append(taxon_layouts.LayoutEvolEvents(name='Taxa Evolutionary events', prop="evoltype",
             speciation_color="blue", 
-            duplication_color="red", node_size = 2,
+            duplication_color="red", node_size = 3,
             legend=True))
         layouts = layouts + taxa_layouts
         level += 1
@@ -504,7 +513,10 @@ def run(args):
     if args.plot:
         get_image(tree, layouts, args.port, os.path.abspath(args.plot))
     else:  
-        tree.explore(keep_server=True, compress=False, quiet=args.verbose, layouts=layouts, port=args.port, include_props=sorted(popup_prop_keys))
+        tree.explore(keep_server=True, compress=False, quiet=args.verbose, 
+        layouts=layouts, port=args.port, include_props=sorted(popup_prop_keys),
+        show_leaf_name=args.hide_leaf_name, show_branch_support=args.hide_branch_support,
+        show_branch_length=args.hide_branch_distance)
     
     return
 
