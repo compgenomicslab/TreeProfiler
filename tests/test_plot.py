@@ -40,7 +40,7 @@ def tree_session(tree, layouts):
     #t = Tree(TREEFILE, format=1)
     tree.explore(layouts=layouts, show_leaf_name=True, 
                 show_branch_length=True, show_branch_support=True, port=5000,
-                custom_api={}, custom_route={}) 
+                keep_server=True, open_browser=False) 
 
 def test_plot_01():
     # basic annotate categorical data
@@ -76,8 +76,9 @@ def test_plot_02():
     layouts.extend(label_layouts)
     expected_config = "{'default': {'Branch length': True, 'Branch support': True, 'Leaf name': True, 'Number of leaves': False, 'Label_alphabet_type': True}}"
     expected_draw = "[['line', [0, 2.0], [2.0, 2.0], '', [], {'stroke': '#000000', 'stroke-width': 0.5, 'fill': '#e5e5e5', 'fill-opacity': 0.3, 'type': 'solid'}], ['nodebox', [0, 0, 2.0, 4.0], '', {'name': '', 'dist': 0.0, 'support': 1.0}, [], [], {'fill': 'transparent'}]]"
-    expected_layout = "{'name': 'Label_alphabet_type', 'active': True, 'aligned_faces': True, 'description': '', 'legend': True, 'always_render': False, 'ts': None, 'ns': None, 'text_prop': 'alphabet_type', 'column': 1, 'color_dict': {'consonant': 'red', 'vowel': 'darkblue'}, 'internal_prop': 'alphabet_type_counter', 'width': 70, 'height': None, 'min_fsize': 5, 'max_fsize': 15, 'absence_color': '#EBEBEB', 'padding_x': 1, 'padding_y': 0}"
+    expected_layout = "{'name': 'Label_alphabet_type', 'active': True, 'aligned_faces': True, 'description': '', 'legend': True, 'always_render': False, 'ts': None, 'ns': None, 'text_prop': 'alphabet_type', 'column': 1, 'color_dict': {'consonant': '#9a312f', 'vowel': '#9b57d0'}, 'internal_prop': 'alphabet_type_counter', 'width': 70, 'height': None, 'min_fsize': 5, 'max_fsize': 15, 'absence_color': '#EBEBEB', 'padding_x': 1, 'padding_y': 0}"
     get_parallel(test_tree, layouts, expected_draw, expected_config)
+    
     assert str(layouts[0].__dict__)==expected_layout
 
 def test_plot_03():
@@ -105,8 +106,9 @@ def test_plot_03():
     layouts.extend(colorbranch_layouts)
     expected_config = "{'default': {'Branch length': True, 'Branch support': True, 'Leaf name': True, 'Number of leaves': False, 'Colorbranch_alphabet_type': True}}"
     expected_draw = "[['line', [0, 2.0], [2.0, 2.0], '', [], {'stroke': '#000000', 'stroke-width': 0.5, 'fill': '#e5e5e5', 'fill-opacity': 0.3, 'type': 'solid'}], ['nodebox', [0, 0, 2.0, 4.0], '', {'name': '', 'dist': 0.0, 'support': 1.0}, [], [], {'fill': 'transparent'}]]"
-    expected_layout = "{'name': 'Colorbranch_alphabet_type', 'active': True, 'aligned_faces': True, 'description': '', 'legend': True, 'always_render': False, 'ts': None, 'ns': None, 'text_prop': 'alphabet_type', 'column': 1, 'color_dict': {'consonant': 'red', 'vowel': 'darkblue'}, 'internal_prop': 'alphabet_type_counter', 'height': None, 'absence_color': '#EBEBEB', 'width': 70, 'padding_x': 1, 'padding_y': 0}"
+    expected_layout = "{'name': 'Colorbranch_alphabet_type', 'active': True, 'aligned_faces': True, 'description': '', 'legend': True, 'always_render': False, 'ts': None, 'ns': None, 'text_prop': 'alphabet_type', 'column': 1, 'color_dict': {'consonant': '#9a312f', 'vowel': '#9b57d0'}, 'internal_prop': 'alphabet_type_counter', 'height': None, 'absence_color': '#EBEBEB', 'width': 70, 'padding_x': 1, 'padding_y': 0}"
     get_parallel(test_tree, layouts, expected_draw, expected_config)
+    
     assert str(layouts[0].__dict__)==expected_layout
 
 def test_plot_04():
@@ -134,8 +136,9 @@ def test_plot_04():
     layouts.extend(rectangular_layouts)
     expected_config = "{'default': {'Branch length': True, 'Branch support': True, 'Leaf name': True, 'Number of leaves': False, 'Rectangular_alphabet_type': True}}"
     expected_draw = "[['line', [0, 2.0], [2.0, 2.0], '', [], {'stroke': '#000000', 'stroke-width': 0.5, 'fill': '#e5e5e5', 'fill-opacity': 0.3, 'type': 'solid'}], ['nodebox', [0, 0, 2.0, 4.0], '', {'name': '', 'dist': 0.0, 'support': 1.0}, [], [], {'fill': 'transparent'}]]"
-    expected_layout = "{'name': 'Rectangular_alphabet_type', 'active': True, 'aligned_faces': True, 'description': '', 'legend': True, 'always_render': False, 'ts': None, 'ns': None, 'text_prop': 'alphabet_type', 'column': 1, 'color_dict': {'consonant': 'red', 'vowel': 'darkblue'}, 'absence_color': '#EBEBEB', 'internal_prop': 'alphabet_type_counter', 'width': 70, 'height': None, 'min_fsize': 5, 'max_fsize': 15, 'padding_x': 1, 'padding_y': 0}"
+    expected_layout = "{'name': 'Rectangular_alphabet_type', 'active': True, 'aligned_faces': True, 'description': '', 'legend': True, 'always_render': False, 'ts': None, 'ns': None, 'text_prop': 'alphabet_type', 'column': 1, 'color_dict': {'consonant': '#9a312f', 'vowel': '#9b57d0'}, 'absence_color': '#EBEBEB', 'internal_prop': 'alphabet_type_counter', 'width': 70, 'height': None, 'min_fsize': 5, 'max_fsize': 15, 'padding_x': 1, 'padding_y': 0}"
     get_parallel(test_tree, layouts, expected_draw, expected_config)
+    
     assert str(layouts[0].__dict__)==expected_layout
 
 def test_plot_05():
@@ -212,7 +215,7 @@ def test_plot_07():
     layouts.extend(barplot_layouts)
     expected_config = "{'default': {'Branch length': True, 'Branch support': True, 'Leaf name': True, 'Number of leaves': False, 'Barplot_col1': True}}"
     expected_draw = "[['line', [0, 2.0], [2.0, 2.0], '', [], {'stroke': '#000000', 'stroke-width': 0.5, 'fill': '#e5e5e5', 'fill-opacity': 0.3, 'type': 'solid'}], ['nodebox', [0, 0, 2.0, 4.0], '', {'name': '', 'dist': 0.0, 'support': 1.0}, [], [], {'fill': 'transparent'}]]"
-    expected_layout = "{'name': 'Barplot_col1', 'active': True, 'aligned_faces': True, 'description': '', 'legend': True, 'always_render': False, 'ts': None, 'ns': None, 'width': 70, 'position': 'aligned', 'column': 1, 'scale': True, 'padding_x': 10, 'padding_y': 0, 'internal_rep': 'avg', 'prop': 'col1', 'size_prop': 'col1', 'color_prop': None, 'color': 'darkblue', 'colors': None, 'color_gradient': None}"
+    expected_layout = "{'name': 'Barplot_col1', 'active': True, 'aligned_faces': True, 'description': '', 'legend': True, 'always_render': False, 'ts': None, 'ns': None, 'width': 70, 'position': 'aligned', 'column': 1, 'scale': True, 'padding_x': 10, 'padding_y': 0, 'internal_rep': 'avg', 'prop': 'col1', 'size_prop': 'col1', 'color_prop': None, 'color': '#9b57d0', 'colors': None, 'color_gradient': None}"
     get_parallel(test_tree, layouts, expected_draw, expected_config)
     assert str(layouts[0].__dict__) == expected_layout
 

@@ -110,7 +110,7 @@ def test_pruned_by_03():
         columns=columns, prop2type=prop2type)
     props = ['col1', 'col1_avg', 'col1_sum', 'col1_max', 'col1_min', 'col1_std']
     
-    expected_tree = '(((E:1[&&NHX:col1=4.0],D:1[&&NHX:col1=3.0])Internal_1:0.5[&&NHX:col1_avg=3.5:col1_sum=7.0:col1_max=4.0:col1_min=3.0:col1_std=0.5])Internal_2:0.5[&&NHX:col1_avg=3.0:col1_sum=9.0:col1_max=4.0:col1_min=2.0:col1_std=1.0])Root[&&NHX:col1_avg=2.5:col1_sum=10.0:col1_max=4.0:col1_min=1.0:col1_std=1.6666666666666667];'
+    expected_tree = '(((E:1[&&NHX:col1=4.0],D:1[&&NHX:col1=3.0])Internal_1:0.5[&&NHX:col1_avg=3.5:col1_sum=7.0:col1_max=4.0:col1_min=3.0:col1_std=0.5])Internal_2:0.5[&&NHX:col1_avg=3.0:col1_sum=9.0:col1_max=4.0:col1_min=2.0:col1_std=1.0])Root[&&NHX:col1_avg=2.5:col1_sum=10.0:col1_max=4.0:col1_min=1.0:col1_std=1.6666666666666665];'
     condition_inputs = ["col1 < 3"]
     pruned_tree = utils.conditional_prune(test_tree_annotated, condition_inputs, prop2type)
 
@@ -137,7 +137,7 @@ def test_pruned_by_04():
 
     props = ['col1', 'col1_avg', 'col1_sum', 'col1_max', 'col1_min', 'col1_std']
 
-    expected_tree = '(A:1[&&NHX:col1=1.0])Root[&&NHX:col1_avg=2.5:col1_sum=10.0:col1_max=4.0:col1_min=1.0:col1_std=1.6666666666666667];'
+    expected_tree = '(A:1[&&NHX:col1=1.0])Root[&&NHX:col1_avg=2.5:col1_sum=10.0:col1_max=4.0:col1_min=1.0:col1_std=1.6666666666666665];'
     condition_inputs = ["col1_avg < 3.5"]
     pruned_tree = utils.conditional_prune(test_tree_annotated, condition_inputs, prop2type)
 
