@@ -97,7 +97,7 @@ def test_annotate_04():
 
     props = ['col1', 'col1_sum','col1_max','col1_min','col1_std','col1_avg']
     expected_tree_no_root = '(A:1[&&NHX:col1=1.0],(B:1[&&NHX:col1=2.0],(E:1[&&NHX:col1=4.0],D:1[&&NHX:col1=3.0])Internal_1:0.5[&&NHX:col1_sum=7.0:col1_max=4.0:col1_min=3.0:col1_std=0.5:col1_avg=3.5])Internal_2:0.5[&&NHX:col1_sum=9.0:col1_max=4.0:col1_min=2.0:col1_std=1.0:col1_avg=3.0]);'    
-    expected_tree_with_root = '(A:1[&&NHX:col1=1.0],(B:1[&&NHX:col1=2.0],(E:1[&&NHX:col1=4.0],D:1[&&NHX:col1=3.0])Internal_1:0.5[&&NHX:col1_sum=7.0:col1_max=4.0:col1_min=3.0:col1_std=0.5:col1_avg=3.5])Internal_2:0.5[&&NHX:col1_sum=9.0:col1_max=4.0:col1_min=2.0:col1_std=1.0:col1_avg=3.0])Root[&&NHX:col1_sum=10.0:col1_max=4.0:col1_min=1.0:col1_std=1.6666666666666665:col1_avg=2.5];'
+    expected_tree_with_root = '(A:1[&&NHX:col1=1.0],(B:1[&&NHX:col1=2.0],(E:1[&&NHX:col1=4.0],D:1[&&NHX:col1=3.0])Internal_1:0.5[&&NHX:col1_sum=7.0:col1_max=4.0:col1_min=3.0:col1_std=0.5:col1_avg=3.5])Internal_2:0.5[&&NHX:col1_sum=9.0:col1_max=4.0:col1_min=2.0:col1_std=1.0:col1_avg=3.0])Root[&&NHX:col1_sum=10.0:col1_max=4.0:col1_min=1.0:col1_std=1.6666666666666667:col1_avg=2.5];'
 
     assert test_tree_annotated.write(props=props, parser=parser) == expected_tree_no_root
     assert test_tree_annotated.write(props=props, parser=parser, format_root_node=True) == expected_tree_with_root
@@ -226,7 +226,7 @@ def test_annotate_09():
         columns=columns, prop2type=prop2type)
 
     props = ['col1', 'col2', 'col3', 'col4', 'col1_counter', 'col4_counter', 'col3_counter', 'col2_avg', 'col2_sum', 'col2_max', 'col2_min', 'col2_std']
-    expected_tree = '(A:1[&&NHX:col1=vowel:col2=1.0:col3=True:col4=a|b|c],(B:1[&&NHX:col1=consonant:col2=2.0:col3=False:col4=c|d],(E:1[&&NHX:col1=vowel:col2=4.0:col3=False:col4=e|d|b],D:1[&&NHX:col1=consonant:col2=3.0:col3=True:col4=a|c|d|e])Internal_1:0.5[&&NHX:col1_counter=consonant--1||vowel--1:col4_counter=a--1||b--1||c--1||d--2||e--2:col3_counter=False--1||True--1:col2_avg=3.5:col2_sum=7.0:col2_max=4.0:col2_min=3.0:col2_std=0.5])Internal_2:0.5[&&NHX:col1_counter=consonant--2||vowel--1:col4_counter=a--1||b--1||c--2||d--3||e--2:col3_counter=False--2||True--1:col2_avg=3.0:col2_sum=9.0:col2_max=4.0:col2_min=2.0:col2_std=1.0])Root[&&NHX:col1_counter=consonant--2||vowel--2:col4_counter=a--2||b--2||c--3||d--3||e--2:col3_counter=False--2||True--2:col2_avg=2.5:col2_sum=10.0:col2_max=4.0:col2_min=1.0:col2_std=1.6666666666666665];'    
+    expected_tree = '(A:1[&&NHX:col1=vowel:col2=1.0:col3=True:col4=a|b|c],(B:1[&&NHX:col1=consonant:col2=2.0:col3=False:col4=c|d],(E:1[&&NHX:col1=vowel:col2=4.0:col3=False:col4=e|d|b],D:1[&&NHX:col1=consonant:col2=3.0:col3=True:col4=a|c|d|e])Internal_1:0.5[&&NHX:col1_counter=consonant--1||vowel--1:col4_counter=a--1||b--1||c--1||d--2||e--2:col3_counter=False--1||True--1:col2_avg=3.5:col2_sum=7.0:col2_max=4.0:col2_min=3.0:col2_std=0.5])Internal_2:0.5[&&NHX:col1_counter=consonant--2||vowel--1:col4_counter=a--1||b--1||c--2||d--3||e--2:col3_counter=False--2||True--1:col2_avg=3.0:col2_sum=9.0:col2_max=4.0:col2_min=2.0:col2_std=1.0])Root[&&NHX:col1_counter=consonant--2||vowel--2:col4_counter=a--2||b--2||c--3||d--3||e--2:col3_counter=False--2||True--2:col2_avg=2.5:col2_sum=10.0:col2_max=4.0:col2_min=1.0:col2_std=1.6666666666666667];'    
     assert test_tree_annotated.write(props=props, parser=parser, format_root_node=True) == expected_tree
 
 def test_annotate_10():
@@ -254,7 +254,7 @@ def test_annotate_10():
         columns=columns, prop2type=prop2type)
     props = ['col1', 'col2', 'col3', 'col4', 'col1_counter', 'col4_counter', 'col3_counter', 'col2_avg', 'col2_sum', 'col2_max', 'col2_min', 'col2_std']
     
-    expected_tree = '(A:1[&&NHX:col1=vowel:col2=1.0:col3=True:col4=a|b|c],(B:1[&&NHX:col1=consonant:col2=2.0:col3=False:col4=c|d],(E:1[&&NHX:col1=vowel:col2=4.0:col3=False:col4=e|d|b],D:1[&&NHX:col1=consonant:col2=3.0:col3=True:col4=a|c|d|e])Internal_1:0.5[&&NHX:col1_counter=consonant--1||vowel--1:col4_counter=a--1||b--1||c--1||d--2||e--2:col3_counter=False--1||True--1:col2_avg=3.5:col2_sum=7.0:col2_max=4.0:col2_min=3.0:col2_std=0.5])Internal_2:0.5[&&NHX:col1_counter=consonant--2||vowel--1:col4_counter=a--1||b--1||c--2||d--3||e--2:col3_counter=False--2||True--1:col2_avg=3.0:col2_sum=9.0:col2_max=4.0:col2_min=2.0:col2_std=1.0])Root[&&NHX:col1_counter=consonant--2||vowel--2:col4_counter=a--2||b--2||c--3||d--3||e--2:col3_counter=False--2||True--2:col2_avg=2.5:col2_sum=10.0:col2_max=4.0:col2_min=1.0:col2_std=1.6666666666666665];'
+    expected_tree = '(A:1[&&NHX:col1=vowel:col2=1.0:col3=True:col4=a|b|c],(B:1[&&NHX:col1=consonant:col2=2.0:col3=False:col4=c|d],(E:1[&&NHX:col1=vowel:col2=4.0:col3=False:col4=e|d|b],D:1[&&NHX:col1=consonant:col2=3.0:col3=True:col4=a|c|d|e])Internal_1:0.5[&&NHX:col1_counter=consonant--1||vowel--1:col4_counter=a--1||b--1||c--1||d--2||e--2:col3_counter=False--1||True--1:col2_avg=3.5:col2_sum=7.0:col2_max=4.0:col2_min=3.0:col2_std=0.5])Internal_2:0.5[&&NHX:col1_counter=consonant--2||vowel--1:col4_counter=a--1||b--1||c--2||d--3||e--2:col3_counter=False--2||True--1:col2_avg=3.0:col2_sum=9.0:col2_max=4.0:col2_min=2.0:col2_std=1.0])Root[&&NHX:col1_counter=consonant--2||vowel--2:col4_counter=a--2||b--2||c--3||d--3||e--2:col3_counter=False--2||True--2:col2_avg=2.5:col2_sum=10.0:col2_max=4.0:col2_min=1.0:col2_std=1.6666666666666667];'
     assert test_tree_annotated.write(props=props, parser=parser, format_root_node=True) ==expected_tree 
 
 def test_annotate_11():
@@ -280,7 +280,7 @@ def test_annotate_11():
         num_prop_idx=num_prop_idx, bool_prop_idx=bool_prop_idx,
         columns=columns, prop2type=prop2type)
     props = ['col1', 'col2', 'col3', 'col4', 'col5', 'col6', 'col7', 'col1_counter', 'col2_counter', 'col7_counter', 'col5_counter', 'col6_counter', 'col3_avg', 'col3_sum', 'col3_max', 'col3_min', 'col3_std', 'col4_avg', 'col4_sum', 'col4_max', 'col4_min', 'col4_std']
-    expected_tree = '(A:1[&&NHX:col1=vowel:col2=vowel:col3=1.0:col4=1.0:col5=True:col6=True:col7=a|b|c],(B:1[&&NHX:col1=consonant:col2=consonant:col3=2.0:col4=2.0:col5=False:col6=False:col7=c|d],(E:1[&&NHX:col1=vowel:col2=vowel:col3=4.0:col4=4.0:col5=False:col6=False:col7=e|d|b],D:1[&&NHX:col1=consonant:col2=consonant:col3=3.0:col4=3.0:col5=True:col6=True:col7=a|c|d|e])Internal_1:0.5[&&NHX:col1_counter=consonant--1||vowel--1:col2_counter=consonant--1||vowel--1:col7_counter=a--1||b--1||c--1||d--2||e--2:col5_counter=False--1||True--1:col6_counter=False--1||True--1:col3_avg=3.5:col3_sum=7.0:col3_max=4.0:col3_min=3.0:col3_std=0.5:col4_avg=3.5:col4_sum=7.0:col4_max=4.0:col4_min=3.0:col4_std=0.5])Internal_2:0.5[&&NHX:col1_counter=consonant--2||vowel--1:col2_counter=consonant--2||vowel--1:col7_counter=a--1||b--1||c--2||d--3||e--2:col5_counter=False--2||True--1:col6_counter=False--2||True--1:col3_avg=3.0:col3_sum=9.0:col3_max=4.0:col3_min=2.0:col3_std=1.0:col4_avg=3.0:col4_sum=9.0:col4_max=4.0:col4_min=2.0:col4_std=1.0])Root[&&NHX:col1_counter=consonant--2||vowel--2:col2_counter=consonant--2||vowel--2:col7_counter=a--2||b--2||c--3||d--3||e--2:col5_counter=False--2||True--2:col6_counter=False--2||True--2:col3_avg=2.5:col3_sum=10.0:col3_max=4.0:col3_min=1.0:col3_std=1.6666666666666665:col4_avg=2.5:col4_sum=10.0:col4_max=4.0:col4_min=1.0:col4_std=1.6666666666666665];'
+    expected_tree = '(A:1[&&NHX:col1=vowel:col2=vowel:col3=1.0:col4=1.0:col5=True:col6=True:col7=a|b|c],(B:1[&&NHX:col1=consonant:col2=consonant:col3=2.0:col4=2.0:col5=False:col6=False:col7=c|d],(E:1[&&NHX:col1=vowel:col2=vowel:col3=4.0:col4=4.0:col5=False:col6=False:col7=e|d|b],D:1[&&NHX:col1=consonant:col2=consonant:col3=3.0:col4=3.0:col5=True:col6=True:col7=a|c|d|e])Internal_1:0.5[&&NHX:col1_counter=consonant--1||vowel--1:col2_counter=consonant--1||vowel--1:col7_counter=a--1||b--1||c--1||d--2||e--2:col5_counter=False--1||True--1:col6_counter=False--1||True--1:col3_avg=3.5:col3_sum=7.0:col3_max=4.0:col3_min=3.0:col3_std=0.5:col4_avg=3.5:col4_sum=7.0:col4_max=4.0:col4_min=3.0:col4_std=0.5])Internal_2:0.5[&&NHX:col1_counter=consonant--2||vowel--1:col2_counter=consonant--2||vowel--1:col7_counter=a--1||b--1||c--2||d--3||e--2:col5_counter=False--2||True--1:col6_counter=False--2||True--1:col3_avg=3.0:col3_sum=9.0:col3_max=4.0:col3_min=2.0:col3_std=1.0:col4_avg=3.0:col4_sum=9.0:col4_max=4.0:col4_min=2.0:col4_std=1.0])Root[&&NHX:col1_counter=consonant--2||vowel--2:col2_counter=consonant--2||vowel--2:col7_counter=a--2||b--2||c--3||d--3||e--2:col5_counter=False--2||True--2:col6_counter=False--2||True--2:col3_avg=2.5:col3_sum=10.0:col3_max=4.0:col3_min=1.0:col3_std=1.6666666666666667:col4_avg=2.5:col4_sum=10.0:col4_max=4.0:col4_min=1.0:col4_std=1.6666666666666667];'
     assert test_tree_annotated.write(props=props, parser=parser, format_root_node=True) == expected_tree
 
 def test_annotate_12():
@@ -358,7 +358,7 @@ def test_annotate_14_a():
         metadata_dict=metadata_dict, node_props=node_props, num_stat='all',
         columns=columns, prop2type=prop2type)
     props = ['col1', 'col1_sum','col1_max','col1_min','col1_std','col1_avg']
-    expected_tree_all = '(A:1[&&NHX:col1=1.0],(B:1[&&NHX:col1=2.0],(E:1[&&NHX:col1=4.0],D:1[&&NHX:col1=3.0])Internal_1:0.5[&&NHX:col1_sum=7.0:col1_max=4.0:col1_min=3.0:col1_std=0.5:col1_avg=3.5])Internal_2:0.5[&&NHX:col1_sum=9.0:col1_max=4.0:col1_min=2.0:col1_std=1.0:col1_avg=3.0])Root[&&NHX:col1_sum=10.0:col1_max=4.0:col1_min=1.0:col1_std=1.6666666666666665:col1_avg=2.5];'
+    expected_tree_all = '(A:1[&&NHX:col1=1.0],(B:1[&&NHX:col1=2.0],(E:1[&&NHX:col1=4.0],D:1[&&NHX:col1=3.0])Internal_1:0.5[&&NHX:col1_sum=7.0:col1_max=4.0:col1_min=3.0:col1_std=0.5:col1_avg=3.5])Internal_2:0.5[&&NHX:col1_sum=9.0:col1_max=4.0:col1_min=2.0:col1_std=1.0:col1_avg=3.0])Root[&&NHX:col1_sum=10.0:col1_max=4.0:col1_min=1.0:col1_std=1.6666666666666667:col1_avg=2.5];'
     
     assert test_tree_annotated_all.write(props=props, parser=parser, format_root_node=True) == expected_tree_all
 
@@ -472,7 +472,7 @@ def test_annotate_14_f():
         metadata_dict=metadata_dict, node_props=node_props, num_stat='std',
         columns=columns, prop2type=prop2type)
 
-    expected_tree_std = '(A:1[&&NHX:col1=1.0],(B:1[&&NHX:col1=2.0],(E:1[&&NHX:col1=4.0],D:1[&&NHX:col1=3.0])Internal_1:0.5[&&NHX:col1_std=0.5])Internal_2:0.5[&&NHX:col1_std=1.0])Root[&&NHX:col1_std=1.6666666666666665];'
+    expected_tree_std = '(A:1[&&NHX:col1=1.0],(B:1[&&NHX:col1=2.0],(E:1[&&NHX:col1=4.0],D:1[&&NHX:col1=3.0])Internal_1:0.5[&&NHX:col1_std=0.5])Internal_2:0.5[&&NHX:col1_std=1.0])Root[&&NHX:col1_std=1.6666666666666667];'
     
     assert test_tree_annotated_std.write(props=None, parser=parser, format_root_node=True) == expected_tree_std
 
