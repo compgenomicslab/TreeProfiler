@@ -1,19 +1,25 @@
 #!/usr/bin/env python3
 
+import os, math, re
 import sys
-import os
 import time
 import random
-import math
-import re
 import csv
 import tarfile
+
 from io import StringIO
 from itertools import islice
 from collections import defaultdict, Counter
 import numpy as np
-from scipy import stats
 
+from scipy import stats
+from scipy.stats import entropy
+from numba import njit, float64, int64
+
+from pastml.tree import read_tree, name_tree
+from pastml.acr import acr
+from pastml.annotation import preannotate_forest
+from pastml import col_name2cat
 
 from ete4.parser.newick import NewickError
 from ete4.core.seqgroup import SeqGroup
@@ -322,6 +328,17 @@ def run_tree_annotate(tree, input_annotated_tree=False,
     end = time.time()
     print('Time for load_metadata_to_tree to run: ', end - start)
 
+    
+    from pastml import col_name2cat
+    # Ancestor Character Reconstruction analysis
+    print("hey", columns.keys())
+    # Convert column2states to numpy arrays and sort the states
+    column2states = {c: np.array(sorted(list(set(states)))) for c, states in columns.items()}
+    print("hey2", column2states)
+    
+    # Run ACR
+    acr_results = acr(forest=[annotated_tree], columns=columns.keys(), column2states=column2states, prediction_method="MPPA", model="F81", threads=1)
+    
     # stat method
     counter_stat = counter_stat #'raw' or 'relative'
     num_stat = num_stat
@@ -604,6 +621,98 @@ def check_tar_gz(file_path):
             return True
     except tarfile.ReadError:
         return False
+
+def _validate_input(tree_nwk, data, data_sep='/t', single_tree_file=False):
+    '''tree_nwk      = Represents the path to the Newick file containing the tree or a string with the tree itself.
+    data             = Represents the path to the data file or DataFrame used for annotation with leaf states.
+    data_sep         (default: ',')   = Separator used in the data file.
+    single_tree_file (default: False) = Boolean value that specifies whether the input tree is provided as a single file.'''
+    
+    if single_tree_file==False:
+        with open(tree_nwk, 'r') as f:                                                 # Reads the tree from a Newick file and returns its roots
+            nwks = f.read().replace('\n', '')
+        roots = [read_tree(open(tree_nwk))]
+    else:
+        roots = [read_tree(open(tree_nwk))]                                                  # Reads the newick tree and returns its roots
+
+    column2annotated = Counter()                                                       # Counter to keep track of the number of times each column is annotated
+    column2states    = defaultdict(set)                                                # Dictionary to store the unique states for each column
+
+    # Read the data as a pandas DataFrame
+    df         = pd.read_csv(data, sep=data_sep, index_col=0, header=0, dtype=str)
+    df.index   = df.index.map(str)
+    df.columns = [col_name2cat(column) for column in df.columns]
+    columns    = df.columns
+    
+    node_names     = set.union(*[{n.name for n in root.traverse() if n.name} for root in roots])     # Get the names of the nodes in the tree
+    df_index_names = set(df.index)                                                                   # Get the index names from the DataFrame
+    common_ids     = list(node_names & df_index_names)                                               # Find the common IDs between node names and DataFrame index names
+    
+    # strip quotes if needed
+    if not common_ids:
+        node_names = {_.strip("'").strip('"') for _ in node_names}
+        common_ids = node_names & df_index_names
+        if common_ids:
+            for root in roots:
+                for n in root.traverse():
+                    n.name = n.name.strip("'").strip('"')
+
+    # Preannotate the forest with the DataFrame
+    preannotate_forest(roots, df=df)
+
+    # Populate the column2states dictionary with unique states for each column
+    for c in df.columns:
+        column2states[c] |= {_ for _ in df[c].unique() if pd.notnull(_) and _ != ''}
+
+    num_tips = 0
+
+    # Count the number of annotated columns for each node
+    column2annotated_states = defaultdict(set)
+    for root in roots:
+        for n in root.traverse():
+            for c in columns:
+                vs = n.props.get(c, set())
+                column2states[c] |= vs
+                column2annotated_states[c] |= vs
+                if vs:
+                    column2annotated[c] += 1
+            if n.is_leaf:
+                num_tips += 1
+
+    if column2annotated:
+        c, num_annotated = min(column2annotated.items(), key=lambda _: _[1])
+    else:
+        c, num_annotated = columns[0], 0
+
+    # Calculate the percentage of unknown tip annotations
+    percentage_unknown = (num_tips - num_annotated) / num_tips
+    if percentage_unknown >= .9:
+        raise ValueError('{:.1f}% of tip annotations for character "{}" are unknown, '
+                         'not enough data to infer ancestral states. '
+                         '{}'
+                         .format(percentage_unknown * 100, c,
+                                 'Check your annotation file and if its ids correspond to the tree tip/node names.'
+                                 if data
+                                 else 'You tree file should contain character state annotations, '
+                                      'otherwise consider specifying a metadata file.'))
+    c, states = min(column2annotated_states.items(), key=lambda _: len(_[1]))
+
+    # Check if the number of unique states is too high for the given number of tips
+    if len(states) > num_tips * .75:
+        raise ValueError('Character "{}" has {} unique states annotated in this tree: {}, '
+                         'which is too much to infer on a {} with only {} tips. '
+                         'Make sure the character you are analysing is discrete, and if yes use a larger tree.'
+                         .format(c, len(states), states, 'tree' if len(roots) == 1 else 'forest', num_tips))
+
+
+    # Convert column2states to numpy arrays and sort the states
+    column2states = {c: np.array(sorted(states)) for c, states in column2states.items()}
+
+    # Name the trees in the forest
+    for i, tree in enumerate(roots):
+        name_tree(tree, suffix='' if len(roots) == 1 else '_{}'.format(i))
+
+    return roots, columns, column2states
 
 def parse_csv(input_files, delimiter='\t', no_colnames=False, aggregate_duplicate=False):
     """
