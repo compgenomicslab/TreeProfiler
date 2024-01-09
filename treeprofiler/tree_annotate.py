@@ -455,25 +455,27 @@ def run(args):
     if args.tree:
         tree = None  # Initialize tree to None
         try:
-            if args.input_type == 'newick' or args.input_type == 'auto':
+            if args.input_type == 'ete' or args.input_type == 'auto':
                 try:
-                    tree = ete4_parse(open(args.tree), internal_parser=args.internal_parser)
-                    # If parsing is successful, proceed
+                    with open(args.tree, 'r') as f:
+                        file_content = f.read()
+                    tree = b64pickle.loads(file_content, encoder='pickle', unpack=False)
                 except Exception as e:
-                    if args.input_type == 'newick':
+                    if args.input_type == 'ete':
                         print(e)
                         sys.exit(1)
                     # If it's 'auto', try the next format
-            if args.input_type == 'ete' or (args.input_type == 'auto' and tree is None):
-                with open(args.tree, 'r') as f:
-                    file_content = f.read()
-                    tree = b64pickle.loads(file_content, encoder='pickle', unpack=False)
+
+            if args.input_type == 'newick' or (args.input_type == 'auto' and tree is None):
+                try:
+                    tree = ete4_parse(open(args.tree), internal_parser=args.internal_parser)
+                except Exception as e:
+                    print(e)
+                    sys.exit(1)
+
         except ValueError as e:
             print(e)
-            if args.input_type == 'ete':
-                print("Invalid ete format.")
-            else:
-                print("Invalid tree format.")
+            print("Invalid tree format.")
             sys.exit(1)
 
     # if refer tree from taxadb, input tree will be ignored
