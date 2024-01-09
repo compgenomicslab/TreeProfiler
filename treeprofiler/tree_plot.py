@@ -98,9 +98,14 @@ def poplulate_plot_args(plot_args_p):
         help="customize column width of each layout.[default: 20]"
     )
     group.add_argument('--barplot-width',
-        type=int,
+        type=float,
         default=200,
         help="customize barplot width of barplot layout.[default: 200]"
+    )
+    group.add_argument('--barplot-anchor',
+        type=str,
+        default=None,
+        help="find the barplot column as scale anchor.[default: None]"
     )
     # group.add_argument('--profiling_width',
     #     type=int,
@@ -352,7 +357,7 @@ def run(args):
             total_color_dict.append(color_dict)
         
         if layout == 'barplot-layout':
-            barplot_layouts, level,color_dict = get_barplot_layouts(tree, args.barplot_layout, level, prop2type, column_width=args.barplot_width, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep)
+            barplot_layouts, level,color_dict = get_barplot_layouts(tree, args.barplot_layout, level, prop2type, column_width=args.barplot_width, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep, anchor_column=args.barplot_anchor)
             layouts.extend(barplot_layouts)
             total_color_dict.append(color_dict)
 
@@ -624,33 +629,67 @@ def get_binary_layouts(tree, props, level, prop2type, column_width=70, reverse=F
         level += 1
     return layouts, level, prop_color_dict
 
-def get_barplot_layouts(tree, props, level, prop2type, column_width=70, padding_x=1, padding_y=0, internal_rep='avg'):
+def get_barplot_layouts(tree, props, level, prop2type, column_width=70, padding_x=1, padding_y=0, internal_rep='avg', anchor_column=None):
     prop_color_dict = {}
     layouts = []
-    barplot_padding_x = padding_x * 10 
-    for prop in props:
-        
-        color_dict = {} # key = value, value = color id
-        prop_values = children_prop_array(tree, prop)
-        if prop_values:
-            size_prop = prop
-        else:
-            size_prop = prop+'_'+internal_rep
+    barplot_padding_x = padding_x * 10
+    if anchor_column:
+        anchor_column_values = np.array(list(set(children_prop_array(tree, anchor_column)))).astype('float64')
+        anchor_column_values = anchor_column_values[~np.isnan(anchor_column_values)]
+        anchormin, anchormax = anchor_column_values.min(), anchor_column_values.max()
+        for prop in props:
+            color_dict = {}
+            prop_values = np.array(list(set(children_prop_array(tree, prop)))).astype('float64')
+            prop_values = prop_values[~np.isnan(prop_values)]
+            minval, maxval = prop_values.min(), prop_values.max()
+            new_column_width = maxval / (anchormax / column_width)
+            if prop_values.any():
+                size_prop = prop
+            else:
+                size_prop = prop+'_'+internal_rep
 
-        if level > len(paired_color):
-            barplot_color =  random_color(h=None)
-        else:
-            barplot_color = paired_color[level]
-        
-        layout =  staple_layouts.LayoutBarplot(name='Barplot_'+prop, prop=prop, 
-                                    width=column_width, color=barplot_color, 
-                                    size_prop=size_prop, column=level, 
-                                    internal_rep=internal_rep, padding_x=barplot_padding_x
-                                    )
+            if level > len(paired_color):
+                barplot_color =  random_color(h=None)
+            else:
+                barplot_color = paired_color[level]
+            
+            layout =  staple_layouts.LayoutBarplot(name='Barplot_'+prop, prop=prop, 
+                                        width=new_column_width, color=barplot_color, 
+                                        size_prop=size_prop, column=level, 
+                                        internal_rep=internal_rep, padding_x=barplot_padding_x
+                                        )
 
-        prop_color_dict[prop] = barplot_color
-        layouts.append(layout)  
-        level += 1
+            prop_color_dict[prop] = barplot_color
+            layouts.append(layout)  
+            level += 1
+
+        pass
+    else: 
+        for prop in props:
+            color_dict = {} # key = value, value = color id
+            prop_values = np.array(list(set(children_prop_array(tree, prop)))).astype('float64')
+            prop_values = prop_values[~np.isnan(prop_values)]
+            minval, maxval = prop_values.min(), prop_values.max()
+            
+            if prop_values.any():
+                size_prop = prop
+            else:
+                size_prop = prop+'_'+internal_rep
+
+            if level > len(paired_color):
+                barplot_color =  random_color(h=None)
+            else:
+                barplot_color = paired_color[level]
+            
+            layout =  staple_layouts.LayoutBarplot(name='Barplot_'+prop, prop=prop, 
+                                        width=column_width, color=barplot_color, 
+                                        size_prop=size_prop, column=level, 
+                                        internal_rep=internal_rep, padding_x=barplot_padding_x
+                                        )
+
+            prop_color_dict[prop] = barplot_color
+            layouts.append(layout)  
+            level += 1
 
     return layouts, level, prop_color_dict
 
@@ -838,3 +877,10 @@ def multiple2profile(tree, profiling_prop):
             matrix += absence * len(all_values) +'\n'
     return matrix, all_values
       
+def barplot_width_type(value):
+    if value.lower() == 'none':
+        return None
+    try:
+        return float(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError("Value must be an float or 'None'.")
