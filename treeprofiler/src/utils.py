@@ -204,8 +204,17 @@ def conditional_prune(tree, conditions_input, prop2type):
     return array
 
 def children_prop_array(nodes, prop):
-    #array = [n.props.get(prop) if n.props.get(prop) else 'NaN' for n in nodes] 
-    array = [n.props.get(prop) for n in nodes if n.props.get(prop) ] 
+    array = []
+    for n in nodes:
+        prop_value = n.props.get(prop)
+        if prop_value:
+            # Check if the property value is a set
+            if isinstance(prop_value, set):
+                # Extract elements from the set
+                array.extend(prop_value)
+            else:
+                # Directly append the property value
+                array.append(prop_value)
     return array
 
 def children_prop_array_missing(nodes, prop):
@@ -295,3 +304,21 @@ def assign_colors(variables, cmap_name='tab20'):
     cmap = plt.cm.get_cmap(cmap_name, len(variables))  # Get the colormap
     colors = [rgba_to_hex(cmap(i)) for i in range(cmap.N)]  # Generate colors in hex format
     return dict(zip(variables, colors))
+
+def clear_extra_features(forest, features):
+    features = set(features) | {'name', 'dist', 'support'}
+    for tree in forest:
+        for n in tree.traverse():
+            for f in set(n.props) - features:
+                if f not in features:
+                    n.del_prop(f)
+            
+            for key, value in n.props.items():
+                # Check if the value is a set
+                if isinstance(value, set):
+                    # Convert the set to a string representation
+                    # You can customize the string conversion as needed
+                    n.props[key] = ','.join(map(str, value))
+
+def add_suffix(name, suffix, delimiter='_'):
+    return str(name) + delimiter + str(suffix)

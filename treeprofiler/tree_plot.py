@@ -18,12 +18,13 @@ from ete4.smartview import TreeStyle, NodeStyle, TreeLayout
 from treeprofiler.tree_image import get_image
 from treeprofiler.layouts import (
     text_layouts, taxon_layouts, staple_layouts, 
-    conditional_layouts, seq_layouts, profile_layouts)
+    conditional_layouts, seq_layouts, profile_layouts, phylosignal_layouts)
 from treeprofiler.src import b64pickle
 from treeprofiler.src.utils import (
     ete4_parse, taxatree_prune, conditional_prune,
     children_prop_array, children_prop_array_missing, 
-    flatten, get_consensus_seq, random_color, assign_color_to_values)
+    flatten, get_consensus_seq, random_color, assign_color_to_values, 
+    add_suffix)
 
 #paired_color = ["red", "darkblue", "lightgreen", "sienna", "lightCoral", "violet", "mediumturquoise",   "lightSkyBlue", "indigo", "tan", "coral", "olivedrab", "teal", "darkyellow"]
 paired_color = [
@@ -117,6 +118,10 @@ def poplulate_plot_args(plot_args_p):
         default=0,
         help="customize vertical padding distance of each layout.[default: 0]"
     )
+    group.add_argument('--acr-layout',
+        nargs='+',
+        required=False,
+        help="<prop1,prop2> names of properties which need to be plot as acr-layout")
     group.add_argument('--binary-layout',
         nargs='+',
         required=False,
@@ -320,41 +325,86 @@ def run(args):
             input_order.append(arg[2:])
         else:
             continue
+
+    visualized_props = []
     
+
     for layout in input_order:
+        if layout == 'acr-layout':
+            acr_layouts, level, color_dict = get_acr_layouts(tree, args.acr_layout, level, prop2type=prop2type, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y)
+            layouts.extend(acr_layouts)
+            total_color_dict.append(color_dict)
+            visualized_props.extend(args.acr_layout)
+
+            # delta statistic
+            gradientscolor = {
+                20: '#F62D2D', 19: '#F74444', 18: '#F85B5B', 17: '#F97373', 16: '#FA8A8A', 15: '#FBA1A1',
+                14: '#FCB9B9', 13: '#FDD0D0', 12: '#FEE7E7', 11: '#e6e6f3', 10: '#FFFFFF', 9: '#E4E8F5',
+                8: '#C9D1EB', 7: '#AFBBE1', 6: '#94A4D7', 5: '#7A8ECD', 4: '#5F77C3', 3: '#4561B9',
+                2: '#2A4AAF', 1: '#1034A6'
+            }
+
+            acr_props = args.acr_layout
+            for prop in acr_props:
+                delta_prop = add_suffix(prop, "delta")
+                all_values = sorted([node.props.get(delta_prop) for node in tree.traverse() if node.props.get(delta_prop)])
+                minval = min(all_values)
+                maxval = max(all_values)
+                num = len(gradientscolor)
+                index_values = np.linspace(minval, maxval, num)
+                
+                deltavalue2color = {}
+                for search_value in all_values:
+                    index = np.abs(index_values - search_value).argmin()+1
+                    deltavalue2color[search_value] = gradientscolor[index]
+                
+                delta_layout = phylosignal_layouts.LayoutBranchScore(name='Delta_'+prop, column=level, \
+                    color_dict=deltavalue2color, score_prop=delta_prop, value_range=[minval, maxval])
+
+                layouts.append(delta_layout)
+                visualized_props.append(delta_prop)
+
+
         if layout == 'heatmap-layout':
             heatmap_layouts, level = get_heatmap_layouts(tree, args.heatmap_layout, level, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep)
             layouts.extend(heatmap_layouts)
+            visualized_props.extend(args.heatmap_layout)
 
         if layout == 'label-layout':
             label_layouts, level, color_dict = get_label_layouts(tree, args.label_layout, level, prop2type=prop2type, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y)
             layouts.extend(label_layouts)
             total_color_dict.append(color_dict)
+            visualized_props.extend(args.label_layout)
 
         if layout == 'colorbranch-layout':
             colorbranch_layouts, level, color_dict = get_colorbranch_layouts(tree, args.colorbranch_layout, level, prop2type=prop2type, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y)
             layouts.extend(colorbranch_layouts)
             total_color_dict.append(color_dict)
+            visualized_props.extend(args.colorbranch_layout)
 
         if layout == 'rectangle-layout':
             rectangle_layouts, level, color_dict = get_rectangle_layouts(tree, args.rectangle_layout, level, prop2type=prop2type, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y)
             layouts.extend(rectangle_layouts)
             total_color_dict.append(color_dict)
+            visualized_props.extend(args.rectangle_layout)
 
         if layout == 'binary-layout':
             label_layouts, level, color_dict = get_binary_layouts(tree, args.binary_layout, level, prop2type=prop2type, column_width=args.column_width, reverse=False, padding_x=args.padding_x, padding_y=args.padding_y)
             layouts.extend(label_layouts)
             total_color_dict.append(color_dict)
+            visualized_props.extend(args.binary_layout)
 
         if layout == 'revbinary-layout':
             label_layouts, level, color_dict = get_binary_layouts(tree, args.revbinary_layout, level, prop2type=prop2type, column_width=args.column_width, reverse=True,  padding_x=args.padding_x, padding_y=args.padding_y)
             layouts.extend(label_layouts)
             total_color_dict.append(color_dict)
-        
+            visualized_props.extend(args.revbinary_layout)
+
         if layout == 'barplot-layout':
             barplot_layouts, level,color_dict = get_barplot_layouts(tree, args.barplot_layout, level, prop2type, column_width=args.barplot_width, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep)
             layouts.extend(barplot_layouts)
             total_color_dict.append(color_dict)
+            visualized_props.extend(args.barplot_layout)
 
         if layout == 'alignment-layout':
             #fasta_file = args.alignment_layout
@@ -508,17 +558,18 @@ def run(args):
         tree = conditional_prune(tree, condition_strings, prop2type)
 
     #### Output #####
+    popup_prop_keys.extend(list(set(visualized_props)))
+    
     if args.out_colordict:
         wrtie_color(total_color_dict)
     if args.plot:
         get_image(tree, layouts, args.port, os.path.abspath(args.plot))
-    else:  
+    else:
         tree.explore(keep_server=True, compress=False, quiet=args.verbose, 
         layouts=layouts, port=args.port, include_props=sorted(popup_prop_keys),
         show_leaf_name=args.hide_leaf_name, show_branch_support=args.hide_branch_support,
         show_branch_length=args.hide_branch_distance)
     
-    return
 
 def wrtie_color(color_dict):
     with open('color_dict.txt','w') as f:
@@ -534,7 +585,27 @@ def wrtie_color(color_dict):
                         f.write('VAR'+'\t'+ sub_k+'\n')
                         f.write('COLOR'+'\t'+ sub_v+'\n')
                     f.write('\n')
-    return
+
+def get_acr_layouts(tree, props, level, prop2type, column_width=70, padding_x=1, padding_y=0):
+    prop_color_dict = {}
+    layouts = []
+    for prop in props:
+        color_dict = {} # key = value, value = color id
+        if prop2type and prop2type.get(prop) == list:
+            leaf_values = list(map(list,set(map(tuple,children_prop_array(tree, prop)))))    
+            prop_values = [val for sublist in leaf_values for val in sublist]
+        else:
+            prop_values = sorted(list(set(children_prop_array(tree, prop))))
+        
+        # normal text prop
+        color_dict = assign_color_to_values(prop_values, paired_color)
+
+        layout = phylosignal_layouts.LayoutACR(name='ACR_'+prop, column=level, \
+            color_dict=color_dict, text_prop=prop, width=column_width, \
+                padding_x=padding_x, padding_y=padding_y)
+        layouts.append(layout)
+        level += 1
+    return layouts, level, prop_color_dict
 
 def get_label_layouts(tree, props, level, prop2type, column_width=70, padding_x=1, padding_y=0):
     prop_color_dict = {}
