@@ -2,7 +2,7 @@ from ete4.smartview import TreeStyle, NodeStyle, TreeLayout, PieChartFace
 from ete4.smartview  import RectFace, CircleFace, SeqMotifFace, TextFace, OutlineFace
 from treeprofiler.layouts.general_layouts import get_piechartface, get_stackedbarface
 
-class LayoutACR(TreeLayout):
+class LayoutACRDiscrete(TreeLayout):
     def __init__(self, name, column, color_dict, text_prop, legend=True, width=70, padding_x=1, padding_y=0):
         super().__init__(name)
         self.aligned_faces = True
@@ -55,7 +55,7 @@ class LayoutACR(TreeLayout):
         #         node.add_face(TextFace(prop_text, color = "red", 
         #         padding_x=self.padding_x),column=0, position="branch_right")
 
-class LayoutBranchScore(TreeLayout):
+class LayoutACRContinuous(TreeLayout):
     def __init__(self, name, column, color_dict, score_prop, value_range=None, legend=True):
         super().__init__(name)
         self.aligned_faces = True

@@ -242,6 +242,7 @@ def run(args):
     #parse input tree
     if args.tree:
         tree = None  # Initialize tree to None
+        eteformat_flag = False
         try:
             if args.input_type == 'newick' or args.input_type == 'auto':
                 try:
@@ -256,6 +257,7 @@ def run(args):
                 with open(args.tree, 'r') as f:
                     file_content = f.read()
                     tree = b64pickle.loads(file_content, encoder='pickle', unpack=False)
+                    eteformat_flag = True
         except ValueError as e:
             print(e)
             if args.input_type == 'ete':
@@ -263,6 +265,10 @@ def run(args):
             else:
                 print("Invalid tree format.")
             sys.exit(1)
+    else:
+        print("No tree file provided.")
+        sys.exit(1)
+
     
     #rest_prop = []
     if args.prop2type:
@@ -291,7 +297,7 @@ def run(args):
                 }
         popup_prop_keys = list(prop2type.keys()) 
 
-        if args.input_type == 'ete':
+        if eteformat_flag:
             leafa, _, leafb, _ = tree._get_farthest_and_closest_leaves()
             leaf_prop2type = get_prop2type(leafa)
             leaf_prop2type.update(get_prop2type(leafb))
@@ -332,7 +338,6 @@ def run(args):
             continue
 
     visualized_props = []
-    
 
     for layout in input_order:
         if layout == 'acr-layout':
@@ -352,22 +357,23 @@ def run(args):
             acr_props = args.acr_layout
             for prop in acr_props:
                 delta_prop = add_suffix(prop, "delta")
-                all_values = sorted([node.props.get(delta_prop) for node in tree.traverse() if node.props.get(delta_prop)])
-                minval = min(all_values)
-                maxval = max(all_values)
-                num = len(gradientscolor)
-                index_values = np.linspace(minval, maxval, num)
-                
-                deltavalue2color = {}
-                for search_value in all_values:
-                    index = np.abs(index_values - search_value).argmin()+1
-                    deltavalue2color[search_value] = gradientscolor[index]
-                
-                delta_layout = phylosignal_layouts.LayoutBranchScore(name='Delta_'+prop, column=level, \
-                    color_dict=deltavalue2color, score_prop=delta_prop, value_range=[minval, maxval])
+                if tree.props.get(delta_prop):
+                    all_values = sorted([node.props.get(delta_prop) for node in tree.traverse() if node.props.get(delta_prop)])
+                    minval = min(all_values)
+                    maxval = max(all_values)
+                    num = len(gradientscolor)
+                    index_values = np.linspace(minval, maxval, num)
+                    
+                    deltavalue2color = {}
+                    for search_value in all_values:
+                        index = np.abs(index_values - search_value).argmin()+1
+                        deltavalue2color[search_value] = gradientscolor[index]
+                    
+                    delta_layout = phylosignal_layouts.LayoutACRContinuous(name='Delta_'+prop, column=level, \
+                        color_dict=deltavalue2color, score_prop=delta_prop, value_range=[minval, maxval])
 
-                layouts.append(delta_layout)
-                visualized_props.append(delta_prop)
+                    layouts.append(delta_layout)
+                    visualized_props.append(delta_prop)
 
 
         if layout == 'heatmap-layout':
@@ -605,7 +611,7 @@ def get_acr_layouts(tree, props, level, prop2type, column_width=70, padding_x=1,
         # normal text prop
         color_dict = assign_color_to_values(prop_values, paired_color)
 
-        layout = phylosignal_layouts.LayoutACR(name='ACR_'+prop, column=level, \
+        layout = phylosignal_layouts.LayoutACRDiscrete(name='ACR_'+prop, column=level, \
             color_dict=color_dict, text_prop=prop, width=column_width, \
                 padding_x=padding_x, padding_y=padding_y)
         layouts.append(layout)
