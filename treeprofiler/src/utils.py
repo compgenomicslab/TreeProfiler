@@ -7,6 +7,8 @@ from Bio.Align import MultipleSeqAlignment
 from Bio.Align.AlignInfo import SummaryInfo
 from itertools import chain
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
+import numpy as np
 import random
 import colorsys
 import operator
@@ -304,6 +306,23 @@ def assign_colors(variables, cmap_name='tab20'):
     cmap = plt.cm.get_cmap(cmap_name, len(variables))  # Get the colormap
     colors = [rgba_to_hex(cmap(i)) for i in range(cmap.N)]  # Generate colors in hex format
     return dict(zip(variables, colors))
+
+
+def build_color_gradient(n_colors, colormap_name="viridis"):
+    """
+    Build a color gradient based on the specified matplotlib colormap.
+
+    Parameters:
+    n_colors (int): Number of distinct colors to include in the gradient.
+    colormap_name (str): Name of the matplotlib colormap to use. "viridis"  # Replace with "plasma", "inferno", "magma", etc., as needed
+
+    Returns:
+    dict: A dictionary mapping indices to colors in the specified colormap.
+    """
+    cmap = plt.get_cmap(colormap_name)
+    indices = np.linspace(0, 1, n_colors)
+    color_gradient = {i: mcolors.rgb2hex(cmap(idx)) for i, idx in enumerate(indices, 1)}
+    return color_gradient
 
 def clear_extra_features(forest, features):
     features = set(features) | {'name', 'dist', 'support'}

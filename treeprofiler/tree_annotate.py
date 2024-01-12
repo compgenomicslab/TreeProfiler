@@ -24,7 +24,7 @@ from treeprofiler.src.utils import (
     get_internal_parser, ete4_parse, taxatree_prune, conditional_prune,
     children_prop_array, children_prop_array_missing, 
     flatten, get_consensus_seq, add_suffix)
-from treeprofiler.src.phylosignal import run_acr, run_delta
+from treeprofiler.src.phylosignal import run_acr_discrete, run_delta
 
 DESC = "annotate tree"
 
@@ -336,12 +336,11 @@ def run_tree_annotate(tree, input_annotated_tree=False,
     #discrete_traits = text_prop 
     if acr_columns:
         print("Performing ACR analysis...")
-        
+        # need to be discrete traits
         discrete_traits = text_prop
-        
         acr_columns_dict = {k: v for k, v in columns.items() if k in discrete_traits}
         start = time.time()
-        acr_results, annotated_tree = run_acr(annotated_tree, acr_columns_dict, prediction_method="MPPA", model="F81", threads=threads)
+        acr_results, annotated_tree = run_acr_discrete(annotated_tree, acr_columns_dict, prediction_method="MPPA", model="F81", threads=threads)
         run_delta(acr_results, tree, threads=threads)
         end = time.time()
         print('Time for acr to run: ', end - start)

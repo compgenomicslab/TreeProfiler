@@ -24,7 +24,7 @@ from treeprofiler.src.utils import (
     ete4_parse, taxatree_prune, conditional_prune,
     children_prop_array, children_prop_array_missing, 
     flatten, get_consensus_seq, random_color, assign_color_to_values, 
-    add_suffix)
+    add_suffix, build_color_gradient)
 
 #paired_color = ["red", "darkblue", "lightgreen", "sienna", "lightCoral", "violet", "mediumturquoise",   "lightSkyBlue", "indigo", "tan", "coral", "olivedrab", "teal", "darkyellow"]
 paired_color = [
@@ -123,38 +123,43 @@ def poplulate_plot_args(plot_args_p):
         default=0,
         help="customize vertical padding distance of each layout.[default: 0]"
     )
-    group.add_argument('--acr-layout',
+    group.add_argument('--acr-discrete-layout',
         nargs='+',
         required=False,
-        help="<prop1,prop2> names of properties which need to be plot as acr-layout")
+        help="<prop1> <prop2> names of properties which need to be plot as acr-discrete-layout")
+    group.add_argument('--acr-continuous-layout',
+        nargs='+',
+        required=False,
+        help="<prop1> <prop2> names of properties which need to be plot as acr-continuous-layout")
+    
     group.add_argument('--binary-layout',
         nargs='+',
         required=False,
-        help="<prop1,prop2> names of properties which need to be plot as binary-layout which highlights the postives")
+        help="<prop1> <prop2> names of properties which need to be plot as binary-layout which highlights the postives")
     group.add_argument('--revbinary-layout',
         nargs='+',
         required=False,
-        help="<prop1,prop2> names of properties which need to be plot as revbinary-layout which highlights the negatives")
+        help="<prop1> <prop2> names of properties which need to be plot as revbinary-layout which highlights the negatives")
     group.add_argument('--colorbranch-layout',
         nargs='+',
         required=False,
-        help="<prop1,prop2> names of properties where branches will be colored based on different values.")
+        help="<prop1> <prop2> names of properties where branches will be colored based on different values.")
     group.add_argument('--label-layout',
         nargs='+',
         required=False,
-        help="<prop1,prop2> names of properties where values will be displayed on the aligned panel.")
+        help="<prop1> <prop2> names of properties where values will be displayed on the aligned panel.")
     group.add_argument('--rectangle-layout',
         nargs='+',
         required=False,
-        help="<prop1,prop2> names  of properties where values will be label as rectangular color block on the aligned panel.")
+        help="<prop1> <prop2> names  of properties where values will be label as rectangular color block on the aligned panel.")
     group.add_argument('--heatmap-layout',
         nargs='+',
         required=False,
-        help="<prop1,prop2> names of numerical properties which need to be read as heatmap-layout")
+        help="<prop1> <prop2> names of numerical properties which need to be read as heatmap-layout")
     group.add_argument('--barplot-layout',
         nargs='+',
         required=False,
-        help="<prop1,prop2> names of numerical properties which need to be read as barplot_layouts")
+        help="<prop1> <prop2> names of numerical properties which need to be read as barplot_layouts")
     group.add_argument('--taxonclade-layout',
         default=False,
         action='store_true',
@@ -178,19 +183,19 @@ def poplulate_plot_args(plot_args_p):
     group.add_argument('--profiling-layout',
         nargs='+',
         required=False,
-        help="<prop1,prop2> names of properties which need to be convert to presence-absence profiling matrix of each value")
+        help="<prop1> <prop2> names of properties which need to be convert to presence-absence profiling matrix of each value")
     group.add_argument('--multi-profiling-layout',
         nargs='+',
         required=False,
-        help="<prop1,prop2> names of properties containing values as list which need to be convert to presence-absence profiling matrix")
+        help="<prop1> <prop2> names of properties containing values as list which need to be convert to presence-absence profiling matrix")
     group.add_argument('--categorical-matrix-layout',
         nargs='+',
         required=False,
-        help="<prop1,prop2> names which need to be plot as categorical_matrix_layout for categorical values")
+        help="<prop1> <prop2> names which need to be plot as categorical_matrix_layout for categorical values")
     group.add_argument('--numerical-matrix-layout',
         nargs='+',
         required=False,
-        help="<prop1,prop2> names which need to be plot as numerical_matrix_layout for numerical values ")
+        help="<prop1> <prop2> names which need to be plot as numerical_matrix_layout for numerical values ")
 
     group = plot_args_p.add_argument_group(title='Visualizing output arguments',
         description="Visualizing output parameters")
@@ -338,43 +343,21 @@ def run(args):
             continue
 
     visualized_props = []
-
     for layout in input_order:
-        if layout == 'acr-layout':
-            acr_layouts, level, color_dict = get_acr_layouts(tree, args.acr_layout, level, prop2type=prop2type, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y)
-            layouts.extend(acr_layouts)
+        if layout == 'acr-discrete-layout':
+            acr_discrete_layouts, level, color_dict = get_acr_discrete_layouts(tree, args.acr_discrete_layout, level, prop2type=prop2type, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y)
+            layouts.extend(acr_discrete_layouts)
             total_color_dict.append(color_dict)
-            visualized_props.extend(args.acr_layout)
+            visualized_props.extend(args.acr_discrete_layout)
 
-            # delta statistic
-            gradientscolor = {
-                20: '#F62D2D', 19: '#F74444', 18: '#F85B5B', 17: '#F97373', 16: '#FA8A8A', 15: '#FBA1A1',
-                14: '#FCB9B9', 13: '#FDD0D0', 12: '#FEE7E7', 11: '#e6e6f3', 10: '#FFFFFF', 9: '#E4E8F5',
-                8: '#C9D1EB', 7: '#AFBBE1', 6: '#94A4D7', 5: '#7A8ECD', 4: '#5F77C3', 3: '#4561B9',
-                2: '#2A4AAF', 1: '#1034A6'
-            }
-
-            acr_props = args.acr_layout
-            for prop in acr_props:
-                delta_prop = add_suffix(prop, "delta")
-                if tree.props.get(delta_prop):
-                    all_values = sorted([node.props.get(delta_prop) for node in tree.traverse() if node.props.get(delta_prop)])
-                    minval = min(all_values)
-                    maxval = max(all_values)
-                    num = len(gradientscolor)
-                    index_values = np.linspace(minval, maxval, num)
-                    
-                    deltavalue2color = {}
-                    for search_value in all_values:
-                        index = np.abs(index_values - search_value).argmin()+1
-                        deltavalue2color[search_value] = gradientscolor[index]
-                    
-                    delta_layout = phylosignal_layouts.LayoutACRContinuous(name='Delta_'+prop, column=level, \
-                        color_dict=deltavalue2color, score_prop=delta_prop, value_range=[minval, maxval])
-
-                    layouts.append(delta_layout)
-                    visualized_props.append(delta_prop)
-
+            #delta statistic 
+            acr_delta_props = [add_suffix(prop, "delta") for prop in args.acr_discrete_layout]
+            visualized_props.extend(acr_delta_props)
+           
+        if layout == 'acr-continuous-layout':
+            acr_continuous_layouts = get_acr_continuous_layouts(tree, args.acr_continuous_layout, level, prop2type=prop2type, padding_x=args.padding_x, padding_y=args.padding_y)
+            layouts.extend(acr_continuous_layouts)
+            visualized_props.extend(args.acr_continuous_layout)
 
         if layout == 'heatmap-layout':
             heatmap_layouts, level = get_heatmap_layouts(tree, args.heatmap_layout, level, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep)
@@ -597,7 +580,7 @@ def wrtie_color(color_dict):
                         f.write('COLOR'+'\t'+ sub_v+'\n')
                     f.write('\n')
 
-def get_acr_layouts(tree, props, level, prop2type, column_width=70, padding_x=1, padding_y=0):
+def get_acr_discrete_layouts(tree, props, level, prop2type, column_width=70, padding_x=1, padding_y=0):
     prop_color_dict = {}
     layouts = []
     for prop in props:
@@ -612,11 +595,35 @@ def get_acr_layouts(tree, props, level, prop2type, column_width=70, padding_x=1,
         color_dict = assign_color_to_values(prop_values, paired_color)
 
         layout = phylosignal_layouts.LayoutACRDiscrete(name='ACR_'+prop, column=level, \
-            color_dict=color_dict, text_prop=prop, width=column_width, \
+            color_dict=color_dict, acr_prop=prop, width=column_width, \
                 padding_x=padding_x, padding_y=padding_y)
         layouts.append(layout)
         level += 1
     return layouts, level, prop_color_dict
+
+def get_acr_continuous_layouts(tree, props, level, prop2type, padding_x=1, padding_y=0):
+    # gradientscolor = {
+    #     20: '#F62D2D', 19: '#F74444', 18: '#F85B5B', 17: '#F97373', 16: '#FA8A8A', 15: '#FBA1A1',
+    #     14: '#FCB9B9', 13: '#FDD0D0', 12: '#FEE7E7', 11: '#e6e6f3', 10: '#FFFFFF', 9: '#E4E8F5',
+    #     8: '#C9D1EB', 7: '#AFBBE1', 6: '#94A4D7', 5: '#7A8ECD', 4: '#5F77C3', 3: '#4561B9',
+    #     2: '#2A4AAF', 1: '#1034A6'
+    # }
+    gradientscolor = build_color_gradient(20)
+    layouts = []
+    for prop in props:
+        all_values = sorted([float(node.props.get(prop)) for node in tree.traverse() if node.props.get(prop)])
+        minval = min(all_values)
+        maxval = max(all_values)
+        num = len(gradientscolor)
+        index_values = np.linspace(minval, maxval, num)
+        value2color = {}
+        for search_value in all_values:
+            index = np.abs(index_values - search_value).argmin()+1
+            value2color[search_value] = gradientscolor[index]
+        layout = phylosignal_layouts.LayoutACRContinuous(name='ACR_'+prop, column=level, \
+            color_dict=value2color, score_prop=prop, value_range=[minval, maxval], color_range=[gradientscolor[1], gradientscolor[10], gradientscolor[20]])
+        layouts.append(layout)
+    return layouts
 
 def get_label_layouts(tree, props, level, prop2type, column_width=70, padding_x=1, padding_y=0):
     prop_color_dict = {}

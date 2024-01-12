@@ -172,7 +172,8 @@ def delta(x,lambda0,se,sim,thin,burn,ent_type, threads=1):
     
     return deltaA
 
-def run_acr(tree, columns, prediction_method="MPPA", model="F81", threads=1):
+# Calculate the marginal probabilities for each discrete trait
+def run_acr_discrete(tree, columns, prediction_method="MPPA", model="F81", threads=1):
     prop2acr = {}
     column2states = {c: np.array(sorted(list(set(states)))) for c, states in columns.items()}
     features = list(column2states.keys())
@@ -190,26 +191,47 @@ def run_acr(tree, columns, prediction_method="MPPA", model="F81", threads=1):
     clear_extra_features(forest, features)
     return prop2acr, forest[0]
 
-def run_delta(acr_results, tree, lambda0=lambda0, se=se, sim=sim, burn=burn, thin=thin, ent_type='LSE', threads=1):
+# Calculate the marginal probabilities for each continuous trait
+def run_acr_continuous(tree, columns):
+    return
+
+# Calculate delta-statistic of marginal probabilities each discrete trait
+def run_delta(acr_results, tree, run_whole_tree=False, lambda0=lambda0, se=se, sim=sim, burn=burn, thin=thin, ent_type='LSE', threads=1):
     prop2marginals = {}
     leafnames = tree.leaf_names()
     node2leaves = tree.get_cached_content(leaves_only=False)
     # extract the marginal probabilities for each discrete trait
-    for node in tree.traverse():
-        if node.is_leaf:
-            continue
+    if run_whole_tree:
+        for node in tree.traverse():
+            if node.is_leaf:
+                continue
 
+            for prop, acr_result in acr_results.items():
+                # Get the marginal probabilities for each node
+                children_data = acr_result[0]['marginal_probabilities'].loc[[child.name for child in node2leaves[node] if not child.is_leaf]]
+                
+                #internal_nodes_data[node.name] = children_data
+                if node.is_root:
+                    marginal_probs = np.asarray(acr_result[0]['marginal_probabilities'].drop(leafnames))
+                else:
+                    marginal_probs = np.asarray(children_data)
+                # run delta for each discrete trait
+                # load annotations to leaves
+                delta_result = delta(marginal_probs, lambda0, se, sim, burn, thin, ent_type, threads)
+                node.add_prop(add_suffix(prop, "delta"), delta_result)
+    else:
         for prop, acr_result in acr_results.items():
             # Get the marginal probabilities for each node
-            children_data = acr_result[0]['marginal_probabilities'].loc[[child.name for child in node2leaves[node] if not child.is_leaf]]
-            
-            #internal_nodes_data[node.name] = children_data
-            if node.is_root:
-                marginal_probs = np.asarray(acr_result[0]['marginal_probabilities'].drop(leafnames))
-            else:
-                marginal_probs = np.asarray(children_data)
+            marginal_probs = np.asarray(acr_result[0]['marginal_probabilities'].drop(leafnames))
             # run delta for each discrete trait
             # load annotations to leaves
             delta_result = delta(marginal_probs, lambda0, se, sim, burn, thin, ent_type, threads)
-            node.add_prop(add_suffix(prop, "delta"), delta_result)
-            
+            tree.add_prop(add_suffix(prop, "delta"), delta_result)
+
+# Calculate Pagel's lambda statistic for each continuous trait
+def run_lambda():
+    return
+
+# Calculate Blomberg's kappa statistic for each continuous trait
+def run_kappa():
+    return
