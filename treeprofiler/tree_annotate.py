@@ -248,8 +248,8 @@ def run_tree_annotate(tree, input_annotated_tree=False,
                             pass
                     if dtype == float:
                         num_prop.append(key)
-                    # if dtype == bool:
-                    #     bool_prop.append(key)
+                    if dtype == bool:
+                        bool_prop.append(key)
 
         # paramemters can over write the default
         if emapper_annotations:
@@ -268,8 +268,12 @@ def run_tree_annotate(tree, input_annotated_tree=False,
                 'KEGG_Module', 'KEGG_Reaction', 'KEGG_rclass',
                 'BRITE', 'KEGG_TC', 'CAZy', 'BiGG_Reaction', 'PFAMs'])
 
-        for prop in text_prop+bool_prop:
+        for prop in text_prop:
             prop2type[prop] = str
+            prop2type[prop+'_counter'] = str
+
+        for prop in bool_prop:
+            prop2type[prop] = bool
             prop2type[prop+'_counter'] = str
 
         for prop in multiple_text_prop:
@@ -342,11 +346,10 @@ def run_tree_annotate(tree, input_annotated_tree=False,
     # data preparation
 
     # Convert column2states to numpy arrays and sort the states
-    #discrete_traits = text_prop 
     if acr_columns:
         print("Performing ACR analysis...")
         # need to be discrete traits
-        discrete_traits = text_prop
+        discrete_traits = text_prop + bool_prop
         acr_columns_dict = {k: v for k, v in columns.items() if k in discrete_traits}
         start = time.time()
         acr_results, annotated_tree = run_acr_discrete(annotated_tree, acr_columns_dict, \
@@ -366,6 +369,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
 
     # merge annotations depends on the column datatype
     start = time.time()
+
     if not input_annotated_tree:
 
         #pre load node2leaves to save time
@@ -692,7 +696,7 @@ def parse_csv(input_files, delimiter='\t', no_colnames=False, aggregate_duplicat
             else:
                 dtype = infer_dtype(columns[prop])
                 prop2type[prop] = dtype # get_type_convert(dtype)
-
+    
     for input_file in input_files:
         # check file
         if check_tar_gz(input_file):
@@ -773,25 +777,51 @@ def get_comma_separated_values(lst):
             return True
     return False
 
+def can_convert_to_bool(column):
+    true_values = {'true', 't', 'yes', 'y', '1'}
+    false_values = {'false', 'f', 'no', 'n', '0'}
+    ignore_values = {'nan', 'none', ''}  # Add other representations of NaN as needed
+
+    # Initialize sets to hold the representations of true and false values
+    true_representations = set()
+    false_representations = set()
+
+    for value in column:
+        str_val = str(value).strip()  # Preserving the original capitalization
+        if str_val.lower() in ignore_values:
+            continue  # Skip this value
+        if str_val.lower() in true_values:
+            true_representations.add(str_val)
+        elif str_val.lower() in false_values:
+            false_representations.add(str_val)
+        else:
+            return False
+
+    # Check that all true values and all false values have exactly one representation
+    return len(true_representations) <= 1 and len(false_representations) <= 1
+
+
 def convert_column_data(column, np_dtype):
     #np_dtype = np.dtype(dtype).type
     try:
         data = np.array(column).astype(np_dtype)
         return np_dtype
-    except ValueError:
+    except ValueError as e:
         return None
-    #data.astype(np.float)
 
 def infer_dtype(column):
     if get_comma_separated_values(column):
         return list
+    elif can_convert_to_bool(column):
+        print("yes")
+        print(column)
+        return bool
     else:
         dtype_dict = {
             float:np.float64,
-            bool:np.bool_,
             str:np.str_
             }
-        #dtype_order = ['float64', 'bool', 'str']
+        #dtype_order = ['float64', 'str']
         for dtype, np_dtype in dtype_dict.items():
             result = convert_column_data(column, np_dtype)
             if result is not None:
@@ -807,7 +837,7 @@ def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, 
     # preload all leaves to save time instead of search in tree
     for leaf in tree.leaves():
         name2leaf[leaf.name].append(leaf)
-
+    
     # load all metadata to leaf nodes
     for node, props in metadata_dict.items():
         if node in name2leaf.keys():
@@ -821,6 +851,7 @@ def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, 
                         else:
                             taxon_prop = value
                         target_node.add_prop(key, taxon_prop)
+                    
                     # numerical
                     elif key in prop2type and prop2type[key]==float:
                         try:
@@ -833,9 +864,11 @@ def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, 
                             target_node.add_prop(key, 'NaN')
 
                     # categorical
+                    # list
                     elif key in prop2type and prop2type[key]==list:
                         value_list = value.split(multi_text_seperator)
                         target_node.add_prop(key, value_list)
+                    # str
                     else:
                         target_node.add_prop(key, value)
         else:
