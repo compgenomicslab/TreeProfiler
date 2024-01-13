@@ -23,7 +23,7 @@ from treeprofiler.src import b64pickle
 from treeprofiler.src.utils import (
     get_internal_parser, ete4_parse, taxatree_prune, conditional_prune,
     children_prop_array, children_prop_array_missing, 
-    flatten, get_consensus_seq, add_suffix)
+    flatten, get_consensus_seq, add_suffix, clear_extra_features)
 from treeprofiler.src.phylosignal import run_acr_discrete, run_delta
 
 DESC = "annotate tree"
@@ -299,18 +299,27 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         name2seq = parse_fasta(alignment)
         for leaf in tree.leaves():
             leaf.add_prop(alignment_prop, name2seq.get(leaf.name,''))
+        prop2type.update({
+            alignment_prop:str
+            })
 
     # domain annotation before other annotation
     if emapper_pfam:
+        domain_prop = 'dom_arq'
         if not alignment:
             raise ValueError("Please provide alignment file using '--alignment' for pfam annotation.")
-        annot_tree_pfam_table(tree, emapper_pfam, alignment)
-
+        annot_tree_pfam_table(tree, emapper_pfam, alignment, domain_prop=domain_prop)
+        prop2type.update({
+            domain_prop:str
+            })
     if emapper_smart:
+        domain_prop = 'dom_arq'
         if not alignment:
             raise ValueError("Please provide alignment file using '--alignment' for smart annotation.")
-        annot_tree_smart_table(tree, emapper_smart, alignment)
-
+        annot_tree_smart_table(tree, emapper_smart, alignment, domain_prop=domain_prop)
+        prop2type.update({
+            domain_prop:str
+            })
 
     # load all metadata to leaf nodes
     #taxon_column = []
@@ -340,14 +349,21 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         discrete_traits = text_prop
         acr_columns_dict = {k: v for k, v in columns.items() if k in discrete_traits}
         start = time.time()
-        acr_results, annotated_tree = run_acr_discrete(annotated_tree, acr_columns_dict, prediction_method="MPPA", model="F81", threads=threads)
-        run_delta(acr_results, tree, threads=threads)
+        acr_results, annotated_tree = run_acr_discrete(annotated_tree, acr_columns_dict, \
+        prediction_method="MPPA", model="F81", threads=threads)
+
+        # Clear extra features
+        clear_extra_features([annotated_tree], prop2type.keys())
+
+        run_delta(acr_results, annotated_tree, threads=threads)
+                
         end = time.time()
         print('Time for acr to run: ', end - start)
 
     # statistic method
     counter_stat = counter_stat #'raw' or 'relative'
     num_stat = num_stat
+
     # merge annotations depends on the column datatype
     start = time.time()
     if not input_annotated_tree:
@@ -395,7 +411,6 @@ def run_tree_annotate(tree, input_annotated_tree=False,
                             matrix += name2seq.get(leaf.name)+"\n"
                     consensus_seq = get_consensus_seq(StringIO(matrix), 0.7)
                     node.add_prop(alignment_prop, consensus_seq)
-
     else:
         pass
     end = time.time()
@@ -450,7 +465,6 @@ def run_tree_annotate(tree, input_annotated_tree=False,
     
     # name internal nodes
     annotated_tree = name_nodes(annotated_tree)
-
     return annotated_tree, prop2type
 
 def run(args):
@@ -1125,7 +1139,7 @@ def parse_emapper_annotations(input_file, delimiter='\t', no_colnames=False):
 
     return metadata, node_props, columns
 
-def annot_tree_pfam_table(post_tree, pfam_table, alg_fasta):
+def annot_tree_pfam_table(post_tree, pfam_table, alg_fasta, domain_prop='dom_arq'):
     pair_delimiter = "@"
     item_seperator = "||"
     fasta = SeqGroup(alg_fasta) # aligned_fasta
@@ -1158,17 +1172,17 @@ def annot_tree_pfam_table(post_tree, pfam_table, alg_fasta):
         if l.name in seq2doms.keys():
             domains = seq2doms[l.name]
             domains_string = item_seperator.join(domains)
-            l.add_prop('dom_arq', domains_string)
+            l.add_prop(domain_prop, domains_string)
 
     for n in post_tree.traverse():
         if not n.is_leaf:
-            random_node_domains = n.get_closest_leaf()[0].props.get('dom_arq', 'none@none@none')
-            n.add_prop('dom_arq', random_node_domains)
+            random_node_domains = n.get_closest_leaf()[0].props.get(domain_prop, 'none@none@none')
+            n.add_prop(domain_prop, random_node_domains)
 
     # for n in post_tree.traverse():
     #     print(n.name, n.props.get('dom_arq'))
 
-def annot_tree_smart_table(post_tree, smart_table, alg_fasta):
+def annot_tree_smart_table(post_tree, smart_table, alg_fasta, domain_prop='dom_arq'):
     pair_delimiter = "@"
     item_seperator = "||"
     fasta = SeqGroup(alg_fasta) # aligned_fasta
@@ -1201,12 +1215,12 @@ def annot_tree_smart_table(post_tree, smart_table, alg_fasta):
         if l.name in seq2doms.keys():
             domains = seq2doms[l.name]
             domains_string = item_seperator.join(domains)
-            l.add_prop('dom_arq', domains_string)
+            l.add_prop(domain_prop, domains_string)
 
     for n in post_tree.traverse():
         if not n.is_leaf:
-            random_node_domains = n.get_closest_leaf()[0].props.get('dom_arq', 'none@none@none')
-            n.add_prop('dom_arq', random_node_domains)
+            random_node_domains = n.get_closest_leaf()[0].props.get(domain_prop, 'none@none@none')
+            n.add_prop(domain_prop, random_node_domains)
 
     # for n in post_tree.traverse():
     #     print(n.name, n.props.get('dom_arq'))

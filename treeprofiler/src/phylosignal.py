@@ -12,7 +12,7 @@ from pastml.annotation import preannotate_forest
 from pastml import col_name2cat
 from collections import defaultdict, Counter
 
-from treeprofiler.src.utils import clear_extra_features, add_suffix
+from treeprofiler.src.utils import add_suffix
 
 lambda0  = 0.1                       # rate parameter of the proposal
 se       = 0.5                       # standard deviation of the proposal
@@ -187,8 +187,6 @@ def run_acr_discrete(tree, columns, prediction_method="MPPA", model="F81", threa
         acr_result = acr(forest=forest, columns=single_column.keys(), column2states=single_column2states, prediction_method=prediction_method, model=model, threads=1)
         prop2acr[key] = acr_result
     
-    # Clear extra features
-    clear_extra_features(forest, features)
     return prop2acr, forest[0]
 
 # Calculate the marginal probabilities for each continuous trait

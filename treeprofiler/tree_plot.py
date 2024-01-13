@@ -235,7 +235,6 @@ def run(args):
     node_props=[]
     properties = {}
     rank2values = {}
-
     total_color_dict = []
     layouts = []
     level = 1 # level 1 is the leaf name
@@ -309,7 +308,7 @@ def run(args):
             internal_node_prop2type = get_prop2type(tree)
             prop2type.update(leaf_prop2type)
             prop2type.update(internal_node_prop2type)
-        
+
         # elif args.input_type == 'newick':
         #     popup_prop_keys = list(prop2type.keys()) 
     
@@ -553,7 +552,6 @@ def run(args):
 
     #### Output #####
     popup_prop_keys.extend(list(set(visualized_props)))
-    
     if args.out_colordict:
         wrtie_color(total_color_dict)
     if args.plot:
