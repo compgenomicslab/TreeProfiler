@@ -225,6 +225,25 @@ def children_prop_array_missing(nodes, prop):
     #array = [n.props.get(prop) for n in nodes if n.props.get(prop) ] 
     return array
 
+def convert_to_int_or_float(column):
+    """
+    Convert a column to integer if possible, otherwise convert to float64.
+    
+    Args:
+    column (list): The input column data.
+    
+    Returns:
+    np.ndarray: Array converted to integer or float64.
+    """
+    np_column = np.array(column)
+
+    # Try converting to integer
+    try:
+        return np_column.astype(np.int64)
+    except ValueError:
+        # If conversion to integer fails, convert to float64
+        return np_column.astype(np.float64)
+        
 def flatten(nasted_list):
     """
     input: nasted_list - this contain any number of nested lists.

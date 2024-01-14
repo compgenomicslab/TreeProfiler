@@ -694,24 +694,18 @@ def get_binary_layouts(tree, props, level, prop2type, column_width=70, reverse=F
     layouts = []
 
     for prop in props:
-        color_dict = {} # key = value, value = color id
         prop_values = sorted(list(set(children_prop_array(tree, prop))))
         
         if can_convert_to_bool(prop_values):
             nvals = len(prop_values)
-
-            for i in range(0, nvals): # only positive, negative, NaN, three options
-                color_dict[prop_values[i]] = paired_color[i]
-
             color = random_color(h=None)
             if not reverse:
-                layout = conditional_layouts.LayoutBinary('Binary_'+prop, level, color, color_dict, prop, width=column_width, padding_x=padding_x, padding_y=padding_y, reverse=reverse)
+                layout = conditional_layouts.LayoutBinary('Binary_'+prop, level, bool_prop=prop, width=column_width, padding_x=padding_x, padding_y=padding_y, reverse=reverse)
             else:
-                layout = conditional_layouts.LayoutBinary('ReverseBinary_'+prop, level, color, color_dict, prop, width=column_width, padding_x=padding_x, padding_y=0, reverse=reverse)
+                layout = conditional_layouts.LayoutBinary('ReverseBinary_'+prop, level, bool_prop=prop, width=column_width, padding_x=padding_x, padding_y=0, reverse=reverse)
             
             internal_prop = prop + '_' + 'counter'
-            prop_color_dict[internal_prop] = color_dict
-            prop_color_dict[prop] = color
+
             layouts.append(layout)
             level += 1
         else:

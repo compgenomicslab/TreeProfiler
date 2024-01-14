@@ -497,6 +497,9 @@ class ProfileAlignmentFace(Face):
         self._box = Box(x, y, self.width / zx, dy)
         return self._box
 
+    # def get_fsize(self, dx, dy, zx, zy, max_fsize=None):
+    #     return min([dx * zx * CHAR_HEIGHT, abs(dy * zy), max_fsize or 4])
+
     def draw(self, drawer):
         def get_height(x, y):
             r = (x or 1e-10) if drawer.TYPE == 'circ' else 1
@@ -547,8 +550,15 @@ class ProfileAlignmentFace(Face):
             sm_x = sm_x if drawer.TYPE == 'rect' else x0
             y, h = get_height(sm_x, y)
             sm_box = Box(sm_x+sm_x0, y, posw * len(seq), h)
-            #yield [ f'pixi-gradients', sm_box, seq ]
+            # fsize = self.get_fsize(dx / len(seq), dy, zx, zy, 20)
+            # style = {
+            #     'fill': "black",
+            #     'max_fsize': fsize,
+            #     'ftype': 'sans-serif', # default sans-serif
+            #    }
             yield draw_array(sm_box,[gradientscolor[x] for x in seq])
+            #yield draw_text(sm_box, for i in seq, "jjj", style=style)
+            
 
         elif self.seq_format == "categories":
             seq = self.get_seq(sm_start, sm_end)
@@ -570,4 +580,3 @@ class ProfileAlignmentFace(Face):
             else:
                 aa_type = "text"
                 yield [ f'pixi-aa_{aa_type}', sm_box, seq ]
-            

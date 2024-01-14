@@ -36,6 +36,9 @@ def populate_annotate_args(parser):
     add = gmeta.add_argument
     add('-d', '--metadata', nargs='+',
         help="<metadata.csv> .csv, .tsv. mandatory input")
+    add('-sep', '--metadata_sep', default='\t',
+        help="column separator of metadata table [default: \\t]")
+
     add('--no_colnames', action='store_true',
         help="metadata table doesn't contain columns name")
     add('--aggregate-duplicate', action='store_true',
@@ -529,7 +532,8 @@ def run(args):
     print("start parsing...")
     # parsing metadata
     if args.metadata: # make a series aof metadatas
-        metadata_dict, node_props, columns, prop2type = parse_csv(args.metadata, no_colnames=args.no_colnames, aggregate_duplicate=args.aggregate_duplicate)
+        metadata_dict, node_props, columns, prop2type = parse_csv(args.metadata, delimiter=args.metadata_sep, \
+        no_colnames=args.no_colnames, aggregate_duplicate=args.aggregate_duplicate)
     else: # annotated_tree
         node_props=[]
         columns = {}
