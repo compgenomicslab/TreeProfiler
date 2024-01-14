@@ -803,10 +803,11 @@ def get_barplot_layouts(tree, props, level, prop2type, column_width=70, padding_
 def get_heatmap_layouts(tree, props, level, column_width=70, padding_x=1, padding_y=0, internal_rep='avg'):
     gradientscolor = build_color_gradient(20, colormap_name="Reds")
     layouts = []
+    all_prop_values = [list(set(children_prop_array(tree, prop))) for prop in props]
+    all_prop_values = np.array(flatten(all_prop_values)).astype('float64')
     for prop in props:
-        prop_values = np.array(list(set(children_prop_array(tree, prop)))).astype('float64')
-        prop_values = prop_values[~np.isnan(prop_values)]
-        minval, maxval = prop_values.min(), prop_values.max()
+
+        minval, maxval = all_prop_values.min(), all_prop_values.max()
         # layout =  staple_layouts.LayoutHeatmap(name='Heatmap_'+prop, column=level, 
         #             width=column_width, padding_x=padding_x, padding_y=padding_y, \
         #             internal_rep=internal_rep, prop=prop, maxval=maxval, minval=minval)
@@ -866,7 +867,7 @@ def props2matrix(tree, profiling_props, dtype=float):
         if node.is_leaf:
             leaf2matrix[node.name] = []
             for profiling_prop in profiling_props:
-                if node.props.get(profiling_prop):
+                if node.props.get(profiling_prop) is not None:
                     if dtype == float:
                         val = float(node.props.get(profiling_prop))
                     elif dtype == str:
@@ -883,7 +884,6 @@ def props2matrix(tree, profiling_props, dtype=float):
         minval = min(all_values)
         num = len(gradients)
         values = np.linspace(minval, maxval, num)
-
         matrix = ''
         for leaf, prop in leaf2matrix.items():
             matrix += '\n'+'>'+leaf+'\n'

@@ -209,7 +209,7 @@ def children_prop_array(nodes, prop):
     array = []
     for n in nodes:
         prop_value = n.props.get(prop)
-        if prop_value:
+        if prop_value is not None:
             # Check if the property value is a set
             if isinstance(prop_value, set):
                 # Extract elements from the set
