@@ -25,8 +25,8 @@ from treeprofiler.src.utils import (
     children_prop_array, children_prop_array_missing, 
     flatten, get_consensus_seq, random_color, assign_color_to_values, 
     add_suffix, build_color_gradient)
+from treeprofiler.tree_annotate import can_convert_to_bool
 
-#paired_color = ["red", "darkblue", "lightgreen", "sienna", "lightCoral", "violet", "mediumturquoise",   "lightSkyBlue", "indigo", "tan", "coral", "olivedrab", "teal", "darkyellow"]
 paired_color = [
     '#9a312f', '#9b57d0', '#f8ce9a', '#f16017', '#28fef9', '#53707a',
     '#213b07', '#b5e5ac', '#9640b2', '#a9bd10', '#69e42b', '#b44d67',
@@ -692,23 +692,26 @@ def get_binary_layouts(tree, props, level, prop2type, column_width=70, reverse=F
     for prop in props:
         color_dict = {} # key = value, value = color id
         prop_values = sorted(list(set(children_prop_array(tree, prop))))
-        print(prop_values)
-        nvals = len(prop_values)
-
-        for i in range(0, nvals): # only positive, negative, NaN, three options
-            color_dict[prop_values[i]] = paired_color[i]
-        print(color_dict)
-        color = random_color(h=None)
-        if not reverse:
-            layout = conditional_layouts.LayoutBinary('Binary_'+prop, level, color, color_dict, prop, width=column_width, padding_x=padding_x, padding_y=padding_y, reverse=reverse)
-        else:
-            layout = conditional_layouts.LayoutBinary('ReverseBinary_'+prop, level, color, color_dict, prop, width=column_width, padding_x=padding_x, padding_y=0, reverse=reverse)
         
-        internal_prop = prop + '_' + 'counter'
-        prop_color_dict[internal_prop] = color_dict
-        prop_color_dict[prop] = color
-        layouts.append(layout)
-        level += 1
+        if can_convert_to_bool(prop_values):
+            nvals = len(prop_values)
+
+            for i in range(0, nvals): # only positive, negative, NaN, three options
+                color_dict[prop_values[i]] = paired_color[i]
+            print(color_dict)
+            color = random_color(h=None)
+            if not reverse:
+                layout = conditional_layouts.LayoutBinary('Binary_'+prop, level, color, color_dict, prop, width=column_width, padding_x=padding_x, padding_y=padding_y, reverse=reverse)
+            else:
+                layout = conditional_layouts.LayoutBinary('ReverseBinary_'+prop, level, color, color_dict, prop, width=column_width, padding_x=padding_x, padding_y=0, reverse=reverse)
+            
+            internal_prop = prop + '_' + 'counter'
+            prop_color_dict[internal_prop] = color_dict
+            prop_color_dict[prop] = color
+            layouts.append(layout)
+            level += 1
+        else:
+            raise ValueError(f"Property {prop} is not binary trait.")
     return layouts, level, prop_color_dict
 
 def get_barplot_layouts(tree, props, level, prop2type, column_width=70, padding_x=1, padding_y=0, internal_rep='avg', anchor_column=None):

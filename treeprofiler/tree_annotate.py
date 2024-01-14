@@ -344,8 +344,6 @@ def run_tree_annotate(tree, input_annotated_tree=False,
     
     # Ancestor Character Reconstruction analysis
     # data preparation
-
-    # Convert column2states to numpy arrays and sort the states
     if acr_columns:
         print("Performing ACR analysis...")
         # need to be discrete traits
@@ -363,6 +361,8 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         end = time.time()
         print('Time for acr to run: ', end - start)
 
+    # lineage specificity analysis
+    
     # statistic method
     counter_stat = counter_stat #'raw' or 'relative'
     num_stat = num_stat
@@ -764,13 +764,6 @@ def parse_csv(input_files, delimiter='\t', no_colnames=False, aggregate_duplicat
 
     return metadata, node_props, columns, prop2type
 
-# def get_type_convert(np_type):
-#     """
-#     convert np_type to python type
-#     """
-#     convert_type = type(np.zeros(1,np_type).tolist()[0])
-#     return (np_type, convert_type)
-
 def get_comma_separated_values(lst):
     for item in lst:
         if isinstance(item, str) and any(',' in x for x in item.split()):
@@ -813,8 +806,6 @@ def infer_dtype(column):
     if get_comma_separated_values(column):
         return list
     elif can_convert_to_bool(column):
-        print("yes")
-        print(column)
         return bool
     else:
         dtype_dict = {
