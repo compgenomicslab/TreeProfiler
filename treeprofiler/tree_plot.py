@@ -609,7 +609,7 @@ def get_acr_discrete_layouts(tree, props, level, prop2type, column_width=70, pad
     return layouts, level, prop_color_dict
 
 def get_acr_continuous_layouts(tree, props, level, prop2type, padding_x=1, padding_y=0):
-    gradientscolor = build_color_gradient(20)
+    gradientscolor = build_color_gradient(20, colormap_name='viridis')
     layouts = []
     for prop in props:
         all_values = np.array(sorted(list(set(children_prop_array(tree, prop))))).astype('float64')
@@ -719,7 +719,7 @@ def get_binary_layouts(tree, props, level, prop2type, column_width=70, reverse=F
     return layouts, level, prop_color_dict
 
 def get_branchscore_layouts(tree, props, prop2type, padding_x=1, padding_y=0, internal_rep='avg'):
-    gradientscolor = build_color_gradient(20)
+    gradientscolor = build_color_gradient(20, colormap_name='viridis')
     layouts = []
     for prop in props:
         all_values = np.array(sorted(list(set(children_prop_array(tree, prop))))).astype('float64')
@@ -736,7 +736,8 @@ def get_branchscore_layouts(tree, props, prop2type, padding_x=1, padding_y=0, in
 
         # get corresponding gradient color on the fly of visualization
         layout = staple_layouts.LayoutBranchScore(name='BranchScore_'+prop, \
-            color_dict=gradientscolor, score_prop=prop, internal_rep=internal_rep, value_range=[minval, maxval], \
+            color_dict=gradientscolor, score_prop=prop, internal_rep=internal_rep, \
+            value_range=[minval, maxval], \
             color_range=[gradientscolor[20], gradientscolor[10], gradientscolor[1]])
         layouts.append(layout)
     return layouts
@@ -806,15 +807,19 @@ def get_barplot_layouts(tree, props, level, prop2type, column_width=70, padding_
     return layouts, level, prop_color_dict
 
 def get_heatmap_layouts(tree, props, level, column_width=70, padding_x=1, padding_y=0, internal_rep='avg'):
-    gradientscolor = build_color_gradient(20, cmap_name="Reds")
+    gradientscolor = build_color_gradient(20, colormap_name="Reds")
     layouts = []
     for prop in props:
         prop_values = np.array(list(set(children_prop_array(tree, prop)))).astype('float64')
         prop_values = prop_values[~np.isnan(prop_values)]
         minval, maxval = prop_values.min(), prop_values.max()
-        layout =  staple_layouts.LayoutHeatmap(name='Heatmap_'+prop, column=level, 
+        # layout =  staple_layouts.LayoutHeatmap(name='Heatmap_'+prop, column=level, 
+        #             width=column_width, padding_x=padding_x, padding_y=padding_y, \
+        #             internal_rep=internal_rep, prop=prop, maxval=maxval, minval=minval)
+        layout = staple_layouts.LayoutHeatmap(name='Heatmap_'+prop, column=level, 
                     width=column_width, padding_x=padding_x, padding_y=padding_y, \
-                    internal_rep=internal_rep, prop=prop, maxval=maxval, minval=minval)
+                    internal_rep=internal_rep, prop=prop, maxval=maxval, minval=minval,\
+                    color_dict=gradientscolor)
         layouts.append(layout)  
         level += 1
 

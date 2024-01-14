@@ -244,15 +244,12 @@ class LayoutBarplot(LayoutPlot):
 
 class LayoutHeatmap(TreeLayout):
     def __init__(self, name=None, column=0, width=70, height=None, padding_x=1, padding_y=0, \
-        internal_rep=None, prop=None, maxval=100, minval=0, min_color="#ffffff", \
-        max_color="#971919", legend=True):
+        internal_rep=None, prop=None, maxval=100, minval=0, color_dict=None, legend=True):
         super().__init__(name)
         self.aligned_faces = True
         self.num_prop = prop
         self.column = column
-        #self.colour_dict = colour_dict
-        self.min_color = min_color
-        self.max_color = max_color
+        self.color_dict = color_dict
         self.maxval = maxval
         self.minval = minval
         self.internal_prop = prop+'_'+internal_rep
@@ -269,35 +266,39 @@ class LayoutHeatmap(TreeLayout):
         tree_style.aligned_panel_header.add_face(text, column=self.column)
 
         if self.legend:
-            colormap = { self.num_prop: {self.max_color},
-                        }
             tree_style.add_legend(title=self.num_prop,
                                     variable='continuous',
-                                    colormap=colormap,
                                     value_range=[self.minval, self.maxval],
-                                    color_range=[self.max_color, self.min_color ]
+                                    color_range=[
+                                        self.color_dict[20], 
+                                        self.color_dict[10], 
+                                        self.color_dict[1]
+                                    ]
                                     )
 
+    def _get_color(self, search_value):
+        num = len(self.color_dict)
+        search_value = float(search_value)
+        index_values = np.linspace(self.minval, self.maxval, num)
+        index = np.abs(index_values - search_value).argmin() + 1
+        return self.color_dict.get(index, "")
+
     def set_node_style(self, node):
-        c1 = self.min_color
-        c2 = self.max_color #red
         if node.is_leaf and node.props.get(self.num_prop):
             # heatmap
-            
             tooltip = ""
             if node.name:
                 tooltip += f'<b>{node.name}</b><br>'
             if self.num_prop:
                 tooltip += f'<br>{self.num_prop}: {node.props.get(self.num_prop)}<br>'
 
-            try:
-                ratio = float(node.props.get(self.num_prop)) / self.maxval
-                gradient_color = color_gradient(c1, c2, mix=ratio)
-                identF = RectFace(width=self.width, height=self.height, text="%.2f" % (float(node.props.get(self.num_prop))), color=gradient_color, 
-                    padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
-               
-            except ValueError: # for miss data
-                identF = RectFace(width=self.width, height=self.height, text="NA", color=c1, 
+            gradient_color = self._get_color(node.props.get(self.num_prop))
+            if gradient_color:
+                identF = RectFace(width=self.width, height=self.height, text="%.2f" % (float(node.props.get(self.num_prop))), \
+                color=gradient_color, padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
+            else:   # for miss data
+                identF = RectFace(width=self.width, height=self.height, text="NA", 
+                color="", 
                 padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
 
             node.add_face(identF, column = self.column,  position = 'aligned')
@@ -309,15 +310,16 @@ class LayoutHeatmap(TreeLayout):
                 tooltip += f'<b>{node.name}</b><br>'
             if self.num_prop:
                 tooltip += f'<br>{self.internal_prop}: {node.props.get(self.internal_prop)}<br>'
-            try:
-                ratio = float(node.props.get(self.internal_prop)) / self.maxval
-                gradient_color = color_gradient(c1, c2, mix=ratio)
-                identF = RectFace(width=self.width, height=self.height, text="%.2f" % (float(node.props.get(self.internal_prop))), color=gradient_color, 
-                    padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
-            except ValueError: # for miss data
-                identF = RectFace(width=self.width, height=self.height, text="NA", color=c1, 
+            
+            gradient_color = self._get_color(node.props.get(self.internal_prop))
+            if gradient_color:
+                identF = RectFace(width=self.width, height=self.height, text="%.2f" % (float(node.props.get(self.internal_prop))), \
+                color=gradient_color, padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
+            else:   # for miss data
+                identF = RectFace(width=self.width, height=self.height, text="NA", 
+                color="", 
                 padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
-            node.add_face(identF, column = self.column,  position = 'aligned')
+            node.add_face(identF, column = self.column,  position = 'aligned', collapsed_only=True)
 
         elif node.props.get(self.internal_prop):
             # heatmap
@@ -326,18 +328,16 @@ class LayoutHeatmap(TreeLayout):
                 tooltip += f'<b>{node.name}</b><br>'
             if self.num_prop:
                 tooltip += f'<br>{self.internal_prop}: {node.props.get(self.internal_prop)}<br>'
-            try:
-                ratio = float(node.props.get(self.internal_prop)) / self.maxval
-                gradient_color = color_gradient(c1, c2, mix=ratio)
-                identF = RectFace(width=self.width, height=self.height, text="%.2f" % (float(node.props.get(self.internal_prop))), color=gradient_color, 
-                    padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
-            except ValueError: # for miss data
-                identF = RectFace(width=self.width, height=self.height, text="NA", color=c1, 
+            
+            gradient_color = self._get_color(node.props.get(self.internal_prop))
+            if gradient_color:
+                identF = RectFace(width=self.width, height=self.height, text="%.2f" % (float(node.props.get(self.internal_prop))), \
+                color=gradient_color, padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
+            else:   # for miss data
+                identF = RectFace(width=self.width, height=self.height, text="NA", 
+                color="", 
                 padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
             node.add_face(identF, column = self.column,  position = 'aligned', collapsed_only=True)
-            # identF = RectFace(width=50,height=50,text="NA", color=c1, 
-            #     padding_x=1, padding_y=1)
-            # node.add_face(identF, column = self.column,  position = 'aligned', collapsed_only=True)
 
 class LayoutBranchScore(TreeLayout):
     def __init__(self, name, color_dict, score_prop, internal_rep=None, \
