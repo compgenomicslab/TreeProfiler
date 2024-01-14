@@ -60,7 +60,7 @@ def populate_annotate_args(parser):
         help="1 2 3 or [1-5] index columns which need to be read as numerical data")
     add('--bool-prop-idx', nargs='+',
         help="1 2 3 or [1-5] index columns which need to be read as boolean data")
-    add('--acr-columns', nargs='+',
+    add('--acr-discrete-columns', nargs='+',
         help=("<col1> <col2> names to perform ACR analysis"))
     # add('--taxatree',
     #     help=("<kingdom|phylum|class|order|family|genus|species|subspecies> "
@@ -122,7 +122,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         bool_prop=[], bool_prop_idx=[], prop2type_file=None, alignment=None, emapper_pfam=None,
         emapper_smart=None, counter_stat='raw', num_stat='all',
         taxonomic_profile=False, taxadb='GTDB', taxon_column='name',
-        taxon_delimiter='', taxa_field=0, rank_limit=None, pruned_by=None, acr_columns=None,
+        taxon_delimiter='', taxa_field=0, rank_limit=None, pruned_by=None, acr_discrete_columns=None,
         threads=1, outdir='./'):
 
     total_color_dict = []
@@ -344,13 +344,13 @@ def run_tree_annotate(tree, input_annotated_tree=False,
     
     # Ancestor Character Reconstruction analysis
     # data preparation
-    if acr_columns:
+    if acr_discrete_columns:
         print("Performing ACR analysis...")
         # need to be discrete traits
         discrete_traits = text_prop + bool_prop
-        acr_columns_dict = {k: v for k, v in columns.items() if k in discrete_traits}
+        acr_discrete_columns_dict = {k: v for k, v in columns.items() if k in discrete_traits}
         start = time.time()
-        acr_results, annotated_tree = run_acr_discrete(annotated_tree, acr_columns_dict, \
+        acr_results, annotated_tree = run_acr_discrete(annotated_tree, acr_discrete_columns_dict, \
         prediction_method="MPPA", model="F81", threads=threads)
 
         # Clear extra features
@@ -579,7 +579,7 @@ def run(args):
         counter_stat=args.counter_stat, num_stat=args.num_stat,
         taxonomic_profile=args.taxonomic_profile, taxadb=args.taxadb, taxon_column=args.taxon_column,
         taxon_delimiter=args.taxon_delimiter, taxa_field=args.taxa_field,
-        rank_limit=args.rank_limit, pruned_by=args.pruned_by, acr_columns=args.acr_columns, 
+        rank_limit=args.rank_limit, pruned_by=args.pruned_by, acr_discrete_columns=args.acr_discrete_columns, 
         threads=args.threads, outdir=args.outdir)
 
     if args.outdir:
