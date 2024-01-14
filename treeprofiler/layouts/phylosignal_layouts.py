@@ -12,7 +12,7 @@ class LayoutACRDiscrete(TreeLayout):
         self.color_dict = color_dict
         self.legend = legend
         self.height = None
-        self.absence_color = "#EBEBEB"
+        self.absence_color = "black"
         self.width = width
         self.padding_x = padding_x
         self.padding_y = padding_y
@@ -23,7 +23,7 @@ class LayoutACRDiscrete(TreeLayout):
         #tree_style.aligned_panel_header.add_face(text, column=self.column)
         if self.legend:
             if self.color_dict:
-                self.color_dict["Undecided Ancestral Character State"] = "black"
+                self.color_dict["Undecided Ancestral Character State"] = self.absence_color 
                 tree_style.add_legend(title=self.name,
                                     variable='discrete',
                                     colormap=self.color_dict
@@ -44,9 +44,9 @@ class LayoutACRDiscrete(TreeLayout):
                     node.sm_style["hz_line_width"] = 2
                     node.sm_style["vt_line_color"] = self.color_dict.get(prop_text,"")
                     node.sm_style["vt_line_width"] = 2
-                    node.sm_style["outline_color"] = self.color_dict.get(prop_text,"black")
+                    node.sm_style["outline_color"] = self.color_dict.get(prop_text, self.absence_color)
                     node.sm_style["size"] = 3
-                    node.sm_style["fgcolor"] = self.color_dict.get(prop_text,"black")
+                    node.sm_style["fgcolor"] = self.color_dict.get(prop_text, self.absence_color)
 
         # # Delta statistic
         if node.props.get(self.delta_prop):
@@ -63,7 +63,7 @@ class LayoutACRContinuous(TreeLayout):
         self.score_prop = score_prop
         self.color_dict = color_dict
         self.legend = legend
-        self.absence_color = "#EBEBEB"
+        self.absence_color = "black"
         self.value_range = value_range
         self.color_range = color_range
         self.line_width = 5
@@ -88,4 +88,4 @@ class LayoutACRContinuous(TreeLayout):
                 node.sm_style["hz_line_width"] = self.line_width
                 node.sm_style["vt_line_color"] = self.color_dict.get(prop_score,"")
                 node.sm_style["vt_line_width"] = self.line_width
-                node.sm_style["outline_color"] = self.color_dict.get(prop_score,"black")
+                node.sm_style["outline_color"] = self.color_dict.get(prop_score, self.absence_color)

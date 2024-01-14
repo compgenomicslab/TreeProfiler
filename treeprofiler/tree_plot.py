@@ -160,6 +160,10 @@ def poplulate_plot_args(plot_args_p):
         nargs='+',
         required=False,
         help="<prop1> <prop2> names of numerical properties which need to be read as barplot_layouts")
+    group.add_argument('--branchscore-layout',
+        nargs='+',
+        required=False,
+        help="<prop1> <prop2> names of numerical properties which need to be read as branchscore_layouts")  
     group.add_argument('--taxonclade-layout',
         default=False,
         action='store_true',
@@ -398,6 +402,11 @@ def run(args):
             layouts.extend(barplot_layouts)
             total_color_dict.append(color_dict)
             visualized_props.extend(args.barplot_layout)
+        
+        if layout == "branchscore-layout":
+            branchscore_layouts = get_branchscore_layouts(tree, args.branchscore_layout, prop2type, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep='avg')
+            layouts.extend(branchscore_layouts)
+            visualized_props.extend(args.branchscore_layout)
 
         if layout == 'alignment-layout':
             #fasta_file = args.alignment_layout
@@ -584,7 +593,7 @@ def get_acr_discrete_layouts(tree, props, level, prop2type, column_width=70, pad
     for prop in props:
         color_dict = {} # key = value, value = color id
         if prop2type and prop2type.get(prop) == list:
-            leaf_values = list(map(list,set(map(tuple,children_prop_array(tree, prop)))))    
+            leaf_values = list(map(list,set(map(tuple, children_prop_array(tree, prop)))))    
             prop_values = [val for sublist in leaf_values for val in sublist]
         else:
             prop_values = sorted(list(set(children_prop_array(tree, prop))))
@@ -600,18 +609,12 @@ def get_acr_discrete_layouts(tree, props, level, prop2type, column_width=70, pad
     return layouts, level, prop_color_dict
 
 def get_acr_continuous_layouts(tree, props, level, prop2type, padding_x=1, padding_y=0):
-    # gradientscolor = {
-    #     20: '#F62D2D', 19: '#F74444', 18: '#F85B5B', 17: '#F97373', 16: '#FA8A8A', 15: '#FBA1A1',
-    #     14: '#FCB9B9', 13: '#FDD0D0', 12: '#FEE7E7', 11: '#e6e6f3', 10: '#FFFFFF', 9: '#E4E8F5',
-    #     8: '#C9D1EB', 7: '#AFBBE1', 6: '#94A4D7', 5: '#7A8ECD', 4: '#5F77C3', 3: '#4561B9',
-    #     2: '#2A4AAF', 1: '#1034A6'
-    # }
     gradientscolor = build_color_gradient(20)
     layouts = []
     for prop in props:
-        all_values = sorted([float(node.props.get(prop)) for node in tree.traverse() if node.props.get(prop)])
-        minval = min(all_values)
-        maxval = max(all_values)
+        all_values = np.array(sorted(list(set(children_prop_array(tree, prop))))).astype('float64')
+        all_values = all_values[~np.isnan(all_values)]
+        minval, maxval = all_values.min(), all_values.max()
         num = len(gradientscolor)
         index_values = np.linspace(minval, maxval, num)
         value2color = {}
@@ -619,7 +622,8 @@ def get_acr_continuous_layouts(tree, props, level, prop2type, padding_x=1, paddi
             index = np.abs(index_values - search_value).argmin()+1
             value2color[search_value] = gradientscolor[index]
         layout = phylosignal_layouts.LayoutACRContinuous(name='ACR_'+prop, column=level, \
-            color_dict=value2color, score_prop=prop, value_range=[minval, maxval], color_range=[gradientscolor[1], gradientscolor[10], gradientscolor[20]])
+            color_dict=value2color, score_prop=prop, value_range=[minval, maxval], \
+            color_range=[gradientscolor[20], gradientscolor[10], gradientscolor[1]])
         layouts.append(layout)
     return layouts
 
@@ -698,7 +702,7 @@ def get_binary_layouts(tree, props, level, prop2type, column_width=70, reverse=F
 
             for i in range(0, nvals): # only positive, negative, NaN, three options
                 color_dict[prop_values[i]] = paired_color[i]
-            print(color_dict)
+
             color = random_color(h=None)
             if not reverse:
                 layout = conditional_layouts.LayoutBinary('Binary_'+prop, level, color, color_dict, prop, width=column_width, padding_x=padding_x, padding_y=padding_y, reverse=reverse)
@@ -713,6 +717,29 @@ def get_binary_layouts(tree, props, level, prop2type, column_width=70, reverse=F
         else:
             raise ValueError(f"Property {prop} is not binary trait.")
     return layouts, level, prop_color_dict
+
+def get_branchscore_layouts(tree, props, prop2type, padding_x=1, padding_y=0, internal_rep='avg'):
+    gradientscolor = build_color_gradient(20)
+    layouts = []
+    for prop in props:
+        all_values = np.array(sorted(list(set(children_prop_array(tree, prop))))).astype('float64')
+        all_values = all_values[~np.isnan(all_values)]
+        minval, maxval = all_values.min(), all_values.max()
+
+        # preload corresponding gradient color of each value
+        # num = len(gradientscolor)
+        # index_values = np.linspace(minval, maxval, num)
+        # value2color = {}
+        # for search_value in all_values:
+        #     index = np.abs(index_values - search_value).argmin()+1
+        #     value2color[search_value] = gradientscolor[index]
+
+        # get corresponding gradient color on the fly of visualization
+        layout = staple_layouts.LayoutBranchScore(name='BranchScore_'+prop, \
+            color_dict=gradientscolor, score_prop=prop, internal_rep=internal_rep, value_range=[minval, maxval], \
+            color_range=[gradientscolor[20], gradientscolor[10], gradientscolor[1]])
+        layouts.append(layout)
+    return layouts
 
 def get_barplot_layouts(tree, props, level, prop2type, column_width=70, padding_x=1, padding_y=0, internal_rep='avg', anchor_column=None):
     prop_color_dict = {}
@@ -779,14 +806,15 @@ def get_barplot_layouts(tree, props, level, prop2type, column_width=70, padding_
     return layouts, level, prop_color_dict
 
 def get_heatmap_layouts(tree, props, level, column_width=70, padding_x=1, padding_y=0, internal_rep='avg'):
+    gradientscolor = build_color_gradient(20, cmap_name="Reds")
     layouts = []
     for prop in props:
         prop_values = np.array(list(set(children_prop_array(tree, prop)))).astype('float64')
         prop_values = prop_values[~np.isnan(prop_values)]
         minval, maxval = prop_values.min(), prop_values.max()
         layout =  staple_layouts.LayoutHeatmap(name='Heatmap_'+prop, column=level, 
-                    width=column_width, padding_x=padding_x, padding_y=padding_y,internal_rep=internal_rep, 
-                    prop=prop, maxval=maxval, minval=minval)
+                    width=column_width, padding_x=padding_x, padding_y=padding_y, \
+                    internal_rep=internal_rep, prop=prop, maxval=maxval, minval=minval)
         layouts.append(layout)  
         level += 1
 

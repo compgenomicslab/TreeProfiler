@@ -338,3 +338,60 @@ class LayoutHeatmap(TreeLayout):
             # identF = RectFace(width=50,height=50,text="NA", color=c1, 
             #     padding_x=1, padding_y=1)
             # node.add_face(identF, column = self.column,  position = 'aligned', collapsed_only=True)
+
+class LayoutBranchScore(TreeLayout):
+    def __init__(self, name, color_dict, score_prop, internal_rep=None, \
+    value_range=None, color_range=None, legend=True):
+        super().__init__(name)
+        self.aligned_faces = True
+        self.score_prop = score_prop
+        self.internal_prop = score_prop+'_'+internal_rep
+        self.color_dict = color_dict
+        self.legend = legend
+        self.absence_color = "black"
+        self.value_range = value_range
+        self.color_range = color_range
+        self.line_width = 5
+
+    def set_tree_style(self, tree, tree_style):
+        if self.legend:
+            if self.color_dict:
+                tree_style.add_legend(title=self.name,
+                                    variable='continuous',
+                                    value_range=self.value_range,
+                                    color_range=self.color_range,
+                                    )
+    def _get_color(self, search_value):
+        num = len(self.color_dict)
+        index_values = np.linspace(self.value_range[0], self.value_range[1], num)
+        index = np.abs(index_values - search_value).argmin() + 1
+        return self.color_dict.get(index, self.absence_color)
+
+    def set_node_style(self, node):
+        prop_score = node.props.get(self.score_prop)
+        if prop_score:
+            prop_score = float(prop_score)
+            # node.add_face(TextFace(node.name, color = self.color_dict.get(prop_text,""), 
+            # padding_x=self.padding_x),column=0, position="branch_right")
+            node.sm_style["hz_line_color"] = self._get_color(prop_score)
+            node.sm_style["hz_line_width"] = self.line_width
+            node.sm_style["vt_line_color"] = self._get_color(prop_score)
+            node.sm_style["vt_line_width"] = self.line_width
+            node.sm_style["outline_color"] = self._get_color(prop_score)
+        elif node.is_leaf and node.props.get(self.internal_prop):
+            prop_score = node.props.get(self.internal_prop)
+            prop_score = float(prop_score)
+            node.sm_style["hz_line_color"] = self._get_color(prop_score)
+            node.sm_style["hz_line_width"] = self.line_width
+            node.sm_style["vt_line_color"] = self._get_color(prop_score)
+            node.sm_style["vt_line_width"] = self.line_width
+            node.sm_style["outline_color"] = self._get_color(prop_score)
+        elif node.props.get(self.internal_prop):
+            prop_score = node.props.get(self.internal_prop)
+            prop_score = float(prop_score)
+            node.sm_style["hz_line_color"] = self._get_color(prop_score)
+            node.sm_style["hz_line_width"] = self.line_width
+            node.sm_style["vt_line_color"] = self._get_color(prop_score)
+            node.sm_style["vt_line_width"] = self.line_width
+            node.sm_style["outline_color"] = self._get_color(prop_score)
+            
