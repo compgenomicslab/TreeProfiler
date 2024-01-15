@@ -49,6 +49,83 @@ gradientscolor = {
     's': '#2A4AAF', 't': '#1034A6', '-': "#EBEBEB"
 }
 
+class LayoutPropsMatrix(TreeLayout):
+    def __init__(self, name="Profile", matrix=None, matrix_type='categorical', \
+            matrix_props=None, width=None, poswidth=20, height=20,
+            column=0, range=None, summarize_inner_nodes=False, value_range=[], \
+            value_color={}, legend=True, active=True):
+        super().__init__(name, active=active)
+        self.matrix = matrix
+        self.matrix_type = matrix_type
+        self.matrix_props = matrix_props
+
+        if width:
+            self.width = width
+        else:
+            self.width = poswidth * len(matrix_props)
+
+        self.height = height
+        self.column = column
+        self.aligned_faces = True
+
+        self.length = len(next(iter(self.matrix))[1]) if self.matrix else None
+        self.scale_range = range or (0, self.length)
+        self.value_range = value_range
+        self.value_color = value_color
+
+        self.summarize_inner_nodes = summarize_inner_nodes
+        self.legend = legend
+
+    def set_tree_style(self, tree, tree_style):
+        if self.length:
+            face = TextScaleFace(width=self.width, scale_range=self.scale_range, 
+                                headers=self.matrix_props, padding_y=0, rotation=270)
+            #face = ScaleFace(width=self.width, scale_range=self.scale_range, padding_y=0)
+            tree_style.aligned_panel_header.add_face(face, column=self.column)
+
+        if self.legend:
+            if self.matrix_type == 'numerical':
+                if self.value_range:
+                    color_gradient = [
+                        self.value_color[self.value_range[1]], 
+                        "#FFFFFF", 
+                        self.value_color[self.value_range[0]]
+                        ]
+                    tree_style.add_legend(title=self.name,
+                                    variable="continuous",
+                                    value_range=self.value_range,
+                                    color_range=color_gradient,
+                                    )
+            if self.matrix_type == 'categorical':
+                tree_style.add_legend(title=self.name,
+                                    variable='discrete',
+                                    colormap=self.value_color,
+                                    )
+    def _get_array(self, node):
+        if self.matrix:
+            return self.matrix.get(node.name)
+
+    def get_array(self, node):
+        if node.is_leaf:
+            return self._get_array(node)
+        else:
+            first_leaf = next(node.leaves())
+            return self._get_array(first_leaf)
+
+    def set_node_style(self, node):
+        array = self.get_array(node)
+        if len(self.matrix_props) > 1:
+            poswidth = self.width / (len(self.matrix_props)-1 )
+        else:
+            poswidth = self.width
+        
+        if array:
+            profileFace = ProfileFace(array, self.value_color, gap_format=None, \
+            seq_format=self.matrix_type, width=self.width, height=self.height, \
+            poswidth=poswidth)
+            node.add_face(profileFace, column=self.column, position='aligned', \
+                collapsed_only=(not node.is_leaf))
+
 class LayoutProfile(TreeLayout):
     def __init__(self, name="Profile", mode='single',
             alignment=None, seq_format='profiles', profiles=None, width=None, poswidth=20, height=20,
@@ -545,7 +622,7 @@ class ProfileAlignmentFace(Face):
                     
                     yield [ "pixi-block", box ]
 
-        elif self.seq_format == "gradients":
+        elif self.seq_format == "numerical":
             seq = self.get_seq(sm_start, sm_end)
             sm_x = sm_x if drawer.TYPE == 'rect' else x0
             y, h = get_height(sm_x, y)
@@ -560,7 +637,7 @@ class ProfileAlignmentFace(Face):
             #yield draw_text(sm_box, for i in seq, "jjj", style=style)
             
 
-        elif self.seq_format == "categories":
+        elif self.seq_format == "categorical":
             seq = self.get_seq(sm_start, sm_end)
             sm_x = sm_x if drawer.TYPE == 'rect' else x0
             y, h = get_height(sm_x, y)
@@ -590,3 +667,159 @@ class ProfileAlignmentFace(Face):
             for i in range(len(seq)):
                 sm_box = Box(sm_x+sm_x0+(posw * i), y, posw, h)
                 yield draw_text(sm_box, seq[i], "jjj", style=style)
+
+class ProfileFace(Face):
+    def __init__(self, seq, value2color=None,
+            gap_format='line', seq_format='categorical', # profiles, numerical, categorical
+            width=None, height=None, # max height
+            gap_linewidth=0.2,
+            max_fsize=12, ftype='sans-serif', poswidth=5,
+            padding_x=0, padding_y=0):
+
+        Face.__init__(self, padding_x=padding_x, padding_y=padding_y)
+
+        self.seq = seq
+        self.seqlength = len(self.seq)
+        self.value2color = value2color
+
+        self.autoformat = True  # block if 1px contains > 1 tile
+
+        self.seq_format = seq_format
+        self.gap_format = gap_format
+        self.gap_linewidth = gap_linewidth
+        self.compress_gaps = False
+
+        self.poswidth = poswidth
+        self.w_scale = 1
+        self.width = width    # sum of all regions' width if not provided
+        self.height = None  # dynamically computed if not provided
+
+        total_width = self.seqlength * self.poswidth
+        if self.width:
+            self.w_scale = self.width / total_width
+        else:
+            self.width = total_width
+  
+
+        # Text
+        self.ftype = ftype
+        self._min_fsize = 8
+        self.max_fsize = max_fsize
+        self._fsize = None
+
+        self.blocks = []
+        self.build_blocks()
+    
+    def __name__(self):
+        return "ProfileFace"
+
+    def get_seq(self, start, end):
+        """Retrieves sequence given start, end"""
+        return self.seq[start:end]
+
+    def build_blocks(self):
+        pos = 0
+        for reg in self.seq:
+            reg = str(reg)
+            if reg:
+                if not reg.startswith("-"):
+                    self.blocks.append([pos, pos + len(reg) - 1])
+                pos += len(reg)
+
+        self.blocks.sort()
+
+    def compute_bounding_box(self,
+            drawer,
+            point, size,
+            dx_to_closest_child,
+            bdx, bdy,
+            bdy0, bdy1,
+            pos, row,
+            n_row, n_col,
+            dx_before, dy_before):
+
+        if pos != 'branch_right' and not pos.startswith('aligned'):
+            raise InvalidUsage(f'Position {pos} not allowed for Profile')
+
+        box = super().compute_bounding_box(
+            drawer,
+            point, size,
+            dx_to_closest_child,
+            bdx, bdy,
+            bdy0, bdy1,
+            pos, row,
+            n_row, n_col,
+            dx_before, dy_before)
+
+        x, y, _, dy = box
+
+        zx, zy = self.zoom
+        zx = 1 if drawer.TYPE != 'circ' else zx
+
+            # zx = drawer.zoom[0]
+            # self.zoom = (zx, zy)
+
+        if drawer.TYPE == "circ":
+            self.viewport = (0, drawer.viewport.dx)
+        else:
+            self.viewport = (drawer.viewport.x, drawer.viewport.x + drawer.viewport.dx)
+
+        self._box = Box(x, y, self.width / zx, dy)
+        return self._box
+    
+    def draw(self, drawer):
+        def get_height(x, y):
+            r = (x or 1e-10) if drawer.TYPE == 'circ' else 1
+            default_h = dy * zy * r
+            h = min([self.height or default_h, default_h]) / zy
+            # h /= r
+            return y + (dy - h) / 2, h
+
+        # Only leaf/collapsed branch_right or aligned
+        x0, y, dx, dy = self._box
+        zx, zy = self.zoom
+        zx = drawer.zoom[0] if drawer.TYPE == 'circ' else zx
+
+
+        if self.gap_format in ["line", "-"]:
+            p1 = (x0, y + dy / 2)
+            p2 = (x0 + self.width, y + dy / 2)
+            if drawer.TYPE == 'circ':
+                p1 = cartesian(p1)
+                p2 = cartesian(p2)
+            yield draw_line(p1, p2, style={'stroke-width': self.gap_linewidth,
+                                           'stroke': self.gapcolor})
+        vx0, vx1 = self.viewport
+        too_small = (self.width * zx) / (self.seqlength) < 1
+
+        posw = self.poswidth * self.w_scale
+        viewport_start = vx0 - self.viewport_margin / zx
+        viewport_end = vx1 + self.viewport_margin / zx
+        sm_x = max(viewport_start - x0, 0)
+        sm_start = round(sm_x / posw)
+        w = self.seqlength * posw
+        sm_x0 = x0 if drawer.TYPE == "rect" else 0
+        sm_end = self.seqlength - round(max(sm_x0 + w - viewport_end, 0) / posw)
+
+        if self.seq_format == "numerical":
+            seq = self.get_seq(sm_start, sm_end)
+            sm_x = sm_x if drawer.TYPE == 'rect' else x0
+            y, h = get_height(sm_x, y)
+            sm_box = Box(sm_x+sm_x0, y, posw * len(seq), h)
+            # fsize = self.get_fsize(dx / len(seq), dy, zx, zy, 20)
+            # style = {
+            #     'fill': "black",
+            #     'max_fsize': fsize,
+            #     'ftype': 'sans-serif', # default sans-serif
+            #    }
+            tooltip = f'<p>{seq}</p>'
+            yield draw_array(sm_box, [self.value2color[x] for x in seq], tooltip=tooltip)
+            #yield draw_text(sm_box, for i in seq, "jjj", style=style)
+            
+        if self.seq_format == "categorical":
+            seq = self.get_seq(sm_start, sm_end)
+            sm_x = sm_x if drawer.TYPE == 'rect' else x0
+            y, h = get_height(sm_x, y)
+            sm_box = Box(sm_x+sm_x0, y, posw * len(seq), h)
+            tooltip = f'<p>{seq}</p>'
+            yield draw_array(sm_box, [self.value2color[x] for x in seq], tooltip=tooltip)
