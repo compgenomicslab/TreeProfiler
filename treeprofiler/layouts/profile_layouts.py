@@ -573,10 +573,20 @@ class ProfileAlignmentFace(Face):
             sm_x = sm_x if drawer.TYPE == 'rect' else x0
             y, h = get_height(sm_x, y)
             sm_box = Box(sm_x+sm_x0, y, posw * len(seq), h)
+            
             if self.seq_format == 'profiles' or posw * zx < self._min_fsize:
                 aa_type = "notext"
                 tooltip = f'<p>{seq}</p>'
-                yield draw_array(sm_box, [gradientscolor[x] for x in seq], tooltip=tooltip)
+                style = {
+                    'fill': "black",
+                    'max_fsize': 14,
+                    'ftype': 'sans-serif', # default sans-serif
+                   }
+                yield draw_array(sm_box, [gradientscolor[x] for x in seq], tooltip=tooltip)            
             else:
                 aa_type = "text"
                 yield [ f'pixi-aa_{aa_type}', sm_box, seq ]
+            sm_x0 = sm_x0 + posw/2 - zx*2 # centering text in the middle of the box
+            for i in range(len(seq)):
+                sm_box = Box(sm_x+sm_x0+(posw * i), y, posw, h)
+                yield draw_text(sm_box, seq[i], "jjj", style=style)

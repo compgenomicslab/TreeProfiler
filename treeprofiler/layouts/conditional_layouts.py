@@ -4,8 +4,11 @@ from ete4.smartview  import (RectFace, CircleFace, SeqMotifFace, TextFace, Outli
 from treeprofiler.layouts.general_layouts import get_heatmapface
 from treeprofiler.src.utils import to_code, call, counter_call, check_nan
 # for boolean layouts
-from distutils.util import strtobool
-
+try:
+    from distutils.util import strtobool
+except ImportError:
+    from treeprofiler.src.utils import strtobool
+    
 # branch thicken, background highlighted to purple
 def highlight_layout(conditions, level, prop2type={}, color='purple'):
     conditional_output = to_code(conditions)

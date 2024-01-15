@@ -15,6 +15,7 @@ import operator
 import math
 import Bio
 import re
+import sys
 
 # conditional syntax calling
 operator_dict = {
@@ -25,6 +26,25 @@ operator_dict = {
                 '>':operator.gt,
                 '>=':operator.ge,
                 }
+
+_true_set = {'yes', 'true', 't', 'y', '1'}
+_false_set = {'no', 'false', 'f', 'n', '0'}
+
+def str2bool(value, raise_exc=False):
+    if isinstance(value, str) or sys.version_info[0] < 3 and isinstance(value, basestring):
+        value = value.lower()
+        if value in _true_set:
+            return True
+        if value in _false_set:
+            return False
+
+    if raise_exc:
+        raise ValueError('Expected "%s"' % '", "'.join(_true_set | _false_set))
+    return None
+
+
+def str2bool_exc(value):
+    return str2bool(value, raise_exc=True)
 
 def check_nan(value):
     try:
@@ -203,6 +223,20 @@ def conditional_prune(tree, conditions_input, prop2type):
 
     #array = [n.props.get(prop) if n.props.get(prop) else 'NaN' for n in nodes] 
     array = [n.props.get(prop) for n in nodes if n.props.get(prop) ] 
+    return array
+
+def tree_prop_array(node, prop):
+    array = []
+    for n in node.traverse():
+        prop_value = n.props.get(prop)
+        if prop_value is not None:
+            # Check if the property value is a set
+            if isinstance(prop_value, set):
+                # Extract elements from the set
+                array.extend(prop_value)
+            else:
+                # Directly append the property value
+                array.append(prop_value)
     return array
 
 def children_prop_array(nodes, prop):

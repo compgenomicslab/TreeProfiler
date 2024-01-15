@@ -25,6 +25,7 @@ from treeprofiler.src.utils import (
     children_prop_array, children_prop_array_missing, 
     flatten, get_consensus_seq, add_suffix, clear_extra_features)
 from treeprofiler.src.phylosignal import run_acr_discrete, run_delta
+from treeprofiler.src.lsa import run_lsa
 
 DESC = "annotate tree"
 
@@ -64,7 +65,11 @@ def populate_annotate_args(parser):
     add('--bool-prop-idx', nargs='+',
         help="1 2 3 or [1-5] index columns which need to be read as boolean data")
     add('--acr-discrete-columns', nargs='+',
-        help=("<col1> <col2> names to perform ACR analysis"))
+        help=("<col1> <col2> names to perform ACR analysis for discrete traits"))
+    add('--acr-continuous-columns', nargs='+',
+        help=("<col1> <col2> names to perform ACR analysis for continuous traits"))
+    add('--lsa-columns', nargs='+',
+        help=("<col1> <col2> names to perform lineage specificity analysis"))
     # add('--taxatree',
     #     help=("<kingdom|phylum|class|order|family|genus|species|subspecies> "
     #           "reference tree from taxonomic database"))
@@ -126,7 +131,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         emapper_smart=None, counter_stat='raw', num_stat='all',
         taxonomic_profile=False, taxadb='GTDB', taxon_column='name',
         taxon_delimiter='', taxa_field=0, rank_limit=None, pruned_by=None, acr_discrete_columns=None,
-        threads=1, outdir='./'):
+        lsa_columns=None, threads=1, outdir='./'):
 
     total_color_dict = []
     layouts = []
@@ -365,7 +370,11 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         print('Time for acr to run: ', end - start)
 
     # lineage specificity analysis
-    
+    if lsa_columns:
+        #print("start lsa for prop: ", bool_prop)
+        if all(column in bool_prop for column in lsa_columns):
+            run_lsa(annotated_tree, props=lsa_columns, precision_cutoff=0.95, sensitivity_threshold=0.95)
+        
     # statistic method
     counter_stat = counter_stat #'raw' or 'relative'
     num_stat = num_stat
@@ -584,7 +593,7 @@ def run(args):
         taxonomic_profile=args.taxonomic_profile, taxadb=args.taxadb, taxon_column=args.taxon_column,
         taxon_delimiter=args.taxon_delimiter, taxa_field=args.taxa_field,
         rank_limit=args.rank_limit, pruned_by=args.pruned_by, acr_discrete_columns=args.acr_discrete_columns, 
-        threads=args.threads, outdir=args.outdir)
+        lsa_columns=args.lsa_columns, threads=args.threads, outdir=args.outdir)
 
     if args.outdir:
         base=os.path.splitext(os.path.basename(args.tree))[0]
@@ -1192,7 +1201,6 @@ def annot_tree_pfam_table(post_tree, pfam_table, alg_fasta, domain_prop='dom_arq
                 if raw2alg.get(seq_name):
                     trans_dom_start = raw2alg[seq_name][dom_start]
                     trans_dom_end = raw2alg[seq_name][dom_end]
-
                     dom_info_string = pair_delimiter.join([dom_name, str(trans_dom_start), str(trans_dom_end)])
                     seq2doms[seq_name].append(dom_info_string)
 

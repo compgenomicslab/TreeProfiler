@@ -79,6 +79,8 @@ class LayoutACRContinuous(TreeLayout):
 
     def set_node_style(self, node):
         prop_score = node.props.get(self.score_prop)
+        print(self.score_prop)
+        print(node.name, prop_score)
         if prop_score:
             prop_score = float(prop_score)
             if self.color_dict:

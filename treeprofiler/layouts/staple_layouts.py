@@ -4,7 +4,7 @@ import numpy as np
 from ete4.smartview import TreeStyle, NodeStyle, TreeLayout
 from ete4.smartview  import TextFace, Face, ScaleFace, LegendFace, RectFace
 from ete4.smartview.renderer.draw_helpers import *
-from treeprofiler.src.utils import random_color
+from treeprofiler.src.utils import random_color, add_suffix
 
 import colorsys
 
@@ -253,7 +253,7 @@ class LayoutHeatmap(TreeLayout):
         self.color_dict = color_dict
         self.maxval = maxval
         self.minval = minval
-        self.internal_prop = prop+'_'+internal_rep
+        self.internal_prop = add_suffix(prop, internal_rep)
         self.width = width
         self.height = height
         self.padding_x = padding_x
@@ -347,7 +347,10 @@ class LayoutBranchScore(TreeLayout):
         super().__init__(name)
         self.aligned_faces = True
         self.score_prop = score_prop
-        self.internal_prop = score_prop+'_'+internal_rep
+        if internal_rep:
+            self.internal_prop = add_suffix(score_prop, internal_rep)
+        else:
+            self.internal_prop = None
         self.color_dict = color_dict
         self.legend = legend
         self.absence_color = "black"
