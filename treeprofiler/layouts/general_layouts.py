@@ -15,14 +15,14 @@ from treeprofiler.src.utils import to_code, call, counter_call, check_nan
 
 Box = namedtuple('Box', 'x y dx dy')  # corner and size of a 2D shape
 
-def get_piechartface(node, prop, colour_dict=None, radius=20, tooltip=None):
+def get_piechartface(node, prop, color_dict=None, radius=20, tooltip=None):
     pair_delimiter = "--"
     item_seperator = "||"
     piechart_data = []
     counter_props = node.props.get(prop).split(item_seperator)
     for counter_prop in counter_props:
         k, v = counter_prop.split(pair_delimiter)
-        piechart_data.append([k,float(v),colour_dict.get(k,None),None])
+        piechart_data.append([k,float(v),color_dict.get(k,None),None])
         
     if piechart_data:
         # tooltip = ""
@@ -100,7 +100,7 @@ def get_consensus_seq(filename: Path | str, threshold=0.7) -> SeqRecord:
     consensus = summary.dumb_consensus(threshold, "-")
     return consensus
 
-def get_stackedbarface(node, prop, colour_dict=None, width=70, height=None, padding_x=1, padding_y=0, tooltip=None):
+def get_stackedbarface(node, prop, color_dict=None, width=70, height=None, padding_x=1, padding_y=0, tooltip=None):
     pair_delimiter = "--"
     item_seperator = "||"
     stackedbar_data = []
@@ -113,7 +113,7 @@ def get_stackedbarface(node, prop, colour_dict=None, width=70, height=None, padd
         k, v = counter_prop.split(pair_delimiter)
         if v:
             total += float(v)
-        stackedbar_data.append([k,float(v),colour_dict.get(k,absence_color),None])
+        stackedbar_data.append([k,float(v),color_dict.get(k,absence_color),None])
         
     if stackedbar_data:
         tooltip = ""

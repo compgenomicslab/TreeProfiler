@@ -56,6 +56,9 @@ class LayoutText(TreeLayout):
         elif node.props.get(self.internal_prop):
             stackedbar_face = get_stackedbarface(node, self.internal_prop, self.color_dict, width=self.width, padding_x=self.padding_x, padding_y=self.padding_y)
             node.add_face(stackedbar_face, column = self.column, position = "aligned", collapsed_only=True)
+            # piechart_face = get_piechartface(node, self.internal_prop, self.color_dict, radius=25)
+            # node.add_face(piechart_face, column = self.column, position = "branch_right", collapsed_only=False)
+            # node.add_face(piechart_face, column = self.column, position = "branch_right", collapsed_only=True)
         else:
             #prop_face = CircleFace(radius=self.radius, color='grey', padding_x=self.padding_x, padding_y=self.padding_y)
             prop_face = RectFace(width=self.width, height=self.height, color=self.absence_color, \
