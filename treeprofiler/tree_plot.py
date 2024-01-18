@@ -430,6 +430,15 @@ def run(args):
             layouts.append(domain_layout)
         
         # presence-absence profiling based on categorical data
+        # if layout == 'profiling-layout':
+        #     profiling_props = args.profiling_layout
+        #     for profiling_prop in profiling_props:
+        #         matrix, all_values = single2profile(tree, profiling_prop)
+        #         profile_layout = profile_layouts.LayoutProfile(name=f'Profiling_{profiling_prop}', mode='multi',
+        #             alignment=matrix, seq_format='profiles', profiles=all_values, column=level, summarize_inner_nodes=True, poswidth=args.column_width)
+        #         level += 1
+        #         layouts.append(profile_layout)
+        
         if layout == 'profiling-layout':
             profiling_props = args.profiling_layout
             for profiling_prop in profiling_props:
@@ -438,7 +447,7 @@ def run(args):
                     alignment=matrix, seq_format='profiles', profiles=all_values, column=level, summarize_inner_nodes=True, poswidth=args.column_width)
                 level += 1
                 layouts.append(profile_layout)
-        
+
         # presence-absence profiling based on list data
         if layout == 'multi-profiling-layout':
             profiling_props = args.multi_profiling_layout
@@ -484,7 +493,6 @@ def run(args):
             ]
         #label_layouts, level, _ = get_layouts(tree, text_props, 'rectangular', level, 'counter', prop2type=prop2type)
         label_layouts, level, _ = get_rectangle_layouts(tree, text_props, level, prop2type=prop2type, column_width=args.column_width)
-            
         layouts.extend(label_layouts)
         
         num_props = [
@@ -615,7 +623,7 @@ def get_acr_discrete_layouts(tree, props, level, prop2type, column_width=70, pad
         # normal text prop
         color_dict = assign_color_to_values(prop_values, paired_color)
 
-        layout = phylosignal_layouts.LayoutACRDiscrete(name='ACR_'+prop, column=level, \
+        layout = phylosignal_layouts.LayoutACRDiscrete(name='acr_'+prop, column=level, \
             color_dict=color_dict, acr_prop=prop, width=column_width, \
                 padding_x=padding_x, padding_y=padding_y)
         layouts.append(layout)
@@ -635,7 +643,7 @@ def get_acr_continuous_layouts(tree, props, level, prop2type, padding_x=1, paddi
         for search_value in all_values:
             index = np.abs(index_values - search_value).argmin()+1
             value2color[search_value] = gradientscolor[index]
-        layout = phylosignal_layouts.LayoutACRContinuous(name='ACR_'+prop, column=level, \
+        layout = phylosignal_layouts.LayoutACRContinuous(name='acr_'+prop, column=level, \
             color_dict=value2color, score_prop=prop, value_range=[minval, maxval], \
             color_range=[gradientscolor[20], gradientscolor[10], gradientscolor[1]])
         layouts.append(layout)
@@ -898,7 +906,6 @@ def categorical2matrix(tree, profiling_props, dtype=str):
     value2color = assign_color_to_values(all_values, paired_color)
     if "NaN" in value2color:
         value2color["NaN"] = "#EBEBEB"
-
     return leaf2matrix, value2color
 
 def numerical2matrix(tree, profiling_props, dtype=float):

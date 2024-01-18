@@ -68,7 +68,7 @@ class LayoutPropsMatrix(TreeLayout):
         self.column = column
         self.aligned_faces = True
 
-        self.length = len(next(iter(self.matrix))[1]) if self.matrix else None
+        self.length = len(next(iter(self.matrix))[0]) if self.matrix else None
         self.scale_range = range or (0, self.length)
         self.value_range = value_range
         self.value_color = value_color

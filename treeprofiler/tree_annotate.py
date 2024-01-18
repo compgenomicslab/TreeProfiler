@@ -65,9 +65,9 @@ def populate_annotate_args(parser):
     add('--bool-prop-idx', nargs='+',
         help="1 2 3 or [1-5] index columns which need to be read as boolean data")
     add('--acr-discrete-columns', nargs='+',
-        help=("<col1> <col2> names to perform ACR analysis for discrete traits"))
+        help=("<col1> <col2> names to perform acr analysis for discrete traits"))
     add('--acr-continuous-columns', nargs='+',
-        help=("<col1> <col2> names to perform ACR analysis for continuous traits"))
+        help=("<col1> <col2> names to perform acr analysis for continuous traits"))
     add('--lsa-columns', nargs='+',
         help=("<col1> <col2> names to perform lineage specificity analysis"))
     # add('--taxatree',
@@ -353,7 +353,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
     # Ancestor Character Reconstruction analysis
     # data preparation
     if acr_discrete_columns:
-        print("Performing ACR analysis...")
+        print("Performing acr analysis...")
         # need to be discrete traits
         discrete_traits = text_prop + bool_prop
         acr_discrete_columns_dict = {k: v for k, v in columns.items() if k in discrete_traits}
@@ -365,7 +365,10 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         clear_extra_features([annotated_tree], prop2type.keys())
 
         run_delta(acr_results, annotated_tree, threads=threads)
-                
+        for prop in acr_discrete_columns:
+            prop2type.update({
+                add_suffix(prop, "delta"): float
+            })
         end = time.time()
         print('Time for acr to run: ', end - start)
 
@@ -374,7 +377,13 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         #print("start lsa for prop: ", bool_prop)
         if all(column in bool_prop for column in lsa_columns):
             run_lsa(annotated_tree, props=lsa_columns, precision_cutoff=0.95, sensitivity_threshold=0.95)
-        
+            
+            for prop in lsa_columns:
+                prop2type.update({
+                    add_suffix(prop, "prec"): float,
+                    add_suffix(prop, "sens"): float,
+                    add_suffix(prop, "f1"): float
+                })
     # statistic method
     counter_stat = counter_stat #'raw' or 'relative'
     num_stat = num_stat
