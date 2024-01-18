@@ -19,9 +19,9 @@ from ete4.core.seqgroup import SeqGroup
 from ete4 import Tree, PhyloTree
 from ete4 import GTDBTaxa
 from ete4 import NCBITaxa
-from treeprofiler.src import b64pickle
 from treeprofiler.src.utils import (
-    get_internal_parser, ete4_parse, taxatree_prune, conditional_prune,
+    validate_tree, TreeFormatError,
+    taxatree_prune, conditional_prune,
     children_prop_array, children_prop_array_missing, 
     flatten, get_consensus_seq, add_suffix, clear_extra_features)
 from treeprofiler.src.phylosignal import run_acr_discrete, run_delta
@@ -39,7 +39,6 @@ def populate_annotate_args(parser):
         help="<metadata.csv> .csv, .tsv. mandatory input")
     add('-sep', '--metadata_sep', default='\t',
         help="column separator of metadata table [default: \\t]")
-
     add('--no_colnames', action='store_true',
         help="metadata table doesn't contain columns name")
     add('--aggregate-duplicate', action='store_true',
@@ -92,6 +91,11 @@ def populate_annotate_args(parser):
 
     group = parser.add_argument_group(title='Annotation arguments',
         description="Annotation parameters")
+    group.add_argument('--resolve-polytomy',
+        default=False,
+        action='store_true',
+        required=False,
+        help="Resolve polytomy in tree")
     group.add_argument('--taxonomic-profile',
         default=False,
         action='store_true',
@@ -103,7 +107,6 @@ def populate_annotate_args(parser):
         type=str,
         required=False,
         help="statistic calculation to perform for numerical data in internal nodes, [all, sum, avg, max, min, std, none]. If 'none' was chosen, numerical properties won't be summarized nor annotated in internal nodes. [default: all]")  
-
     group.add_argument('--counter-stat',
         default='raw',
         choices=['raw', 'relative', 'none'],
@@ -513,38 +516,16 @@ def run(args):
         
 
     # parsing tree
-    if args.tree:
-        tree = None  # Initialize tree to None
-        try:
-            if args.input_type == 'ete' or args.input_type == 'auto':
-                try:
-                    with open(args.tree, 'r') as f:
-                        file_content = f.read()
-                    tree = b64pickle.loads(file_content, encoder='pickle', unpack=False)
-                except Exception as e:
-                    if args.input_type == 'ete':
-                        print(e)
-                        sys.exit(1)
-                    # If it's 'auto', try the next format
+    try:
+        tree, eteformat_flag = validate_tree(args.tree, args.input_type, args.internal_parser)
+    except TreeFormatError as e:
+        print(e)
+        sys.exit(1)
 
-            if args.input_type == 'newick' or (args.input_type == 'auto' and tree is None):
-                try:
-                    tree = ete4_parse(open(args.tree), internal_parser=args.internal_parser)
-                except Exception as e:
-                    print(e)
-                    sys.exit(1)
-
-        except ValueError as e:
-            print(e)
-            print("Invalid tree format.")
-            sys.exit(1)
-
-    # if refer tree from taxadb, input tree will be ignored
-    # elif taxatree and taxadb:
-    #     tree = ''
-    else:
-        sys.exit('empty input')
-
+    # resolve polytomy
+    if args.resolve_polytomy:
+        tree.resolve_polytomy()
+        
     # parse csv to metadata table
     start = time.time()
     print("start parsing...")

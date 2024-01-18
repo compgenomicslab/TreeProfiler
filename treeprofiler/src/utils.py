@@ -1,4 +1,5 @@
 from __future__ import annotations
+from treeprofiler.src import b64pickle
 from ete4.parser.newick import NewickError
 from ete4.core.operations import remove
 from ete4 import Tree, PhyloTree
@@ -142,6 +143,34 @@ def get_consensus_seq(filename: Path | str, threshold=0.7) -> SeqRecord:
     consensus = summary.dumb_consensus(threshold, "-")
     return consensus
 
+# validate tree format
+class TreeFormatError(Exception):
+    pass
+
+def validate_tree(tree_path, input_type, internal_parser=None):
+    tree = None  # Initialize tree to None
+    eteformat_flag = False
+    if input_type in ['ete', 'auto']:
+        try:
+            with open(tree_path, 'r') as f:
+                file_content = f.read()
+            tree = b64pickle.loads(file_content, encoder='pickle', unpack=False)
+            eteformat_flag = True
+        except Exception as e:
+            if input_type == 'ete':
+                raise TreeFormatError(f"Error loading tree in 'ete' format: {e}")
+
+    if input_type in ['newick', 'auto'] and tree is None:
+        try:
+            tree = ete4_parse(open(tree_path), internal_parser=internal_parser)
+        except Exception as e:
+            raise TreeFormatError(f"Error loading tree in 'newick' format: {e}\n"
+                                  "Please try using the correct parser with --internal-parser option, or check the newick format.")
+
+    # if tree is None:
+    #     raise TreeFormatError("Failed to load the tree in either 'ete' or 'newick' format.")
+
+    return tree, eteformat_flag
 
 # parse ete4 Tree
 def get_internal_parser(internal_parser="name"):

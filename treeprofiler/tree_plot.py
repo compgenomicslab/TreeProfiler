@@ -19,9 +19,10 @@ from treeprofiler.tree_image import get_image
 from treeprofiler.layouts import (
     text_layouts, taxon_layouts, staple_layouts, 
     conditional_layouts, seq_layouts, profile_layouts, phylosignal_layouts)
-from treeprofiler.src import b64pickle
+
 from treeprofiler.src.utils import (
-    ete4_parse, taxatree_prune, conditional_prune,
+    validate_tree, TreeFormatError,
+    taxatree_prune, conditional_prune,
     tree_prop_array, children_prop_array, children_prop_array_missing, 
     flatten, get_consensus_seq, random_color, assign_color_to_values, 
     add_suffix, build_color_gradient)
@@ -250,35 +251,37 @@ def run(args):
     if not os.path.exists(args.tree):
        raise FileNotFoundError(f"Input tree {args.tree} does not exist.")
 
-    #parse input tree
-    if args.tree:
-        tree = None  # Initialize tree to None
-        eteformat_flag = False
-        try:
-            if args.input_type == 'newick' or args.input_type == 'auto':
-                try:
-                    tree = ete4_parse(open(args.tree), internal_parser=args.internal_parser)
-                    # If parsing is successful, proceed
-                except Exception as e:
-                    if args.input_type == 'newick':
-                        print(e)
-                        sys.exit(1)
-                    # If it's 'auto', try the next format
-            if args.input_type == 'ete' or (args.input_type == 'auto' and tree is None):
-                with open(args.tree, 'r') as f:
-                    file_content = f.read()
-                    tree = b64pickle.loads(file_content, encoder='pickle', unpack=False)
-                    eteformat_flag = True
-        except ValueError as e:
-            print(e)
-            if args.input_type == 'ete':
-                print("Invalid ete format.")
-            else:
-                print("Invalid tree format.")
-            sys.exit(1)
-    else:
-        print("No tree file provided.")
+   # parsing tree
+    try:
+        tree, eteformat_flag = validate_tree(args.tree, args.input_type, args.internal_parser)
+        # tree = None  # Initialize tree to None
+        # eteformat_flag = False
+        # if args.input_type in ['ete', 'auto']:
+        #     try:
+        #         with open(args.tree, 'r') as f:
+        #             file_content = f.read()
+        #         tree = b64pickle.loads(file_content, encoder='pickle', unpack=False)
+        #         eteformat_flag = True
+        #     except Exception as e:
+        #         if args.input_type == 'ete':
+        #             print(f"Error loading tree in 'ete' format: {e}")
+        #             sys.exit(1)
+
+        # if args.input_type in ['newick', 'auto'] and tree is None:
+        #     try:
+        #         tree = ete4_parse(open(args.tree), internal_parser=args.internal_parser)
+        #     except NewickError as e:
+        #         print(f"Error loading tree in 'newick' format: {e}")
+        #         print(f"Please try use the correct parser with --internal-parser option. or check the newick format.")
+        #         sys.exit(1)
+
+        # if tree is None:
+        #     print("Failed to load the tree in either 'ete' or 'newick' format.")
+        #     sys.exit(1)
+    except TreeFormatError as e:
+        print(e)
         sys.exit(1)
+
 
     
     #rest_prop = []
