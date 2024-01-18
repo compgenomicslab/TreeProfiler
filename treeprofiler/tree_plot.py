@@ -254,30 +254,6 @@ def run(args):
    # parsing tree
     try:
         tree, eteformat_flag = validate_tree(args.tree, args.input_type, args.internal_parser)
-        # tree = None  # Initialize tree to None
-        # eteformat_flag = False
-        # if args.input_type in ['ete', 'auto']:
-        #     try:
-        #         with open(args.tree, 'r') as f:
-        #             file_content = f.read()
-        #         tree = b64pickle.loads(file_content, encoder='pickle', unpack=False)
-        #         eteformat_flag = True
-        #     except Exception as e:
-        #         if args.input_type == 'ete':
-        #             print(f"Error loading tree in 'ete' format: {e}")
-        #             sys.exit(1)
-
-        # if args.input_type in ['newick', 'auto'] and tree is None:
-        #     try:
-        #         tree = ete4_parse(open(args.tree), internal_parser=args.internal_parser)
-        #     except NewickError as e:
-        #         print(f"Error loading tree in 'newick' format: {e}")
-        #         print(f"Please try use the correct parser with --internal-parser option. or check the newick format.")
-        #         sys.exit(1)
-
-        # if tree is None:
-        #     print("Failed to load the tree in either 'ete' or 'newick' format.")
-        #     sys.exit(1)
     except TreeFormatError as e:
         print(e)
         sys.exit(1)
