@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os, math, re
+import logging
 import sys
 import time
 import random
@@ -29,6 +30,17 @@ from treeprofiler.src.lsa import run_lsa
 from treeprofiler.src import b64pickle
 
 DESC = "annotate tree"
+
+TAXONOMICDICT = {# start with leaf name
+                'rank': str,
+                'sci_name': str,
+                'taxid': str,
+                'lineage':str,
+                'named_lineage': str,
+                'evoltype': str,
+                'dup_sp': str,
+                'dup_percent': float,
+                }
 
 def populate_annotate_args(parser):
     gmeta = parser.add_argument_group(
@@ -73,11 +85,12 @@ def populate_annotate_args(parser):
     # add('--taxatree',
     #     help=("<kingdom|phylum|class|order|family|genus|species|subspecies> "
     #           "reference tree from taxonomic database"))
-    add('--taxadb', default='GTDB', type=str.upper,
+    add('--taxadb', type=str.upper,
         help="<NCBI|GTDB> for taxonomic profiling or fetch taxatree [default: GTDB]")
     add('--taxon-column',
-        help="<col1> name of columns which need to be read as taxon data")
-    add('--taxon-delimiter', default='',
+        help="Activate taxonomic annotation using <col1> name of columns which need to be read as taxon data. \
+            Unless taxon data in leaf name, please use 'name' as input such as --taxon-column name")
+    add('--taxon-delimiter', default=None,
         help="delimiter of taxa columns. [default: None]")
     add('--taxa-field', type=int, default=0,
         help="field of taxa name after delimiter. [default: 0]")
@@ -97,11 +110,6 @@ def populate_annotate_args(parser):
         action='store_true',
         required=False,
         help="Resolve polytomy in tree")
-    group.add_argument('--taxonomic-profile',
-        default=False,
-        action='store_true',
-        required=False,
-        help="Activate taxonomic annotation on tree")
     group.add_argument('--column-summary-method', 
         nargs='+',
         required=False,
@@ -137,7 +145,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         text_prop=[], text_prop_idx=[], multiple_text_prop=[], num_prop=[], num_prop_idx=[],
         bool_prop=[], bool_prop_idx=[], prop2type_file=None, alignment=None, emapper_pfam=None,
         emapper_smart=None, counter_stat='raw', num_stat='all', column2method={},
-        taxonomic_profile=False, taxadb='GTDB', taxon_column='name',
+        taxadb='GTDB', taxon_column='name',
         taxon_delimiter='', taxa_field=0, rank_limit=None, pruned_by=None, acr_discrete_columns=None,
         lsa_columns=None, threads=1, outdir='./'):
 
@@ -460,35 +468,16 @@ def run_tree_annotate(tree, input_annotated_tree=False,
 
     # taxa annotations
     start = time.time()
-    if taxonomic_profile:
-        # taxonomic annotation
+    if taxon_column:
         if not taxadb:
-            print('Please specify which taxa db using --taxadb <GTDB|NCBI>')
+            raise Exception('Please specify which taxa db using --taxadb <GTDB|NCBI>')
         else:
-            if taxadb == 'GTDB':
-                if taxon_column:
-                    annotated_tree, rank2values = annotate_taxa(annotated_tree, db=taxadb, taxid_attr=taxon_column, sp_delimiter=taxon_delimiter, sp_field=taxa_field)
-                else:
-                    annotated_tree, rank2values = annotate_taxa(annotated_tree, db=taxadb, taxid_attr="name", sp_delimiter=taxon_delimiter, sp_field=taxa_field)
-            elif taxadb == 'NCBI':
-                if taxon_column:
-                    annotated_tree, rank2values = annotate_taxa(annotated_tree, db=taxadb, taxid_attr=taxon_column, sp_delimiter=taxon_delimiter, sp_field=taxa_field)
-                else:
-                    annotated_tree, rank2values = annotate_taxa(annotated_tree, db=taxadb, taxid_attr="name", sp_delimiter=taxon_delimiter, sp_field=taxa_field)
-        
+            annotated_tree, rank2values = annotate_taxa(annotated_tree, db=taxadb, \
+                taxid_attr=taxon_column, sp_delimiter=taxon_delimiter, sp_field=taxa_field)
+                
         # evolutionary events annotation
         annotated_tree = annotate_evol_events(annotated_tree, sp_delimiter=taxon_delimiter, sp_field=taxa_field)
-        
-        prop2type.update({# start with leaf name
-                'rank': str,
-                'sci_name': str,
-                'taxid': str,
-                'lineage':str,
-                'named_lineage': str,
-                'evoltype': str,
-                'dup_sp': str,
-                'dup_percent': float,
-                })
+        prop2type.update(TAXONOMICDICT)
     else:
         rank2values = {}
 
@@ -597,7 +586,7 @@ def run(args):
         prop2type_file=args.prop2type, alignment=args.alignment,
         emapper_pfam=args.emapper_pfam, emapper_smart=args.emapper_smart, 
         counter_stat=args.counter_stat, num_stat=args.num_stat, column2method=column2method, 
-        taxonomic_profile=args.taxonomic_profile, taxadb=args.taxadb, taxon_column=args.taxon_column,
+        taxadb=args.taxadb, taxon_column=args.taxon_column,
         taxon_delimiter=args.taxon_delimiter, taxa_field=args.taxa_field,
         rank_limit=args.rank_limit, pruned_by=args.pruned_by, acr_discrete_columns=args.acr_discrete_columns, 
         lsa_columns=args.lsa_columns, threads=args.threads, outdir=args.outdir)
@@ -624,14 +613,8 @@ def run(args):
 
         ### out tsv
         prop_keys = list(prop2type.keys())
-        if args.taxonomic_profile:
-            prop_keys.extend([
-                'rank',
-                'sci_name',
-                'taxid',
-                'lineage',
-                'named_lineage'
-            ])
+        if args.taxon_column:
+            prop_keys.extend(list(TAXONOMICDICT.keys()))
         if args.annotated_tree:
             tree2table(annotated_tree, internal_node=True, props=None, outfile=os.path.join(args.outdir, out_tsv))
         else:
@@ -1053,7 +1036,7 @@ def gtdb_accession_to_taxid(accession):
 
 def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field=0):
     global rank2values
-
+    #print(next(tree.leaves()).props.get(taxid_attr).split(sp_delimiter)[sp_field])
     def return_spcode_ncbi(leaf):
         #print(leaf.props.get(taxid_attr).split(sp_delimiter)[sp_field])
         try:
