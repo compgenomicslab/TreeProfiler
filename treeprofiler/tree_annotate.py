@@ -20,12 +20,13 @@ from ete4 import Tree, PhyloTree
 from ete4 import GTDBTaxa
 from ete4 import NCBITaxa
 from treeprofiler.src.utils import (
-    validate_tree, TreeFormatError,
+    validate_tree, TreeFormatError, get_internal_parser,
     taxatree_prune, conditional_prune,
     children_prop_array, children_prop_array_missing, 
     flatten, get_consensus_seq, add_suffix, clear_extra_features)
 from treeprofiler.src.phylosignal import run_acr_discrete, run_delta
 from treeprofiler.src.lsa import run_lsa
+from treeprofiler.src import b64pickle
 
 DESC = "annotate tree"
 
@@ -101,6 +102,10 @@ def populate_annotate_args(parser):
         action='store_true',
         required=False,
         help="Activate taxonomic annotation on tree")
+    group.add_argument('--column-summary-method', 
+        nargs='+',
+        required=False,
+        help="Specify summary method for individual columns in the format ColumnName=Method")
     group.add_argument('--num-stat',
         default='all',
         choices=['all', 'sum', 'avg', 'max', 'min', 'std', 'none'],
@@ -131,7 +136,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         emapper_annotations=None,
         text_prop=[], text_prop_idx=[], multiple_text_prop=[], num_prop=[], num_prop_idx=[],
         bool_prop=[], bool_prop_idx=[], prop2type_file=None, alignment=None, emapper_pfam=None,
-        emapper_smart=None, counter_stat='raw', num_stat='all',
+        emapper_smart=None, counter_stat='raw', num_stat='all', column2method={},
         taxonomic_profile=False, taxadb='GTDB', taxon_column='name',
         taxon_delimiter='', taxa_field=0, rank_limit=None, pruned_by=None, acr_discrete_columns=None,
         lsa_columns=None, threads=1, outdir='./'):
@@ -393,32 +398,40 @@ def run_tree_annotate(tree, input_annotated_tree=False,
 
     # merge annotations depends on the column datatype
     start = time.time()
+    
+    # choose summary method based on datatype
+    
+    for prop in text_prop+multiple_text_prop+bool_prop:
+        if not prop in column2method:
+            column2method[prop] = counter_stat
+
+    for prop in num_prop:
+        if not prop in column2method:
+            column2method[prop] = num_stat
 
     if not input_annotated_tree:
-
         #pre load node2leaves to save time
         node2leaves = annotated_tree.get_cached_content()
         for i, node in enumerate(annotated_tree.traverse("postorder")):
             internal_props = {}
             if not node.is_leaf:
-                if counter_stat != 'none':
-                    if text_prop:
-                        internal_props_text = merge_text_annotations(node2leaves[node], text_prop, counter_stat=counter_stat)
-                        internal_props.update(internal_props_text)
+                if text_prop:
+                    internal_props_text = merge_text_annotations(node2leaves[node], text_prop, column2method)
+                    internal_props.update(internal_props_text)
 
-                    if multiple_text_prop:
-                        internal_props_multi = merge_multitext_annotations(node2leaves[node], multiple_text_prop, counter_stat=counter_stat)
-                        internal_props.update(internal_props_multi)
+                if multiple_text_prop:
+                    internal_props_multi = merge_multitext_annotations(node2leaves[node], multiple_text_prop, column2method)
+                    internal_props.update(internal_props_multi)
 
-                    if bool_prop:
-                        internal_props_bool = merge_text_annotations(node2leaves[node], bool_prop, counter_stat=counter_stat)
-                        internal_props.update(internal_props_bool)
+                if bool_prop:
+                    internal_props_bool = merge_text_annotations(node2leaves[node], bool_prop, column2method)
+                    internal_props.update(internal_props_bool)
 
-                if num_stat != 'none':
-                    if num_prop:
-                        internal_props_num = merge_num_annotations(node2leaves[node], num_prop, num_stat=num_stat)                        
-                        if internal_props_num:
-                            internal_props.update(internal_props_num)
+                
+                if num_prop:
+                    internal_props_num = merge_num_annotations(node2leaves[node], num_prop, column2method)                        
+                    if internal_props_num:
+                        internal_props.update(internal_props_num)
 
                 # deprecated
                 # if rest_column:
@@ -501,6 +514,7 @@ def run(args):
     level = 1 # level 1 is the leaf name
     prop2type = {}
     metadata_dict = {}
+    column2method = {}
 
     # checking file and output exists
     if not os.path.exists(args.tree):
@@ -571,6 +585,9 @@ def run(args):
         })
 
     # start annotation
+    if args.column_summary_method:
+        column2method = process_column_summary_methods(args.column_summary_method)
+
     annotated_tree, prop2type = run_tree_annotate(tree, input_annotated_tree=args.annotated_tree,
         metadata_dict=metadata_dict, node_props=node_props, columns=columns,
         prop2type=prop2type,
@@ -578,8 +595,8 @@ def run(args):
         multiple_text_prop=args.multiple_text_prop, num_prop=args.num_prop, num_prop_idx=args.num_prop_idx,
         bool_prop=args.bool_prop, bool_prop_idx=args.bool_prop_idx,
         prop2type_file=args.prop2type, alignment=args.alignment,
-        emapper_pfam=args.emapper_pfam, emapper_smart=args.emapper_smart,
-        counter_stat=args.counter_stat, num_stat=args.num_stat,
+        emapper_pfam=args.emapper_pfam, emapper_smart=args.emapper_smart, 
+        counter_stat=args.counter_stat, num_stat=args.num_stat, column2method=column2method, 
         taxonomic_profile=args.taxonomic_profile, taxadb=args.taxadb, taxon_column=args.taxon_column,
         taxon_delimiter=args.taxon_delimiter, taxa_field=args.taxa_field,
         rank_limit=args.rank_limit, pruned_by=args.pruned_by, acr_discrete_columns=args.acr_discrete_columns, 
@@ -767,6 +784,17 @@ def parse_csv(input_files, delimiter='\t', no_colnames=False, aggregate_duplicat
 
     return metadata, node_props, columns, prop2type
 
+def process_column_summary_methods(column_summary_methods):
+    column_methods = {}
+    if column_summary_methods:
+        for entry in column_summary_methods:
+            try:
+                column, method = entry.split('=')
+                column_methods[column] = method
+            except ValueError:
+                raise ValueError(f"Invalid format for --column-summary-method: '{entry}'. Expected format: ColumnName=Method")
+    return column_methods
+
 def get_comma_separated_values(lst):
     for item in lst:
         if isinstance(item, str) and any(',' in x for x in item.split()):
@@ -888,11 +916,12 @@ def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, 
 
     return tree
 
-def merge_text_annotations(nodes, target_props, counter_stat='raw'):
+def merge_text_annotations(nodes, target_props, column2method):
     pair_seperator = "--"
     item_seperator = "||"
     internal_props = {}
     for target_prop in target_props:
+        counter_stat = column2method.get(target_prop, "raw")
         if counter_stat == 'raw':
             prop_list = children_prop_array_missing(nodes, target_prop)
             internal_props[add_suffix(target_prop, 'counter')] = item_seperator.join([add_suffix(str(key), value, pair_seperator) for key, value in sorted(dict(Counter(prop_list)).items())])
@@ -911,12 +940,12 @@ def merge_text_annotations(nodes, target_props, counter_stat='raw'):
             #internal_props[add_suffix(target_prop, 'counter')] = '||'.join([add_suffix(key, value, '--') for key, value in dict(Counter(prop_list)).items()])
 
         else:
-            print('Invalid stat method')
-            break
+            #print('Invalid stat method')
+            pass
 
     return internal_props
 
-def merge_multitext_annotations(nodes, target_props, counter_stat='raw'):
+def merge_multitext_annotations(nodes, target_props, column2method):
     #seperator of multiple text 'GO:0000003,GO:0000902,GO:0000904'
     multi_text_seperator = ','
     pair_seperator = "--"
@@ -924,6 +953,7 @@ def merge_multitext_annotations(nodes, target_props, counter_stat='raw'):
 
     internal_props = {}
     for target_prop in target_props:
+        counter_stat = column2method.get(target_prop, "raw")
         if counter_stat == 'raw':
             prop_list = children_prop_array(nodes, target_prop)
             multi_prop_list = []
@@ -951,36 +981,15 @@ def merge_multitext_annotations(nodes, target_props, counter_stat='raw'):
             internal_props[add_suffix(target_prop, 'counter')] = item_seperator.join(counter_line)
             #internal_props[add_suffix(target_prop, 'counter')] = '||'.join([add_suffix(key, value, '--') for key, value in dict(Counter(prop_list)).items()])
         else:
-            print('Invalid stat method')
-            break
+            #print('Invalid stat method')
+            pass
 
     return internal_props
 
-# def merge_bool_annotations(nodes, target_props, counter_stat='raw'):
-#     internal_props = {}
-#     for target_prop in target_props:
-#         if counter_stat == 'raw':
-#             prop_list = children_prop_array(nodes, target_prop)
-#             counter_line = []
-#             for key, value in dict(Counter(prop_list)).items():
-#                 counter_line.append(add_suffix(key, value, '--'))
-
-#             internal_props[add_suffix(target_prop, 'counter')] = '||'.join(counter_line)
-#             # internal_props[add_suffix(target_prop, 'counter')] = '||'.join([add_suffix(str(key), value, '--') for key, value in dict(Counter(prop_list)).items()])
-
-#         # elif counter_stat == 'relative':
-#         #     prop_list = children_prop_array(nodes, target_prop)
-#         #     internal_props[add_suffix(target_prop, 'counter')] = '||'.join([add_suffix(key, value, '--') for key, value in dict(Counter(prop_list)).items()])
-
-#         else:
-#             print('Invalid stat method')
-#             break
-
-#     return internal_props
-
-def merge_num_annotations(nodes, target_props, num_stat='all'):
+def merge_num_annotations(nodes, target_props, column2method):
     internal_props = {}
     for target_prop in target_props:
+        num_stat = column2method.get(target_prop, "raw")
         if target_prop != 'dist' and target_prop != 'support':
             prop_array = np.array(children_prop_array(nodes, target_prop),dtype=np.float64)
             prop_array = prop_array[~np.isnan(prop_array)] # remove nan data
@@ -1012,7 +1021,7 @@ def merge_num_annotations(nodes, target_props, num_stat='all'):
                     else:
                         internal_props[add_suffix(target_prop, 'std')] = 0
                 else:
-                    print('Invalid stat method')
+                    #print('Invalid stat method')
                     pass
             else:
                 pass
