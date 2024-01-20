@@ -42,6 +42,8 @@ TAXONOMICDICT = {# start with leaf name
                 'dup_percent': float,
                 }
 
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
 def populate_annotate_args(parser):
     gmeta = parser.add_argument_group(
         title='METADATA TABLE parameters',
@@ -1036,16 +1038,14 @@ def gtdb_accession_to_taxid(accession):
 
 def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field=0):
     global rank2values
-    #print(next(tree.leaves()).props.get(taxid_attr).split(sp_delimiter)[sp_field])
+    logging.info(f"\n==============Annotating tree with {db} taxonomic database============")
     def return_spcode_ncbi(leaf):
-        #print(leaf.props.get(taxid_attr).split(sp_delimiter)[sp_field])
         try:
             return leaf.props.get(taxid_attr).split(sp_delimiter)[sp_field]
         except (IndexError, ValueError):
             return leaf.props.get(taxid_attr)
 
     def return_spcode_gtdb(leaf):
-        #print(leaf.props.get(taxid_attr).split(sp_delimiter)[sp_field])
         try:
             if sp_delimiter:
                 species_attribute = leaf.props.get(taxid_attr).split(sp_delimiter)[sp_field]
