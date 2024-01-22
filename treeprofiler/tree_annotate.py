@@ -80,15 +80,18 @@ def populate_annotate_args(parser):
         help="1 2 3 or [1-5] index columns which need to be read as boolean data")
     add('--acr-discrete-columns', nargs='+',
         help=("<col1> <col2> names to perform acr analysis for discrete traits"))
-    add('--acr-continuous-columns', nargs='+',
-        help=("<col1> <col2> names to perform acr analysis for continuous traits"))
+    # add('--acr-continuous-columns', nargs='+',
+    #     help=("<col1> <col2> names to perform acr analysis for continuous traits"))
     add('--lsa-columns', nargs='+',
         help=("<col1> <col2> names to perform lineage specificity analysis"))
     # add('--taxatree',
     #     help=("<kingdom|phylum|class|order|family|genus|species|subspecies> "
     #           "reference tree from taxonomic database"))
     add('--taxadb', type=str.upper,
-        help="<NCBI|GTDB> for taxonomic profiling or fetch taxatree [default: GTDB]")
+        choices=['NCBI', 'GTDB'],
+        help="<NCBI|GTDB> for taxonomic profiling or fetch taxatree")
+    add('--taxa-dump', type=str,
+        help='Path to taxonomic database dump file for specific version, such as https://github.com/etetoolkit/ete-data/raw/main/gtdb_taxonomy/gtdblatest/gtdb_latest_dump.tar.gz')
     add('--taxon-column',
         help="Activate taxonomic annotation using <col1> name of columns which need to be read as taxon data. \
             Unless taxon data in leaf name, please use 'name' as input such as --taxon-column name")
@@ -129,10 +132,10 @@ def populate_annotate_args(parser):
         required=False,
         help="statistic calculation to perform for categorical data in internal nodes, raw count or in percentage [raw, relative, none]. If 'none' was chosen, categorical and boolean properties won't be summarized nor annotated in internal nodes [default: raw]")  
     group.add_argument('--threads',
-        default=1,
+        default=4,
         type=int,
         required=False,
-        help="Number of threads to use for annotation [default: 1]")
+        help="Number of threads to use for annotation [default: 4]")
     group = parser.add_argument_group(title='OUTPUT options',
         description="")
     group.add_argument('-o', '--outdir',
@@ -147,7 +150,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         text_prop=[], text_prop_idx=[], multiple_text_prop=[], num_prop=[], num_prop_idx=[],
         bool_prop=[], bool_prop_idx=[], prop2type_file=None, alignment=None, emapper_pfam=None,
         emapper_smart=None, counter_stat='raw', num_stat='all', column2method={},
-        taxadb='GTDB', taxon_column='name',
+        taxadb='GTDB', taxa_dump=None, taxon_column='name',
         taxon_delimiter='', taxa_field=0, rank_limit=None, pruned_by=None, acr_discrete_columns=None,
         lsa_columns=None, threads=1, outdir='./'):
 
@@ -355,9 +358,9 @@ def run_tree_annotate(tree, input_annotated_tree=False,
     #taxon_column = []
 
     # input_annotated_tree determines if input tree is already annotated, if annotated, no longer need metadata
+    
     if not input_annotated_tree:
         if taxon_column: # to identify taxon column as taxa property from metadata
-            #taxon_column.append(taxon_column)
             annotated_tree = load_metadata_to_tree(tree, metadata_dict, prop2type=prop2type, taxon_column=taxon_column, taxon_delimiter=taxon_delimiter, taxa_field=taxa_field)
         else:
             annotated_tree = load_metadata_to_tree(tree, metadata_dict, prop2type=prop2type)
@@ -374,15 +377,66 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         print("Performing acr analysis...")
         # need to be discrete traits
         discrete_traits = text_prop + bool_prop
-        acr_discrete_columns_dict = {k: v for k, v in columns.items() if k in discrete_traits}
+        acr_discrete_columns_dict = {k: v for k, v in columns.items() if k in acr_discrete_columns}
+        
+        ############################3
         start = time.time()
         acr_results, annotated_tree = run_acr_discrete(annotated_tree, acr_discrete_columns_dict, \
-        prediction_method="MPPA", model="F81", threads=threads)
+        prediction_method="MPPA", model="F81", threads=threads, outdir=outdir)
 
         # Clear extra features
         clear_extra_features([annotated_tree], prop2type.keys())
+        
+        # get observed delta
+        prop2delta = run_delta(acr_results, annotated_tree, threads=threads)
+        for prop, delta_result in prop2delta.items():
+            tree.add_prop(add_suffix(prop, "delta"), delta_result)
 
-        run_delta(acr_results, annotated_tree, threads=threads)
+        # start calculating p_value
+        dump_tree = annotated_tree.copy()
+        clear_extra_features([dump_tree], ["name", "dist", "support"])
+        
+        prop2array = {}
+        for prop in columns.keys():
+            prop2array.update(convert_to_prop_array(metadata_dict, prop))
+        
+        
+        prop2delta_array = {}
+        for _ in range(100):
+            shuffled_dict = {}
+            for column, trait in acr_discrete_columns_dict.items():
+                trait = acr_discrete_columns_dict[column]
+                #shuffle traits
+                shuffled_trait = np.random.choice(trait, len(trait), replace=False)
+                prop2array[column][1] = list(shuffled_trait)
+                shuffled_dict[column] = list(shuffled_trait)
+
+            # Converting back to the original dictionary format
+            # # annotate new metadata to leaf
+            new_metadata_dict = convert_back_to_original(prop2array)
+            dump_tree = load_metadata_to_tree(dump_tree, new_metadata_dict)
+            
+            # # run acr
+
+            random_acr_results, dump_tree = run_acr_discrete(dump_tree, shuffled_dict, \
+            prediction_method="MPPA", model="F81", threads=threads, outdir=None)
+            random_delta = run_delta(random_acr_results, dump_tree, threads=threads)
+            
+            for prop, delta_result in random_delta.items():
+                if prop in prop2delta_array:
+                    prop2delta_array[prop].append(delta_result)
+                else:
+                    prop2delta_array[prop] = [delta_result]
+            clear_extra_features([dump_tree], ["name", "dist", "support"])
+
+        for prop, delta_array in prop2delta_array.items():
+            p_value = np.sum(np.array(delta_array) > prop2delta[prop]) / len(delta_array)
+            print(f"p_value of {prop} is {p_value}")
+            tree.add_prop(add_suffix(prop, "p_value"), p_value)
+            prop2type.update({
+                add_suffix(prop, "p_value"): float
+            })
+
         for prop in acr_discrete_columns:
             prop2type.update({
                 add_suffix(prop, "delta"): float
@@ -474,6 +528,14 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         if not taxadb:
             raise Exception('Please specify which taxa db using --taxadb <GTDB|NCBI>')
         else:
+            
+            if taxa_dump and taxadb == 'GTDB':
+                logging.info(f"Loading GTDB database dump file {taxa_dump}...")
+                GTDBTaxa().update_taxonomy_database(taxa_dump)
+            elif taxa_dump and taxadb == 'NCBI':
+                logging.info(f"Loading NCBI database dump file {taxa_dump}...")
+                NCBITaxa().update_taxonomy_database(taxa_dump)
+                
             annotated_tree, rank2values = annotate_taxa(annotated_tree, db=taxadb, \
                 taxid_attr=taxon_column, sp_delimiter=taxon_delimiter, sp_field=taxa_field)
                 
@@ -588,7 +650,7 @@ def run(args):
         prop2type_file=args.prop2type, alignment=args.alignment,
         emapper_pfam=args.emapper_pfam, emapper_smart=args.emapper_smart, 
         counter_stat=args.counter_stat, num_stat=args.num_stat, column2method=column2method, 
-        taxadb=args.taxadb, taxon_column=args.taxon_column,
+        taxadb=args.taxadb, taxa_dump=args.taxa_dump, taxon_column=args.taxon_column,
         taxon_delimiter=args.taxon_delimiter, taxa_field=args.taxa_field,
         rank_limit=args.rank_limit, pruned_by=args.pruned_by, acr_discrete_columns=args.acr_discrete_columns, 
         lsa_columns=args.lsa_columns, threads=args.threads, outdir=args.outdir)
@@ -818,6 +880,47 @@ def convert_column_data(column, np_dtype):
     except ValueError as e:
         return None
 
+def convert_to_prop_array(metadata_dict, prop):
+    """
+    Convert a dictionary of metadata to a structured array format.
+
+    Parameters:
+    metadata_dict (dict): The original dictionary containing metadata.
+    prop (str): The property to extract from the metadata.
+
+    Returns:
+    dict: A dictionary with keys as properties and values as structured arrays.
+    
+    # {"leaf1":{"prop":"value1"},{"leaf2":{"prop":"value2"}}} 
+    # to 
+    # {"prop":[["leaf1", "leaf2"],["value1", "value2"]]}
+    """
+    prop_array = {prop: [[], []]}
+    for leaf, value in metadata_dict.items():
+        prop_array[prop][0].append(leaf)  # Append key
+        prop_array[prop][1].append(value.get(prop, None))  # Append property value, handle missing values
+
+    return prop_array
+
+def convert_back_to_original(prop2array):
+    """
+    Convert the structured array format back to the original dictionary format.
+
+    Parameters:
+    prop2array (dict): The structured array format dictionary.
+
+    Returns:
+    dict: The original format of the data.
+    """
+    metadata_dict = {}
+    for key in prop2array:
+        identifiers, values = prop2array[key]
+        for identifier, value in zip(identifiers, values):
+            if identifier not in metadata_dict:
+                metadata_dict[identifier] = {}
+            metadata_dict[identifier][key] = value
+    return metadata_dict
+
 def infer_dtype(column):
     if get_comma_separated_values(column):
         return list
@@ -1039,6 +1142,7 @@ def gtdb_accession_to_taxid(accession):
 def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field=0):
     global rank2values
     logging.info(f"\n==============Annotating tree with {db} taxonomic database============")
+    
     def return_spcode_ncbi(leaf):
         try:
             return leaf.props.get(taxid_attr).split(sp_delimiter)[sp_field]
@@ -1206,7 +1310,6 @@ def annot_tree_smart_table(post_tree, smart_table, alg_fasta, domain_prop='dom_a
     fasta = SeqGroup(alg_fasta) # aligned_fasta
     raw2alg = defaultdict(dict)
     for num, (name, seq, _) in enumerate(fasta):
-
         p_raw = 1
         for p_alg, (a) in enumerate(seq, 1):
             if a != '-':

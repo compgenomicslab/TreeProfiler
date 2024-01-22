@@ -7,7 +7,7 @@ from numba import njit, float64, int64
 
 from pastml.tree import read_tree, name_tree, annotate_dates, DATE, read_forest, DATE_CI, resolve_trees, IS_POLYTOMY, \
     unresolve_trees
-from pastml.acr import acr
+from pastml.acr import acr, _serialize_acr
 from pastml.annotation import preannotate_forest
 from pastml import col_name2cat
 from collections import defaultdict, Counter
@@ -16,7 +16,7 @@ from treeprofiler.src.utils import add_suffix
 
 lambda0  = 0.1                       # rate parameter of the proposal
 se       = 0.5                       # standard deviation of the proposal
-sim      = 100000                    # number of iterations
+sim      = 10000                    # number of iterations
 thin     = 10                        # Keep only each xth iterate
 burn     = 100                       # Burned-in iterates
 
@@ -173,7 +173,7 @@ def delta(x,lambda0,se,sim,thin,burn,ent_type, threads=1):
     return deltaA
 
 # Calculate the marginal probabilities for each discrete trait
-def run_acr_discrete(tree, columns, prediction_method="MPPA", model="F81", threads=1):
+def run_acr_discrete(tree, columns, prediction_method="MPPA", model="F81", threads=1, outdir="./"):
     prop2acr = {}
     column2states = {c: np.array(sorted(list(set(states)))) for c, states in columns.items()}
     features = list(column2states.keys())
@@ -182,11 +182,11 @@ def run_acr_discrete(tree, columns, prediction_method="MPPA", model="F81", threa
     for key in column2states.keys():
         single_column = {key:columns[key]}
         single_column2states = {key:column2states[key]}
-
         # Run ACR
-        acr_result = acr(forest=forest, columns=single_column.keys(), column2states=single_column2states, prediction_method=prediction_method, model=model, threads=1)
+        acr_result = acr(forest=forest, columns=single_column.keys(), column2states=single_column2states, prediction_method=prediction_method, model=model, threads=threads)
         prop2acr[key] = acr_result
-    
+        if outdir:
+            _serialize_acr((acr_result[0], outdir))
     return prop2acr, forest[0]
 
 # Calculate the marginal probabilities for each continuous trait
@@ -195,6 +195,7 @@ def run_acr_continuous(tree, columns):
 
 # Calculate delta-statistic of marginal probabilities each discrete trait
 def run_delta(acr_results, tree, run_whole_tree=False, lambda0=lambda0, se=se, sim=sim, burn=burn, thin=thin, ent_type='LSE', threads=1):
+    prop2delta = {}
     prop2marginals = {}
     leafnames = tree.leaf_names()
     node2leaves = tree.get_cached_content(leaves_only=False)
@@ -218,13 +219,16 @@ def run_delta(acr_results, tree, run_whole_tree=False, lambda0=lambda0, se=se, s
                 delta_result = delta(marginal_probs, lambda0, se, sim, burn, thin, ent_type, threads)
                 node.add_prop(add_suffix(prop, "delta"), delta_result)
     else:
+        # this is the case when we only want to calculate delta for the root
         for prop, acr_result in acr_results.items():
             # Get the marginal probabilities for each node
             marginal_probs = np.asarray(acr_result[0]['marginal_probabilities'].drop(leafnames))
             # run delta for each discrete trait
             # load annotations to leaves
             delta_result = delta(marginal_probs, lambda0, se, sim, burn, thin, ent_type, threads)
-            tree.add_prop(add_suffix(prop, "delta"), delta_result)
+            #tree.add_prop(add_suffix(prop, "delta"), delta_result)
+            prop2delta[prop] = delta_result
+        return prop2delta
 
 # Calculate Pagel's lambda statistic for each continuous trait
 def run_lambda():
