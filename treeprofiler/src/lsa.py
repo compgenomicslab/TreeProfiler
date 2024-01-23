@@ -23,8 +23,9 @@ def get_total_trait(tree, prop):
     return sum(1 for node in tree.leaves() if bool(strtobool(node.props.get(prop))))
 
 ###### start lineage specificity analysis ######
-def run_lsa(tree, props, precision_cutoff=0.95, sensitivity_threshold=0.95):
+def run_lsa(tree, props, precision_cutoff=0.95, sensitivity_cutoff=0.95):
     best_node = None
+    qualified_nodes = []
     best_f1 = -1
     for prop in props:
         total_with_trait = get_total_trait(tree, prop)
@@ -40,12 +41,17 @@ def run_lsa(tree, props, precision_cutoff=0.95, sensitivity_threshold=0.95):
                 print(f"Node: {node.name} , Precision: {precision}, Sensitivity: {sensitivity}, F1 Score: {f1}")
 
                 # Check if the node meets the lineage-specific criteria
-                if precision >= precision_cutoff and sensitivity >= sensitivity_threshold and f1 > best_f1:
-                    best_f1 = f1
-                    best_node = node
+                if not node.is_root:
+                    if precision >= precision_cutoff and sensitivity >= sensitivity_cutoff:
+                        qualified_nodes.append(node)
+                        if f1 > best_f1:
+                            best_f1 = f1
+                            best_node = node
         if best_node:
-            print(f"Best node: for feature {prop}: {best_node}")
-    #return tree, best_node
+            print(f"Root of Lineage-Specific Clade of {prop} Trait with f1 score {best_node.props.get(add_suffix(prop, 'f1'))}")
+            best_node.add_prop(add_suffix(prop, "ls_clade"), True)
+
+    return best_node, qualified_nodes
 
 # #### find lineage-specific clades ####
 # def find_lineage_specific_root(tree):

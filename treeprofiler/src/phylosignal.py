@@ -14,15 +14,21 @@ from collections import defaultdict, Counter
 
 from treeprofiler.src.utils import add_suffix
 
-lambda0  = 0.1                       # rate parameter of the proposal
-se       = 0.5                       # standard deviation of the proposal
-sim      = 10000                    # number of iterations
-thin     = 10                        # Keep only each xth iterate
-burn     = 100                       # Burned-in iterates
+# lambda0  = 0.1                       # rate parameter of the proposal
+# se       = 0.5                       # standard deviation of the proposal
+# sim      = 10000                     # number of iterations
+# thin     = 10                        # Keep only each xth iterate
+# burn     = 100                       # Burned-in iterates
 
-ent_type = 'LSE'                     # Linear Shannon Entropy
+# ent_type = 'SE'                      # Linear Shannon Entropy LSE or Shannon Entropy [SE] or Gini impurity [GI]
 
-#Script found in the GitHub of this delta method. https://github.com/diogo-s-ribeiro/delta-statistic/blob/master/Delta-Python/delta_functs.py
+''' ADDITIONAL INFORMATION
+
+[1] Borges, R. et al. (2019). Measuring phylogenetic signal between categorical traits and phylogenies. Bioinformatics, 35, 1862-1869.
+
+'''
+
+# Source Script of delta method from https://github.com/diogo-s-ribeiro/delta-statistic/blob/master/Delta-Python/delta_functs.py
 # Metropolis-Hastings step for alpha parameter
 @njit(float64(float64, float64, float64[::1], float64, float64))
 def mhalpha(a,b,x,l0,se):
@@ -60,13 +66,13 @@ def mhbeta(a,b,x,l0,se):
     
     b1   = np.exp(np.random.normal(np.log(b),se,1))[0]
     lp_b = np.exp( (len(x)*(math.lgamma(a+b1)-math.lgamma(b1)) - b1*(l0-np.sum(np.log(1-x)))) - (len(x)*(math.lgamma(a+b)-math.lgamma(b)) - b*(l0-np.sum(np.log(1-x)))) )
-    r    = min( 1, lp_b )
+    r    = min(1, lp_b )
     
     # Repeat until a valid value is obtained
     while (np.isnan(lp_b) == True):
         b1   = np.exp(np.random.normal(np.log(b),se,1))[0]
         lp_b = np.exp( (len(x)*(math.lgamma(a+b1)-math.lgamma(b1)) - b1*(l0-np.sum(np.log(1-x)))) - (len(x)*(math.lgamma(a+b)-math.lgamma(b)) - b*(l0-np.sum(np.log(1-x)))) )
-        r    = min( 1, lp_b )
+        r    = min(1, lp_b )
     
     # Accept or reject based on the acceptance ratio
     if np.random.uniform(0,1) < r:
@@ -93,7 +99,7 @@ def emcmc(params):
     gibbs  = []
     p      = 0
 
-    for i in range(sim+1):
+    for i in range(sim + 1):
         alpha = mhalpha(alpha,beta,x,l0,se)
         beta  = mhbeta(alpha,beta,x,l0,se)
         
@@ -194,7 +200,7 @@ def run_acr_continuous(tree, columns):
     return
 
 # Calculate delta-statistic of marginal probabilities each discrete trait
-def run_delta(acr_results, tree, run_whole_tree=False, lambda0=lambda0, se=se, sim=sim, burn=burn, thin=thin, ent_type='LSE', threads=1):
+def run_delta(acr_results, tree, run_whole_tree=False, ent_type='LSE', lambda0=0.1, se=0.5, sim=10000, burn=100, thin=10, threads=1):
     prop2delta = {}
     prop2marginals = {}
     leafnames = tree.leaf_names()

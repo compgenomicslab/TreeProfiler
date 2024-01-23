@@ -629,16 +629,20 @@ def get_acr_continuous_layouts(tree, props, level, prop2type, padding_x=1, paddi
     return layouts
 
 def get_lsa_layouts(tree, props, level, prop2type, padding_x=1, padding_y=0):
-    gradientscolor = build_color_gradient(20, colormap_name='viridis')
     precision_suffix = "prec"
     sensitivity_suffix = "sens"
     f1_suffix  = "f1"
+    ls_clade_suffix = "ls_clade"
+    ls_clade_props = [add_suffix(prop, ls_clade_suffix) for prop in props]
+    lsprop2color = assign_color_to_values(ls_clade_props, paired_color)
 
+    gradientscolor = build_color_gradient(20, colormap_name='viridis')
+    
     layouts = []
     lsa_props = []
     for prop in props:
         for suffix in [precision_suffix, sensitivity_suffix, f1_suffix]:
-            lsa_prop = prop + "_" + suffix
+            lsa_prop = add_suffix(prop, suffix)
             minval, maxval = 0, 1
             
             # layout = staple_layouts.LayoutBranchScore(name='BranchScore_'+prop, \
@@ -649,8 +653,16 @@ def get_lsa_layouts(tree, props, level, prop2type, padding_x=1, padding_y=0):
             layout = staple_layouts.LayoutBranchScore(name='lsa_'+lsa_prop, \
                 color_dict=gradientscolor, score_prop=lsa_prop, value_range=[minval, maxval], \
                 color_range=[gradientscolor[20], gradientscolor[10], gradientscolor[1]])
+            
             layouts.append(layout)
             lsa_props.append(lsa_prop)
+    
+        ls_clade_prop = add_suffix(prop, ls_clade_suffix)
+        ls_clade_layout = phylosignal_layouts.LayoutLineageSpecific(name=f'Linear Specific Clade {prop}', \
+            ls_prop=ls_clade_prop, color=lsprop2color[ls_clade_prop])
+        layouts.append(ls_clade_layout)
+        lsa_props.append(ls_clade_prop)
+
     return layouts, lsa_props
 
 def get_label_layouts(tree, props, level, prop2type, column_width=70, padding_x=1, padding_y=0):

@@ -48,7 +48,6 @@ def populate_annotate_args(parser):
     gmeta = parser.add_argument_group(
         title='METADATA TABLE parameters',
         description="Input parameters of METADATA")
-
     add = gmeta.add_argument
     add('-d', '--metadata', nargs='+',
         help="<metadata.csv> .csv, .tsv. mandatory input")
@@ -108,34 +107,97 @@ def populate_annotate_args(parser):
     add('--alignment',
         help="Sequence alignment, .fasta format")
 
-    group = parser.add_argument_group(title='Annotation arguments',
+    annotation_group = parser.add_argument_group(title='Internal nodes annotation arguments',
         description="Annotation parameters")
-    group.add_argument('--resolve-polytomy',
-        default=False,
-        action='store_true',
-        required=False,
-        help="Resolve polytomy in tree")
-    group.add_argument('--column-summary-method', 
+    annotation_group.add_argument('--column-summary-method', 
         nargs='+',
         required=False,
         help="Specify summary method for individual columns in the format ColumnName=Method")
-    group.add_argument('--num-stat',
+    annotation_group.add_argument('--num-stat',
         default='all',
         choices=['all', 'sum', 'avg', 'max', 'min', 'std', 'none'],
         type=str,
         required=False,
         help="statistic calculation to perform for numerical data in internal nodes, [all, sum, avg, max, min, std, none]. If 'none' was chosen, numerical properties won't be summarized nor annotated in internal nodes. [default: all]")  
-    group.add_argument('--counter-stat',
+    annotation_group.add_argument('--counter-stat',
         default='raw',
         choices=['raw', 'relative', 'none'],
         type=str,
         required=False,
         help="statistic calculation to perform for categorical data in internal nodes, raw count or in percentage [raw, relative, none]. If 'none' was chosen, categorical and boolean properties won't be summarized nor annotated in internal nodes [default: raw]")  
-    group.add_argument('--threads',
+    
+    acr_group = parser.add_argument_group(title='Ancestral Character Reconstruction arguments',
+        description="ACR parameters")
+    acr_group.add_argument('--prediction-method',
+        default='MPPA',
+        choices=['MPPA','MAP','JOINT','DOWNPASS','ACCTRAN','DELTRAN','COPY','ALL','ML','MP'],
+        type=str,
+        required=False,
+        help="prediction method for ACR discrete analysis [default: MPPA]"
+        )
+    acr_group.add_argument('--model',
+        default='F81',
+        choices=['JC','F81','EFT','HKY','JTT','CUSTOM_RATES'],
+        type=str,
+        required=False,
+        help="Evolutionary model for ML methods in ACR discrete analysis [default: F81]"
+        )
+    acr_group.add_argument('--threads',
         default=4,
         type=int,
         required=False,
         help="Number of threads to use for annotation [default: 4]")
+    delta_group = parser.add_argument_group(title='Ancestral Character Reconstruction arguments',
+        description="Delta statistic parameters")
+    delta_group.add_argument('--delta-stats',
+        action='store_true',
+        required=False,
+        help="Calculate delta statistic for discrete traits in ACR analysis, ONLY for MPPA or MAP prediction method.[default: False]"
+    )
+    delta_group.add_argument('--ent_type',
+        default='SE',
+        choices=['LSE', 'SE', 'GINI'],
+        type=str,
+        required=False,
+        help="Entropy method to measure the degree of phylogenetic signal between discrete trati and phylogeny. \
+            [default: SE] for Shannon Entropy, other options are GINI for Gini impurity and LSE for Linear Shannon Entropy."
+    )
+    delta_group.add_argument('--iteration',
+        default=10000,
+        type=int,
+        required=False,
+        help="Number of iterations for delta statistic calculation. [default: 100]"
+    )
+    delta_group.add_argument('--lambda0', 
+        type=float, 
+        default=0.1, 
+        help='Rate parameter of the delta statistic calculation.'
+    )
+    delta_group.add_argument('--se', 
+        type=float, 
+        default=0.5, 
+        help='Standard deviation of the delta statistic calculation.')
+    delta_group.add_argument('--thin', 
+        type=int, 
+        default=10, 
+        help='Keep only each xth iterate.')
+    delta_group.add_argument('--burn', 
+        type=int, 
+        default=100, 
+        help='Burned-in iterates.')
+    lsa_group = parser.add_argument_group(title='Lineage Specificity Analysis arguments',
+        description="LSA parameters")
+    lsa_group.add_argument('--prec-cutoff',
+        default=0.95,
+        type=float,
+        required=False,
+        help="Precision cutoff for lineage specificity analysis [default: 0.95]")
+    lsa_group.add_argument('--sens-cutoff',
+        default=0.95,
+        type=float,
+        required=False,
+        help="Sensitivity threshold for lineage specificity analysis [default: 0.95]")
+    
     group = parser.add_argument_group(title='OUTPUT options',
         description="")
     group.add_argument('-o', '--outdir',
@@ -151,8 +213,12 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         bool_prop=[], bool_prop_idx=[], prop2type_file=None, alignment=None, emapper_pfam=None,
         emapper_smart=None, counter_stat='raw', num_stat='all', column2method={},
         taxadb='GTDB', taxa_dump=None, taxon_column='name',
-        taxon_delimiter='', taxa_field=0, rank_limit=None, pruned_by=None, acr_discrete_columns=None,
-        lsa_columns=None, threads=1, outdir='./'):
+        taxon_delimiter='', taxa_field=0, rank_limit=None, pruned_by=None, 
+        acr_discrete_columns=None, prediction_method="MPPA", model="F81", 
+        delta_stats=False, ent_type="SE", 
+        iteration=100, lambda0=0.1, se=0.5, thin=10, burn=100, 
+        lsa_columns=None, prec_cutoff=0.95, sens_cutoff=0.95, 
+        threads=1, outdir='./'):
 
     total_color_dict = []
     layouts = []
@@ -355,7 +421,6 @@ def run_tree_annotate(tree, input_annotated_tree=False,
             })
 
     # load all metadata to leaf nodes
-    #taxon_column = []
 
     # input_annotated_tree determines if input tree is already annotated, if annotated, no longer need metadata
     
@@ -374,73 +439,62 @@ def run_tree_annotate(tree, input_annotated_tree=False,
     # Ancestor Character Reconstruction analysis
     # data preparation
     if acr_discrete_columns:
-        print("Performing acr analysis...")
+        logging.info(f"Performing ACR analysis with Character {acr_discrete_columns}...")
         # need to be discrete traits
         discrete_traits = text_prop + bool_prop
         acr_discrete_columns_dict = {k: v for k, v in columns.items() if k in acr_discrete_columns}
-        
-        ############################3
+
+        #############################
         start = time.time()
         acr_results, annotated_tree = run_acr_discrete(annotated_tree, acr_discrete_columns_dict, \
-        prediction_method="MPPA", model="F81", threads=threads, outdir=outdir)
-
+        prediction_method=prediction_method, model=model, threads=threads, outdir=outdir)
+        
         # Clear extra features
         clear_extra_features([annotated_tree], prop2type.keys())
         
         # get observed delta
-        prop2delta = run_delta(acr_results, annotated_tree, threads=threads)
-        for prop, delta_result in prop2delta.items():
-            tree.add_prop(add_suffix(prop, "delta"), delta_result)
+        # only MPPA,MAP method has marginal probabilities to calculate delta
+        if delta_stats:
+            if prediction_method in ['MPPA', 'MAP']:
+                logging.info(f"Performing Delta Statistic analysis with Character {acr_discrete_columns}...")
+                prop2delta = run_delta(acr_results, annotated_tree, ent_type=ent_type, 
+                lambda0=lambda0, se=se, sim=iteration, burn=burn, thin=thin, 
+                threads=threads)
 
-        # start calculating p_value
-        dump_tree = annotated_tree.copy()
-        clear_extra_features([dump_tree], ["name", "dist", "support"])
-        
-        prop2array = {}
-        for prop in columns.keys():
-            prop2array.update(convert_to_prop_array(metadata_dict, prop))
-        
-        
-        prop2delta_array = {}
-        for _ in range(100):
-            shuffled_dict = {}
-            for column, trait in acr_discrete_columns_dict.items():
-                trait = acr_discrete_columns_dict[column]
-                #shuffle traits
-                shuffled_trait = np.random.choice(trait, len(trait), replace=False)
-                prop2array[column][1] = list(shuffled_trait)
-                shuffled_dict[column] = list(shuffled_trait)
+                for prop, delta_result in prop2delta.items():
+                    logging.info(f"Delta statistic of {prop} is: {delta_result}")
+                    tree.add_prop(add_suffix(prop, "delta"), delta_result)
 
-            # Converting back to the original dictionary format
-            # # annotate new metadata to leaf
-            new_metadata_dict = convert_back_to_original(prop2array)
-            dump_tree = load_metadata_to_tree(dump_tree, new_metadata_dict)
-            
-            # # run acr
+                # start calculating p_value
+                logging.info(f"Calculating p_value for delta statistic...")
+                # get a copy of the tree
+                dump_tree = annotated_tree.copy()
+                clear_extra_features([dump_tree], ["name", "dist", "support"])
+                
+                prop2array = {}
+                for prop in columns.keys():
+                    prop2array.update(convert_to_prop_array(metadata_dict, prop))
+                
+                prop2delta_array = get_pval(prop2array, dump_tree, acr_discrete_columns_dict, \
+                    iteration=100, prediction_method=prediction_method, model=model,
+                    ent_type=ent_type, lambda0=lambda0, se=se, sim=iteration, burn=burn, thin=thin, 
+                    threads=threads)
 
-            random_acr_results, dump_tree = run_acr_discrete(dump_tree, shuffled_dict, \
-            prediction_method="MPPA", model="F81", threads=threads, outdir=None)
-            random_delta = run_delta(random_acr_results, dump_tree, threads=threads)
-            
-            for prop, delta_result in random_delta.items():
-                if prop in prop2delta_array:
-                    prop2delta_array[prop].append(delta_result)
-                else:
-                    prop2delta_array[prop] = [delta_result]
-            clear_extra_features([dump_tree], ["name", "dist", "support"])
+                for prop, delta_array in prop2delta_array.items():
+                    p_value = np.sum(np.array(delta_array) > prop2delta[prop]) / len(delta_array)
+                    logging.info(f"p_value of {prop} is {p_value}")
+                    tree.add_prop(add_suffix(prop, "p_value"), p_value)
+                    prop2type.update({
+                        add_suffix(prop, "p_value"): float
+                    })
 
-        for prop, delta_array in prop2delta_array.items():
-            p_value = np.sum(np.array(delta_array) > prop2delta[prop]) / len(delta_array)
-            print(f"p_value of {prop} is {p_value}")
-            tree.add_prop(add_suffix(prop, "p_value"), p_value)
-            prop2type.update({
-                add_suffix(prop, "p_value"): float
-            })
+                for prop in acr_discrete_columns:
+                    prop2type.update({
+                        add_suffix(prop, "delta"): float
+                    })
+            else:
+                logging.warning(f"Delta statistic analysis only support MPPA and MAP prediction method, {prediction_method} is not supported.")
 
-        for prop in acr_discrete_columns:
-            prop2type.update({
-                add_suffix(prop, "delta"): float
-            })
         end = time.time()
         print('Time for acr to run: ', end - start)
 
@@ -448,14 +502,15 @@ def run_tree_annotate(tree, input_annotated_tree=False,
     if lsa_columns:
         #print("start lsa for prop: ", bool_prop)
         if all(column in bool_prop for column in lsa_columns):
-            run_lsa(annotated_tree, props=lsa_columns, precision_cutoff=0.95, sensitivity_threshold=0.95)
-            
+            best_node, qualified_nodes = run_lsa(annotated_tree, props=lsa_columns, 
+            precision_cutoff=prec_cutoff, sensitivity_cutoff=sens_cutoff)
             for prop in lsa_columns:
                 prop2type.update({
                     add_suffix(prop, "prec"): float,
                     add_suffix(prop, "sens"): float,
                     add_suffix(prop, "f1"): float
                 })
+
     # statistic method
     counter_stat = counter_stat #'raw' or 'relative'
     num_stat = num_stat
@@ -640,7 +695,7 @@ def run(args):
     # start annotation
     if args.column_summary_method:
         column2method = process_column_summary_methods(args.column_summary_method)
-
+    
     annotated_tree, prop2type = run_tree_annotate(tree, input_annotated_tree=args.annotated_tree,
         metadata_dict=metadata_dict, node_props=node_props, columns=columns,
         prop2type=prop2type,
@@ -652,8 +707,14 @@ def run(args):
         counter_stat=args.counter_stat, num_stat=args.num_stat, column2method=column2method, 
         taxadb=args.taxadb, taxa_dump=args.taxa_dump, taxon_column=args.taxon_column,
         taxon_delimiter=args.taxon_delimiter, taxa_field=args.taxa_field,
-        rank_limit=args.rank_limit, pruned_by=args.pruned_by, acr_discrete_columns=args.acr_discrete_columns, 
-        lsa_columns=args.lsa_columns, threads=args.threads, outdir=args.outdir)
+        rank_limit=args.rank_limit, pruned_by=args.pruned_by, 
+        acr_discrete_columns=args.acr_discrete_columns, 
+        prediction_method=args.prediction_method, model=args.model, 
+        delta_stats=args.delta_stats, ent_type=args.ent_type, 
+        iteration=args.iteration, lambda0=args.lambda0, se=args.se,
+        thin=args.thin, burn=args.burn,
+        lsa_columns=args.lsa_columns, prec_cutoff=args.prec_cutoff, sens_cutoff=args.sens_cutoff, 
+        threads=args.threads, outdir=args.outdir)
 
     if args.outdir:
         base=os.path.splitext(os.path.basename(args.tree))[0]
@@ -1390,6 +1451,41 @@ def parse_fasta(fastafile):
 #                 if entry not in all_golsims_dict:
 #                     all_golsims_dict[entry] = single_desc
 #     return output_dict, all_golsims_dict
+
+def get_pval(prop2array, dump_tree, acr_discrete_columns_dict, iteration=100, 
+            prediction_method="MPPA", model="F81", ent_type='SE', 
+            lambda0=0.1, se=0.5, sim=10000, burn=100, thin=10, threads=1):
+    prop2delta_array = {}
+    for _ in range(iteration):
+        shuffled_dict = {}
+        for column, trait in acr_discrete_columns_dict.items():
+            trait = acr_discrete_columns_dict[column]
+            #shuffle traits
+            shuffled_trait = np.random.choice(trait, len(trait), replace=False)
+            prop2array[column][1] = list(shuffled_trait)
+            shuffled_dict[column] = list(shuffled_trait)
+
+        # Converting back to the original dictionary format
+        # # annotate new metadata to leaf
+        new_metadata_dict = convert_back_to_original(prop2array)
+        dump_tree = load_metadata_to_tree(dump_tree, new_metadata_dict)
+        
+        # # run acr
+        random_acr_results, dump_tree = run_acr_discrete(dump_tree, shuffled_dict, \
+        prediction_method="MPPA", model="F81", threads=threads, outdir=None)
+        random_delta = run_delta(random_acr_results, dump_tree, ent_type=ent_type, 
+                lambda0=lambda0, se=se, sim=sim, burn=burn, thin=thin, 
+                threads=threads)
+
+        for prop, delta_result in random_delta.items():
+            if prop in prop2delta_array:
+                prop2delta_array[prop].append(delta_result)
+            else:
+                prop2delta_array[prop] = [delta_result]
+        clear_extra_features([dump_tree], ["name", "dist", "support"])
+
+    return prop2delta_array
+
 
 def tree2table(tree, internal_node=True, props=None, outfile='tree2table.csv'):
     node2leaves = {}

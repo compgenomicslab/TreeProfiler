@@ -41,11 +41,11 @@ class LayoutACRDiscrete(TreeLayout):
                     # node.add_face(TextFace(node.name, color = self.color_dict.get(prop_text,""), 
                     # padding_x=self.padding_x),column=0, position="branch_right")
                     node.sm_style["hz_line_color"] = self.color_dict.get(prop_text,"")
-                    node.sm_style["hz_line_width"] = 2
+                    node.sm_style["hz_line_width"] = 3
                     node.sm_style["vt_line_color"] = self.color_dict.get(prop_text,"")
-                    node.sm_style["vt_line_width"] = 2
+                    node.sm_style["vt_line_width"] = 3
                     node.sm_style["outline_color"] = self.color_dict.get(prop_text, self.absence_color)
-                    node.sm_style["size"] = 3
+                    node.sm_style["size"] = 4
                     node.sm_style["fgcolor"] = self.color_dict.get(prop_text, self.absence_color)
 
         # # Delta statistic
@@ -89,3 +89,25 @@ class LayoutACRContinuous(TreeLayout):
                 node.sm_style["vt_line_color"] = self.color_dict.get(prop_score,"")
                 node.sm_style["vt_line_width"] = self.line_width
                 node.sm_style["outline_color"] = self.color_dict.get(prop_score, self.absence_color)
+
+class LayoutLineageSpecific(TreeLayout):
+    def __init__(self, name, ls_prop, color, legend=True):
+        super().__init__(name)
+        self.ls_prop = ls_prop
+        self.color = color
+        self.legend = legend
+
+    def set_tree_style(self, tree, tree_style):
+        if self.legend:
+            
+            tree_style.add_legend(title=self.name,
+                                variable='discrete',
+                                colormap={
+                                    self.ls_prop: self.color,
+                                }
+                                )
+
+    def set_node_style(self, node):
+        if node.props.get(self.ls_prop):
+            node.sm_style["bgcolor"] = self.color # highligh clade
+            node.sm_style["outline_color"] = self.color
