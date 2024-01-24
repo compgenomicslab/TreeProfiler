@@ -8,6 +8,7 @@ class LayoutACRDiscrete(TreeLayout):
         self.aligned_faces = True
         self.acr_prop = acr_prop
         self.delta_prop = acr_prop+"_delta"
+        self.pval_prop = acr_prop+"_pval"
         self.column = column
         self.color_dict = color_dict
         self.legend = legend
@@ -38,8 +39,8 @@ class LayoutACRDiscrete(TreeLayout):
                 else:
                     pass
                 if self.color_dict:
-                    # node.add_face(TextFace(node.name, color = self.color_dict.get(prop_text,""), 
-                    # padding_x=self.padding_x),column=0, position="branch_right")
+                    node.add_face(TextFace(node.name, color = self.color_dict.get(prop_text,""), 
+                    padding_x=self.padding_x),column=0, position="branch_right")
                     node.sm_style["hz_line_color"] = self.color_dict.get(prop_text,"")
                     node.sm_style["hz_line_width"] = 3
                     node.sm_style["vt_line_color"] = self.color_dict.get(prop_text,"")
@@ -55,6 +56,13 @@ class LayoutACRDiscrete(TreeLayout):
                 output = u"\u0394" + f"-{self.acr_prop}: " + prop_text
                 node.add_face(TextFace(output, color = "red", 
                 padding_x=self.padding_x*5), column=0, position="branch_right")
+            # p_value
+            if node.props.get(self.pval_prop):
+                prop_text = "%.2f" % float(node.props.get(self.pval_prop))
+                if prop_text:
+                    output = "p-value: " + prop_text
+                    node.add_face(TextFace(output, color = "red", 
+                    padding_x=self.padding_x*5), column=0, position="branch_right")
 
 class LayoutACRContinuous(TreeLayout):
     def __init__(self, name, column, color_dict, score_prop, value_range=None, color_range=None, legend=True):

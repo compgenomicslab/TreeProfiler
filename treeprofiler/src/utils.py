@@ -254,18 +254,30 @@ def conditional_prune(tree, conditions_input, prop2type):
     array = [n.props.get(prop) for n in nodes if n.props.get(prop) ] 
     return array
 
-def tree_prop_array(node, prop):
+def tree_prop_array(node, prop, leaf_only=False):
     array = []
-    for n in node.traverse():
-        prop_value = n.props.get(prop)
-        if prop_value is not None:
-            # Check if the property value is a set
-            if isinstance(prop_value, set):
-                # Extract elements from the set
-                array.extend(prop_value)
-            else:
-                # Directly append the property value
-                array.append(prop_value)
+    if leaf_only:
+        for n in node.leaves():
+            prop_value = n.props.get(prop)
+            if prop_value is not None:
+                # Check if the property value is a set
+                if isinstance(prop_value, set):
+                    # Extract elements from the set
+                    array.extend(prop_value)
+                else:
+                    # Directly append the property value
+                    array.append(prop_value)
+    else:
+        for n in node.traverse():
+            prop_value = n.props.get(prop)
+            if prop_value is not None:
+                # Check if the property value is a set
+                if isinstance(prop_value, set):
+                    # Extract elements from the set
+                    array.extend(prop_value)
+                else:
+                    # Directly append the property value
+                    array.append(prop_value)
     return array
 
 def children_prop_array(nodes, prop):

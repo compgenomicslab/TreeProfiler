@@ -26,7 +26,7 @@ from treeprofiler.src.utils import (
     children_prop_array, children_prop_array_missing, 
     flatten, get_consensus_seq, add_suffix, clear_extra_features)
 from treeprofiler.src.phylosignal import run_acr_discrete, run_delta
-from treeprofiler.src.lsa import run_lsa
+from treeprofiler.src.ls import run_ls
 from treeprofiler.src import b64pickle
 
 DESC = "annotate tree"
@@ -81,7 +81,7 @@ def populate_annotate_args(parser):
         help=("<col1> <col2> names to perform acr analysis for discrete traits"))
     # add('--acr-continuous-columns', nargs='+',
     #     help=("<col1> <col2> names to perform acr analysis for continuous traits"))
-    add('--lsa-columns', nargs='+',
+    add('--ls-columns', nargs='+',
         help=("<col1> <col2> names to perform lineage specificity analysis"))
     # add('--taxatree',
     #     help=("<kingdom|phylum|class|order|family|genus|species|subspecies> "
@@ -185,14 +185,14 @@ def populate_annotate_args(parser):
         type=int, 
         default=100, 
         help='Burned-in iterates.')
-    lsa_group = parser.add_argument_group(title='Lineage Specificity Analysis arguments',
-        description="LSA parameters")
-    lsa_group.add_argument('--prec-cutoff',
+    ls_group = parser.add_argument_group(title='Lineage Specificity Analysis arguments',
+        description="ls parameters")
+    ls_group.add_argument('--prec-cutoff',
         default=0.95,
         type=float,
         required=False,
         help="Precision cutoff for lineage specificity analysis [default: 0.95]")
-    lsa_group.add_argument('--sens-cutoff',
+    ls_group.add_argument('--sens-cutoff',
         default=0.95,
         type=float,
         required=False,
@@ -217,7 +217,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         acr_discrete_columns=None, prediction_method="MPPA", model="F81", 
         delta_stats=False, ent_type="SE", 
         iteration=100, lambda0=0.1, se=0.5, thin=10, burn=100, 
-        lsa_columns=None, prec_cutoff=0.95, sens_cutoff=0.95, 
+        ls_columns=None, prec_cutoff=0.95, sens_cutoff=0.95, 
         threads=1, outdir='./'):
 
     total_color_dict = []
@@ -439,13 +439,16 @@ def run_tree_annotate(tree, input_annotated_tree=False,
     # Ancestor Character Reconstruction analysis
     # data preparation
     if acr_discrete_columns:
-        logging.info(f"Performing ACR analysis with Character {acr_discrete_columns}...")
+        logging.info(f"Performing ACR analysis with Character {acr_discrete_columns} via {prediction_method} method with {model} model.......\n")
         # need to be discrete traits
         discrete_traits = text_prop + bool_prop
-        acr_discrete_columns_dict = {k: v for k, v in columns.items() if k in acr_discrete_columns}
+        for k in acr_discrete_columns:
+            if k not in discrete_traits:
+                raise ValueError(f"Character {k} is not discrete trait, please check your input.")
 
         #############################
         start = time.time()
+        acr_discrete_columns_dict = {k: v for k, v in columns.items() if k in acr_discrete_columns}
         acr_results, annotated_tree = run_acr_discrete(annotated_tree, acr_discrete_columns_dict, \
         prediction_method=prediction_method, model=model, threads=threads, outdir=outdir)
         
@@ -456,7 +459,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         # only MPPA,MAP method has marginal probabilities to calculate delta
         if delta_stats:
             if prediction_method in ['MPPA', 'MAP']:
-                logging.info(f"Performing Delta Statistic analysis with Character {acr_discrete_columns}...")
+                logging.info(f"Performing Delta Statistic analysis with Character {acr_discrete_columns}...\n")
                 prop2delta = run_delta(acr_results, annotated_tree, ent_type=ent_type, 
                 lambda0=lambda0, se=se, sim=iteration, burn=burn, thin=thin, 
                 threads=threads)
@@ -483,9 +486,9 @@ def run_tree_annotate(tree, input_annotated_tree=False,
                 for prop, delta_array in prop2delta_array.items():
                     p_value = np.sum(np.array(delta_array) > prop2delta[prop]) / len(delta_array)
                     logging.info(f"p_value of {prop} is {p_value}")
-                    tree.add_prop(add_suffix(prop, "p_value"), p_value)
+                    tree.add_prop(add_suffix(prop, "pval"), p_value)
                     prop2type.update({
-                        add_suffix(prop, "p_value"): float
+                        add_suffix(prop, "pval"): float
                     })
 
                 for prop in acr_discrete_columns:
@@ -499,17 +502,19 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         print('Time for acr to run: ', end - start)
 
     # lineage specificity analysis
-    if lsa_columns:
-        #print("start lsa for prop: ", bool_prop)
-        if all(column in bool_prop for column in lsa_columns):
-            best_node, qualified_nodes = run_lsa(annotated_tree, props=lsa_columns, 
+    if ls_columns:
+        logging.info(f"Performing Lineage Specificity analysis with Character {ls_columns}...\n")
+        if all(column in bool_prop for column in ls_columns):
+            best_node, qualified_nodes = run_ls(annotated_tree, props=ls_columns, 
             precision_cutoff=prec_cutoff, sensitivity_cutoff=sens_cutoff)
-            for prop in lsa_columns:
+            for prop in ls_columns:
                 prop2type.update({
                     add_suffix(prop, "prec"): float,
                     add_suffix(prop, "sens"): float,
                     add_suffix(prop, "f1"): float
                 })
+        else:
+            logging.warning(f"Lineage specificity analysis only support boolean properties, {ls_columns} is not boolean property.")
 
     # statistic method
     counter_stat = counter_stat #'raw' or 'relative'
@@ -713,7 +718,7 @@ def run(args):
         delta_stats=args.delta_stats, ent_type=args.ent_type, 
         iteration=args.iteration, lambda0=args.lambda0, se=args.se,
         thin=args.thin, burn=args.burn,
-        lsa_columns=args.lsa_columns, prec_cutoff=args.prec_cutoff, sens_cutoff=args.sens_cutoff, 
+        ls_columns=args.ls_columns, prec_cutoff=args.prec_cutoff, sens_cutoff=args.sens_cutoff, 
         threads=args.threads, outdir=args.outdir)
 
     if args.outdir:
@@ -1524,4 +1529,3 @@ def tree2table(tree, internal_node=True, props=None, outfile='tree2table.csv'):
                         writer.writerow(output_row)
                     else:
                         pass
-    return

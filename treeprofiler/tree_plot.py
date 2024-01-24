@@ -132,10 +132,10 @@ def poplulate_plot_args(plot_args_p):
         nargs='+',
         required=False,
         help="<prop1> <prop2> names of properties which need to be plot as acr-continuous-layout")
-    group.add_argument('--lsa-layout',
+    group.add_argument('--ls-layout',
         nargs='+',
         required=False,
-        help="<prop1> <prop2> names of properties which need to be plot as lsa-layout")
+        help="<prop1> <prop2> names of properties which need to be plot as ls-layout")
     group.add_argument('--binary-layout',
         nargs='+',
         required=False,
@@ -164,10 +164,10 @@ def poplulate_plot_args(plot_args_p):
         nargs='+',
         required=False,
         help="<prop1> <prop2> names of numerical properties which need to be read as barplot_layouts")
-    group.add_argument('--branchscore-layout',
-        nargs='+',
-        required=False,
-        help="<prop1> <prop2> names of numerical properties which need to be read as branchscore_layouts")  
+    # group.add_argument('--branchscore-layout',
+    #     nargs='+',
+    #     required=False,
+    #     help="<prop1> <prop2> names of numerical properties which need to be read as branchscore_layouts")  
     group.add_argument('--taxonclade-layout',
         default=False,
         action='store_true',
@@ -336,19 +336,19 @@ def run(args):
             visualized_props.extend(args.acr_discrete_layout)
 
             #delta statistic 
-            acr_delta_props = [add_suffix(prop, "delta") for prop in args.acr_discrete_layout]
-            visualized_props.extend(acr_delta_props)
+            for suffix in ['delta', 'pval']:
+                visualized_props.extend([add_suffix(prop, suffix) for prop in args.acr_discrete_layout])
            
         if layout == 'acr-continuous-layout':
             acr_continuous_layouts = get_acr_continuous_layouts(tree, args.acr_continuous_layout, level, prop2type=prop2type, padding_x=args.padding_x, padding_y=args.padding_y)
             layouts.extend(acr_continuous_layouts)
             visualized_props.extend(args.acr_continuous_layout)
 
-        if layout == 'lsa-layout':
-            lsa_layouts, lsa_props = get_lsa_layouts(tree, args.lsa_layout, level, prop2type=prop2type, padding_x=args.padding_x, padding_y=args.padding_y)
-            layouts.extend(lsa_layouts)
-            visualized_props.extend(args.lsa_layout)
-            visualized_props.extend(lsa_props)
+        if layout == 'ls-layout':
+            ls_layouts, ls_props = get_ls_layouts(tree, args.ls_layout, level, prop2type=prop2type, padding_x=args.padding_x, padding_y=args.padding_y)
+            layouts.extend(ls_layouts)
+            visualized_props.extend(args.ls_layout)
+            visualized_props.extend(ls_props)
             
         if layout == 'heatmap-layout':
             heatmap_layouts, level = get_heatmap_layouts(tree, args.heatmap_layout, level, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep)
@@ -362,10 +362,17 @@ def run(args):
             visualized_props.extend(args.label_layout)
 
         if layout == 'colorbranch-layout':
-            colorbranch_layouts, level, color_dict = get_colorbranch_layouts(tree, args.colorbranch_layout, level, prop2type=prop2type, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y)
-            layouts.extend(colorbranch_layouts)
-            total_color_dict.append(color_dict)
-            visualized_props.extend(args.colorbranch_layout)
+            categorical_props = [prop for prop in args.colorbranch_layout if prop2type[prop] in [str, list, bool]]
+            if categorical_props:
+                colorbranch_layouts, level, color_dict = get_colorbranch_layouts(tree, categorical_props, level, prop2type=prop2type, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y)
+                layouts.extend(colorbranch_layouts)
+                total_color_dict.append(color_dict)
+                visualized_props.extend(categorical_props)
+
+            numerical_props = [prop for prop in args.colorbranch_layout if prop2type[prop] in [float, int]]
+            if numerical_props:
+                branchscore_layouts = get_branchscore_layouts(tree, numerical_props, prop2type, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep)
+                visualized_props.extend(numerical_props)
 
         if layout == 'rectangle-layout':
             rectangle_layouts, level, color_dict = get_rectangle_layouts(tree, args.rectangle_layout, level, prop2type=prop2type, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y)
@@ -628,7 +635,7 @@ def get_acr_continuous_layouts(tree, props, level, prop2type, padding_x=1, paddi
         layouts.append(layout)
     return layouts
 
-def get_lsa_layouts(tree, props, level, prop2type, padding_x=1, padding_y=0):
+def get_ls_layouts(tree, props, level, prop2type, padding_x=1, padding_y=0):
     precision_suffix = "prec"
     sensitivity_suffix = "sens"
     f1_suffix  = "f1"
@@ -639,10 +646,10 @@ def get_lsa_layouts(tree, props, level, prop2type, padding_x=1, padding_y=0):
     gradientscolor = build_color_gradient(20, colormap_name='viridis')
     
     layouts = []
-    lsa_props = []
+    ls_props = []
     for prop in props:
         for suffix in [precision_suffix, sensitivity_suffix, f1_suffix]:
-            lsa_prop = add_suffix(prop, suffix)
+            ls_prop = add_suffix(prop, suffix)
             minval, maxval = 0, 1
             
             # layout = staple_layouts.LayoutBranchScore(name='BranchScore_'+prop, \
@@ -650,20 +657,21 @@ def get_lsa_layouts(tree, props, level, prop2type, padding_x=1, padding_y=0):
             # value_range=[minval, maxval], \
             # color_range=[gradientscolor[20], gradientscolor[10], gradientscolor[1]])
         
-            layout = staple_layouts.LayoutBranchScore(name='lsa_'+lsa_prop, \
-                color_dict=gradientscolor, score_prop=lsa_prop, value_range=[minval, maxval], \
-                color_range=[gradientscolor[20], gradientscolor[10], gradientscolor[1]])
+            layout = staple_layouts.LayoutBranchScore(name='ls_'+ls_prop, \
+                color_dict=gradientscolor, score_prop=ls_prop, value_range=[minval, maxval], \
+                color_range=[gradientscolor[20], gradientscolor[10], gradientscolor[1]], 
+                show_score=True)
             
             layouts.append(layout)
-            lsa_props.append(lsa_prop)
+            ls_props.append(ls_prop)
     
         ls_clade_prop = add_suffix(prop, ls_clade_suffix)
         ls_clade_layout = phylosignal_layouts.LayoutLineageSpecific(name=f'Linear Specific Clade {prop}', \
             ls_prop=ls_clade_prop, color=lsprop2color[ls_clade_prop])
         layouts.append(ls_clade_layout)
-        lsa_props.append(ls_clade_prop)
+        ls_props.append(ls_clade_prop)
 
-    return layouts, lsa_props
+    return layouts, ls_props
 
 def get_label_layouts(tree, props, level, prop2type, column_width=70, padding_x=1, padding_y=0):
     prop_color_dict = {}
@@ -731,8 +739,7 @@ def get_binary_layouts(tree, props, level, prop2type, column_width=70, reverse=F
     layouts = []
 
     for prop in props:
-        prop_values = sorted(list(set(tree_prop_array(tree, prop))))
-        
+        prop_values = sorted(list(set(tree_prop_array(tree, prop, leaf_only=True))))
         if can_convert_to_bool(prop_values):
             nvals = len(prop_values)
             color = random_color(h=None)

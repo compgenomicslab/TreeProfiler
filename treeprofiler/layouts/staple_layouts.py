@@ -343,7 +343,7 @@ class LayoutHeatmap(TreeLayout):
 
 class LayoutBranchScore(TreeLayout):
     def __init__(self, name, color_dict, score_prop, internal_rep=None, \
-    value_range=None, color_range=None, legend=True):
+    value_range=None, color_range=None, show_score=False, legend=True):
         super().__init__(name)
         self.aligned_faces = True
         self.score_prop = score_prop
@@ -356,6 +356,7 @@ class LayoutBranchScore(TreeLayout):
         self.absence_color = "black"
         self.value_range = value_range
         self.color_range = color_range
+        self.show_score = show_score
         self.line_width = 3
 
     def set_tree_style(self, tree, tree_style):
@@ -383,6 +384,12 @@ class LayoutBranchScore(TreeLayout):
             node.sm_style["vt_line_color"] = self._get_color(prop_score)
             node.sm_style["vt_line_width"] = self.line_width
             node.sm_style["outline_color"] = self._get_color(prop_score)
+
+            if self.show_score:                
+                node.add_face(
+                    TextFace("%.2f" % (float(prop_score)), color=self._get_color(prop_score)),
+                    position="branch_bottom")
+
         elif node.is_leaf and node.props.get(self.internal_prop):
             prop_score = node.props.get(self.internal_prop)
             prop_score = float(prop_score)
@@ -391,6 +398,12 @@ class LayoutBranchScore(TreeLayout):
             node.sm_style["vt_line_color"] = self._get_color(prop_score)
             node.sm_style["vt_line_width"] = self.line_width
             node.sm_style["outline_color"] = self._get_color(prop_score)
+            
+            if self.show_score:                
+                node.add_face(
+                    TextFace("%.2f" % (float(prop_score)), color=self._get_color(prop_score)),
+                    position="branch_bottom")
+
         elif node.props.get(self.internal_prop):
             prop_score = node.props.get(self.internal_prop)
             prop_score = float(prop_score)
@@ -399,4 +412,11 @@ class LayoutBranchScore(TreeLayout):
             node.sm_style["vt_line_color"] = self._get_color(prop_score)
             node.sm_style["vt_line_width"] = self.line_width
             node.sm_style["outline_color"] = self._get_color(prop_score)
+
+            if self.show_score:                
+                node.add_face(
+                    TextFace("%.2f" % (float(prop_score)), color=self._get_color(prop_score)),
+                    position="branch_bottom")
+
+            
             
