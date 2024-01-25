@@ -156,6 +156,10 @@ def poplulate_plot_args(plot_args_p):
         nargs='+',
         required=False,
         help="<prop1> <prop2> names  of properties where values will be label as rectangular color block on the aligned panel.")
+    group.add_argument('--piechart-layout',
+        nargs='+',
+        required=False,
+        help="<prop1> <prop2> names of properties whose internal nodes need to be plot as piechart-layout.")
     group.add_argument('--heatmap-layout',
         nargs='+',
         required=False,
@@ -373,7 +377,12 @@ def run(args):
             if numerical_props:
                 branchscore_layouts = get_branchscore_layouts(tree, numerical_props, prop2type, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep)
                 visualized_props.extend(numerical_props)
-
+        
+        if layout == "piechart-layout":
+            piechart_layouts = get_piechart_layouts(tree, args.piechart_layout, prop2type=prop2type, padding_x=args.padding_x, padding_y=args.padding_y)
+            layouts.extend(piechart_layouts)
+            visualized_props.extend(args.piechart_layout)
+            
         if layout == 'rectangle-layout':
             rectangle_layouts, level, color_dict = get_rectangle_layouts(tree, args.rectangle_layout, level, prop2type=prop2type, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y)
             layouts.extend(rectangle_layouts)
@@ -673,11 +682,26 @@ def get_ls_layouts(tree, props, level, prop2type, padding_x=1, padding_y=0):
 
     return layouts, ls_props
 
+def get_piechart_layouts(tree, props, prop2type, padding_x=1, padding_y=0, radius=20):
+    layouts = []
+    for prop in props:
+        color_dict = {} 
+        if prop2type and prop2type.get(prop) == list:
+            leaf_values = list(map(list,set(map(tuple,tree_prop_array(tree, prop)))))
+            prop_values = [val for sublist in leaf_values for val in sublist]
+        else:
+            prop_values = sorted(list(set(tree_prop_array(tree, prop))))
+        
+        color_dict = assign_color_to_values(prop_values, paired_color)
+        layout = text_layouts.LayoutPiechart(name='Piechart_'+prop, color_dict=color_dict, text_prop=prop, radius=radius)
+        layouts.append(layout)
+    return layouts
+
 def get_label_layouts(tree, props, level, prop2type, column_width=70, padding_x=1, padding_y=0):
     prop_color_dict = {}
     layouts = []
     for prop in props:
-        color_dict = {} # key = value, value = color id
+        color_dict = {} 
         if prop2type and prop2type.get(prop) == list:
             leaf_values = list(map(list,set(map(tuple,tree_prop_array(tree, prop)))))
             prop_values = [val for sublist in leaf_values for val in sublist]

@@ -25,11 +25,6 @@ def get_piechartface(node, prop, color_dict=None, radius=20, tooltip=None):
         piechart_data.append([k,float(v),color_dict.get(k,None),None])
         
     if piechart_data:
-        # tooltip = ""
-        # if node.name:
-        #     tooltip += f'<b>{node.name}</b><br>'
-        # if prop:
-        #     tooltip += f'<br>{prop}: {piechart_data}<br>' # {counter_props}
         piechart_face = PieChartFace(radius=radius, data=piechart_data, padding_x=5, tooltip=tooltip)
         
         return piechart_face
