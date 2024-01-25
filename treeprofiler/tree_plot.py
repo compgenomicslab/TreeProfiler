@@ -262,8 +262,10 @@ def run(args):
         print(e)
         sys.exit(1)
 
+    # resolve polytomy
+    if args.resolve_polytomy:
+        tree.resolve_polytomy()
 
-    
     #rest_prop = []
     if args.prop2type:
         prop2type = {}
@@ -376,13 +378,15 @@ def run(args):
             numerical_props = [prop for prop in args.colorbranch_layout if prop2type[prop] in [float, int]]
             if numerical_props:
                 branchscore_layouts = get_branchscore_layouts(tree, numerical_props, prop2type, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep)
+                layouts.extend(branchscore_layouts)
                 visualized_props.extend(numerical_props)
+
         
         if layout == "piechart-layout":
             piechart_layouts = get_piechart_layouts(tree, args.piechart_layout, prop2type=prop2type, padding_x=args.padding_x, padding_y=args.padding_y)
             layouts.extend(piechart_layouts)
             visualized_props.extend(args.piechart_layout)
-            
+
         if layout == 'rectangle-layout':
             rectangle_layouts, level, color_dict = get_rectangle_layouts(tree, args.rectangle_layout, level, prop2type=prop2type, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y)
             layouts.extend(rectangle_layouts)

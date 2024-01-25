@@ -663,10 +663,10 @@ class ProfileAlignmentFace(Face):
             else:
                 aa_type = "text"
                 yield [ f'pixi-aa_{aa_type}', sm_box, seq ]
-            sm_x0 = sm_x0 + posw/2 - zx*2 # centering text in the middle of the box
-            for i in range(len(seq)):
-                sm_box = Box(sm_x+sm_x0+(posw * i), y, posw, h)
-                yield draw_text(sm_box, seq[i], "jjj", style=style)
+            # sm_x0 = sm_x0 + posw/2 - zx*2 # centering text in the middle of the box
+            # for i in range(len(seq)):
+            #     sm_box = Box(sm_x+sm_x0+(posw * i), y, posw, h)
+            #     yield draw_text(sm_box, seq[i], "jjj", style=style)
 
 class ProfileFace(Face):
     def __init__(self, seq, value2color=None,

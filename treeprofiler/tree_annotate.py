@@ -1282,52 +1282,35 @@ def get_range(input_range):
     return column_start, column_end
 
 def parse_emapper_annotations(input_file, delimiter='\t', no_colnames=False):
-    """
-    Takes tsv table as input
-    Return
-    metadata, as dictionary of dictionaries for each node's metadata
-    node_props, a list of property names(column names of metadata table)
-    columns, dictionary of property name and it's values
-    """
     metadata = {}
     columns = defaultdict(list)
     prop2type = {}
-    headers = ["#query", "seed_ortholog", "evalue",	"score","eggNOG_OGs",
-            "max_annot_lvl","COG_category","Description","Preferred_name","GOs",
-            "EC","KEGG_ko","KEGG_Pathway",	"KEGG_Module", "KEGG_Reaction",	"KEGG_rclass",
-            "BRITE", "KEGG_TC", "CAZy", "BiGG_Reaction", "PFAMs"]
-
-    lines_count = len(open(input_file).readlines())
+    headers = ["#query", "seed_ortholog", "evalue", "score", "eggNOG_OGs",
+               "max_annot_lvl", "COG_category", "Description", "Preferred_name", "GOs",
+               "EC", "KEGG_ko", "KEGG_Pathway", "KEGG_Module", "KEGG_Reaction", "KEGG_rclass",
+               "BRITE", "KEGG_TC", "CAZy", "BiGG_Reaction", "PFAMs"]
 
     with open(input_file, 'r') as f:
+        # Skip lines starting with '##'
+        filtered_lines = (line for line in f if not line.startswith('##'))
 
         if no_colnames:
-            reader = csv.DictReader(f, delimiter=delimiter, fieldnames=headers)
+            reader = csv.DictReader(filtered_lines, delimiter=delimiter, fieldnames=headers)
         else:
-            lines_count = len(f.readlines())
-            skip_header = 4
-            skip_footer = 3
-            f.seek(0) # using f twice
-            reader = csv.DictReader(islice(f,skip_header,lines_count-skip_footer), delimiter=delimiter)
+            reader = csv.DictReader(filtered_lines, delimiter=delimiter)
 
         node_header, node_props = headers[0], headers[1:]
         for row in reader:
             nodename = row[node_header]
             del row[node_header]
 
-            for k, v in row.items(): # replace missing value
-
-                if check_missing(v):
-                    row[k] = 'NaN'
-                else:
-                    row[k] = v
+            for k, v in row.items():  # Replace missing value
+                row[k] = 'NaN' if check_missing(v) else v
             metadata[nodename] = dict(row)
-            for (k,v) in row.items(): # go over each column name and value
-                columns[k].append(v) # append the value into the appropriate list
-                                    # based on column name k
+            for k, v in row.items():  # Go over each column name and value
+                columns[k].append(v)  # Append the value into the appropriate list based on column name k
 
     return metadata, node_props, columns
-
 def annot_tree_pfam_table(post_tree, pfam_table, alg_fasta, domain_prop='dom_arq'):
     pair_delimiter = "@"
     item_seperator = "||"
