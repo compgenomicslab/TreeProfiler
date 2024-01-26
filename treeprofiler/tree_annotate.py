@@ -363,25 +363,22 @@ def run_tree_annotate(tree, input_annotated_tree=False,
                 'KEGG_Module', 'KEGG_Reaction', 'KEGG_rclass',
                 'BRITE', 'KEGG_TC', 'CAZy', 'BiGG_Reaction', 'PFAMs'])
 
+        
         for prop in text_prop:
             prop2type[prop] = str
-            prop2type[prop+'_counter'] = str
+  
 
         for prop in bool_prop:
             prop2type[prop] = bool
-            prop2type[prop+'_counter'] = str
+
 
         for prop in multiple_text_prop:
             prop2type[prop] = list
-            prop2type[prop+'_counter'] = str
+
 
         for prop in num_prop:
             prop2type[prop] = float
-            prop2type[prop+'_avg'] = float
-            prop2type[prop+'_sum'] = float
-            prop2type[prop+'_max'] = float
-            prop2type[prop+'_min'] = float
-            prop2type[prop+'_std'] = float
+
 
         prop2type.update({# start with leaf name
                 'name':str,
@@ -528,10 +525,22 @@ def run_tree_annotate(tree, input_annotated_tree=False,
     for prop in text_prop+multiple_text_prop+bool_prop:
         if not prop in column2method:
             column2method[prop] = counter_stat
+        if column2method[prop] != 'none':
+            prop2type[add_suffix(prop, "counter")] = str
 
     for prop in num_prop:
         if not prop in column2method:
             column2method[prop] = num_stat
+        if column2method[prop] == 'all':
+            prop2type[add_suffix(prop, "avg")] = float
+            prop2type[add_suffix(prop, "sum")] = float
+            prop2type[add_suffix(prop, "max")] = float
+            prop2type[add_suffix(prop, "min")] = float
+            prop2type[add_suffix(prop, "std")] = float
+        elif column2method[prop] == 'none':
+            pass
+        else:
+            prop2type[add_suffix(prop, column2method[prop])] = float
 
     if not input_annotated_tree:
         #pre load node2leaves to save time
@@ -551,7 +560,6 @@ def run_tree_annotate(tree, input_annotated_tree=False,
                     internal_props_bool = merge_text_annotations(node2leaves[node], bool_prop, column2method)
                     internal_props.update(internal_props_bool)
 
-                
                 if num_prop:
                     internal_props_num = merge_num_annotations(node2leaves[node], num_prop, column2method)                        
                     if internal_props_num:
@@ -1143,42 +1151,45 @@ def merge_multitext_annotations(nodes, target_props, column2method):
 def merge_num_annotations(nodes, target_props, column2method):
     internal_props = {}
     for target_prop in target_props:
-        num_stat = column2method.get(target_prop, "raw")
-        if target_prop != 'dist' and target_prop != 'support':
-            prop_array = np.array(children_prop_array(nodes, target_prop),dtype=np.float64)
-            prop_array = prop_array[~np.isnan(prop_array)] # remove nan data
-            if prop_array.any():
-                n, (smin, smax), sm, sv, ss, sk = stats.describe(prop_array)
+        num_stat = column2method.get(target_prop, None)
+        if num_stat != 'none':
+            if target_prop != 'dist' and target_prop != 'support':
+                prop_array = np.array(children_prop_array(nodes, target_prop),dtype=np.float64)
+                prop_array = prop_array[~np.isnan(prop_array)] # remove nan data
+                
+                
+                if prop_array.any():
+                    n, (smin, smax), sm, sv, ss, sk = stats.describe(prop_array)
 
-                if num_stat == 'all':
-                    internal_props[add_suffix(target_prop, 'avg')] = sm
-                    internal_props[add_suffix(target_prop, 'sum')] = np.sum(prop_array)
-                    internal_props[add_suffix(target_prop, 'max')] = smax
-                    internal_props[add_suffix(target_prop, 'min')] = smin
-                    if math.isnan(sv) == False:
-                        internal_props[add_suffix(target_prop, 'std')] = sv
-                    else:
-                        internal_props[add_suffix(target_prop, 'std')] = 0
+                    if num_stat == 'all':
+                        internal_props[add_suffix(target_prop, 'avg')] = sm
+                        internal_props[add_suffix(target_prop, 'sum')] = np.sum(prop_array)
+                        internal_props[add_suffix(target_prop, 'max')] = smax
+                        internal_props[add_suffix(target_prop, 'min')] = smin
+                        if math.isnan(sv) == False:
+                            internal_props[add_suffix(target_prop, 'std')] = sv
+                        else:
+                            internal_props[add_suffix(target_prop, 'std')] = 0
 
-                elif num_stat == 'avg':
-                    internal_props[add_suffix(target_prop, 'avg')] = sm
-                elif num_stat == 'sum':
-                    #print(target_prop)
-                    internal_props[add_suffix(target_prop, 'sum')] = np.sum(prop_array)
-                elif num_stat == 'max':
-                    internal_props[add_suffix(target_prop, 'max')] = smax
-                elif num_stat == 'min':
-                    internal_props[add_suffix(target_prop, 'min')] = smin
-                elif num_stat == 'std':
-                    if math.isnan(sv) == False:
-                        internal_props[add_suffix(target_prop, 'std')] = sv
+                    elif num_stat == 'avg':
+                        internal_props[add_suffix(target_prop, 'avg')] = sm
+                    elif num_stat == 'sum':
+                        #print(target_prop)
+                        internal_props[add_suffix(target_prop, 'sum')] = np.sum(prop_array)
+                    elif num_stat == 'max':
+                        internal_props[add_suffix(target_prop, 'max')] = smax
+                    elif num_stat == 'min':
+                        internal_props[add_suffix(target_prop, 'min')] = smin
+                    elif num_stat == 'std':
+                        if math.isnan(sv) == False:
+                            internal_props[add_suffix(target_prop, 'std')] = sv
+                        else:
+                            internal_props[add_suffix(target_prop, 'std')] = 0
                     else:
-                        internal_props[add_suffix(target_prop, 'std')] = 0
+                        #print('Invalid stat method')
+                        pass
                 else:
-                    #print('Invalid stat method')
                     pass
-            else:
-                pass
 
     if internal_props:
         return internal_props
