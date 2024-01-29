@@ -387,7 +387,7 @@ def assign_color_to_values(values, paired_colors):
         color_dict = {val: paired_colors[i] for i, val in enumerate(values)}
     else:
         # Use the assign_colors function to generate colors if not enough predefined colors
-        color_dict = assign_colors(values)
+        color_dict = assign_colors(values, cmap_name='tab20')
 
     return dict(sorted(color_dict.items()))
 
@@ -399,6 +399,7 @@ def assign_colors(variables, cmap_name='tab20'):
     """Assigns colors to variables using a matplotlib colormap."""
     cmap = plt.cm.get_cmap(cmap_name, len(variables))  # Get the colormap
     colors = [rgba_to_hex(cmap(i)) for i in range(cmap.N)]  # Generate colors in hex format
+    random.shuffle(colors)
     return dict(zip(variables, colors))
 
 

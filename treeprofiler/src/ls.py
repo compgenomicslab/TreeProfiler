@@ -10,7 +10,7 @@ from treeprofiler.src.utils import add_suffix
 # Function to calculate precision, sensitivity, and F1 score
 def calculate_metrics(node, total_with_trait, prop):
     if not node.is_leaf:
-        clade_with_trait = sum(1 for child in node.leaves() if bool(strtobool(child.props.get(prop))))
+        clade_with_trait = sum(1 for child in node.leaves() if child.props.get(prop) is not None and bool(strtobool(child.props.get(prop))))
         clade_total = len([leave for leave in node.leaves()])
         precision = clade_with_trait / clade_total if clade_total else 0
         sensitivity = clade_with_trait / total_with_trait if total_with_trait else 0
@@ -20,7 +20,7 @@ def calculate_metrics(node, total_with_trait, prop):
 
 # Total number of nodes with the trait
 def get_total_trait(tree, prop):
-    return sum(1 for node in tree.leaves() if bool(strtobool(node.props.get(prop))))
+    return sum(1 for node in tree.leaves() if node.props.get(prop) is not None and bool(strtobool(node.props.get(prop))))
 
 ###### start lineage specificity analysis ######
 def run_ls(tree, props, precision_cutoff=0.95, sensitivity_cutoff=0.95):
@@ -38,7 +38,7 @@ def run_ls(tree, props, precision_cutoff=0.95, sensitivity_cutoff=0.95):
                 node.add_prop(add_suffix(prop, "sens"), sensitivity)
                 node.add_prop(add_suffix(prop, "f1"), f1)
                 #node.add_prop(precision=precision, sensitivity=sensitivity, f1_score=f1)
-                print(f"Node: {node.name} , Precision: {precision}, Sensitivity: {sensitivity}, F1 Score: {f1}")
+                #print(f"Node: {node.name} , Precision: {precision}, Sensitivity: {sensitivity}, F1 Score: {f1}")
 
                 # Check if the node meets the lineage-specific criteria
                 if not node.is_root:

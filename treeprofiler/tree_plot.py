@@ -392,6 +392,7 @@ def run(args):
             layouts.extend(rectangle_layouts)
             total_color_dict.append(color_dict)
             visualized_props.extend(args.rectangle_layout)
+            visualized_props.extend([add_suffix(prop, 'counter') for prop in args.rectangle_layout])
 
         if layout == 'binary-layout':
             label_layouts, level, color_dict = get_binary_layouts(tree, args.binary_layout, level, prop2type=prop2type, column_width=args.column_width, reverse=False, padding_x=args.padding_x, padding_y=args.padding_y)

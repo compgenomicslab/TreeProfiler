@@ -57,7 +57,7 @@ class LayoutACRDiscrete(TreeLayout):
                 node.add_face(TextFace(output, color = "red", 
                 padding_x=self.padding_x*5), column=0, position="branch_right")
             # p_value
-            if node.props.get(self.pval_prop):
+            if node.props.get(self.pval_prop) is not None:
                 prop_text = "%.2f" % float(node.props.get(self.pval_prop))
                 if prop_text:
                     output = "p-value: " + prop_text
