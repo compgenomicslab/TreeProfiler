@@ -29,6 +29,17 @@ class LayoutACRDiscrete(TreeLayout):
                                     variable='discrete',
                                     colormap=self.color_dict
                                     )
+    def format_p_value(self, pval):
+        if pval < 0.001:
+            return "P < 0.001"
+        elif pval < 0.01:
+            return f"P = {pval:.3f}"
+        else:
+            # Handle rounding issue for P values greater than .01
+            if 0.049 <= pval < 0.050 or 0.0049 <= pval < 0.005:
+                return f"P = {pval:.3f}"
+            else:
+                return f"P = {pval:.2f}"
 
     def set_node_style(self, node):
         if node.props.get(self.acr_prop):
@@ -58,10 +69,11 @@ class LayoutACRDiscrete(TreeLayout):
                 padding_x=self.padding_x*5), column=0, position="branch_right")
             # p_value
             if node.props.get(self.pval_prop) is not None:
-                prop_text = "%.2f" % float(node.props.get(self.pval_prop))
+                pval = float(node.props.get(self.pval_prop))
+
+                prop_text = self.format_p_value(pval)
                 if prop_text:
-                    output = "p-value: " + prop_text
-                    node.add_face(TextFace(output, color = "red", 
+                    node.add_face(TextFace(prop_text, color = "red", 
                     padding_x=self.padding_x*5), column=0, position="branch_right")
 
 class LayoutACRContinuous(TreeLayout):
