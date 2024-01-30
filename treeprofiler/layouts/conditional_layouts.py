@@ -4,8 +4,11 @@ from ete4.smartview  import (RectFace, CircleFace, SeqMotifFace, TextFace, Outli
 from treeprofiler.layouts.general_layouts import get_heatmapface
 from treeprofiler.src.utils import to_code, call, counter_call, check_nan
 # for boolean layouts
-from distutils.util import strtobool
-
+try:
+    from distutils.util import strtobool
+except ImportError:
+    from treeprofiler.src.utils import strtobool
+    
 # branch thicken, background highlighted to purple
 def highlight_layout(conditions, level, prop2type={}, color='purple'):
     conditional_output = to_code(conditions)
@@ -90,15 +93,14 @@ def collapsed_by_layout(conditions, level, prop2type={}, color='red'):
     return
 
 class LayoutBinary(TreeLayout):
-    def __init__(self, name=None, level=1, color='#E60A0A', prop_colour_dict=None, \
+    def __init__(self, name=None, level=1, color='#E60A0A', \
         bool_prop=None, reverse=False, radius=25, padding_x=1, padding_y=0, width=70, legend=True):
         super().__init__(name)
         self.aligned_faces = True
         self.bool_prop = bool_prop
         self.column = level
-        self.color = color
+        self.color = "#FF0000"
         self.negative_color = '#EBEBEB'
-        self.prop_colour_dict = prop_colour_dict
         self.internal_prop = bool_prop+'_counter'
         self.reverse = reverse
         self.radius = radius
@@ -121,35 +123,31 @@ class LayoutBinary(TreeLayout):
         text = TextFace(self.bool_prop, min_fsize=10, max_fsize=15, padding_x=self.padding_x, width=self.width, rotation=315)
         tree_style.aligned_panel_header.add_face(text, column=self.column)
         if self.legend:
-            if self.prop_colour_dict:
-                if self.reverse:
-                    title = 'ReverseBinary_' + self.bool_prop
-                    colormap = {
-                        "False": self.color,
-                        "True" : self.negative_color,
-                        "NA": 'white'
-                    }
-                    tree_style.add_legend(title=title,
-                                        variable='discrete',
-                                        colormap=colormap,
-                                        )
-                else:
-                    title = 'Binary_' + self.bool_prop
-                    colormap = {
-                        "True": self.color,
-                        "False" : self.negative_color,
-                        "NA": 'white'
-                    }
-                    tree_style.add_legend(title=title,
-                                        variable='discrete',
-                                        colormap=colormap,
-                                        )
-                # tree_style.add_legend(title=self.internal_prop,
-                #                     variable='discrete',
-                #                     colormap=self.prop_colour_dict
-                #                     )
-                
+            
+            if self.reverse:
+                title = 'ReverseBinary_' + self.bool_prop
+                colormap = {
+                    "False": self.color,
+                    "True" : self.negative_color,
+                    "NA": 'white'
+                }
+                tree_style.add_legend(title=title,
+                                    variable='discrete',
+                                    colormap=colormap,
+                                    )
+            else:
+                title = 'Binary_' + self.bool_prop
+                colormap = {
+                    "True": self.color,
+                    "False" : self.negative_color,
+                    "NA": 'white'
+                }
+                tree_style.add_legend(title=title,
+                                    variable='discrete',
+                                    colormap=colormap,
+                                    )
 
+                
     def set_node_style(self, node):
         if node.is_leaf:
             if node.props.get(self.bool_prop):

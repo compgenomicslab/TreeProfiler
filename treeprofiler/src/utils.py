@@ -1,4 +1,5 @@
 from __future__ import annotations
+from treeprofiler.src import b64pickle
 from ete4.parser.newick import NewickError
 from ete4.core.operations import remove
 from ete4 import Tree, PhyloTree
@@ -7,12 +8,15 @@ from Bio.Align import MultipleSeqAlignment
 from Bio.Align.AlignInfo import SummaryInfo
 from itertools import chain
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
+import numpy as np
 import random
 import colorsys
 import operator
 import math
 import Bio
 import re
+import sys
 
 # conditional syntax calling
 operator_dict = {
@@ -23,6 +27,25 @@ operator_dict = {
                 '>':operator.gt,
                 '>=':operator.ge,
                 }
+
+_true_set = {'yes', 'true', 't', 'y', '1'}
+_false_set = {'no', 'false', 'f', 'n', '0'}
+
+def str2bool(value, raise_exc=False):
+    if isinstance(value, str) or sys.version_info[0] < 3 and isinstance(value, basestring):
+        value = value.lower()
+        if value in _true_set:
+            return True
+        if value in _false_set:
+            return False
+
+    if raise_exc:
+        raise ValueError('Expected "%s"' % '", "'.join(_true_set | _false_set))
+    return None
+
+
+def str2bool_exc(value):
+    return str2bool(value, raise_exc=True)
 
 def check_nan(value):
     try:
@@ -120,6 +143,34 @@ def get_consensus_seq(filename: Path | str, threshold=0.7) -> SeqRecord:
     consensus = summary.dumb_consensus(threshold, "-")
     return consensus
 
+# validate tree format
+class TreeFormatError(Exception):
+    pass
+
+def validate_tree(tree_path, input_type, internal_parser=None):
+    tree = None  # Initialize tree to None
+    eteformat_flag = False
+    if input_type in ['ete', 'auto']:
+        try:
+            with open(tree_path, 'r') as f:
+                file_content = f.read()
+            tree = b64pickle.loads(file_content, encoder='pickle', unpack=False)
+            eteformat_flag = True
+        except Exception as e:
+            if input_type == 'ete':
+                raise TreeFormatError(f"Error loading tree in 'ete' format: {e}")
+
+    if input_type in ['newick', 'auto'] and tree is None:
+        try:
+            tree = ete4_parse(open(tree_path), internal_parser=internal_parser)
+        except Exception as e:
+            raise TreeFormatError(f"Error loading tree in 'newick' format: {e}\n"
+                                  "Please try using the correct parser with --internal-parser option, or check the newick format.")
+
+    # if tree is None:
+    #     raise TreeFormatError("Failed to load the tree in either 'ete' or 'newick' format.")
+
+    return tree, eteformat_flag
 
 # parse ete4 Tree
 def get_internal_parser(internal_parser="name"):
@@ -203,9 +254,44 @@ def conditional_prune(tree, conditions_input, prop2type):
     array = [n.props.get(prop) for n in nodes if n.props.get(prop) ] 
     return array
 
+def tree_prop_array(node, prop, leaf_only=False):
+    array = []
+    if leaf_only:
+        for n in node.leaves():
+            prop_value = n.props.get(prop)
+            if prop_value is not None:
+                # Check if the property value is a set
+                if isinstance(prop_value, set):
+                    # Extract elements from the set
+                    array.extend(prop_value)
+                else:
+                    # Directly append the property value
+                    array.append(prop_value)
+    else:
+        for n in node.traverse():
+            prop_value = n.props.get(prop)
+            if prop_value is not None:
+                # Check if the property value is a set
+                if isinstance(prop_value, set):
+                    # Extract elements from the set
+                    array.extend(prop_value)
+                else:
+                    # Directly append the property value
+                    array.append(prop_value)
+    return array
+
 def children_prop_array(nodes, prop):
-    #array = [n.props.get(prop) if n.props.get(prop) else 'NaN' for n in nodes] 
-    array = [n.props.get(prop) for n in nodes if n.props.get(prop) ] 
+    array = []
+    for n in nodes:
+        prop_value = n.props.get(prop)
+        if prop_value is not None:
+            # Check if the property value is a set
+            if isinstance(prop_value, set):
+                # Extract elements from the set
+                array.extend(prop_value)
+            else:
+                # Directly append the property value
+                array.append(prop_value)
     return array
 
 def children_prop_array_missing(nodes, prop):
@@ -214,6 +300,25 @@ def children_prop_array_missing(nodes, prop):
     #array = [n.props.get(prop) for n in nodes if n.props.get(prop) ] 
     return array
 
+def convert_to_int_or_float(column):
+    """
+    Convert a column to integer if possible, otherwise convert to float64.
+    
+    Args:
+    column (list): The input column data.
+    
+    Returns:
+    np.ndarray: Array converted to integer or float64.
+    """
+    np_column = np.array(column)
+
+    # Try converting to integer
+    try:
+        return np_column.astype(np.int64)
+    except ValueError:
+        # If conversion to integer fails, convert to float64
+        return np_column.astype(np.float64)
+        
 def flatten(nasted_list):
     """
     input: nasted_list - this contain any number of nested lists.
@@ -282,7 +387,7 @@ def assign_color_to_values(values, paired_colors):
         color_dict = {val: paired_colors[i] for i, val in enumerate(values)}
     else:
         # Use the assign_colors function to generate colors if not enough predefined colors
-        color_dict = assign_colors(values)
+        color_dict = assign_colors(values, cmap_name='tab20')
 
     return dict(sorted(color_dict.items()))
 
@@ -294,4 +399,40 @@ def assign_colors(variables, cmap_name='tab20'):
     """Assigns colors to variables using a matplotlib colormap."""
     cmap = plt.cm.get_cmap(cmap_name, len(variables))  # Get the colormap
     colors = [rgba_to_hex(cmap(i)) for i in range(cmap.N)]  # Generate colors in hex format
+    random.shuffle(colors)
     return dict(zip(variables, colors))
+
+
+def build_color_gradient(n_colors, colormap_name="viridis"):
+    """
+    Build a color gradient based on the specified matplotlib colormap.
+
+    Parameters:
+    n_colors (int): Number of distinct colors to include in the gradient.
+    colormap_name (str): Name of the matplotlib colormap to use. "viridis"  # Replace with "plasma", "inferno", "magma", etc., as needed
+
+    Returns:
+    dict: A dictionary mapping indices to colors in the specified colormap.
+    """
+    cmap = plt.get_cmap(colormap_name)
+    indices = np.linspace(0, 1, n_colors)
+    color_gradient = {i: mcolors.rgb2hex(cmap(idx)) for i, idx in enumerate(indices, 1)}
+    return color_gradient
+
+def clear_extra_features(forest, features):
+    features = set(features) | {'name', 'dist', 'support'}
+    for tree in forest:
+        for n in tree.traverse():
+            for f in set(n.props) - features:
+                if f not in features:
+                    n.del_prop(f)
+            
+            for key, value in n.props.items():
+                # Check if the value is a set
+                if isinstance(value, set):
+                    # Convert the set to a string representation
+                    # You can customize the string conversion as needed
+                    n.props[key] = ','.join(map(str, value))
+
+def add_suffix(name, suffix, delimiter='_'):
+    return str(name) + delimiter + str(suffix)

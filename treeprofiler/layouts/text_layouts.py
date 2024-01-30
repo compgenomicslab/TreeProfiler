@@ -56,6 +56,9 @@ class LayoutText(TreeLayout):
         elif node.props.get(self.internal_prop):
             stackedbar_face = get_stackedbarface(node, self.internal_prop, self.color_dict, width=self.width, padding_x=self.padding_x, padding_y=self.padding_y)
             node.add_face(stackedbar_face, column = self.column, position = "aligned", collapsed_only=True)
+            # piechart_face = get_piechartface(node, self.internal_prop, self.color_dict, radius=25)
+            # node.add_face(piechart_face, column = self.column, position = "branch_right", collapsed_only=False)
+            # node.add_face(piechart_face, column = self.column, position = "branch_right", collapsed_only=True)
         else:
             #prop_face = CircleFace(radius=self.radius, color='grey', padding_x=self.padding_x, padding_y=self.padding_y)
             prop_face = RectFace(width=self.width, height=self.height, color=self.absence_color, \
@@ -97,7 +100,6 @@ class LayoutColorbranch(TreeLayout):
                 else:
                     pass
                 if self.color_dict:
-                    
                     node.add_face(TextFace(node.name, color = self.color_dict.get(prop_text,""), 
                     padding_x=self.padding_x),column=0, position="branch_right")
                     node.sm_style["hz_line_color"] = self.color_dict.get(prop_text,"")
@@ -190,3 +192,32 @@ class LayoutRect(TreeLayout):
             prop_face = RectFace(width=self.width, height=self.height, color=self.absence_color, \
                     padding_x=self.padding_x , padding_y=self.padding_y, tooltip=None)
             node.add_face(prop_face, column=self.column, position="aligned", collapsed_only=True)
+
+class LayoutPiechart(TreeLayout):
+    def __init__(self, name, color_dict, text_prop, radius=20, padding_x=1, padding_y=0, legend=True, aligned_faces=True):
+        super().__init__(name, aligned_faces=aligned_faces)
+        self.aligned_faces = True
+
+        self.text_prop = text_prop+"_counter"
+        self.internal_prop = text_prop+'_counter'
+        self.color_dict = color_dict
+        self.radius = radius
+        self.padding_x = padding_x
+        self.padding_y = padding_y
+        self.legend = legend
+    
+    def set_tree_style(self, tree, tree_style):
+        super().set_tree_style(tree, tree_style)
+        if self.legend:
+            if self.color_dict:
+                tree_style.add_legend(title=self.text_prop,
+                                    variable='discrete',
+                                    colormap=self.color_dict
+                                    )
+
+    def set_node_style(self, node):
+        if not node.is_leaf:
+            if node.props.get(self.internal_prop):
+                piechart_face = get_piechartface(node, self.internal_prop, self.color_dict, radius=self.radius)
+                node.add_face(piechart_face, column = 1, position = "branch_right", collapsed_only=False)
+                node.add_face(piechart_face, column = 1, position = "branch_right", collapsed_only=True)

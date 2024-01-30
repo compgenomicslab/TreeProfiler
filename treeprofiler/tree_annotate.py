@@ -1,58 +1,75 @@
 #!/usr/bin/env python3
 
+import os, math, re
+import logging
 import sys
-import os
 import time
 import random
-import math
-import re
 import csv
 import tarfile
+
 from io import StringIO
 from itertools import islice
 from collections import defaultdict, Counter
 import numpy as np
-from scipy import stats
 
+from scipy import stats
 
 from ete4.parser.newick import NewickError
 from ete4.core.seqgroup import SeqGroup
 from ete4 import Tree, PhyloTree
 from ete4 import GTDBTaxa
 from ete4 import NCBITaxa
-from treeprofiler.src import b64pickle
 from treeprofiler.src.utils import (
-    get_internal_parser, ete4_parse, taxatree_prune, conditional_prune,
-    children_prop_array, children_prop_array_missing,
-    flatten, get_consensus_seq)
+    validate_tree, TreeFormatError, get_internal_parser,
+    taxatree_prune, conditional_prune,
+    children_prop_array, children_prop_array_missing, 
+    flatten, get_consensus_seq, add_suffix, clear_extra_features)
+from treeprofiler.src.phylosignal import run_acr_discrete, run_delta
+from treeprofiler.src.ls import run_ls
+from treeprofiler.src import b64pickle
 
 DESC = "annotate tree"
+
+TAXONOMICDICT = {# start with leaf name
+                'rank': str,
+                'sci_name': str,
+                'taxid': str,
+                'lineage':str,
+                'named_lineage': str,
+                'evoltype': str,
+                'dup_sp': str,
+                'dup_percent': float,
+                }
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def populate_annotate_args(parser):
     gmeta = parser.add_argument_group(
         title='METADATA TABLE parameters',
         description="Input parameters of METADATA")
-
     add = gmeta.add_argument
     add('-d', '--metadata', nargs='+',
         help="<metadata.csv> .csv, .tsv. mandatory input")
+    add('-sep', '--metadata_sep', default='\t',
+        help="column separator of metadata table [default: \\t]")
     add('--no_colnames', action='store_true',
         help="metadata table doesn't contain columns name")
     add('--aggregate-duplicate', action='store_true',
         help="treeprofiler will aggregate duplicated metadata to a list as a property if metadata contains duplicated row")
     add('--text-prop', nargs='+',
-        help=("<col1,col2> names, column index or index range of columns which "
+        help=("<col1> <col2> names, column index or index range of columns which "
               "need to be read as categorical data"))
     add('--multiple-text-prop', nargs='+',
-        help=("<col1,col2> names, column index or index range of columns which "
+        help=("<col1> <col2> names, column index or index range of columns which "
               "need to be read as categorical data which contains more than one"
               " value and seperate by ',' such "
               "as GO:0000003,GO:0000902,GO:0000904,GO:0003006"))
     add('--num-prop', nargs='+',
-        help=("<col1,col2> names, column index or index range of columns which "
+        help=("<col1> <col2> names, column index or index range of columns which "
               "need to be read as numerical data"))
     add('--bool-prop', nargs='+',
-        help=("<col1,col2> names, column index or index range of columns which "
+        help=("<col1> <col2> names, column index or index range of columns which "
               "need to be read as boolean data"))
     add('--text-prop-idx', nargs='+',
         help="1 2 3 or [1-5] index of columns which need to be read as categorical data")
@@ -60,14 +77,24 @@ def populate_annotate_args(parser):
         help="1 2 3 or [1-5] index columns which need to be read as numerical data")
     add('--bool-prop-idx', nargs='+',
         help="1 2 3 or [1-5] index columns which need to be read as boolean data")
+    add('--acr-discrete-columns', nargs='+',
+        help=("<col1> <col2> names to perform acr analysis for discrete traits"))
+    # add('--acr-continuous-columns', nargs='+',
+    #     help=("<col1> <col2> names to perform acr analysis for continuous traits"))
+    add('--ls-columns', nargs='+',
+        help=("<col1> <col2> names to perform lineage specificity analysis"))
     # add('--taxatree',
     #     help=("<kingdom|phylum|class|order|family|genus|species|subspecies> "
     #           "reference tree from taxonomic database"))
-    add('--taxadb', default='GTDB', type=str.upper,
-        help="<NCBI|GTDB> for taxonomic profiling or fetch taxatree [default: GTDB]")
+    add('--taxadb', type=str.upper,
+        choices=['NCBI', 'GTDB'],
+        help="<NCBI|GTDB> for taxonomic profiling or fetch taxatree")
+    add('--taxa-dump', type=str,
+        help='Path to taxonomic database dump file for specific version, such as https://github.com/etetoolkit/ete-data/raw/main/gtdb_taxonomy/gtdblatest/gtdb_latest_dump.tar.gz')
     add('--taxon-column',
-        help="<col1> name of columns which need to be read as taxon data")
-    add('--taxon-delimiter', default='',
+        help="Activate taxonomic annotation using <col1> name of columns which need to be read as taxon data. \
+            Unless taxon data in leaf name, please use 'name' as input such as --taxon-column name")
+    add('--taxon-delimiter', default=None,
         help="delimiter of taxa columns. [default: None]")
     add('--taxa-field', type=int, default=0,
         help="field of taxa name after delimiter. [default: 0]")
@@ -80,26 +107,96 @@ def populate_annotate_args(parser):
     add('--alignment',
         help="Sequence alignment, .fasta format")
 
-    group = parser.add_argument_group(title='Annotation arguments',
+    annotation_group = parser.add_argument_group(title='Internal nodes annotation arguments',
         description="Annotation parameters")
-    group.add_argument('--taxonomic-profile',
-        default=False,
-        action='store_true',
+    annotation_group.add_argument('--column-summary-method', 
+        nargs='+',
         required=False,
-        help="Activate taxonomic annotation on tree")
-    group.add_argument('--num-stat',
+        help="Specify summary method for individual columns in the format ColumnName=Method")
+    annotation_group.add_argument('--num-stat',
         default='all',
         choices=['all', 'sum', 'avg', 'max', 'min', 'std', 'none'],
         type=str,
         required=False,
         help="statistic calculation to perform for numerical data in internal nodes, [all, sum, avg, max, min, std, none]. If 'none' was chosen, numerical properties won't be summarized nor annotated in internal nodes. [default: all]")  
-
-    group.add_argument('--counter-stat',
+    annotation_group.add_argument('--counter-stat',
         default='raw',
         choices=['raw', 'relative', 'none'],
         type=str,
         required=False,
         help="statistic calculation to perform for categorical data in internal nodes, raw count or in percentage [raw, relative, none]. If 'none' was chosen, categorical and boolean properties won't be summarized nor annotated in internal nodes [default: raw]")  
+    
+    acr_group = parser.add_argument_group(title='Ancestral Character Reconstruction arguments',
+        description="ACR parameters")
+    acr_group.add_argument('--prediction-method',
+        default='MPPA',
+        choices=['MPPA','MAP','JOINT','DOWNPASS','ACCTRAN','DELTRAN','COPY','ALL','ML','MP'],
+        type=str,
+        required=False,
+        help="prediction method for ACR discrete analysis [default: MPPA]"
+        )
+    acr_group.add_argument('--model',
+        default='F81',
+        choices=['JC','F81','EFT','HKY','JTT','CUSTOM_RATES'],
+        type=str,
+        required=False,
+        help="Evolutionary model for ML methods in ACR discrete analysis [default: F81]"
+        )
+    acr_group.add_argument('--threads',
+        default=4,
+        type=int,
+        required=False,
+        help="Number of threads to use for annotation [default: 4]")
+    delta_group = parser.add_argument_group(title='Ancestral Character Reconstruction arguments',
+        description="Delta statistic parameters")
+    delta_group.add_argument('--delta-stats',
+        action='store_true',
+        required=False,
+        help="Calculate delta statistic for discrete traits in ACR analysis, ONLY for MPPA or MAP prediction method.[default: False]"
+    )
+    delta_group.add_argument('--ent_type',
+        default='SE',
+        choices=['LSE', 'SE', 'GINI'],
+        type=str,
+        required=False,
+        help="Entropy method to measure the degree of phylogenetic signal between discrete trati and phylogeny. \
+            [default: SE] for Shannon Entropy, other options are GINI for Gini impurity and LSE for Linear Shannon Entropy."
+    )
+    delta_group.add_argument('--iteration',
+        default=10000,
+        type=int,
+        required=False,
+        help="Number of iterations for delta statistic calculation. [default: 100]"
+    )
+    delta_group.add_argument('--lambda0', 
+        type=float, 
+        default=0.1, 
+        help='Rate parameter of the delta statistic calculation.'
+    )
+    delta_group.add_argument('--se', 
+        type=float, 
+        default=0.5, 
+        help='Standard deviation of the delta statistic calculation.')
+    delta_group.add_argument('--thin', 
+        type=int, 
+        default=10, 
+        help='Keep only each xth iterate.')
+    delta_group.add_argument('--burn', 
+        type=int, 
+        default=100, 
+        help='Burned-in iterates.')
+    ls_group = parser.add_argument_group(title='Lineage Specificity Analysis arguments',
+        description="ls parameters")
+    ls_group.add_argument('--prec-cutoff',
+        default=0.95,
+        type=float,
+        required=False,
+        help="Precision cutoff for lineage specificity analysis [default: 0.95]")
+    ls_group.add_argument('--sens-cutoff',
+        default=0.95,
+        type=float,
+        required=False,
+        help="Sensitivity threshold for lineage specificity analysis [default: 0.95]")
     
     group = parser.add_argument_group(title='OUTPUT options',
         description="")
@@ -114,10 +211,14 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         emapper_annotations=None,
         text_prop=[], text_prop_idx=[], multiple_text_prop=[], num_prop=[], num_prop_idx=[],
         bool_prop=[], bool_prop_idx=[], prop2type_file=None, alignment=None, emapper_pfam=None,
-        emapper_smart=None, counter_stat='raw', num_stat='all',
-        taxonomic_profile=False, taxadb='GTDB', taxon_column='name',
-        taxon_delimiter='', taxa_field=0, rank_limit=None, pruned_by=None,
-        outdir='./'):
+        emapper_smart=None, counter_stat='raw', num_stat='all', column2method={},
+        taxadb='GTDB', taxa_dump=None, taxon_column='name',
+        taxon_delimiter='', taxa_field=0, rank_limit=None, pruned_by=None, 
+        acr_discrete_columns=None, prediction_method="MPPA", model="F81", 
+        delta_stats=False, ent_type="SE", 
+        iteration=100, lambda0=0.1, se=0.5, thin=10, burn=100, 
+        ls_columns=None, prec_cutoff=0.95, sens_cutoff=0.95, 
+        threads=1, outdir='./'):
 
     total_color_dict = []
     layouts = []
@@ -242,8 +343,8 @@ def run_tree_annotate(tree, input_annotated_tree=False,
                             pass
                     if dtype == float:
                         num_prop.append(key)
-                    # if dtype == bool:
-                    #     bool_prop.append(key)
+                    if dtype == bool:
+                        bool_prop.append(key)
 
         # paramemters can over write the default
         if emapper_annotations:
@@ -262,21 +363,22 @@ def run_tree_annotate(tree, input_annotated_tree=False,
                 'KEGG_Module', 'KEGG_Reaction', 'KEGG_rclass',
                 'BRITE', 'KEGG_TC', 'CAZy', 'BiGG_Reaction', 'PFAMs'])
 
-        for prop in text_prop+bool_prop:
+        
+        for prop in text_prop:
             prop2type[prop] = str
-            prop2type[prop+'_counter'] = str
+  
+
+        for prop in bool_prop:
+            prop2type[prop] = bool
+
 
         for prop in multiple_text_prop:
             prop2type[prop] = list
-            prop2type[prop+'_counter'] = str
+
 
         for prop in num_prop:
             prop2type[prop] = float
-            prop2type[prop+'_avg'] = float
-            prop2type[prop+'_sum'] = float
-            prop2type[prop+'_max'] = float
-            prop2type[prop+'_min'] = float
-            prop2type[prop+'_std'] = float
+
 
         prop2type.update({# start with leaf name
                 'name':str,
@@ -293,26 +395,34 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         name2seq = parse_fasta(alignment)
         for leaf in tree.leaves():
             leaf.add_prop(alignment_prop, name2seq.get(leaf.name,''))
+        prop2type.update({
+            alignment_prop:str
+            })
 
     # domain annotation before other annotation
     if emapper_pfam:
+        domain_prop = 'dom_arq'
         if not alignment:
             raise ValueError("Please provide alignment file using '--alignment' for pfam annotation.")
-        annot_tree_pfam_table(tree, emapper_pfam, alignment)
-
+        annot_tree_pfam_table(tree, emapper_pfam, alignment, domain_prop=domain_prop)
+        prop2type.update({
+            domain_prop:str
+            })
     if emapper_smart:
+        domain_prop = 'dom_arq'
         if not alignment:
             raise ValueError("Please provide alignment file using '--alignment' for smart annotation.")
-        annot_tree_smart_table(tree, emapper_smart, alignment)
-
+        annot_tree_smart_table(tree, emapper_smart, alignment, domain_prop=domain_prop)
+        prop2type.update({
+            domain_prop:str
+            })
 
     # load all metadata to leaf nodes
-    #taxon_column = []
 
     # input_annotated_tree determines if input tree is already annotated, if annotated, no longer need metadata
+    
     if not input_annotated_tree:
         if taxon_column: # to identify taxon column as taxa property from metadata
-            #taxon_column.append(taxon_column)
             annotated_tree = load_metadata_to_tree(tree, metadata_dict, prop2type=prop2type, taxon_column=taxon_column, taxon_delimiter=taxon_delimiter, taxa_field=taxa_field)
         else:
             annotated_tree = load_metadata_to_tree(tree, metadata_dict, prop2type=prop2type)
@@ -322,37 +432,138 @@ def run_tree_annotate(tree, input_annotated_tree=False,
     end = time.time()
     print('Time for load_metadata_to_tree to run: ', end - start)
 
-    # stat method
+    
+    # Ancestor Character Reconstruction analysis
+    # data preparation
+    if acr_discrete_columns:
+        logging.info(f"Performing ACR analysis with Character {acr_discrete_columns} via {prediction_method} method with {model} model.......\n")
+        # need to be discrete traits
+        discrete_traits = text_prop + bool_prop
+        for k in acr_discrete_columns:
+            if k not in discrete_traits:
+                raise ValueError(f"Character {k} is not discrete trait, please check your input.")
+
+        #############################
+        start = time.time()
+        acr_discrete_columns_dict = {k: v for k, v in columns.items() if k in acr_discrete_columns}
+        acr_results, annotated_tree = run_acr_discrete(annotated_tree, acr_discrete_columns_dict, \
+        prediction_method=prediction_method, model=model, threads=threads, outdir=outdir)
+        
+        # Clear extra features
+        clear_extra_features([annotated_tree], prop2type.keys())
+        
+        # get observed delta
+        # only MPPA,MAP method has marginal probabilities to calculate delta
+        if delta_stats:
+            if prediction_method in ['MPPA', 'MAP']:
+                logging.info(f"Performing Delta Statistic analysis with Character {acr_discrete_columns}...\n")
+                prop2delta = run_delta(acr_results, annotated_tree, ent_type=ent_type, 
+                lambda0=lambda0, se=se, sim=iteration, burn=burn, thin=thin, 
+                threads=threads)
+
+                for prop, delta_result in prop2delta.items():
+                    logging.info(f"Delta statistic of {prop} is: {delta_result}")
+                    tree.add_prop(add_suffix(prop, "delta"), delta_result)
+
+                # start calculating p_value
+                logging.info(f"Calculating p_value for delta statistic...")
+                # get a copy of the tree
+                dump_tree = annotated_tree.copy()
+                clear_extra_features([dump_tree], ["name", "dist", "support"])
+                
+                prop2array = {}
+                for prop in columns.keys():
+                    prop2array.update(convert_to_prop_array(metadata_dict, prop))
+                
+                prop2delta_array = get_pval(prop2array, dump_tree, acr_discrete_columns_dict, \
+                    iteration=100, prediction_method=prediction_method, model=model,
+                    ent_type=ent_type, lambda0=lambda0, se=se, sim=iteration, burn=burn, thin=thin, 
+                    threads=threads)
+
+                for prop, delta_array in prop2delta_array.items():
+                    p_value = np.sum(np.array(delta_array) > prop2delta[prop]) / len(delta_array)
+                    logging.info(f"p_value of {prop} is {p_value}")
+                    tree.add_prop(add_suffix(prop, "pval"), p_value)
+                    prop2type.update({
+                        add_suffix(prop, "pval"): float
+                    })
+
+                for prop in acr_discrete_columns:
+                    prop2type.update({
+                        add_suffix(prop, "delta"): float
+                    })
+            else:
+                logging.warning(f"Delta statistic analysis only support MPPA and MAP prediction method, {prediction_method} is not supported.")
+
+        end = time.time()
+        print('Time for acr to run: ', end - start)
+
+    # lineage specificity analysis
+    if ls_columns:
+        logging.info(f"Performing Lineage Specificity analysis with Character {ls_columns}...\n")
+        if all(column in bool_prop for column in ls_columns):
+            best_node, qualified_nodes = run_ls(annotated_tree, props=ls_columns, 
+            precision_cutoff=prec_cutoff, sensitivity_cutoff=sens_cutoff)
+            for prop in ls_columns:
+                prop2type.update({
+                    add_suffix(prop, "prec"): float,
+                    add_suffix(prop, "sens"): float,
+                    add_suffix(prop, "f1"): float
+                })
+        else:
+            logging.warning(f"Lineage specificity analysis only support boolean properties, {ls_columns} is not boolean property.")
+
+    # statistic method
     counter_stat = counter_stat #'raw' or 'relative'
     num_stat = num_stat
 
     # merge annotations depends on the column datatype
     start = time.time()
-    if not input_annotated_tree:
+    
+    # choose summary method based on datatype
+    
+    for prop in text_prop+multiple_text_prop+bool_prop:
+        if not prop in column2method:
+            column2method[prop] = counter_stat
+        if column2method[prop] != 'none':
+            prop2type[add_suffix(prop, "counter")] = str
 
+    for prop in num_prop:
+        if not prop in column2method:
+            column2method[prop] = num_stat
+        if column2method[prop] == 'all':
+            prop2type[add_suffix(prop, "avg")] = float
+            prop2type[add_suffix(prop, "sum")] = float
+            prop2type[add_suffix(prop, "max")] = float
+            prop2type[add_suffix(prop, "min")] = float
+            prop2type[add_suffix(prop, "std")] = float
+        elif column2method[prop] == 'none':
+            pass
+        else:
+            prop2type[add_suffix(prop, column2method[prop])] = float
+
+    if not input_annotated_tree:
         #pre load node2leaves to save time
         node2leaves = annotated_tree.get_cached_content()
         for i, node in enumerate(annotated_tree.traverse("postorder")):
             internal_props = {}
             if not node.is_leaf:
-                if counter_stat != 'none':
-                    if text_prop:
-                        internal_props_text = merge_text_annotations(node2leaves[node], text_prop, counter_stat=counter_stat)
-                        internal_props.update(internal_props_text)
+                if text_prop:
+                    internal_props_text = merge_text_annotations(node2leaves[node], text_prop, column2method)
+                    internal_props.update(internal_props_text)
 
-                    if multiple_text_prop:
-                        internal_props_multi = merge_multitext_annotations(node2leaves[node], multiple_text_prop, counter_stat=counter_stat)
-                        internal_props.update(internal_props_multi)
+                if multiple_text_prop:
+                    internal_props_multi = merge_multitext_annotations(node2leaves[node], multiple_text_prop, column2method)
+                    internal_props.update(internal_props_multi)
 
-                    if bool_prop:
-                        internal_props_bool = merge_text_annotations(node2leaves[node], bool_prop, counter_stat=counter_stat)
-                        internal_props.update(internal_props_bool)
+                if bool_prop:
+                    internal_props_bool = merge_text_annotations(node2leaves[node], bool_prop, column2method)
+                    internal_props.update(internal_props_bool)
 
-                if num_stat != 'none':
-                    if num_prop:
-                        internal_props_num = merge_num_annotations(node2leaves[node], num_prop, num_stat=num_stat)                        
-                        if internal_props_num:
-                            internal_props.update(internal_props_num)
+                if num_prop:
+                    internal_props_num = merge_num_annotations(node2leaves[node], num_prop, column2method)                        
+                    if internal_props_num:
+                        internal_props.update(internal_props_num)
 
                 # deprecated
                 # if rest_column:
@@ -373,7 +584,6 @@ def run_tree_annotate(tree, input_annotated_tree=False,
                             matrix += name2seq.get(leaf.name)+"\n"
                     consensus_seq = get_consensus_seq(StringIO(matrix), 0.7)
                     node.add_prop(alignment_prop, consensus_seq)
-
     else:
         pass
     end = time.time()
@@ -382,35 +592,24 @@ def run_tree_annotate(tree, input_annotated_tree=False,
 
     # taxa annotations
     start = time.time()
-    if taxonomic_profile:
-        # taxonomic annotation
+    if taxon_column:
         if not taxadb:
-            print('Please specify which taxa db using --taxadb <GTDB|NCBI>')
+            raise Exception('Please specify which taxa db using --taxadb <GTDB|NCBI>')
         else:
-            if taxadb == 'GTDB':
-                if taxon_column:
-                    annotated_tree, rank2values = annotate_taxa(annotated_tree, db=taxadb, taxid_attr=taxon_column, sp_delimiter=taxon_delimiter, sp_field=taxa_field)
-                else:
-                    annotated_tree, rank2values = annotate_taxa(annotated_tree, db=taxadb, taxid_attr="name", sp_delimiter=taxon_delimiter, sp_field=taxa_field)
-            elif taxadb == 'NCBI':
-                if taxon_column:
-                    annotated_tree, rank2values = annotate_taxa(annotated_tree, db=taxadb, taxid_attr=taxon_column, sp_delimiter=taxon_delimiter, sp_field=taxa_field)
-                else:
-                    annotated_tree, rank2values = annotate_taxa(annotated_tree, db=taxadb, taxid_attr="name", sp_delimiter=taxon_delimiter, sp_field=taxa_field)
-        
+            
+            if taxa_dump and taxadb == 'GTDB':
+                logging.info(f"Loading GTDB database dump file {taxa_dump}...")
+                GTDBTaxa().update_taxonomy_database(taxa_dump)
+            elif taxa_dump and taxadb == 'NCBI':
+                logging.info(f"Loading NCBI database dump file {taxa_dump}...")
+                NCBITaxa().update_taxonomy_database(taxa_dump)
+                
+            annotated_tree, rank2values = annotate_taxa(annotated_tree, db=taxadb, \
+                taxid_attr=taxon_column, sp_delimiter=taxon_delimiter, sp_field=taxa_field)
+                
         # evolutionary events annotation
         annotated_tree = annotate_evol_events(annotated_tree, sp_delimiter=taxon_delimiter, sp_field=taxa_field)
-        
-        prop2type.update({# start with leaf name
-                'rank': str,
-                'sci_name': str,
-                'taxid': str,
-                'lineage':str,
-                'named_lineage': str,
-                'evoltype': str,
-                'dup_sp': str,
-                'dup_percent': float,
-                })
+        prop2type.update(TAXONOMICDICT)
     else:
         rank2values = {}
 
@@ -428,7 +627,6 @@ def run_tree_annotate(tree, input_annotated_tree=False,
     
     # name internal nodes
     annotated_tree = name_nodes(annotated_tree)
-
     return annotated_tree, prop2type
 
 def run(args):
@@ -437,6 +635,7 @@ def run(args):
     level = 1 # level 1 is the leaf name
     prop2type = {}
     metadata_dict = {}
+    column2method = {}
 
     # checking file and output exists
     if not os.path.exists(args.tree):
@@ -452,42 +651,23 @@ def run(args):
         
 
     # parsing tree
-    if args.tree:
-        tree = None  # Initialize tree to None
-        try:
-            if args.input_type == 'newick' or args.input_type == 'auto':
-                try:
-                    tree = ete4_parse(open(args.tree), internal_parser=args.internal_parser)
-                    # If parsing is successful, proceed
-                except Exception as e:
-                    if args.input_type == 'newick':
-                        print(e)
-                        sys.exit(1)
-                    # If it's 'auto', try the next format
-            if args.input_type == 'ete' or (args.input_type == 'auto' and tree is None):
-                with open(args.tree, 'r') as f:
-                    file_content = f.read()
-                    tree = b64pickle.loads(file_content, encoder='pickle', unpack=False)
-        except ValueError as e:
-            print(e)
-            if args.input_type == 'ete':
-                print("Invalid ete format.")
-            else:
-                print("Invalid tree format.")
-            sys.exit(1)
+    try:
+        tree, eteformat_flag = validate_tree(args.tree, args.input_type, args.internal_parser)
+    except TreeFormatError as e:
+        print(e)
+        sys.exit(1)
 
-    # if refer tree from taxadb, input tree will be ignored
-    # elif taxatree and taxadb:
-    #     tree = ''
-    else:
-        sys.exit('empty input')
-
+    # resolve polytomy
+    if args.resolve_polytomy:
+        tree.resolve_polytomy()
+        
     # parse csv to metadata table
     start = time.time()
     print("start parsing...")
     # parsing metadata
     if args.metadata: # make a series aof metadatas
-        metadata_dict, node_props, columns, prop2type = parse_csv(args.metadata, no_colnames=args.no_colnames, aggregate_duplicate=args.aggregate_duplicate)
+        metadata_dict, node_props, columns, prop2type = parse_csv(args.metadata, delimiter=args.metadata_sep, \
+        no_colnames=args.no_colnames, aggregate_duplicate=args.aggregate_duplicate)
     else: # annotated_tree
         node_props=[]
         columns = {}
@@ -526,6 +706,9 @@ def run(args):
         })
 
     # start annotation
+    if args.column_summary_method:
+        column2method = process_column_summary_methods(args.column_summary_method)
+    
     annotated_tree, prop2type = run_tree_annotate(tree, input_annotated_tree=args.annotated_tree,
         metadata_dict=metadata_dict, node_props=node_props, columns=columns,
         prop2type=prop2type,
@@ -533,11 +716,18 @@ def run(args):
         multiple_text_prop=args.multiple_text_prop, num_prop=args.num_prop, num_prop_idx=args.num_prop_idx,
         bool_prop=args.bool_prop, bool_prop_idx=args.bool_prop_idx,
         prop2type_file=args.prop2type, alignment=args.alignment,
-        emapper_pfam=args.emapper_pfam, emapper_smart=args.emapper_smart,
-        counter_stat=args.counter_stat, num_stat=args.num_stat,
-        taxonomic_profile=args.taxonomic_profile, taxadb=args.taxadb, taxon_column=args.taxon_column,
+        emapper_pfam=args.emapper_pfam, emapper_smart=args.emapper_smart, 
+        counter_stat=args.counter_stat, num_stat=args.num_stat, column2method=column2method, 
+        taxadb=args.taxadb, taxa_dump=args.taxa_dump, taxon_column=args.taxon_column,
         taxon_delimiter=args.taxon_delimiter, taxa_field=args.taxa_field,
-        rank_limit=args.rank_limit, pruned_by=args.pruned_by, outdir=args.outdir)
+        rank_limit=args.rank_limit, pruned_by=args.pruned_by, 
+        acr_discrete_columns=args.acr_discrete_columns, 
+        prediction_method=args.prediction_method, model=args.model, 
+        delta_stats=args.delta_stats, ent_type=args.ent_type, 
+        iteration=args.iteration, lambda0=args.lambda0, se=args.se,
+        thin=args.thin, burn=args.burn,
+        ls_columns=args.ls_columns, prec_cutoff=args.prec_cutoff, sens_cutoff=args.sens_cutoff, 
+        threads=args.threads, outdir=args.outdir)
 
     if args.outdir:
         base=os.path.splitext(os.path.basename(args.tree))[0]
@@ -561,14 +751,8 @@ def run(args):
 
         ### out tsv
         prop_keys = list(prop2type.keys())
-        if args.taxonomic_profile:
-            prop_keys.extend([
-                'rank',
-                'sci_name',
-                'taxid',
-                'lineage',
-                'named_lineage'
-            ])
+        if args.taxon_column:
+            prop_keys.extend(list(TAXONOMICDICT.keys()))
         if args.annotated_tree:
             tree2table(annotated_tree, internal_node=True, props=None, outfile=os.path.join(args.outdir, out_tsv))
         else:
@@ -653,7 +837,7 @@ def parse_csv(input_files, delimiter='\t', no_colnames=False, aggregate_duplicat
             else:
                 dtype = infer_dtype(columns[prop])
                 prop2type[prop] = dtype # get_type_convert(dtype)
-
+    
     for input_file in input_files:
         # check file
         if check_tar_gz(input_file):
@@ -721,12 +905,16 @@ def parse_csv(input_files, delimiter='\t', no_colnames=False, aggregate_duplicat
 
     return metadata, node_props, columns, prop2type
 
-# def get_type_convert(np_type):
-#     """
-#     convert np_type to python type
-#     """
-#     convert_type = type(np.zeros(1,np_type).tolist()[0])
-#     return (np_type, convert_type)
+def process_column_summary_methods(column_summary_methods):
+    column_methods = {}
+    if column_summary_methods:
+        for entry in column_summary_methods:
+            try:
+                column, method = entry.split('=')
+                column_methods[column] = method
+            except ValueError:
+                raise ValueError(f"Invalid format for --column-summary-method: '{entry}'. Expected format: ColumnName=Method")
+    return column_methods
 
 def get_comma_separated_values(lst):
     for item in lst:
@@ -734,25 +922,90 @@ def get_comma_separated_values(lst):
             return True
     return False
 
+def can_convert_to_bool(column):
+    true_values = {'true', 't', 'yes', 'y', '1'}
+    false_values = {'false', 'f', 'no', 'n', '0'}
+    ignore_values = {'nan', 'none', ''}  # Add other representations of NaN as needed
+
+    # Initialize sets to hold the representations of true and false values
+    true_representations = set()
+    false_representations = set()
+
+    for value in column:
+        str_val = str(value).strip()  # Preserving the original capitalization
+        if str_val.lower() in ignore_values:
+            continue  # Skip this value
+        if str_val.lower() in true_values:
+            true_representations.add(str_val)
+        elif str_val.lower() in false_values:
+            false_representations.add(str_val)
+        else:
+            return False
+
+    # Check that all true values and all false values have exactly one representation
+    return len(true_representations) <= 1 and len(false_representations) <= 1
+
+
 def convert_column_data(column, np_dtype):
     #np_dtype = np.dtype(dtype).type
     try:
         data = np.array(column).astype(np_dtype)
         return np_dtype
-    except ValueError:
+    except ValueError as e:
         return None
-    #data.astype(np.float)
+
+def convert_to_prop_array(metadata_dict, prop):
+    """
+    Convert a dictionary of metadata to a structured array format.
+
+    Parameters:
+    metadata_dict (dict): The original dictionary containing metadata.
+    prop (str): The property to extract from the metadata.
+
+    Returns:
+    dict: A dictionary with keys as properties and values as structured arrays.
+    
+    # {"leaf1":{"prop":"value1"},{"leaf2":{"prop":"value2"}}} 
+    # to 
+    # {"prop":[["leaf1", "leaf2"],["value1", "value2"]]}
+    """
+    prop_array = {prop: [[], []]}
+    for leaf, value in metadata_dict.items():
+        prop_array[prop][0].append(leaf)  # Append key
+        prop_array[prop][1].append(value.get(prop, None))  # Append property value, handle missing values
+
+    return prop_array
+
+def convert_back_to_original(prop2array):
+    """
+    Convert the structured array format back to the original dictionary format.
+
+    Parameters:
+    prop2array (dict): The structured array format dictionary.
+
+    Returns:
+    dict: The original format of the data.
+    """
+    metadata_dict = {}
+    for key in prop2array:
+        identifiers, values = prop2array[key]
+        for identifier, value in zip(identifiers, values):
+            if identifier not in metadata_dict:
+                metadata_dict[identifier] = {}
+            metadata_dict[identifier][key] = value
+    return metadata_dict
 
 def infer_dtype(column):
     if get_comma_separated_values(column):
         return list
+    elif can_convert_to_bool(column):
+        return bool
     else:
         dtype_dict = {
             float:np.float64,
-            bool:np.bool_,
             str:np.str_
             }
-        #dtype_order = ['float64', 'bool', 'str']
+        #dtype_order = ['float64', 'str']
         for dtype, np_dtype in dtype_dict.items():
             result = convert_column_data(column, np_dtype)
             if result is not None:
@@ -768,7 +1021,7 @@ def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, 
     # preload all leaves to save time instead of search in tree
     for leaf in tree.leaves():
         name2leaf[leaf.name].append(leaf)
-
+    
     # load all metadata to leaf nodes
     for node, props in metadata_dict.items():
         if node in name2leaf.keys():
@@ -782,6 +1035,7 @@ def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, 
                         else:
                             taxon_prop = value
                         target_node.add_prop(key, taxon_prop)
+                    
                     # numerical
                     elif key in prop2type and prop2type[key]==float:
                         try:
@@ -794,9 +1048,11 @@ def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, 
                             target_node.add_prop(key, 'NaN')
 
                     # categorical
+                    # list
                     elif key in prop2type and prop2type[key]==list:
                         value_list = value.split(multi_text_seperator)
                         target_node.add_prop(key, value_list)
+                    # str
                     else:
                         target_node.add_prop(key, value)
         else:
@@ -822,11 +1078,12 @@ def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, 
 
     return tree
 
-def merge_text_annotations(nodes, target_props, counter_stat='raw'):
+def merge_text_annotations(nodes, target_props, column2method):
     pair_seperator = "--"
     item_seperator = "||"
     internal_props = {}
     for target_prop in target_props:
+        counter_stat = column2method.get(target_prop, "raw")
         if counter_stat == 'raw':
             prop_list = children_prop_array_missing(nodes, target_prop)
             internal_props[add_suffix(target_prop, 'counter')] = item_seperator.join([add_suffix(str(key), value, pair_seperator) for key, value in sorted(dict(Counter(prop_list)).items())])
@@ -845,12 +1102,12 @@ def merge_text_annotations(nodes, target_props, counter_stat='raw'):
             #internal_props[add_suffix(target_prop, 'counter')] = '||'.join([add_suffix(key, value, '--') for key, value in dict(Counter(prop_list)).items()])
 
         else:
-            print('Invalid stat method')
-            break
+            #print('Invalid stat method')
+            pass
 
     return internal_props
 
-def merge_multitext_annotations(nodes, target_props, counter_stat='raw'):
+def merge_multitext_annotations(nodes, target_props, column2method):
     #seperator of multiple text 'GO:0000003,GO:0000902,GO:0000904'
     multi_text_seperator = ','
     pair_seperator = "--"
@@ -858,6 +1115,7 @@ def merge_multitext_annotations(nodes, target_props, counter_stat='raw'):
 
     internal_props = {}
     for target_prop in target_props:
+        counter_stat = column2method.get(target_prop, "raw")
         if counter_stat == 'raw':
             prop_list = children_prop_array(nodes, target_prop)
             multi_prop_list = []
@@ -885,80 +1143,58 @@ def merge_multitext_annotations(nodes, target_props, counter_stat='raw'):
             internal_props[add_suffix(target_prop, 'counter')] = item_seperator.join(counter_line)
             #internal_props[add_suffix(target_prop, 'counter')] = '||'.join([add_suffix(key, value, '--') for key, value in dict(Counter(prop_list)).items()])
         else:
-            print('Invalid stat method')
-            break
+            #print('Invalid stat method')
+            pass
 
     return internal_props
 
-# def merge_bool_annotations(nodes, target_props, counter_stat='raw'):
-#     internal_props = {}
-#     for target_prop in target_props:
-#         if counter_stat == 'raw':
-#             prop_list = children_prop_array(nodes, target_prop)
-#             counter_line = []
-#             for key, value in dict(Counter(prop_list)).items():
-#                 counter_line.append(add_suffix(key, value, '--'))
-
-#             internal_props[add_suffix(target_prop, 'counter')] = '||'.join(counter_line)
-#             # internal_props[add_suffix(target_prop, 'counter')] = '||'.join([add_suffix(str(key), value, '--') for key, value in dict(Counter(prop_list)).items()])
-
-#         # elif counter_stat == 'relative':
-#         #     prop_list = children_prop_array(nodes, target_prop)
-#         #     internal_props[add_suffix(target_prop, 'counter')] = '||'.join([add_suffix(key, value, '--') for key, value in dict(Counter(prop_list)).items()])
-
-#         else:
-#             print('Invalid stat method')
-#             break
-
-#     return internal_props
-
-def merge_num_annotations(nodes, target_props, num_stat='all'):
+def merge_num_annotations(nodes, target_props, column2method):
     internal_props = {}
     for target_prop in target_props:
-        if target_prop != 'dist' and target_prop != 'support':
-            prop_array = np.array(children_prop_array(nodes, target_prop),dtype=np.float64)
-            prop_array = prop_array[~np.isnan(prop_array)] # remove nan data
-            if prop_array.any():
-                n, (smin, smax), sm, sv, ss, sk = stats.describe(prop_array)
+        num_stat = column2method.get(target_prop, None)
+        if num_stat != 'none':
+            if target_prop != 'dist' and target_prop != 'support':
+                prop_array = np.array(children_prop_array(nodes, target_prop),dtype=np.float64)
+                prop_array = prop_array[~np.isnan(prop_array)] # remove nan data
+                
+                
+                if prop_array.any():
+                    n, (smin, smax), sm, sv, ss, sk = stats.describe(prop_array)
 
-                if num_stat == 'all':
-                    internal_props[add_suffix(target_prop, 'avg')] = sm
-                    internal_props[add_suffix(target_prop, 'sum')] = np.sum(prop_array)
-                    internal_props[add_suffix(target_prop, 'max')] = smax
-                    internal_props[add_suffix(target_prop, 'min')] = smin
-                    if math.isnan(sv) == False:
-                        internal_props[add_suffix(target_prop, 'std')] = sv
-                    else:
-                        internal_props[add_suffix(target_prop, 'std')] = 0
+                    if num_stat == 'all':
+                        internal_props[add_suffix(target_prop, 'avg')] = sm
+                        internal_props[add_suffix(target_prop, 'sum')] = np.sum(prop_array)
+                        internal_props[add_suffix(target_prop, 'max')] = smax
+                        internal_props[add_suffix(target_prop, 'min')] = smin
+                        if math.isnan(sv) == False:
+                            internal_props[add_suffix(target_prop, 'std')] = sv
+                        else:
+                            internal_props[add_suffix(target_prop, 'std')] = 0
 
-                elif num_stat == 'avg':
-                    internal_props[add_suffix(target_prop, 'avg')] = sm
-                elif num_stat == 'sum':
-                    #print(target_prop)
-                    internal_props[add_suffix(target_prop, 'sum')] = np.sum(prop_array)
-                elif num_stat == 'max':
-                    internal_props[add_suffix(target_prop, 'max')] = smax
-                elif num_stat == 'min':
-                    internal_props[add_suffix(target_prop, 'min')] = smin
-                elif num_stat == 'std':
-                    if math.isnan(sv) == False:
-                        internal_props[add_suffix(target_prop, 'std')] = sv
+                    elif num_stat == 'avg':
+                        internal_props[add_suffix(target_prop, 'avg')] = sm
+                    elif num_stat == 'sum':
+                        #print(target_prop)
+                        internal_props[add_suffix(target_prop, 'sum')] = np.sum(prop_array)
+                    elif num_stat == 'max':
+                        internal_props[add_suffix(target_prop, 'max')] = smax
+                    elif num_stat == 'min':
+                        internal_props[add_suffix(target_prop, 'min')] = smin
+                    elif num_stat == 'std':
+                        if math.isnan(sv) == False:
+                            internal_props[add_suffix(target_prop, 'std')] = sv
+                        else:
+                            internal_props[add_suffix(target_prop, 'std')] = 0
                     else:
-                        internal_props[add_suffix(target_prop, 'std')] = 0
+                        #print('Invalid stat method')
+                        pass
                 else:
-                    print('Invalid stat method')
                     pass
-            else:
-                pass
 
     if internal_props:
         return internal_props
     else:
         return None
-
-
-def add_suffix(name, suffix, delimiter='_'):
-    return str(name) + delimiter + str(suffix)
 
 def name_nodes(tree):
     for i, node in enumerate(tree.traverse("postorder")):
@@ -982,16 +1218,15 @@ def gtdb_accession_to_taxid(accession):
 
 def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field=0):
     global rank2values
-
+    logging.info(f"\n==============Annotating tree with {db} taxonomic database============")
+    
     def return_spcode_ncbi(leaf):
-        #print(leaf.props.get(taxid_attr).split(sp_delimiter)[sp_field])
         try:
             return leaf.props.get(taxid_attr).split(sp_delimiter)[sp_field]
         except (IndexError, ValueError):
             return leaf.props.get(taxid_attr)
 
     def return_spcode_gtdb(leaf):
-        #print(leaf.props.get(taxid_attr).split(sp_delimiter)[sp_field])
         try:
             if sp_delimiter:
                 species_attribute = leaf.props.get(taxid_attr).split(sp_delimiter)[sp_field]
@@ -1058,53 +1293,36 @@ def get_range(input_range):
     return column_start, column_end
 
 def parse_emapper_annotations(input_file, delimiter='\t', no_colnames=False):
-    """
-    Takes tsv table as input
-    Return
-    metadata, as dictionary of dictionaries for each node's metadata
-    node_props, a list of property names(column names of metadata table)
-    columns, dictionary of property name and it's values
-    """
     metadata = {}
     columns = defaultdict(list)
     prop2type = {}
-    headers = ["#query", "seed_ortholog", "evalue",	"score","eggNOG_OGs",
-            "max_annot_lvl","COG_category","Description","Preferred_name","GOs",
-            "EC","KEGG_ko","KEGG_Pathway",	"KEGG_Module", "KEGG_Reaction",	"KEGG_rclass",
-            "BRITE", "KEGG_TC", "CAZy", "BiGG_Reaction", "PFAMs"]
-
-    lines_count = len(open(input_file).readlines())
+    headers = ["#query", "seed_ortholog", "evalue", "score", "eggNOG_OGs",
+               "max_annot_lvl", "COG_category", "Description", "Preferred_name", "GOs",
+               "EC", "KEGG_ko", "KEGG_Pathway", "KEGG_Module", "KEGG_Reaction", "KEGG_rclass",
+               "BRITE", "KEGG_TC", "CAZy", "BiGG_Reaction", "PFAMs"]
 
     with open(input_file, 'r') as f:
+        # Skip lines starting with '##'
+        filtered_lines = (line for line in f if not line.startswith('##'))
 
         if no_colnames:
-            reader = csv.DictReader(f, delimiter=delimiter, fieldnames=headers)
+            reader = csv.DictReader(filtered_lines, delimiter=delimiter, fieldnames=headers)
         else:
-            lines_count = len(f.readlines())
-            skip_header = 4
-            skip_footer = 3
-            f.seek(0) # using f twice
-            reader = csv.DictReader(islice(f,skip_header,lines_count-skip_footer), delimiter=delimiter)
+            reader = csv.DictReader(filtered_lines, delimiter=delimiter)
 
         node_header, node_props = headers[0], headers[1:]
         for row in reader:
             nodename = row[node_header]
             del row[node_header]
 
-            for k, v in row.items(): # replace missing value
-
-                if check_missing(v):
-                    row[k] = 'NaN'
-                else:
-                    row[k] = v
+            for k, v in row.items():  # Replace missing value
+                row[k] = 'NaN' if check_missing(v) else v
             metadata[nodename] = dict(row)
-            for (k,v) in row.items(): # go over each column name and value
-                columns[k].append(v) # append the value into the appropriate list
-                                    # based on column name k
+            for k, v in row.items():  # Go over each column name and value
+                columns[k].append(v)  # Append the value into the appropriate list based on column name k
 
     return metadata, node_props, columns
-
-def annot_tree_pfam_table(post_tree, pfam_table, alg_fasta):
+def annot_tree_pfam_table(post_tree, pfam_table, alg_fasta, domain_prop='dom_arq'):
     pair_delimiter = "@"
     item_seperator = "||"
     fasta = SeqGroup(alg_fasta) # aligned_fasta
@@ -1129,7 +1347,6 @@ def annot_tree_pfam_table(post_tree, pfam_table, alg_fasta):
                 if raw2alg.get(seq_name):
                     trans_dom_start = raw2alg[seq_name][dom_start]
                     trans_dom_end = raw2alg[seq_name][dom_end]
-
                     dom_info_string = pair_delimiter.join([dom_name, str(trans_dom_start), str(trans_dom_end)])
                     seq2doms[seq_name].append(dom_info_string)
 
@@ -1137,23 +1354,22 @@ def annot_tree_pfam_table(post_tree, pfam_table, alg_fasta):
         if l.name in seq2doms.keys():
             domains = seq2doms[l.name]
             domains_string = item_seperator.join(domains)
-            l.add_prop('dom_arq', domains_string)
+            l.add_prop(domain_prop, domains_string)
 
     for n in post_tree.traverse():
         if not n.is_leaf:
-            random_node_domains = n.get_closest_leaf()[0].props.get('dom_arq', 'none@none@none')
-            n.add_prop('dom_arq', random_node_domains)
+            random_node_domains = n.get_closest_leaf()[0].props.get(domain_prop, 'none@none@none')
+            n.add_prop(domain_prop, random_node_domains)
 
     # for n in post_tree.traverse():
     #     print(n.name, n.props.get('dom_arq'))
 
-def annot_tree_smart_table(post_tree, smart_table, alg_fasta):
+def annot_tree_smart_table(post_tree, smart_table, alg_fasta, domain_prop='dom_arq'):
     pair_delimiter = "@"
     item_seperator = "||"
     fasta = SeqGroup(alg_fasta) # aligned_fasta
     raw2alg = defaultdict(dict)
     for num, (name, seq, _) in enumerate(fasta):
-
         p_raw = 1
         for p_alg, (a) in enumerate(seq, 1):
             if a != '-':
@@ -1180,12 +1396,12 @@ def annot_tree_smart_table(post_tree, smart_table, alg_fasta):
         if l.name in seq2doms.keys():
             domains = seq2doms[l.name]
             domains_string = item_seperator.join(domains)
-            l.add_prop('dom_arq', domains_string)
+            l.add_prop(domain_prop, domains_string)
 
     for n in post_tree.traverse():
         if not n.is_leaf:
-            random_node_domains = n.get_closest_leaf()[0].props.get('dom_arq', 'none@none@none')
-            n.add_prop('dom_arq', random_node_domains)
+            random_node_domains = n.get_closest_leaf()[0].props.get(domain_prop, 'none@none@none')
+            n.add_prop(domain_prop, random_node_domains)
 
     # for n in post_tree.traverse():
     #     print(n.name, n.props.get('dom_arq'))
@@ -1235,6 +1451,41 @@ def parse_fasta(fastafile):
 #                     all_golsims_dict[entry] = single_desc
 #     return output_dict, all_golsims_dict
 
+def get_pval(prop2array, dump_tree, acr_discrete_columns_dict, iteration=100, 
+            prediction_method="MPPA", model="F81", ent_type='SE', 
+            lambda0=0.1, se=0.5, sim=10000, burn=100, thin=10, threads=1):
+    prop2delta_array = {}
+    for _ in range(iteration):
+        shuffled_dict = {}
+        for column, trait in acr_discrete_columns_dict.items():
+            trait = acr_discrete_columns_dict[column]
+            #shuffle traits
+            shuffled_trait = np.random.choice(trait, len(trait), replace=False)
+            prop2array[column][1] = list(shuffled_trait)
+            shuffled_dict[column] = list(shuffled_trait)
+
+        # Converting back to the original dictionary format
+        # # annotate new metadata to leaf
+        new_metadata_dict = convert_back_to_original(prop2array)
+        dump_tree = load_metadata_to_tree(dump_tree, new_metadata_dict)
+        
+        # # run acr
+        random_acr_results, dump_tree = run_acr_discrete(dump_tree, shuffled_dict, \
+        prediction_method="MPPA", model="F81", threads=threads, outdir=None)
+        random_delta = run_delta(random_acr_results, dump_tree, ent_type=ent_type, 
+                lambda0=lambda0, se=se, sim=sim, burn=burn, thin=thin, 
+                threads=threads)
+
+        for prop, delta_result in random_delta.items():
+            if prop in prop2delta_array:
+                prop2delta_array[prop].append(delta_result)
+            else:
+                prop2delta_array[prop] = [delta_result]
+        clear_extra_features([dump_tree], ["name", "dist", "support"])
+
+    return prop2delta_array
+
+
 def tree2table(tree, internal_node=True, props=None, outfile='tree2table.csv'):
     node2leaves = {}
     leaf2annotations = {}
@@ -1272,4 +1523,3 @@ def tree2table(tree, internal_node=True, props=None, outfile='tree2table.csv'):
                         writer.writerow(output_row)
                     else:
                         pass
-    return

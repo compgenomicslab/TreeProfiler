@@ -45,7 +45,11 @@ def populate_main_args(main_args_p):
     group.add_argument('--prop2type',
         type=str,
         help="config tsv file where determine the datatype of target properties, if your input tree type is .ete, it's note necessary")
-
+    group.add_argument('--resolve-polytomy',
+        default=False,
+        action='store_true',
+        required=False,
+        help="Resolve polytomy in tree")
     group = main_args_p.add_argument_group(title='Pruning parameters',
         description="Auto pruning parameters")
     group.add_argument('--rank-limit',
