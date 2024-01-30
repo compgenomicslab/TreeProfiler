@@ -631,7 +631,7 @@ def get_acr_discrete_layouts(tree, props, level, prop2type, column_width=70, pad
     return layouts, level, prop_color_dict
 
 def get_acr_continuous_layouts(tree, props, level, prop2type, padding_x=1, padding_y=0):
-    gradientscolor = build_color_gradient(20, colormap_name='viridis')
+    gradientscolor = build_color_gradient(20, colormap_name='jet')
     layouts = []
     for prop in props:
         all_values = np.array(sorted(list(set(tree_prop_array(tree, prop))))).astype('float64')
@@ -657,7 +657,7 @@ def get_ls_layouts(tree, props, level, prop2type, padding_x=1, padding_y=0):
     ls_clade_props = [add_suffix(prop, ls_clade_suffix) for prop in props]
     lsprop2color = assign_color_to_values(ls_clade_props, paired_color)
 
-    gradientscolor = build_color_gradient(20, colormap_name='viridis')
+    gradientscolor = build_color_gradient(20, colormap_name='jet')
     
     layouts = []
     ls_props = []
@@ -786,7 +786,7 @@ def get_binary_layouts(tree, props, level, prop2type, column_width=70, reverse=F
     return layouts, level, prop_color_dict
 
 def get_branchscore_layouts(tree, props, prop2type, padding_x=1, padding_y=0, internal_rep='avg'):
-    gradientscolor = build_color_gradient(20, colormap_name='viridis')
+    gradientscolor = build_color_gradient(20, colormap_name='jet')
     layouts = []
     for prop in props:
         all_values = np.array(sorted(list(set(tree_prop_array(tree, prop))))).astype('float64')
