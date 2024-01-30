@@ -51,12 +51,14 @@ TreeProfiler is command-line tool for profiling metadata table into phylogenetic
 ## Installation
 ### Dependencies
 TreeProfiler requires 
-  - Python version >= 3.7
+  - Python version >= 3.9
   - ETE Toolkit v4
   - biopython
   - selenium
   - scipy
   - matplotlib
+  - numba
+  - pastml (specific)
 
 ### Quick install via pip
 ```
@@ -65,7 +67,10 @@ pip install --force-reinstall https://github.com/etetoolkit/ete/archive/ete4.zip
 
 
 # Install TreeProfiler dependencies
-pip install biopython selenium scipy matplotlib
+pip install biopython selenium scipy matplotlib numba
+
+# Install custom pastml package for ete4
+pip install "git+https://github.com/dengzq1234/pastml.git@pastml2ete4" 
 
 # Install TreeProfiler tool via pip
 pip install TreeProfiler
