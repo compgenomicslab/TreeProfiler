@@ -294,12 +294,10 @@ def run(args):
         popup_prop_keys = list(prop2type.keys()) 
 
         if eteformat_flag:
-            leafa, _, leafb, _ = tree._get_farthest_and_closest_leaves()
-            leaf_prop2type = get_prop2type(leafa)
-            leaf_prop2type.update(get_prop2type(leafb))
-            internal_node_prop2type = get_prop2type(tree)
-            prop2type.update(leaf_prop2type)
-            prop2type.update(internal_node_prop2type)
+            for path, node in tree.iter_prepostorder():
+                prop2type.update(get_prop2type(node))
+                
+                
 
         # elif args.input_type == 'newick':
         #     popup_prop_keys = list(prop2type.keys()) 
@@ -374,6 +372,7 @@ def run(args):
                 layouts.extend(colorbranch_layouts)
                 total_color_dict.append(color_dict)
                 visualized_props.extend(categorical_props)
+                visualized_props.extend([add_suffix(prop, 'counter') for prop in args.piechart_layout])
 
             numerical_props = [prop for prop in args.colorbranch_layout if prop2type[prop] in [float, int]]
             if numerical_props:
@@ -386,6 +385,7 @@ def run(args):
             piechart_layouts = get_piechart_layouts(tree, args.piechart_layout, prop2type=prop2type, padding_x=args.padding_x, padding_y=args.padding_y)
             layouts.extend(piechart_layouts)
             visualized_props.extend(args.piechart_layout)
+            visualized_props.extend([add_suffix(prop, 'counter') for prop in args.piechart_layout])
 
         if layout == 'rectangle-layout':
             rectangle_layouts, level, color_dict = get_rectangle_layouts(tree, args.rectangle_layout, level, prop2type=prop2type, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y)
@@ -777,7 +777,7 @@ def get_binary_layouts(tree, props, level, prop2type, column_width=70, reverse=F
             else:
                 layout = conditional_layouts.LayoutBinary('ReverseBinary_'+prop, level, bool_prop=prop, width=column_width, padding_x=padding_x, padding_y=0, reverse=reverse)
             
-            internal_prop = prop + '_' + 'counter'
+            internal_prop = add_suffix(prop, 'counter')
 
             layouts.append(layout)
             level += 1
