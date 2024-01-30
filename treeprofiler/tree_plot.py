@@ -298,7 +298,6 @@ def run(args):
                 prop2type.update(get_prop2type(node))
                 
                 
-
         # elif args.input_type == 'newick':
         #     popup_prop_keys = list(prop2type.keys()) 
     
@@ -372,7 +371,7 @@ def run(args):
                 layouts.extend(colorbranch_layouts)
                 total_color_dict.append(color_dict)
                 visualized_props.extend(categorical_props)
-                visualized_props.extend([add_suffix(prop, 'counter') for prop in args.piechart_layout])
+                #visualized_props.extend([add_suffix(prop, 'counter') for prop in args.piechart_layout])
 
             numerical_props = [prop for prop in args.colorbranch_layout if prop2type[prop] in [float, int]]
             if numerical_props:
