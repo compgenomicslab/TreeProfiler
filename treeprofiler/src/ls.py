@@ -10,7 +10,7 @@ from treeprofiler.src.utils import add_suffix
 # Function to calculate precision, sensitivity, and F1 score
 def calculate_metrics(node, total_with_trait, prop):
     if not node.is_leaf:
-        clade_with_trait = sum(1 for child in node.leaves() if child.props.get(prop) is not None and bool(strtobool(child.props.get(prop))))
+        clade_with_trait = sum(1 for child in node.leaves() if bool_checker(child, prop))
         clade_total = len([leave for leave in node.leaves()])
         precision = clade_with_trait / clade_total if clade_total else 0
         sensitivity = clade_with_trait / total_with_trait if total_with_trait else 0
@@ -20,7 +20,23 @@ def calculate_metrics(node, total_with_trait, prop):
 
 # Total number of nodes with the trait
 def get_total_trait(tree, prop):
-    return sum(1 for node in tree.leaves() if node.props.get(prop) is not None and bool(strtobool(node.props.get(prop))))
+    return sum(1 for node in tree.leaves() if bool_checker(node, prop))
+
+def bool_checker(node, prop):
+    """
+    Check if the property of a node can be interpreted as a boolean 'True'.
+
+    :param node: The node whose property is to be checked.
+    :param prop: The property name to check.
+    :return: True if the property exists and is a boolean 'True', False otherwise.
+    """
+    prop_value = node.props.get(prop)
+    if prop_value is not None:
+        try:
+            return bool(strtobool(str(prop_value)))
+        except ValueError:
+            return False
+    return False
 
 ###### start lineage specificity analysis ######
 def run_ls(tree, props, precision_cutoff=0.95, sensitivity_cutoff=0.95):
