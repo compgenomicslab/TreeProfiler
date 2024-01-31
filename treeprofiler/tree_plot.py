@@ -926,9 +926,10 @@ def categorical2matrix(tree, profiling_props, dtype=str):
                         val = node.props.get(profiling_prop)
                     leaf2matrix[node.name].append(val)
                 else:
-                    leaf2matrix[node.name].append(None)
+                    leaf2matrix[node.name].append("NaN")
     # get color
     value2color = {}
+    
     all_values = sorted(list(set(flatten([sublist for sublist in leaf2matrix.values()]))))
     value2color = assign_color_to_values(all_values, paired_color)
     if "NaN" in value2color:
