@@ -544,55 +544,80 @@ def run_tree_annotate(tree, input_annotated_tree=False,
             prop2type[add_suffix(prop, column2method[prop])] = float
 
     if not input_annotated_tree:
-        #pre load node2leaves to save time
         node2leaves = annotated_tree.get_cached_content()
-        
-        for i, node in enumerate(annotated_tree.traverse("postorder")):
-            internal_props = {}
+
+        # Prepare data for all nodes
+        nodes_data = []
+        for node in annotated_tree.traverse("postorder"):
             if not node.is_leaf:
-                if text_prop:
-                    internal_props_text = merge_text_annotations(node2leaves[node], text_prop, column2method)
-                    internal_props.update(internal_props_text)
+                node_data = (node, node2leaves[node], text_prop, multiple_text_prop, bool_prop, num_prop, column2method, alignment, name2seq)
+                nodes_data.append(node_data)
 
-                if multiple_text_prop:
-                    internal_props_multi = merge_multitext_annotations(node2leaves[node], multiple_text_prop, column2method)
-                    internal_props.update(internal_props_multi)
+        # Process nodes in parallel if more than one thread is specified
+        if threads > 1:
+            with Pool(threads) as pool:
+                results = pool.map(process_node, nodes_data)
+        else:
+            # For single-threaded execution, process nodes sequentially
+            results = map(process_node, nodes_data)
 
-                if bool_prop:
-                    internal_props_bool = merge_text_annotations(node2leaves[node], bool_prop, column2method)
-                    internal_props.update(internal_props_bool)
+        # Integrate the results back into your tree
+        for result in results:
+            node, internal_props, consensus_seq = result
+            for key, value in internal_props.items():
+                node.add_prop(key, value)
+            if consensus_seq:
+                node.add_prop(alignment_prop, consensus_seq)
 
-                if num_prop:
-                    internal_props_num = merge_num_annotations(node2leaves[node], num_prop, column2method)                        
-                    if internal_props_num:
-                        internal_props.update(internal_props_num)
+        # #pre load node2leaves to save time
+        # node2leaves = annotated_tree.get_cached_content()
+        
+        # for i, node in enumerate(annotated_tree.traverse("postorder")):
+        #     internal_props = {}
+        #     if not node.is_leaf:
+        #         if text_prop:
+        #             internal_props_text = merge_text_annotations(node2leaves[node], text_prop, column2method)
+        #             internal_props.update(internal_props_text)
+
+        #         if multiple_text_prop:
+        #             internal_props_multi = merge_multitext_annotations(node2leaves[node], multiple_text_prop, column2method)
+        #             internal_props.update(internal_props_multi)
+
+        #         if bool_prop:
+        #             internal_props_bool = merge_text_annotations(node2leaves[node], bool_prop, column2method)
+        #             internal_props.update(internal_props_bool)
+
+        #         if num_prop:
+        #             internal_props_num = merge_num_annotations(node2leaves[node], num_prop, column2method)                        
+        #             if internal_props_num:
+        #                 internal_props.update(internal_props_num)
                 
-                for key,value in internal_props.items():
-                    node.add_prop(key, value)
+        #         for key,value in internal_props.items():
+        #             node.add_prop(key, value)
 
-                if alignment:
-                    # matrix = ''
-                    # for leaf in node.leaves():
-                    #     if name2seq.get(leaf.name):
-                    #         matrix += ">"+leaf.name+"\n"
-                    #         matrix += name2seq.get(leaf.name)+"\n"
-                    # consensus_seq = get_consensus_seq(StringIO(matrix), 0.7)
-                    # node.add_prop(alignment_prop, consensus_seq)
+        #         if alignment:
+        #             # matrix = ''
+        #             # for leaf in node.leaves():
+        #             #     if name2seq.get(leaf.name):
+        #             #         matrix += ">"+leaf.name+"\n"
+        #             #         matrix += name2seq.get(leaf.name)+"\n"
+        #             # consensus_seq = get_consensus_seq(StringIO(matrix), 0.7)
+        #             # node.add_prop(alignment_prop, consensus_seq)
                     
-                    #matrix_string = build_matrix_string(node, name2seq)
-                    #consensus_seq = get_consensus_seq(matrix_string)
+        #             #matrix_string = build_matrix_string(node, name2seq)
+        #             #consensus_seq = get_consensus_seq(matrix_string)
 
-                    def _consensus_node(node, name2seq, threshold=0.7):
-                        matrix_string = build_matrix_string(node, name2seq)
-                        consensus_seq = get_consensus_seq(matrix_string, threshold=threshold)
-                        return consensus_seq
+        #             def _consensus_node(node, name2seq, threshold=0.7):
+        #                 matrix_string = build_matrix_string(node, name2seq)
+        #                 consensus_seq = get_consensus_seq(matrix_string, threshold=threshold)
+        #                 return consensus_seq
                     
-                    if threads > 1:
-                        with Pool(threads - 1) as pool:
-                            consensus_seq = pool.map(get_consensus_seq, matrix_string)
-                    else:
-                        consensus_seq = _consensus_node(node, name2seq)
-                    node.add_prop(alignment_prop, consensus_seq)
+        #             if threads > 1:
+        #                 with Pool(threads - 1) as pool:
+        #                     consensus_seq = pool.map(get_consensus_seq, matrix_string)
+        #             else:
+        #                 consensus_seq = _consensus_node(node, name2seq)
+        #             node.add_prop(alignment_prop, consensus_seq)
 
                 
     else:
@@ -1090,9 +1115,11 @@ def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, 
 
     return tree
 
-def merge_node(node_data):
-    node, node_leaves, text_prop, multiple_text_prop, bool_prop, num_prop, column2method = node_data
+def process_node(node_data):
+    node, node_leaves, text_prop, multiple_text_prop, bool_prop, num_prop, column2method, alignment, name2seq = node_data
     internal_props = {}
+
+    # Process text, multitext, bool, and num properties
     if text_prop:
         internal_props_text = merge_text_annotations(node_leaves, text_prop, column2method)
         internal_props.update(internal_props_text)
@@ -1109,7 +1136,14 @@ def merge_node(node_data):
         internal_props_num = merge_num_annotations(node_leaves, num_prop, column2method)
         if internal_props_num:
             internal_props.update(internal_props_num)
-    return node, internal_props  
+
+    # Generate consensus sequence
+    consensus_seq = None
+    if alignment:  # Assuming 'alignment' is a condition to check
+        matrix_string = build_matrix_string(node, name2seq)  # Assuming 'name2seq' is accessible here
+        consensus_seq = get_consensus_seq(matrix_string, threshold=0.7)
+
+    return node, internal_props, consensus_seq
 
 def merge_text_annotations(nodes, target_props, column2method):
     pair_seperator = "--"
