@@ -548,11 +548,14 @@ def run_tree_annotate(tree, input_annotated_tree=False,
 
         # Prepare data for all nodes
         nodes_data = []
+        nodes = []
         for node in annotated_tree.traverse("postorder"):
             if not node.is_leaf:
-                node_data = (node, node2leaves[node], text_prop, multiple_text_prop, bool_prop, num_prop, column2method, alignment, name2seq)
+                nodes.append(node)
+                node_data = (node, node2leaves[node], text_prop, multiple_text_prop, bool_prop, num_prop, column2method, alignment if 'alignment' in locals() else None, name2seq if 'name2seq' in locals() else None)
                 nodes_data.append(node_data)
-
+                node.add_prop("test", "Noooooo")
+        
         # Process nodes in parallel if more than one thread is specified
         if threads > 1:
             with Pool(threads) as pool:
@@ -561,13 +564,15 @@ def run_tree_annotate(tree, input_annotated_tree=False,
             # For single-threaded execution, process nodes sequentially
             results = map(process_node, nodes_data)
 
-        # Integrate the results back into your tree
-        for result in results:
-            node, internal_props, consensus_seq = result
+        # Integrate the results back into your tree?
+        for node, result in zip(nodes, results):
+            internal_props, consensus_seq = result
+
             for key, value in internal_props.items():
                 node.add_prop(key, value)
             if consensus_seq:
                 node.add_prop(alignment_prop, consensus_seq)
+
 
         # #pre load node2leaves to save time
         # node2leaves = annotated_tree.get_cached_content()
@@ -1140,10 +1145,11 @@ def process_node(node_data):
     # Generate consensus sequence
     consensus_seq = None
     if alignment:  # Assuming 'alignment' is a condition to check
-        matrix_string = build_matrix_string(node, name2seq)  # Assuming 'name2seq' is accessible here
-        consensus_seq = get_consensus_seq(matrix_string, threshold=0.7)
-
-    return node, internal_props, consensus_seq
+        if name2seq is not None:
+            matrix_string = build_matrix_string(node, name2seq)  # Assuming 'name2seq' is accessible here
+            consensus_seq = get_consensus_seq(matrix_string, threshold=0.7)
+    
+    return internal_props, consensus_seq
 
 def merge_text_annotations(nodes, target_props, column2method):
     pair_seperator = "--"
