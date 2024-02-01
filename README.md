@@ -58,7 +58,7 @@ TreeProfiler requires
   - scipy
   - matplotlib
   - numba
-  - pastml (specific)
+  - pastml (custom)
 
 ### Quick install via pip
 ```
@@ -74,8 +74,10 @@ pip install "git+https://github.com/dengzq1234/pastml.git@pastml2ete4"
 
 # Install TreeProfiler tool via pip
 pip install TreeProfiler
-# or development mode
+or installing main repo
 pip install https://github.com/compgenomicslab/TreeProfiler/archive/main.zip
+# or development mode for latestest update
+pip install git+https://github.com/compgenomicslab/TreeProfiler@dev-repo
 ```
 
 
