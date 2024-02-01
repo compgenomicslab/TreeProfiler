@@ -572,58 +572,6 @@ def run_tree_annotate(tree, input_annotated_tree=False,
             if consensus_seq:
                 node.add_prop(alignment_prop, consensus_seq)
 
-
-        # #pre load node2leaves to save time
-        # node2leaves = annotated_tree.get_cached_content()
-        
-        # for i, node in enumerate(annotated_tree.traverse("postorder")):
-        #     internal_props = {}
-        #     if not node.is_leaf:
-        #         if text_prop:
-        #             internal_props_text = merge_text_annotations(node2leaves[node], text_prop, column2method)
-        #             internal_props.update(internal_props_text)
-
-        #         if multiple_text_prop:
-        #             internal_props_multi = merge_multitext_annotations(node2leaves[node], multiple_text_prop, column2method)
-        #             internal_props.update(internal_props_multi)
-
-        #         if bool_prop:
-        #             internal_props_bool = merge_text_annotations(node2leaves[node], bool_prop, column2method)
-        #             internal_props.update(internal_props_bool)
-
-        #         if num_prop:
-        #             internal_props_num = merge_num_annotations(node2leaves[node], num_prop, column2method)                        
-        #             if internal_props_num:
-        #                 internal_props.update(internal_props_num)
-                
-        #         for key,value in internal_props.items():
-        #             node.add_prop(key, value)
-
-        #         if alignment:
-        #             # matrix = ''
-        #             # for leaf in node.leaves():
-        #             #     if name2seq.get(leaf.name):
-        #             #         matrix += ">"+leaf.name+"\n"
-        #             #         matrix += name2seq.get(leaf.name)+"\n"
-        #             # consensus_seq = get_consensus_seq(StringIO(matrix), 0.7)
-        #             # node.add_prop(alignment_prop, consensus_seq)
-                    
-        #             #matrix_string = build_matrix_string(node, name2seq)
-        #             #consensus_seq = get_consensus_seq(matrix_string)
-
-        #             def _consensus_node(node, name2seq, threshold=0.7):
-        #                 matrix_string = build_matrix_string(node, name2seq)
-        #                 consensus_seq = get_consensus_seq(matrix_string, threshold=threshold)
-        #                 return consensus_seq
-                    
-        #             if threads > 1:
-        #                 with Pool(threads - 1) as pool:
-        #                     consensus_seq = pool.map(get_consensus_seq, matrix_string)
-        #             else:
-        #                 consensus_seq = _consensus_node(node, name2seq)
-        #             node.add_prop(alignment_prop, consensus_seq)
-
-                
     else:
         pass
         
