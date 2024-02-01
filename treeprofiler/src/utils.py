@@ -17,6 +17,7 @@ import math
 import Bio
 import re
 import sys
+from io import StringIO
 
 # conditional syntax calling
 operator_dict = {
@@ -134,10 +135,10 @@ def to_code(string):
     return conditional_output
 
 SeqRecord = Bio.SeqRecord.SeqRecord
-def get_consensus_seq(filename: Path | str, threshold=0.7) -> SeqRecord:
+def get_consensus_seq(matrix_string: Path | str, threshold=0.7) -> SeqRecord:
     #https://stackoverflow.com/questions/73702044/how-to-get-a-consensus-of-multiple-sequence-alignments-using-biopython
     common_alignment = MultipleSeqAlignment(
-        chain(*AlignIO.parse(filename, "fasta"))
+        chain(*AlignIO.parse(StringIO(matrix_string), "fasta"))
     )
     summary = SummaryInfo(common_alignment)
     consensus = summary.dumb_consensus(threshold, "-")

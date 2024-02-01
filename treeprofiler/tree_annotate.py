@@ -29,6 +29,9 @@ from treeprofiler.src.phylosignal import run_acr_discrete, run_delta
 from treeprofiler.src.ls import run_ls
 from treeprofiler.src import b64pickle
 
+from multiprocessing.pool import ThreadPool
+from multiprocessing import Pool
+
 DESC = "annotate tree"
 
 TAXONOMICDICT = {# start with leaf name
@@ -204,7 +207,6 @@ def populate_annotate_args(parser):
         type=str,
         required=True,
         help="Directory for annotated outputs.")
-
 
 def run_tree_annotate(tree, input_annotated_tree=False,
         metadata_dict={}, node_props=[], columns={}, prop2type={},
@@ -521,7 +523,6 @@ def run_tree_annotate(tree, input_annotated_tree=False,
     start = time.time()
     
     # choose summary method based on datatype
-    
     for prop in text_prop+multiple_text_prop+bool_prop:
         if not prop in column2method:
             column2method[prop] = counter_stat
@@ -543,49 +544,37 @@ def run_tree_annotate(tree, input_annotated_tree=False,
             prop2type[add_suffix(prop, column2method[prop])] = float
 
     if not input_annotated_tree:
-        #pre load node2leaves to save time
         node2leaves = annotated_tree.get_cached_content()
-        for i, node in enumerate(annotated_tree.traverse("postorder")):
-            internal_props = {}
+
+        # Prepare data for all nodes
+        nodes_data = []
+        nodes = []
+        for node in annotated_tree.traverse("postorder"):
             if not node.is_leaf:
-                if text_prop:
-                    internal_props_text = merge_text_annotations(node2leaves[node], text_prop, column2method)
-                    internal_props.update(internal_props_text)
+                nodes.append(node)
+                node_data = (node, node2leaves[node], text_prop, multiple_text_prop, bool_prop, num_prop, column2method, alignment if 'alignment' in locals() else None, name2seq if 'name2seq' in locals() else None)
+                nodes_data.append(node_data)
+        
+        # Process nodes in parallel if more than one thread is specified
+        if threads > 1:
+            with Pool(threads) as pool:
+                results = pool.map(process_node, nodes_data)
+        else:
+            # For single-threaded execution, process nodes sequentially
+            results = map(process_node, nodes_data)
 
-                if multiple_text_prop:
-                    internal_props_multi = merge_multitext_annotations(node2leaves[node], multiple_text_prop, column2method)
-                    internal_props.update(internal_props_multi)
+        # Integrate the results back into your tree?
+        for node, result in zip(nodes, results):
+            internal_props, consensus_seq = result
 
-                if bool_prop:
-                    internal_props_bool = merge_text_annotations(node2leaves[node], bool_prop, column2method)
-                    internal_props.update(internal_props_bool)
+            for key, value in internal_props.items():
+                node.add_prop(key, value)
+            if consensus_seq:
+                node.add_prop(alignment_prop, consensus_seq)
 
-                if num_prop:
-                    internal_props_num = merge_num_annotations(node2leaves[node], num_prop, column2method)                        
-                    if internal_props_num:
-                        internal_props.update(internal_props_num)
-
-                # deprecated
-                # if rest_column:
-                #     internal_props_rest = merge_text_annotations(node2leaves[node], rest_column, counter_stat=counter_stat)
-                #     internal_props.update(internal_props_rest)
-
-                #internal_props = {**internal_props_text, **internal_props_num, **internal_props_rest}
-                #print(internal_props.keys())
-
-                for key,value in internal_props.items():
-                    node.add_prop(key, value)
-
-                if alignment:
-                    matrix = ''
-                    for leaf in node.leaves():
-                        if name2seq.get(leaf.name):
-                            matrix += ">"+leaf.name+"\n"
-                            matrix += name2seq.get(leaf.name)+"\n"
-                    consensus_seq = get_consensus_seq(StringIO(matrix), 0.7)
-                    node.add_prop(alignment_prop, consensus_seq)
     else:
         pass
+        
     end = time.time()
     print('Time for merge annotations to run: ', end - start)
 
@@ -1078,6 +1067,37 @@ def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, 
 
     return tree
 
+def process_node(node_data):
+    node, node_leaves, text_prop, multiple_text_prop, bool_prop, num_prop, column2method, alignment, name2seq = node_data
+    internal_props = {}
+
+    # Process text, multitext, bool, and num properties
+    if text_prop:
+        internal_props_text = merge_text_annotations(node_leaves, text_prop, column2method)
+        internal_props.update(internal_props_text)
+
+    if multiple_text_prop:
+        internal_props_multi = merge_multitext_annotations(node_leaves, multiple_text_prop, column2method)
+        internal_props.update(internal_props_multi)
+
+    if bool_prop:
+        internal_props_bool = merge_text_annotations(node_leaves, bool_prop, column2method)
+        internal_props.update(internal_props_bool)
+
+    if num_prop:
+        internal_props_num = merge_num_annotations(node_leaves, num_prop, column2method)
+        if internal_props_num:
+            internal_props.update(internal_props_num)
+
+    # Generate consensus sequence
+    consensus_seq = None
+    if alignment:  # Assuming 'alignment' is a condition to check
+        if name2seq is not None:
+            matrix_string = build_matrix_string(node, name2seq)  # Assuming 'name2seq' is accessible here
+            consensus_seq = get_consensus_seq(matrix_string, threshold=0.7)
+    
+    return internal_props, consensus_seq
+
 def merge_text_annotations(nodes, target_props, column2method):
     pair_seperator = "--"
     item_seperator = "||"
@@ -1322,13 +1342,14 @@ def parse_emapper_annotations(input_file, delimiter='\t', no_colnames=False):
                 columns[k].append(v)  # Append the value into the appropriate list based on column name k
 
     return metadata, node_props, columns
+
 def annot_tree_pfam_table(post_tree, pfam_table, alg_fasta, domain_prop='dom_arq'):
     pair_delimiter = "@"
     item_seperator = "||"
     fasta = SeqGroup(alg_fasta) # aligned_fasta
     raw2alg = defaultdict(dict)
-    for num, (name, seq, _) in enumerate(fasta):
 
+    for num, (name, seq, _) in enumerate(fasta):
         p_raw = 1
         for p_alg, (a) in enumerate(seq, 1):
             if a != '-':
@@ -1485,6 +1506,13 @@ def get_pval(prop2array, dump_tree, acr_discrete_columns_dict, iteration=100,
 
     return prop2delta_array
 
+# Function to build the matrix string for a node
+def build_matrix_string(node, name2seq):
+    matrix = ''
+    for leaf in node.leaves():
+        if name2seq.get(leaf.name):
+            matrix += f">{leaf.name}\n{name2seq.get(leaf.name)}\n"
+    return matrix
 
 def tree2table(tree, internal_node=True, props=None, outfile='tree2table.csv'):
     node2leaves = {}
