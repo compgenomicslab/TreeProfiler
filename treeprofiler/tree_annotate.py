@@ -554,7 +554,6 @@ def run_tree_annotate(tree, input_annotated_tree=False,
                 nodes.append(node)
                 node_data = (node, node2leaves[node], text_prop, multiple_text_prop, bool_prop, num_prop, column2method, alignment if 'alignment' in locals() else None, name2seq if 'name2seq' in locals() else None)
                 nodes_data.append(node_data)
-                node.add_prop("test", "Noooooo")
         
         # Process nodes in parallel if more than one thread is specified
         if threads > 1:
