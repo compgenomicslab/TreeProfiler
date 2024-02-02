@@ -65,6 +65,15 @@ class TaxaClade(TreeLayout):
                     node.sm_style["outline_color"] = color
                     break
 
+        if not node.is_leaf:
+            # Collapsed face
+            if node.props.get('rank') == self.rank:
+                if node.props.get('sci_name') is not None:
+                    sci_name = node.props.get('sci_name')
+                    color = self.color_dict.get(sci_name, 'gray')
+                    node.add_face(TextFace(sci_name, padding_x=2, color = color),
+                        position="branch_right", column=1, collapsed_only=True)
+            
 
         # if not node.is_root and node.props.get('rank') == self.rank: 
         #     if node.props.get('sci_name'):
