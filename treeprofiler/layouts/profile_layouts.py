@@ -212,11 +212,11 @@ class LayoutProfile(TreeLayout):
             
             try:
                 if self.mode == "numerical":
-                    consensus_seq = get_consensus_seq(StringIO(matrix), 0.1)
+                    consensus_seq = get_consensus_seq(matrix, 0.1)
                 elif self.mode == 'multi':
-                    consensus_seq = get_consensus_seq(StringIO(matrix), 0.7)
+                    consensus_seq = get_consensus_seq(matrix, 0.7)
                 else:
-                    consensus_seq = get_consensus_seq(StringIO(matrix), 0.7)
+                    consensus_seq = get_consensus_seq(matrix, 0.7)
                 return str(consensus_seq)
             except ValueError:
                 return None

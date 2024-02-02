@@ -24,7 +24,7 @@ class LayoutACRDiscrete(TreeLayout):
         #tree_style.aligned_panel_header.add_face(text, column=self.column)
         if self.legend:
             if self.color_dict:
-                self.color_dict["Undecided Ancestral Character State"] = self.absence_color 
+                #self.color_dict["Undecided Ancestral Character State"] = self.absence_color 
                 tree_style.add_legend(title=self.name,
                                     variable='discrete',
                                     colormap=self.color_dict
