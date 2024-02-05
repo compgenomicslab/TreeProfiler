@@ -180,6 +180,10 @@ def poplulate_plot_args(plot_args_p):
         default=False,
         action='store_true',
         help="Activate taxonrectangle-layout which taxonomy of each node will be display as rectangular blocks in aligned panel.")
+    group.add_argument('--taxoncollapse-layout',
+        default=False,
+        action='store_true',
+        help="Activate taxoncollapse-layout which taxonomy of each node will be display as rectangular blocks in aligned panel.")
     group.add_argument('--emapper-layout',
         default=False,
         action='store_true',
@@ -534,31 +538,37 @@ def run(args):
             layouts.append(multiple_text_prop_layout)
             
     # Taxa layouts
-    if args.taxonclade_layout or args.taxonrectangle_layout:
+    if args.taxonclade_layout or args.taxonrectangle_layout or args.taxoncollapse_layout:
         taxon_color_dict = {}
         taxa_layouts = []
-        
+
         # generate a rank2values dict for pre taxonomic annotated tree
         if not rank2values:
             rank2values = defaultdict(list)
             for n in tree.traverse():
                 if n.props.get('rank') and n.props.get('rank') != 'Unknown':
                     rank2values[n.props.get('rank')].append(n.props.get('sci_name',''))
-        else:
+        else:       
             pass
+
         
         # assign color for each value of each rank
         for rank, value in sorted(rank2values.items()):
+            value = list(set(value))
             color_dict = assign_color_to_values(value, paired_color)
-
             if args.taxonclade_layout:
                 taxa_layout = taxon_layouts.TaxaClade(name='TaxaClade_'+rank, level=level, rank = rank, color_dict=color_dict)
                 taxa_layouts.append(taxa_layout)
 
             if args.taxonrectangle_layout:
-                taxa_layout = taxon_layouts.TaxaRectangular(name = "TaxaRect_"+rank, rank=rank ,color_dict=color_dict, column=level)
+                taxa_layout = taxon_layouts.TaxaRectangular(name = "TaxaRect_"+rank, rank=rank, rect_width=args.column_width, color_dict=color_dict, column=level)
                 taxa_layouts.append(taxa_layout)
                 #level += 1
+
+            if args.taxoncollapse_layout:
+                taxa_layout = taxon_layouts.TaxaCollapse(name = "TaxaCollapse_"+rank, rank=rank, rect_width=args.column_width, color_dict=color_dict, column=level)
+                taxa_layouts.append(taxa_layout)
+
             taxon_color_dict[rank] = color_dict
             
         #taxa_layouts.append(taxon_layouts.TaxaRectangular(name = "Last Common Ancester", color_dict=taxon_color_dict, column=level))
@@ -657,7 +667,7 @@ def get_ls_layouts(tree, props, level, prop2type, padding_x=1, padding_y=0):
     ls_clade_props = [add_suffix(prop, ls_clade_suffix) for prop in props]
     lsprop2color = assign_color_to_values(ls_clade_props, paired_color)
 
-    gradientscolor = build_color_gradient(20, colormap_name='jet')
+    gradientscolor = build_color_gradient(20, colormap_name='Reds')
     
     layouts = []
     ls_props = []

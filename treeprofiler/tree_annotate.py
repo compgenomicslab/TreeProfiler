@@ -1260,6 +1260,24 @@ def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field
         gtdb = GTDBTaxa()
         tree.set_species_naming_function(return_spcode_gtdb)
         gtdb.annotate_tree(tree,  taxid_attr="species")
+        suffix_to_rank_dict = {
+            'd__': 'superkingdom',  # Domain or Superkingdom
+            'p__': 'phylum',
+            'c__': 'class',
+            'o__': 'order',
+            'f__': 'family',
+            'g__': 'genus',
+            's__': 'species'
+        }
+        for n in tree.traverse():
+            # in case miss something
+            if n.props.get('named_lineage'):
+                lca_dict = {}
+                for taxa in n.props.get("named_lineage"):
+                    potential_rank = suffix_to_rank_dict.get(taxa[:3],None)
+                    if potential_rank:
+                        lca_dict[potential_rank] = taxa
+                n.add_prop("lca", lca_dict)
 
     elif db == "NCBI":
         ncbi = NCBITaxa()
