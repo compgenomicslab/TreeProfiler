@@ -130,7 +130,7 @@ class TaxaRectangular(TreeLayout):
 
         self.active = True
         self.rank = rank
-        self.color_dict=color_dict
+        self.color_dict = color_dict
         self.rect_width = rect_width
         self.column = column
 
@@ -142,6 +142,7 @@ class TaxaRectangular(TreeLayout):
                                     variable='discrete',
                                     colormap=self.color_dict,
                                     )
+
     def set_node_style(self, node):
         node_rank = node.props.get('rank')
         node_sciname = node.props.get('sci_name')
@@ -149,11 +150,6 @@ class TaxaRectangular(TreeLayout):
             lca = node_sciname
             color = self.color_dict.get(lca, 'lightgray')
             level = get_level(node, level=self.column)
-            # lca_face = RectFace(self.rect_width, float('inf'), 
-            #         color = color, 
-            #         text = lca,
-            #         fgcolor = "white",
-            #         padding_x = 1, padding_y = 1)
             tooltip = ""
             if node.name:
                 tooltip += f'<b>{node.name}</b><br>'
@@ -166,7 +162,89 @@ class TaxaRectangular(TreeLayout):
             node.add_face(lca_face, position='aligned', column=level)
             node.add_face(lca_face, position='aligned', column=level,
                 collapsed_only=True)
+        # else:
+        #     named_lineage = node.props.get('named_lineage', None)
+        #     lca = next((elem for elem in named_lineage if elem in self.taxa_list), None)
+        #     if lca:
+        #         color = self.color_dict.get(lca, 'lightgray')
+        #         #level = get_level(node, level=self.column)
+        #         level = self.column
+        #         tooltip = ""
+        #         if node.name:
+        #             tooltip += f'<b>{node.name}</b><br>'
+        #         if lca:
+        #             tooltip += f'rank: {node_rank}<br>'
+        #             tooltip += f'sci_name: {lca}<br>'
 
+        #         lca_face = RectFace(self.rect_width, None, text = lca, color=color, padding_x=1, padding_y=1, tooltip=tooltip)
+        #         lca_face.rotate_text = True
+        #         node.add_face(lca_face, position='aligned', column=level)
+        #         node.add_face(lca_face, position='aligned', column=level,
+        #             collapsed_only=True)
+
+class TaxaCollapse(TreeLayout):
+    def __init__(self, name="Last common ancestor", rank=None, color_dict={}, rect_width=20, column=0, legend=True ):
+        super().__init__(name, aligned_faces=True)
+
+        self.active = True
+        self.rank = rank
+        self.color_dict=color_dict
+        self.rect_width = rect_width
+        self.column = column
+        self.taxa_list =  list(color_dict.keys())
+
+    def set_tree_style(self, tree, tree_style):
+        super().set_tree_style(tree, tree_style)
+        if self.legend:
+            if self.color_dict:
+                tree_style.add_legend(title='TaxaRectangular_'+self.rank,
+                                    variable='discrete',
+                                    colormap=self.color_dict,
+                                    )
+    
+    def set_node_style(self, node):
+        node_rank = node.props.get('rank')
+        node_sciname = node.props.get('sci_name')
+        named_lineage = node.props.get('named_lineage', None)
+        #lca = next((elem for elem in named_lineage if elem in self.taxa_list), None)
+        lca_dict = node.props.get('lca')
+        if lca_dict:
+            lca = lca_dict.get(self.rank, None)
+            if lca:
+                color = self.color_dict.get(lca, 'lightgray')
+                #level = get_level(node, level=self.column)
+                level = self.column
+                tooltip = ""
+                if node.name:
+                    tooltip += f'<b>{lca}</b><br>'
+                if lca:
+                    tooltip += f'rank: {self.rank}<br>'
+                    tooltip += f'sci_name: {lca}<br>'
+
+                lca_face = RectFace(self.rect_width, None, text = lca, color=color, padding_x=1, padding_y=1, tooltip=tooltip)
+                lca_face.rotate_text = True
+                node.sm_style["draw_descendants"] = False
+                node.add_face(lca_face, position='aligned', column=level)
+                node.add_face(lca_face, position='aligned', column=level,
+                    collapsed_only=True)
+
+            elif node_sciname and (node_rank == self.rank):
+                lca = node_sciname
+                color = self.color_dict.get(lca, 'lightgray')
+                level = self.column
+                tooltip = ""
+                if node.name:
+                    tooltip += f'<b>{node.name}</b><br>'
+                if lca:
+                    tooltip += f'rank: {node_rank}<br>'
+                    tooltip += f'sci_name: {lca}<br>'
+
+                lca_face = RectFace(self.rect_width, None, text = lca, color=color, padding_x=1, padding_y=1, tooltip=tooltip)
+                lca_face.rotate_text = True
+                node.sm_style["draw_descendants"] = False
+                node.add_face(lca_face, position='aligned', column=level)
+                node.add_face(lca_face, position='aligned', column=level,
+                    collapsed_only=True)
 
 class LayoutEvolEvents(TreeLayout):
     def __init__(self, name="Evolutionary events", 
