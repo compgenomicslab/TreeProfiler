@@ -228,23 +228,23 @@ class TaxaCollapse(TreeLayout):
                 node.add_face(lca_face, position='aligned', column=level,
                     collapsed_only=True)
 
-            elif node_sciname and (node_rank == self.rank):
-                lca = node_sciname
-                color = self.color_dict.get(lca, 'lightgray')
-                level = self.column
-                tooltip = ""
-                if node.name:
-                    tooltip += f'<b>{node.name}</b><br>'
-                if lca:
-                    tooltip += f'rank: {node_rank}<br>'
-                    tooltip += f'sci_name: {lca}<br>'
+            # elif node_sciname and (node_rank == self.rank):
+            #     lca = node_sciname
+            #     color = self.color_dict.get(lca, 'lightgray')
+            #     level = self.column
+            #     tooltip = ""
+            #     if node.name:
+            #         tooltip += f'<b>{node.name}</b><br>'
+            #     if lca:
+            #         tooltip += f'rank: {node_rank}<br>'
+            #         tooltip += f'sci_name: {lca}<br>'
 
-                lca_face = RectFace(self.rect_width, None, text = lca, color=color, padding_x=1, padding_y=1, tooltip=tooltip)
-                lca_face.rotate_text = True
-                node.sm_style["draw_descendants"] = False
-                node.add_face(lca_face, position='aligned', column=level)
-                node.add_face(lca_face, position='aligned', column=level,
-                    collapsed_only=True)
+            #     lca_face = RectFace(self.rect_width, None, text = lca, color=color, padding_x=1, padding_y=1, tooltip=tooltip)
+            #     lca_face.rotate_text = True
+            #     node.sm_style["draw_descendants"] = False
+            #     node.add_face(lca_face, position='aligned', column=level)
+            #     node.add_face(lca_face, position='aligned', column=level,
+            #         collapsed_only=True)
 
 class LayoutEvolEvents(TreeLayout):
     def __init__(self, name="Evolutionary events", 
