@@ -8,11 +8,8 @@ import random
 import csv
 import tarfile
 
-from io import StringIO
-from itertools import islice
 from collections import defaultdict, Counter
 import numpy as np
-
 from scipy import stats
 
 from ete4.parser.newick import NewickError
@@ -29,7 +26,6 @@ from treeprofiler.src.phylosignal import run_acr_discrete, run_delta
 from treeprofiler.src.ls import run_ls
 from treeprofiler.src import b64pickle
 
-from multiprocessing.pool import ThreadPool
 from multiprocessing import Pool
 
 DESC = "annotate tree"
@@ -1269,14 +1265,19 @@ def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field
             'g__': 'genus',
             's__': 'species'
         }
+        gtdb_re = r'^(GB_GCA_[0-9]+\.[0-9]+|RS_GCF_[0-9]+\.[0-9]+)'
         for n in tree.traverse():
             # in case miss something
             if n.props.get('named_lineage'):
                 lca_dict = {}
                 for taxa in n.props.get("named_lineage"):
-                    potential_rank = suffix_to_rank_dict.get(taxa[:3],None)
-                    if potential_rank:
-                        lca_dict[potential_rank] = taxa
+                    if re.match(gtdb_re, taxa):
+                        potential_rank = 'subspecies'
+                        lca_dict[potential_rank] = n.props.get("sci_name")
+                    else:
+                        potential_rank = suffix_to_rank_dict.get(taxa[:3], None)
+                        if potential_rank:
+                            lca_dict[potential_rank] = taxa
                 n.add_prop("lca", lca_dict)
 
     elif db == "NCBI":

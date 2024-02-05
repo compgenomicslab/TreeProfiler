@@ -547,7 +547,8 @@ def run(args):
             rank2values = defaultdict(list)
             for n in tree.traverse():
                 if n.props.get('rank') and n.props.get('rank') != 'Unknown':
-                    rank2values[n.props.get('rank')].append(n.props.get('sci_name',''))
+                    rank = n.props.get('rank')
+                    rank2values[rank].append(n.props.get('sci_name',''))
         else:       
             pass
 
