@@ -486,6 +486,30 @@ def run(args):
             level += 1
             layouts.append(matrix_layout)
 
+        if layout == "taxoncollapse-layout":
+            taxon_color_dict = {}
+            taxa_layouts = []
+
+            # generate a rank2values dict for pre taxonomic annotated tree
+            if not rank2values:
+                rank2values = defaultdict(list)
+                for n in tree.traverse():
+                    if n.props.get('rank') and n.props.get('rank') != 'Unknown':
+                        rank2values[n.props.get('rank')].append(n.props.get('sci_name',''))
+            else:       
+                pass
+
+            
+            # assign color for each value of each rank
+            for rank, value in sorted(rank2values.items()):
+                value = list(set(value))
+                color_dict = assign_color_to_values(value, paired_color)
+                taxa_layout = taxon_layouts.TaxaCollapse(name = "TaxaCollapse_"+rank, rank=rank, rect_width=args.column_width, color_dict=color_dict, column=level)
+                taxa_layouts.append(taxa_layout)
+                
+            layouts = layouts + taxa_layouts
+            level += 1
+
     # emapper layout 
     if args.emapper_layout:
         text_props = [
@@ -538,7 +562,7 @@ def run(args):
             layouts.append(multiple_text_prop_layout)
             
     # Taxa layouts
-    if args.taxonclade_layout or args.taxonrectangle_layout or args.taxoncollapse_layout:
+    if args.taxonclade_layout or args.taxonrectangle_layout:
         taxon_color_dict = {}
         taxa_layouts = []
 
