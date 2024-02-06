@@ -183,7 +183,7 @@ class TaxaRectangular(TreeLayout):
         #             collapsed_only=True)
 
 class TaxaCollapse(TreeLayout):
-    def __init__(self, name="Last common ancestor", rank=None, color_dict={}, rect_width=20, column=0, legend=True ):
+    def __init__(self, name="Last common ancestor", rank=None, color_dict={}, rect_width=20, column=0, padding_x=1, padding_y=0, legend=True ):
         super().__init__(name, aligned_faces=True)
 
         self.active = True
@@ -191,10 +191,16 @@ class TaxaCollapse(TreeLayout):
         self.color_dict=color_dict
         self.rect_width = rect_width
         self.column = column
+        self.padding_x = padding_x
+        self.padding_y = padding_y
+
         self.taxa_list =  list(color_dict.keys())
 
     def set_tree_style(self, tree, tree_style):
         super().set_tree_style(tree, tree_style)
+        super().set_tree_style(tree, tree_style)
+        text = TextFace(" ", min_fsize=10, max_fsize=15, padding_x=self.padding_x, width=self.rect_width, rotation=315)
+        tree_style.aligned_panel_header.add_face(text, column=self.column)
         if self.legend:
             if self.color_dict:
                 tree_style.add_legend(title='TaxaRectangular_'+self.rank,
