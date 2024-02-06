@@ -8,11 +8,8 @@ import random
 import csv
 import tarfile
 
-from io import StringIO
-from itertools import islice
 from collections import defaultdict, Counter
 import numpy as np
-
 from scipy import stats
 
 from ete4.parser.newick import NewickError
@@ -29,7 +26,6 @@ from treeprofiler.src.phylosignal import run_acr_discrete, run_delta
 from treeprofiler.src.ls import run_ls
 from treeprofiler.src import b64pickle
 
-from multiprocessing.pool import ThreadPool
 from multiprocessing import Pool
 
 DESC = "annotate tree"
@@ -1260,6 +1256,29 @@ def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field
         gtdb = GTDBTaxa()
         tree.set_species_naming_function(return_spcode_gtdb)
         gtdb.annotate_tree(tree,  taxid_attr="species")
+        suffix_to_rank_dict = {
+            'd__': 'superkingdom',  # Domain or Superkingdom
+            'p__': 'phylum',
+            'c__': 'class',
+            'o__': 'order',
+            'f__': 'family',
+            'g__': 'genus',
+            's__': 'species'
+        }
+        gtdb_re = r'^(GB_GCA_[0-9]+\.[0-9]+|RS_GCF_[0-9]+\.[0-9]+)'
+        for n in tree.traverse():
+            # in case miss something
+            if n.props.get('named_lineage'):
+                lca_dict = {}
+                for taxa in n.props.get("named_lineage"):
+                    if re.match(gtdb_re, taxa):
+                        potential_rank = 'subspecies'
+                        lca_dict[potential_rank] = n.props.get("sci_name")
+                    else:
+                        potential_rank = suffix_to_rank_dict.get(taxa[:3], None)
+                        if potential_rank:
+                            lca_dict[potential_rank] = taxa
+                n.add_prop("lca", lca_dict)
 
     elif db == "NCBI":
         ncbi = NCBITaxa()
@@ -1446,63 +1465,90 @@ def parse_fasta(fastafile):
     fasta_dict[head] = seq
     return fasta_dict
 
-# def goslim_annotation(gos_input, relative=True):
-#     """
-#     deprecated
-#     """
-#     output_dict = {}
-#     all_golsims_dict = {}
-#     goslim_script = os.path.join(os.path.dirname(__file__), 'goslim_list.R')
-#     output = subprocess.check_output([goslim_script,gos_input])
-#     #output_list = [line.split(' \t ') for line in output.decode('utf-8').split('\n') if line ]
-#     for line in output.decode('utf-8').split('\n'):
-#         if line:
-#             name, entries, desc, count = line.split(' \t ')
-#             if entries != '-':
-#                 entries = entries.split(',')
-#                 desc = desc.split('|')
-#                 count = np.array(count.split('|')).astype(int)
-#                 if relative:
-#                     count = [float(i)/sum(count) for i in count]
-#             output_dict[name] = [entries, desc, count]
-#             for i in range(len(entries)):
-#                 entry = entries[i]
-#                 single_desc = desc[i]
-#                 if entry not in all_golsims_dict:
-#                     all_golsims_dict[entry] = single_desc
-#     return output_dict, all_golsims_dict
+# def get_pval(prop2array, dump_tree, acr_discrete_columns_dict, iteration=100, 
+#             prediction_method="MPPA", model="F81", ent_type='SE', 
+#             lambda0=0.1, se=0.5, sim=10000, burn=100, thin=10, threads=1):
+#     prop2delta_array = {}
+#     for _ in range(iteration):
+#         shuffled_dict = {}
+#         for column, trait in acr_discrete_columns_dict.items():
+#             trait = acr_discrete_columns_dict[column]
+#             #shuffle traits
+#             shuffled_trait = np.random.choice(trait, len(trait), replace=False)
+#             prop2array[column][1] = list(shuffled_trait)
+#             shuffled_dict[column] = list(shuffled_trait)
 
-def get_pval(prop2array, dump_tree, acr_discrete_columns_dict, iteration=100, 
-            prediction_method="MPPA", model="F81", ent_type='SE', 
-            lambda0=0.1, se=0.5, sim=10000, burn=100, thin=10, threads=1):
-    prop2delta_array = {}
-    for _ in range(iteration):
-        shuffled_dict = {}
-        for column, trait in acr_discrete_columns_dict.items():
-            trait = acr_discrete_columns_dict[column]
-            #shuffle traits
-            shuffled_trait = np.random.choice(trait, len(trait), replace=False)
-            prop2array[column][1] = list(shuffled_trait)
-            shuffled_dict[column] = list(shuffled_trait)
-
-        # Converting back to the original dictionary format
-        # # annotate new metadata to leaf
-        new_metadata_dict = convert_back_to_original(prop2array)
-        dump_tree = load_metadata_to_tree(dump_tree, new_metadata_dict)
+#         # Converting back to the original dictionary format
+#         # # annotate new metadata to leaf
+#         new_metadata_dict = convert_back_to_original(prop2array)
+#         dump_tree = load_metadata_to_tree(dump_tree, new_metadata_dict)
         
-        # # run acr
-        random_acr_results, dump_tree = run_acr_discrete(dump_tree, shuffled_dict, \
-        prediction_method="MPPA", model="F81", threads=threads, outdir=None)
-        random_delta = run_delta(random_acr_results, dump_tree, ent_type=ent_type, 
-                lambda0=lambda0, se=se, sim=sim, burn=burn, thin=thin, 
-                threads=threads)
+#         # # run acr
+#         random_acr_results, dump_tree = run_acr_discrete(dump_tree, shuffled_dict, \
+#         prediction_method="MPPA", model="F81", threads=threads, outdir=None)
+#         random_delta = run_delta(random_acr_results, dump_tree, ent_type=ent_type, 
+#                 lambda0=lambda0, se=se, sim=sim, burn=burn, thin=thin, 
+#                 threads=threads)
 
-        for prop, delta_result in random_delta.items():
+#         for prop, delta_result in random_delta.items():
+            
+#             if prop in prop2delta_array:
+#                 prop2delta_array[prop].append(delta_result)
+#             else:
+#                 prop2delta_array[prop] = [delta_result]
+#         clear_extra_features([dump_tree], ["name", "dist", "support"])
+
+#     return prop2delta_array
+
+def _worker_function(iteration_data):
+    # Unpack the necessary data for one iteration
+    prop2array, dump_tree, acr_discrete_columns_dict, prediction_method, model, ent_type, lambda0, se, sim, burn, thin, threads = iteration_data
+
+    shuffled_dict = {}
+    for column, trait in acr_discrete_columns_dict.items():
+        # Shuffle traits
+        shuffled_trait = np.random.choice(trait, len(trait), replace=False)
+        prop2array[column][1] = list(shuffled_trait)
+        shuffled_dict[column] = list(shuffled_trait)
+
+    # Converting back to the original dictionary format
+    new_metadata_dict = convert_back_to_original(prop2array)
+    updated_tree = load_metadata_to_tree(dump_tree, new_metadata_dict)
+
+    # Run ACR
+    random_acr_results, updated_tree = run_acr_discrete(updated_tree, shuffled_dict, 
+                                                        prediction_method=prediction_method, 
+                                                        model=model, threads=threads, outdir=None)
+    random_delta = run_delta(random_acr_results, updated_tree, ent_type=ent_type, 
+                             lambda0=lambda0, se=se, sim=sim, burn=burn, thin=thin, 
+                             threads=threads)
+
+    # Clear extra features from the tree
+    clear_extra_features([updated_tree], ["name", "dist", "support"])
+    return random_delta
+    
+def get_pval(prop2array, dump_tree, acr_discrete_columns_dict, iteration=100, 
+             prediction_method="MPPA", model="F81", ent_type='SE', 
+             lambda0=0.1, se=0.5, sim=10000, burn=100, thin=10, threads=1):
+    prop2delta_array = {}
+
+    # Prepare data for each iteration
+    iteration_data = [(prop2array, dump_tree, acr_discrete_columns_dict, prediction_method, model, ent_type, lambda0, se, sim, burn, thin, threads) for _ in range(iteration)]
+
+    # Use multiprocessing pool
+    if threads > 1:
+        with Pool(threads) as pool:
+            results = pool.map(_worker_function, iteration_data)
+    else:
+        results = map(_worker_function, iteration_data)
+
+    # Aggregate results
+    for delta_result in results:
+        for prop, result in delta_result.items():
             if prop in prop2delta_array:
-                prop2delta_array[prop].append(delta_result)
+                prop2delta_array[prop].append(result)
             else:
-                prop2delta_array[prop] = [delta_result]
-        clear_extra_features([dump_tree], ["name", "dist", "support"])
+                prop2delta_array[prop] = [result]
 
     return prop2delta_array
 

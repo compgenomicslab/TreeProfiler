@@ -26,6 +26,9 @@ from treeprofiler.src.utils import add_suffix
 
 [1] Borges, R. et al. (2019). Measuring phylogenetic signal between categorical traits and phylogenies. Bioinformatics, 35, 1862-1869.
 
+[2] Ribeiro, D. et al. (2023). Testing phylogenetic signal with categorical traits and tree uncertainty, Bioinformatics, Volume 39, Issue 7, July 2023
+
+[3] Ishikawa SA, Zhukova A, Iwasaki W, Gascuel O. (2019). A Fast Likelihood Method to Reconstruct and Visualize Ancestral Scenarios. Molecular Biology and Evolution, msz131.
 '''
 
 # Source Script of delta method from https://github.com/diogo-s-ribeiro/delta-statistic/blob/master/Delta-Python/delta_functs.py
