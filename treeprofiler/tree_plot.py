@@ -494,11 +494,15 @@ def run(args):
             if not rank2values:
                 rank2values = defaultdict(list)
                 for n in tree.traverse():
-                    if n.props.get('rank') and n.props.get('rank') != 'Unknown':
-                        rank2values[n.props.get('rank')].append(n.props.get('sci_name',''))
+                    if n.props.get('lca'):
+                        for rank, sci_name in n.props.get('lca').items():
+                            rank2values[rank].append(sci_name)
+
+                    current_rank = n.props.get('rank')
+                    if current_rank and current_rank != 'Unknown':
+                        rank2values[current_rank].append(n.props.get('sci_name',''))
             else:       
                 pass
-
             
             # assign color for each value of each rank
             for rank, value in sorted(rank2values.items()):
@@ -590,9 +594,9 @@ def run(args):
                 taxa_layouts.append(taxa_layout)
                 #level += 1
 
-            if args.taxoncollapse_layout:
-                taxa_layout = taxon_layouts.TaxaCollapse(name = "TaxaCollapse_"+rank, rank=rank, rect_width=args.column_width, color_dict=color_dict, column=level)
-                taxa_layouts.append(taxa_layout)
+            # if args.taxoncollapse_layout:
+            #     taxa_layout = taxon_layouts.TaxaCollapse(name = "TaxaCollapse_"+rank, rank=rank, rect_width=args.column_width, color_dict=color_dict, column=level)
+            #     taxa_layouts.append(taxa_layout)
 
             taxon_color_dict[rank] = color_dict
             

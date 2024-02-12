@@ -230,9 +230,12 @@ class TaxaCollapse(TreeLayout):
                 lca_face = RectFace(self.rect_width, None, text = lca, color=color, padding_x=1, padding_y=1, tooltip=tooltip)
                 lca_face.rotate_text = True
                 node.sm_style["draw_descendants"] = False
+                
                 node.add_face(lca_face, position='aligned', column=level)
                 node.add_face(lca_face, position='aligned', column=level,
                     collapsed_only=True)
+                node.add_face(TextFace(lca, color = color, padding_x=2),
+                column=1, position="branch_right", collapsed_only=True)
 
             # elif node_sciname and (node_rank == self.rank):
             #     lca = node_sciname
