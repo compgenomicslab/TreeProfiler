@@ -116,7 +116,7 @@ class LayoutLineageSpecific(TreeLayout):
         self.ls_prop = ls_prop
         self.color = color
         self.legend = legend
-
+        self.active = False
     def set_tree_style(self, tree, tree_style):
         if self.legend:
             

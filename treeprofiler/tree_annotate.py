@@ -1385,11 +1385,13 @@ def annot_tree_pfam_table(post_tree, pfam_table, alg_fasta, domain_prop='dom_arq
                 dom_start = int(info[7])
                 dom_end = int(info[8])
                 if raw2alg.get(seq_name):
-                    trans_dom_start = raw2alg[seq_name][dom_start]
-                    trans_dom_end = raw2alg[seq_name][dom_end]
-                    dom_info_string = pair_delimiter.join([dom_name, str(trans_dom_start), str(trans_dom_end)])
-                    seq2doms[seq_name].append(dom_info_string)
-
+                    try:
+                        trans_dom_start = raw2alg[seq_name][dom_start]
+                        trans_dom_end = raw2alg[seq_name][dom_end]
+                        dom_info_string = pair_delimiter.join([dom_name, str(trans_dom_start), str(trans_dom_end)])
+                        seq2doms[seq_name].append(dom_info_string)
+                    except KeyError:
+                        raise KeyError(f"Cannot find {dom_start} or {dom_end} in {seq_name}")
     for l in post_tree:
         if l.name in seq2doms.keys():
             domains = seq2doms[l.name]

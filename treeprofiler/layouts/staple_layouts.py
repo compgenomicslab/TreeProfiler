@@ -358,6 +358,7 @@ class LayoutBranchScore(TreeLayout):
         self.color_range = color_range
         self.show_score = show_score
         self.line_width = 3
+        self.active = False
 
     def set_tree_style(self, tree, tree_style):
         if self.legend:
