@@ -1,7 +1,11 @@
 from __future__ import annotations
 from treeprofiler.src import b64pickle
 from ete4.parser.newick import NewickError
+<<<<<<< HEAD
 from ete4 import remove
+=======
+from ete4.core.operations import remove
+>>>>>>> 19b19496cbd797da1f8fc970ec4673a2d69f2c45
 from ete4 import Tree, PhyloTree
 from Bio import AlignIO
 from Bio.Align import MultipleSeqAlignment
