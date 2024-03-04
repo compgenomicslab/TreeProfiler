@@ -696,7 +696,7 @@ def get_ls_layouts(tree, props, level, prop2type, padding_x=1, padding_y=0):
     ls_clade_props = [add_suffix(prop, ls_clade_suffix) for prop in props]
     lsprop2color = assign_color_to_values(ls_clade_props, paired_color)
 
-    gradientscolor = build_color_gradient(20, colormap_name='Reds')
+    gradientscolor = build_color_gradient(20, colormap_name='bwr')
     
     layouts = []
     ls_props = []
