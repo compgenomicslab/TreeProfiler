@@ -13,7 +13,7 @@ import numpy as np
 from scipy import stats
 
 from ete4.parser.newick import NewickError
-from ete4.core.seqgroup import SeqGroup
+from ete4 import SeqGroup
 from ete4 import Tree, PhyloTree
 from ete4 import GTDBTaxa
 from ete4 import NCBITaxa
