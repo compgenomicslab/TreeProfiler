@@ -103,7 +103,7 @@ class LayoutSciName(TreeLayout):
                 color = rank_colordict.get(sci_name, 'gray')
             else:
                 color = 'gray'
-            node.add_face(TextFace(sci_name, color = color, padding_x=2),
+            node.add_face(TextFace(sci_name, color = color, padding_x=2, max_fsize=30),
                 column=0, position="branch_right")
 
             if len(prot_id) > 40:
