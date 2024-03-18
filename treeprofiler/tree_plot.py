@@ -709,11 +709,16 @@ def get_ls_layouts(tree, props, level, prop2type, padding_x=1, padding_y=0):
             # color_dict=gradientscolor, score_prop=prop, internal_rep=internal_rep, \
             # value_range=[minval, maxval], \
             # color_range=[gradientscolor[20], gradientscolor[10], gradientscolor[1]])
-        
-            layout = staple_layouts.LayoutBranchScore(name='ls_'+ls_prop, \
-                color_dict=gradientscolor, score_prop=ls_prop, value_range=[minval, maxval], \
-                color_range=[gradientscolor[20], gradientscolor[10], gradientscolor[1]], 
-                show_score=True)
+            if suffix != "f1":
+                layout = staple_layouts.LayoutBranchScore(name='ls_'+ls_prop, \
+                    color_dict=gradientscolor, score_prop=ls_prop, value_range=[minval, maxval], \
+                    color_range=[gradientscolor[20], gradientscolor[10], gradientscolor[1]], 
+                    show_score=True, active=False)
+            else:
+                layout = staple_layouts.LayoutBranchScore(name='ls_'+ls_prop, \
+                    color_dict=gradientscolor, score_prop=ls_prop, value_range=[minval, maxval], \
+                    color_range=[gradientscolor[20], gradientscolor[10], gradientscolor[1]], 
+                    show_score=True)
             
             layouts.append(layout)
             ls_props.append(ls_prop)
@@ -721,6 +726,7 @@ def get_ls_layouts(tree, props, level, prop2type, padding_x=1, padding_y=0):
         ls_clade_prop = add_suffix(prop, ls_clade_suffix)
         ls_clade_layout = phylosignal_layouts.LayoutLineageSpecific(name=f'Linear Specific Clade {prop}', \
             ls_prop=ls_clade_prop, color=lsprop2color[ls_clade_prop])
+
         layouts.append(ls_clade_layout)
         ls_props.append(ls_clade_prop)
 

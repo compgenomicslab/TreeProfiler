@@ -111,12 +111,12 @@ class LayoutACRContinuous(TreeLayout):
                 node.sm_style["outline_color"] = self.color_dict.get(prop_score, self.absence_color)
 
 class LayoutLineageSpecific(TreeLayout):
-    def __init__(self, name, ls_prop, color, legend=True):
+    def __init__(self, name, ls_prop, color, legend=True, active=True):
         super().__init__(name)
         self.ls_prop = ls_prop
         self.color = color
         self.legend = legend
-        self.active = False
+        self.active = active
     def set_tree_style(self, tree, tree_style):
         if self.legend:
             
