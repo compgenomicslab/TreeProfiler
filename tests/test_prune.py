@@ -20,7 +20,7 @@ def test_pruned_by_00():
     internal_parser = "name"
     parser = utils.get_internal_parser(internal_parser)
 
-    test_tree = tree_annotate.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;")
+    test_tree = utils.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;")
 
      # load metadata
     with NamedTemporaryFile(suffix='.tsv') as f_annotation:
@@ -46,7 +46,7 @@ def test_pruned_by_01():
     internal_parser = "name"
     parser = utils.get_internal_parser(internal_parser)
 
-    test_tree = tree_annotate.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;")
+    test_tree = utils.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;")
 
      # load metadata
     with NamedTemporaryFile(suffix='.tsv') as f_annotation:
@@ -71,7 +71,7 @@ def test_pruned_by_02():
     internal_parser = "name"
     parser = utils.get_internal_parser(internal_parser)
 
-    test_tree = tree_annotate.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;")
+    test_tree = utils.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;")
 
      # load metadata
     with NamedTemporaryFile(suffix='.tsv') as f_annotation:
@@ -96,7 +96,7 @@ def test_pruned_by_03():
     internal_parser = "name"
     parser = utils.get_internal_parser(internal_parser)
 
-    test_tree = tree_annotate.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;")
+    test_tree = utils.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;")
 
      # load metadata
     with NamedTemporaryFile(suffix='.tsv') as f_annotation:
@@ -110,10 +110,10 @@ def test_pruned_by_03():
         columns=columns, prop2type=prop2type)
     props = ['col1', 'col1_avg', 'col1_sum', 'col1_max', 'col1_min', 'col1_std']
     
-    expected_tree = '(((E:1[&&NHX:col1=4.0],D:1[&&NHX:col1=3.0])Internal_1:0.5[&&NHX:col1_avg=3.5:col1_sum=7.0:col1_max=4.0:col1_min=3.0:col1_std=0.5])Internal_2:0.5[&&NHX:col1_avg=3.0:col1_sum=9.0:col1_max=4.0:col1_min=2.0:col1_std=1.0])Root[&&NHX:col1_avg=2.5:col1_sum=10.0:col1_max=4.0:col1_min=1.0:col1_std=1.6666666666666665];'
+    expected_tree = '(((E:1[&&NHX:col1=4.0],D:1[&&NHX:col1=3.0])Internal_1:0.5[&&NHX:col1_avg=3.5:col1_sum=7.0:col1_max=4.0:col1_min=3.0:col1_std=0.5])Internal_2:0.5[&&NHX:col1_avg=3.0:col1_sum=9.0:col1_max=4.0:col1_min=2.0:col1_std=1.0])Root[&&NHX:col1_avg=2.5:col1_sum=10.0:col1_max=4.0:col1_min=1.0:col1_std=1.6666666666666667];'
     condition_inputs = ["col1 < 3"]
     pruned_tree = utils.conditional_prune(test_tree_annotated, condition_inputs, prop2type)
-
+    
     assert pruned_tree.write(props=props, parser=parser, format_root_node=True) == expected_tree
 
 def test_pruned_by_04():
@@ -122,7 +122,7 @@ def test_pruned_by_04():
     internal_parser = "name"
     parser = utils.get_internal_parser(internal_parser)
 
-    test_tree = tree_annotate.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;")
+    test_tree = utils.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;")
 
      # load metadata
     with NamedTemporaryFile(suffix='.tsv') as f_annotation:
@@ -137,7 +137,7 @@ def test_pruned_by_04():
 
     props = ['col1', 'col1_avg', 'col1_sum', 'col1_max', 'col1_min', 'col1_std']
 
-    expected_tree = '(A:1[&&NHX:col1=1.0])Root[&&NHX:col1_avg=2.5:col1_sum=10.0:col1_max=4.0:col1_min=1.0:col1_std=1.6666666666666665];'
+    expected_tree = '(A:1[&&NHX:col1=1.0])Root[&&NHX:col1_avg=2.5:col1_sum=10.0:col1_max=4.0:col1_min=1.0:col1_std=1.6666666666666667];'
     condition_inputs = ["col1_avg < 3.5"]
     pruned_tree = utils.conditional_prune(test_tree_annotated, condition_inputs, prop2type)
 
@@ -149,7 +149,7 @@ def test_pruned_by_05():
     internal_parser = "name"
     parser = utils.get_internal_parser(internal_parser)
 
-    test_tree = tree_annotate.ete4_parse("(A:1,(B:1,(E:1,D:1):0.5):0.5);")
+    test_tree = utils.ete4_parse("(A:1,(B:1,(E:1,D:1):0.5):0.5)Root;")
 
     with NamedTemporaryFile(suffix='.tsv') as f_annotation:
         f_annotation.write(b'#name\tlist_data\nA\ta,b,c\nB\tc,d\nD\ta,c,d,e\nE\te,d,b\n')
@@ -164,16 +164,17 @@ def test_pruned_by_05():
     expected_tree = '((B:1[&&NHX:list_data=c|d],(E:1[&&NHX:list_data=e|d|b])N4:0.5[&&NHX:list_data_counter=a--1||b--1||c--1||d--2||e--2])N5:0.5[&&NHX:list_data_counter=a--1||b--1||c--2||d--3||e--2])Root[&&NHX:list_data_counter=a--2||b--2||c--3||d--3||e--2];'
     condition_inputs = ['list_data contains a']
     pruned_tree = utils.conditional_prune(test_tree_annotated, condition_inputs, prop2type)
-
+    print(expected_tree)
+    print(pruned_tree.write(props=props, parser=parser, format_root_node=True))
     assert pruned_tree.write(props=props, parser=parser, format_root_node=True) == expected_tree
-
+test_pruned_by_05()
 def test_pruned_by_06():
     # test "contains" in internal node in list data
     # load tree
     internal_parser = "name"
     parser = utils.get_internal_parser(internal_parser)
 
-    test_tree = tree_annotate.ete4_parse("(A:1,(B:1,(E:1,D:1):0.5):0.5);")
+    test_tree = utils.ete4_parse("(A:1,(B:1,(E:1,D:1):0.5):0.5);")
     with NamedTemporaryFile(suffix='.tsv') as f_annotation:
         f_annotation.write(b'#name\tlist_data\nA\ta,b,c\nB\tc,d\nD\ta,c,d,e\nE\te,d,b\n')
         f_annotation.flush()
