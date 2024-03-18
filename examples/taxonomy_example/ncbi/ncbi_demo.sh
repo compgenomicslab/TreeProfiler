@@ -5,7 +5,6 @@ treeprofiler annotate \
 --tree ncbi_example.nw \
 --input-type newick \
 --metadata ncbi_example.tsv \
---taxonomic-profile \
 --taxadb NCBI \
 --taxon-column name \
 --taxon-delimiter . \

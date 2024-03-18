@@ -19,7 +19,7 @@ treeprofiler annotate \
 --tree gtdbv202.nw \
 --input-type newick \
 --metadata ar122_metadata_r202.tar.gz bac120_metadata_r202.tar.gz progenome3.tsv \
---taxonomic-profile \
+--taxon-column name \
 --taxadb GTDB \
 -o .
 
