@@ -44,7 +44,15 @@ def str2bool(value, raise_exc=False):
         raise ValueError('Expected "%s"' % '", "'.join(_true_set | _false_set))
     return None
 
-
+def str2dict(value):
+    if isinstance(value, str):
+        try:
+            fields = value.split('|')
+            if fields:
+                return {f.split('-')[0]: f.split('-')[1] for f in fields}
+        except ValueError:
+            raise ValueError('Expected "key1-value1|key2-value2"')
+    
 def str2bool_exc(value):
     return str2bool(value, raise_exc=True)
 

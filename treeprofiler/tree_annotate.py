@@ -917,7 +917,7 @@ def can_convert_to_bool(column):
     false_representations = set()
 
     for value in column:
-        str_val = str(value).strip()  # Preserving the original capitalization
+        str_val = str(value).strip()  
         if str_val.lower() in ignore_values:
             continue  # Skip this value
         if str_val.lower() in true_values:

@@ -25,7 +25,7 @@ from treeprofiler.src.utils import (
     taxatree_prune, conditional_prune,
     tree_prop_array, children_prop_array, children_prop_array_missing, 
     flatten, get_consensus_seq, random_color, assign_color_to_values, 
-    add_suffix, build_color_gradient)
+    add_suffix, build_color_gradient, str2bool, str2dict)
 from treeprofiler.tree_annotate import can_convert_to_bool
 
 paired_color = [
@@ -495,8 +495,13 @@ def run(args):
                 rank2values = defaultdict(list)
                 for n in tree.traverse():
                     if n.props.get('lca'):
-                        for rank, sci_name in n.props.get('lca').items():
-                            rank2values[rank].append(sci_name)
+                        if eteformat_flag:
+                            for rank, sci_name in n.props.get('lca').items():
+                                rank2values[rank].append(sci_name)
+                        else:
+                            lca_dict = str2dict(n.props.get('lca'))
+                            for rank, sci_name in lca_dict.items():
+                                rank2values[rank].append(sci_name)
 
                     current_rank = n.props.get('rank')
                     if current_rank and current_rank != 'Unknown':
