@@ -6,6 +6,7 @@ treeprofiler annotate \
 --tree diauxic.nw \
 --input-type newick \
 --metadata diauxic.array \
+--internal-parser name \
 --outdir ./
 
 # visualize annotated diauxic tree by showing numerical data from col1-col7 with numerical matrix
@@ -21,6 +22,7 @@ echo "annotate MCC_FluA_H3 tree with MCC_FluA_H3_Genotype metadata and MCC_FluA_
 treeprofiler annotate \
 --tree MCC_FluA_H3.nw \
 --input-type newick \
+--internal-parser name \
 --internal-parser support \
 --metadata MCC_FluA_H3_Genotype.txt \
 --alignment FluA_H3_AA.fas \

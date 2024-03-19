@@ -210,7 +210,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         text_prop=[], text_prop_idx=[], multiple_text_prop=[], num_prop=[], num_prop_idx=[],
         bool_prop=[], bool_prop_idx=[], prop2type_file=None, alignment=None, emapper_pfam=None,
         emapper_smart=None, counter_stat='raw', num_stat='all', column2method={},
-        taxadb='GTDB', taxa_dump=None, taxon_column='name',
+        taxadb='GTDB', taxa_dump=None, taxon_column=None,
         taxon_delimiter='', taxa_field=0, rank_limit=None, pruned_by=None, 
         acr_discrete_columns=None, prediction_method="MPPA", model="F81", 
         delta_stats=False, ent_type="SE", 
@@ -917,7 +917,7 @@ def can_convert_to_bool(column):
     false_representations = set()
 
     for value in column:
-        str_val = str(value).strip()  # Preserving the original capitalization
+        str_val = str(value).strip()  
         if str_val.lower() in ignore_values:
             continue  # Skip this value
         if str_val.lower() in true_values:
@@ -1214,7 +1214,7 @@ def merge_num_annotations(nodes, target_props, column2method):
 
 def name_nodes(tree):
     for i, node in enumerate(tree.traverse("postorder")):
-        if not node.name:
+        if not node.name or node.name == 'None':
             if not node.is_root:
                 node.name = 'N'+str(i)
             else:

@@ -25,7 +25,7 @@ from treeprofiler.src.utils import (
     taxatree_prune, conditional_prune,
     tree_prop_array, children_prop_array, children_prop_array_missing, 
     flatten, get_consensus_seq, random_color, assign_color_to_values, 
-    add_suffix, build_color_gradient)
+    add_suffix, build_color_gradient, str2bool, str2dict)
 from treeprofiler.tree_annotate import can_convert_to_bool
 
 paired_color = [
@@ -495,8 +495,13 @@ def run(args):
                 rank2values = defaultdict(list)
                 for n in tree.traverse():
                     if n.props.get('lca'):
-                        for rank, sci_name in n.props.get('lca').items():
-                            rank2values[rank].append(sci_name)
+                        if eteformat_flag:
+                            for rank, sci_name in n.props.get('lca').items():
+                                rank2values[rank].append(sci_name)
+                        else:
+                            lca_dict = str2dict(n.props.get('lca'))
+                            for rank, sci_name in lca_dict.items():
+                                rank2values[rank].append(sci_name)
 
                     current_rank = n.props.get('rank')
                     if current_rank and current_rank != 'Unknown':
@@ -811,14 +816,18 @@ def get_rectangle_layouts(tree, props, level, prop2type, column_width=70, paddin
 def get_binary_layouts(tree, props, level, prop2type, column_width=70, reverse=False, padding_x=1, padding_y=0):
     prop_color_dict = {}
     layouts = []
-
+    
     for prop in props:
         prop_values = sorted(list(set(tree_prop_array(tree, prop, leaf_only=True))))
         if can_convert_to_bool(prop_values):
             nvals = len(prop_values)
-            color = random_color(h=None)
+            if level > len(paired_color):
+                color =  random_color(h=None)
+            else:
+                color = paired_color[level]
+
             if not reverse:
-                layout = conditional_layouts.LayoutBinary('Binary_'+prop, level, bool_prop=prop, width=column_width, padding_x=padding_x, padding_y=padding_y, reverse=reverse)
+                layout = conditional_layouts.LayoutBinary('Binary_'+prop, level, bool_prop=prop, color=color, width=column_width, padding_x=padding_x, padding_y=padding_y, reverse=reverse)
             else:
                 layout = conditional_layouts.LayoutBinary('ReverseBinary_'+prop, level, bool_prop=prop, width=column_width, padding_x=padding_x, padding_y=0, reverse=reverse)
             

@@ -16,7 +16,7 @@ from treeprofiler.src import utils
 def test_annotate_01():
     # basic annotate categorical data
     # load tree
-    test_tree = tree_annotate.ete4_parse('(a:1);')
+    test_tree = utils.ete4_parse('(a:1);')
 
     # load metadata
     with NamedTemporaryFile(suffix='.tsv') as f_annotation:
@@ -38,7 +38,7 @@ def test_annotate_02():
     internal_parser = "name"
     parser = utils.get_internal_parser(internal_parser)
 
-    test_tree = tree_annotate.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;", internal_parser=internal_parser)
+    test_tree = utils.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;", internal_parser=internal_parser)
 
      # load metadata
     with NamedTemporaryFile(suffix='.tsv') as f_annotation:
@@ -60,7 +60,7 @@ def test_annotate_02():
 def test_annotate_03():
     # basic annotate numerical data
     # load tree
-    test_tree = tree_annotate.ete4_parse('(a:1);')
+    test_tree = utils.ete4_parse('(a:1);')
 
     # load metadata
     with NamedTemporaryFile(suffix='.tsv') as f_annotation:
@@ -82,7 +82,7 @@ def test_annotate_04():
     # load tree
     internal_parser = "name"
     parser = utils.get_internal_parser(internal_parser)
-    test_tree = tree_annotate.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;")
+    test_tree = utils.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;")
 
     # load metadata
     with NamedTemporaryFile(suffix='.tsv') as f_annotation:
@@ -108,7 +108,7 @@ def test_annotate_05():
     # load tree
     internal_parser = "name"
     parser = utils.get_internal_parser(internal_parser)
-    test_tree = tree_annotate.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;")
+    test_tree = utils.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;")
 
      # load metadata
     with NamedTemporaryFile(suffix='.tsv') as f_annotation:
@@ -135,7 +135,7 @@ def test_annotate_06():
     internal_parser = "name"
     parser = utils.get_internal_parser(internal_parser)
     
-    test_tree = tree_annotate.ete4_parse("(A:1,(B:1,(E:1,D:1):0.5):0.5);")
+    test_tree = utils.ete4_parse("(A:1,(B:1,(E:1,D:1):0.5):0.5);")
 
     # load metadata
     with NamedTemporaryFile(suffix='.tsv') as f_annotation:
@@ -160,7 +160,7 @@ def test_annotate_07():
     internal_parser = "name"
     parser = utils.get_internal_parser(internal_parser)
 
-    test_tree = tree_annotate.ete4_parse("(A:1,(B:1,(E:1,D:1):0.5):0.5);")
+    test_tree = utils.ete4_parse("(A:1,(B:1,(E:1,D:1):0.5):0.5);")
 
     # load metadata
     with NamedTemporaryFile(suffix='.tsv') as f_annotation:
@@ -183,7 +183,7 @@ def test_annotate_08():
     # internal_nodes annotation list data
     internal_parser = "name"
     parser = utils.get_internal_parser(internal_parser)
-    test_tree = tree_annotate.ete4_parse("(A:1,(B:1,(E:1,D:1):0.5):0.5);")
+    test_tree = utils.ete4_parse("(A:1,(B:1,(E:1,D:1):0.5):0.5);")
     
     with NamedTemporaryFile(suffix='.tsv') as f_annotation:
         f_annotation.write(b'#name\tlist_data\nA\ta,b,c\nB\tc,d\nD\ta,c,d,e\nE\te,d,b\n')
@@ -206,7 +206,7 @@ def test_annotate_09():
     internal_parser = "name"
     parser = utils.get_internal_parser(internal_parser)
 
-    test_tree = tree_annotate.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;")
+    test_tree = utils.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;")
 
     with NamedTemporaryFile(suffix='.tsv') as f_annotation:
         f_annotation.write(b'#name\tcol1\tcol2\tcol3\tcol4\nA\tvowel\t1\tTrue\ta,b,c\nB\tconsonant\t2\tFalse\tc,d\nD\tconsonant\t3\tTrue\ta,c,d,e\nE\tvowel\t4\tFalse\te,d,b\n')
@@ -234,7 +234,7 @@ def test_annotate_10():
     internal_parser = "name"
     parser = utils.get_internal_parser(internal_parser)
 
-    test_tree = tree_annotate.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;")
+    test_tree = utils.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;")
 
     with NamedTemporaryFile(suffix='.tsv') as f_annotation:
         f_annotation.write(b'#name\tcol1\tcol2\tcol3\tcol4\nA\tvowel\t1\tTrue\ta,b,c\nB\tconsonant\t2\tFalse\tc,d\nD\tconsonant\t3\tTrue\ta,c,d,e\nE\tvowel\t4\tFalse\te,d,b\n')
@@ -261,7 +261,7 @@ def test_annotate_11():
     # specify datatype of each column index range
     internal_parser = "name"
     parser = utils.get_internal_parser(internal_parser)
-    test_tree = tree_annotate.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;")
+    test_tree = utils.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;")
 
     with NamedTemporaryFile(suffix='.tsv') as f_annotation:
         f_annotation.write(b'#name\tcol1\tcol2\tcol3\tcol4\tcol5\tcol6\tcol7\nA\tvowel\tvowel\t1\t1\tTrue\tTrue\ta,b,c\nB\tconsonant\tconsonant\t2\t2\tFalse\tFalse\tc,d\nD\tconsonant\tconsonant\t3\t3\tTrue\tTrue\ta,c,d,e\nE\tvowel\tvowel\t4\t4\tFalse\tFalse\te,d,b\n')
@@ -289,7 +289,7 @@ def test_annotate_12():
     # load tree
     internal_parser = "name"
     parser = utils.get_internal_parser(internal_parser)
-    test_tree = tree_annotate.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;")
+    test_tree = utils.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;")
     
     # load metadata with missing categorical data
     with NamedTemporaryFile(suffix='.tsv') as f_annotation:
@@ -323,7 +323,7 @@ def test_annotate_13():
     internal_parser = "name"
     parser = utils.get_internal_parser(internal_parser)
 
-    test_tree = tree_annotate.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;")
+    test_tree = utils.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;")
 
     with NamedTemporaryFile(suffix='.tsv') as f_annotation:
         f_annotation.write(b'#name\tcol1\tcol2\tcol3\nA\tvowel\tTrue\ta,b,c\nB\tconsonant\tFalse\tc,d\nD\tconsonant\tTrue\ta,c,d,e\nE\tvowel\tFalse\te,d,b\n')
@@ -345,7 +345,7 @@ def test_annotate_14_a():
     internal_parser = "name"
     parser = utils.get_internal_parser(internal_parser)
 
-    test_tree = tree_annotate.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;")
+    test_tree = utils.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;")
 
     # load metadata
     with NamedTemporaryFile(suffix='.tsv') as f_annotation:
@@ -368,7 +368,7 @@ def test_annotate_14_b():
     internal_parser = "name"
     parser = utils.get_internal_parser(internal_parser)
 
-    test_tree = tree_annotate.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;")
+    test_tree = utils.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;")
 
     # load metadata
     with NamedTemporaryFile(suffix='.tsv') as f_annotation:
@@ -392,7 +392,7 @@ def test_annotate_14_c():
     internal_parser = "name"
     parser = utils.get_internal_parser(internal_parser)
 
-    test_tree = tree_annotate.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;")
+    test_tree = utils.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;")
 
     # load metadata
     with NamedTemporaryFile(suffix='.tsv') as f_annotation:
@@ -414,7 +414,7 @@ def test_annotate_14_d():
     internal_parser = "name"
     parser = utils.get_internal_parser(internal_parser)
 
-    test_tree = tree_annotate.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;")
+    test_tree = utils.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;")
 
     # load metadata
     with NamedTemporaryFile(suffix='.tsv') as f_annotation:
@@ -436,7 +436,7 @@ def test_annotate_14_e():
     internal_parser = "name"
     parser = utils.get_internal_parser(internal_parser)
 
-    test_tree = tree_annotate.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;")
+    test_tree = utils.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;")
 
     # load metadata
     with NamedTemporaryFile(suffix='.tsv') as f_annotation:
@@ -459,7 +459,7 @@ def test_annotate_14_f():
     internal_parser = "name"
     parser = utils.get_internal_parser(internal_parser)
 
-    test_tree = tree_annotate.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;")
+    test_tree = utils.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;")
 
     # load metadata
     with NamedTemporaryFile(suffix='.tsv') as f_annotation:
@@ -479,7 +479,7 @@ def test_annotate_14_f():
 def test_annotate_tar():
     # test if can read tar.gz file
     # load tree
-    test_tree = tree_annotate.ete4_parse('(a);')
+    test_tree = utils.ete4_parse('(a);')
 
     # load metadata
     with TemporaryDirectory() as temp_dir:
@@ -510,7 +510,7 @@ def test_annotate_tar():
 
 def test_internal_parser_01():
     parser='name'
-    test_tree = tree_annotate.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;", internal_parser=parser)
+    test_tree = utils.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;", internal_parser=parser)
     expected_tree_paser_1 = "(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;"
     expected_tree_paser_0 = "(A:1,(B:1,(E:1,D:1):0.5[&&NHX:name=Internal_1]):0.5[&&NHX:name=Internal_2]);"
 
@@ -520,7 +520,7 @@ def test_internal_parser_01():
 
 def test_internal_parser_02():
     parser='support'
-    test_tree = tree_annotate.ete4_parse("(A:1,(B:1,(E:1,D:1)1:0.5)1:0.5);", internal_parser=parser)
+    test_tree = utils.ete4_parse("(A:1,(B:1,(E:1,D:1)1:0.5)1:0.5);", internal_parser=parser)
     expected_tree_paser_0 = "(A:1,(B:1,(E:1,D:1)1:0.5)1:0.5);"
     expected_tree_paser_1 = "(A:1,(B:1,(E:1,D:1):0.5[&&NHX:support=1.0]):0.5[&&NHX:support=1.0]);"
 

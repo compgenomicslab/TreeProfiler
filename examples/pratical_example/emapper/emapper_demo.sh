@@ -8,9 +8,9 @@ treeprofiler annotate \
 --emapper-annotation nifH.out.emapper.annotations  \
 --emapper-pfam nifH.out.emapper.pfam \
 --alignment nifH.faa.aln \
---taxonomic-profile \
+--taxon-column name \
 --taxadb NCBI \
---taxon-delimiter . \
+--taxon-delimiter '.' \
 --taxa-field 0 \
 -o ./
 

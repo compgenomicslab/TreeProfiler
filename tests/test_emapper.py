@@ -18,7 +18,7 @@ def test_emapper():
     internal_parser = "name"
     parser = utils.get_internal_parser(internal_parser)
 
-    test_tree = tree_annotate.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;")
+    test_tree = utils.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;")
     
     # load emapper annotations
     with NamedTemporaryFile(suffix='.out.emapper.annotations') as f_annotation:
@@ -49,7 +49,7 @@ def test_pfam():
     # load tree
     internal_parser = "name"
     parser = utils.get_internal_parser(internal_parser)
-    test_tree = tree_annotate.ete4_parse("(1000565.METUNv1_03972:1,(1007099.SAMN05216287:1,(1121400.SAMN02746065_101305:1,1009370.ALO_07448:1)Internal_1:0.5)Internal_2:0.5)Root;")
+    test_tree = utils.ete4_parse("(1000565.METUNv1_03972:1,(1007099.SAMN05216287:1,(1121400.SAMN02746065_101305:1,1009370.ALO_07448:1)Internal_1:0.5)Internal_2:0.5)Root;")
 
     # pfam data
     with NamedTemporaryFile(suffix='.out.emapper.pfam') as f_pfam:
@@ -177,7 +177,7 @@ def test_smart():
     internal_parser = "name"
     parser = utils.get_internal_parser(internal_parser)
     
-    test_tree = tree_annotate.ete4_parse("(1000565.METUNv1_03972:1,(1007099.SAMN05216287:1,(1121400.SAMN02746065_101305:1,1009370.ALO_07448:1)Internal_1:0.5)Internal_2:0.5)Root;")
+    test_tree = utils.ete4_parse("(1000565.METUNv1_03972:1,(1007099.SAMN05216287:1,(1121400.SAMN02746065_101305:1,1009370.ALO_07448:1)Internal_1:0.5)Internal_2:0.5)Root;")
 
     # smart data
     with NamedTemporaryFile(suffix='.out.emapper.pfam') as f_smart:
