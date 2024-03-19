@@ -343,7 +343,7 @@ class LayoutHeatmap(TreeLayout):
 
 class LayoutBranchScore(TreeLayout):
     def __init__(self, name, color_dict, score_prop, internal_rep=None, \
-    value_range=None, color_range=None, show_score=False, legend=True):
+    value_range=None, color_range=None, show_score=False, legend=True, active=True):
         super().__init__(name)
         self.aligned_faces = True
         self.score_prop = score_prop
@@ -358,7 +358,7 @@ class LayoutBranchScore(TreeLayout):
         self.color_range = color_range
         self.show_score = show_score
         self.line_width = 3
-        self.active = False
+        self.active = active
 
     def set_tree_style(self, tree, tree_style):
         if self.legend:

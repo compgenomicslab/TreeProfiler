@@ -99,7 +99,7 @@ class LayoutBinary(TreeLayout):
         self.aligned_faces = True
         self.bool_prop = bool_prop
         self.column = level
-        self.color = "#FF0000"
+        self.color = color
         self.negative_color = '#EBEBEB'
         self.internal_prop = bool_prop+'_counter'
         self.reverse = reverse
