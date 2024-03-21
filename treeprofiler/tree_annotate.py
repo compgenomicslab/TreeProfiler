@@ -52,6 +52,8 @@ def populate_annotate_args(parser):
         help="<metadata.csv> .csv, .tsv. mandatory input")
     # add('--data-matrix', nargs='+',
     #     help="<data_matrix.csv> .csv, .tsv. optional input")
+    add('--data-matrix',  nargs='+',
+        help="<datamatrix.csv> .csv, .tsv. matrix data metadata table as array to tree")
     add('-sep', '--metadata-sep', default='\t',
         help="column separator of metadata table [default: \\t]")
     add('--no-headers', action='store_true',
@@ -616,6 +618,17 @@ def run_tree_annotate(tree, input_annotated_tree=False,
     annotated_tree = name_nodes(annotated_tree)
     return annotated_tree, prop2type
 
+
+def run_array_annotate(tree, array_dict):
+    #print(array_dict)
+    for node in tree.traverse():
+        if node.is_leaf:
+            for filename, array in array_dict.items():
+                if array.get(node.name):
+                    node.add_prop(filename, array.get(node.name))
+    return tree
+
+
 def run(args):
     total_color_dict = []
     layouts = []
@@ -652,12 +665,15 @@ def run(args):
     start = time.time()
     print("start parsing...")
     # parsing metadata
-    if args.metadata: # make a series aof metadatas
+    if args.metadata: # make a series of metadatas
         metadata_dict, node_props, columns, prop2type = parse_csv(args.metadata, delimiter=args.metadata_sep, \
         no_headers=args.no_headers, aggregate_duplicate=args.aggregate_duplicate)
     else: # annotated_tree
         node_props=[]
         columns = {}
+    
+    if args.data_matrix:
+        array_dict = parse_tsv_to_array(args.data_matrix, delimiter=args.metadata_sep)
     end = time.time()
     print('Time for parse_csv to run: ', end - start)
 
@@ -697,24 +713,27 @@ def run(args):
         column2method = process_column_summary_methods(args.column_summary_method)
     
     annotated_tree, prop2type = run_tree_annotate(tree, input_annotated_tree=args.annotated_tree,
-        metadata_dict=metadata_dict, node_props=node_props, columns=columns,
-        prop2type=prop2type,
-        text_prop=args.text_prop, text_prop_idx=args.text_prop_idx,
-        multiple_text_prop=args.multiple_text_prop, num_prop=args.num_prop, num_prop_idx=args.num_prop_idx,
-        bool_prop=args.bool_prop, bool_prop_idx=args.bool_prop_idx,
-        prop2type_file=args.prop2type, alignment=args.alignment,
-        emapper_pfam=args.emapper_pfam, emapper_smart=args.emapper_smart, 
-        counter_stat=args.counter_stat, num_stat=args.num_stat, column2method=column2method, 
-        taxadb=args.taxadb, taxa_dump=args.taxa_dump, taxon_column=args.taxon_column,
-        taxon_delimiter=args.taxon_delimiter, taxa_field=args.taxa_field,
-        rank_limit=args.rank_limit, pruned_by=args.pruned_by, 
-        acr_discrete_columns=args.acr_discrete_columns, 
-        prediction_method=args.prediction_method, model=args.model, 
-        delta_stats=args.delta_stats, ent_type=args.ent_type, 
-        iteration=args.iteration, lambda0=args.lambda0, se=args.se,
-        thin=args.thin, burn=args.burn,
-        ls_columns=args.ls_columns, prec_cutoff=args.prec_cutoff, sens_cutoff=args.sens_cutoff, 
-        threads=args.threads, outdir=args.outdir)
+            metadata_dict=metadata_dict, node_props=node_props, columns=columns,
+            prop2type=prop2type,
+            text_prop=args.text_prop, text_prop_idx=args.text_prop_idx,
+            multiple_text_prop=args.multiple_text_prop, num_prop=args.num_prop, num_prop_idx=args.num_prop_idx,
+            bool_prop=args.bool_prop, bool_prop_idx=args.bool_prop_idx,
+            prop2type_file=args.prop2type, alignment=args.alignment,
+            emapper_pfam=args.emapper_pfam, emapper_smart=args.emapper_smart, 
+            counter_stat=args.counter_stat, num_stat=args.num_stat, column2method=column2method, 
+            taxadb=args.taxadb, taxa_dump=args.taxa_dump, taxon_column=args.taxon_column,
+            taxon_delimiter=args.taxon_delimiter, taxa_field=args.taxa_field,
+            rank_limit=args.rank_limit, pruned_by=args.pruned_by, 
+            acr_discrete_columns=args.acr_discrete_columns, 
+            prediction_method=args.prediction_method, model=args.model, 
+            delta_stats=args.delta_stats, ent_type=args.ent_type, 
+            iteration=args.iteration, lambda0=args.lambda0, se=args.se,
+            thin=args.thin, burn=args.burn,
+            ls_columns=args.ls_columns, prec_cutoff=args.prec_cutoff, sens_cutoff=args.sens_cutoff, 
+            threads=args.threads, outdir=args.outdir)
+
+    if args.data_matrix:
+        annotated_tree = run_array_annotate(annotated_tree, array_dict)
 
     if args.outdir:
         base=os.path.splitext(os.path.basename(args.tree))[0]
@@ -844,7 +863,7 @@ def parse_csv(input_files, delimiter='\t', no_headers=False, aggregate_duplicate
                             update_metadata(reader, node_header)
                         
                         update_prop2type(node_props)
-                            
+
         else:          
             with open(input_file, 'r') as f:
                 if no_headers:
@@ -891,6 +910,30 @@ def parse_csv(input_files, delimiter='\t', no_headers=False, aggregate_duplicate
             update_prop2type(node_props)
 
     return metadata, node_props, columns, prop2type
+
+def parse_tsv_to_array(input_files, delimiter='\t', no_headers=True):
+    """
+    Parses a TSV file into a dictionary with the first item of each row as the key
+    and the rest of the items in the row as a list in the value.
+
+    :param filename: Path to the TSV file to be parsed.
+    :return: A dictionary with keys as the first item of each row and values as lists of the remaining items.
+    """
+    matrix2array = {}
+    leaf2array = {}
+    for input_file in input_files:
+        prefix = os.path.basename(input_file)
+        with open(input_file, 'r') as file:
+            for line in file:
+                # Split each line by tab, strip removes trailing newline
+                row = line.strip().split(delimiter)
+                node = row[0]  
+                value = row[1:]  # The rest of the items as value
+                np_array = np.array(value).astype(np.float)
+                leaf2array[node] = np_array.tolist()
+
+        matrix2array[prefix] = leaf2array        
+    return matrix2array
 
 def process_column_summary_methods(column_summary_methods):
     column_methods = {}
