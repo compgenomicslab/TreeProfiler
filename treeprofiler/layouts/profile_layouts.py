@@ -681,6 +681,7 @@ class ProfileFace(Face):
         self.seq = seq
         self.seqlength = len(self.seq)
         self.value2color = value2color
+        self.absence_color = '#EBEBEB'
 
         self.autoformat = True  # block if 1px contains > 1 tile
 
@@ -699,7 +700,7 @@ class ProfileFace(Face):
             self.w_scale = self.width / total_width
         else:
             self.width = total_width
-  
+
 
         # Text
         self.ftype = ftype
@@ -813,7 +814,7 @@ class ProfileFace(Face):
             #     'ftype': 'sans-serif', # default sans-serif
             #    }
             tooltip = f'<p>{seq}</p>'
-            yield draw_array(sm_box, [self.value2color[x] for x in seq], tooltip=tooltip)
+            yield draw_array(sm_box, [self.value2color[x] if x else self.absence_color for x in seq], tooltip=tooltip)
             #yield draw_text(sm_box, for i in seq, "jjj", style=style)
             
         if self.seq_format == "categorical":
@@ -822,4 +823,4 @@ class ProfileFace(Face):
             y, h = get_height(sm_x, y)
             sm_box = Box(sm_x+sm_x0, y, posw * len(seq), h)
             tooltip = f'<p>{seq}</p>'
-            yield draw_array(sm_box, [self.value2color[x] for x in seq], tooltip=tooltip)
+            yield draw_array(sm_box, [self.value2color[x] if x else self.absence_color for x in seq], tooltip=tooltip)
