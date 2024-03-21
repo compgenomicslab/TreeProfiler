@@ -1044,12 +1044,21 @@ def numerical2matrix(tree, profiling_props, dtype=float):
         if node.is_leaf:
             leaf2matrix[node.name] = []
             for profiling_prop in profiling_props:
-                if node.props.get(profiling_prop) is not None:
-                    if dtype == float:
-                        val = float(node.props.get(profiling_prop))
-                    elif dtype == str:
-                        val = node.props.get(profiling_prop)
-                    leaf2matrix[node.name].append(val)
+                if node.props.get(profiling_prop):
+                    if type(node.props.get(profiling_prop)) == list:
+                        for array in node.props.get(profiling_prop):
+                            if dtype == float:
+                                val = float(array)
+                            elif dtype == str:
+                                val = val
+                            leaf2matrix[node.name].append(val)
+                    else:
+                        if node.props.get(profiling_prop) is not None:
+                            if dtype == float:
+                                val = float(node.props.get(profiling_prop))
+                            elif dtype == str:
+                                val = node.props.get(profiling_prop)
+                            leaf2matrix[node.name].append(val)
                 else:
                     leaf2matrix[node.name].append(None)
     
