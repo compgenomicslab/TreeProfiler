@@ -50,9 +50,11 @@ def populate_annotate_args(parser):
     add = gmeta.add_argument
     add('-d', '--metadata', nargs='+',
         help="<metadata.csv> .csv, .tsv. mandatory input")
-    add('-sep', '--metadata_sep', default='\t',
+    # add('--data-matrix', nargs='+',
+    #     help="<data_matrix.csv> .csv, .tsv. optional input")
+    add('-sep', '--metadata-sep', default='\t',
         help="column separator of metadata table [default: \\t]")
-    add('--no_colnames', action='store_true',
+    add('--no-headers', action='store_true',
         help="metadata table doesn't contain columns name")
     add('--aggregate-duplicate', action='store_true',
         help="treeprofiler will aggregate duplicated metadata to a list as a property if metadata contains duplicated row")
@@ -652,7 +654,7 @@ def run(args):
     # parsing metadata
     if args.metadata: # make a series aof metadatas
         metadata_dict, node_props, columns, prop2type = parse_csv(args.metadata, delimiter=args.metadata_sep, \
-        no_colnames=args.no_colnames, aggregate_duplicate=args.aggregate_duplicate)
+        no_headers=args.no_headers, aggregate_duplicate=args.aggregate_duplicate)
     else: # annotated_tree
         node_props=[]
         columns = {}
@@ -772,7 +774,7 @@ def check_tar_gz(file_path):
     except tarfile.ReadError:
         return False
 
-def parse_csv(input_files, delimiter='\t', no_colnames=False, aggregate_duplicate=False):
+def parse_csv(input_files, delimiter='\t', no_headers=False, aggregate_duplicate=False):
     """
     Takes tsv table as input
     Return
@@ -831,7 +833,7 @@ def parse_csv(input_files, delimiter='\t', no_colnames=False, aggregate_duplicat
                     if member.isfile() and member.name.endswith('.tsv'):
                         with tar.extractfile(member) as tsv_file:
                             tsv_text = tsv_file.read().decode('utf-8').splitlines()
-                            if no_colnames:
+                            if no_headers:
                                 fields_len = len(tsv_text[0].split(delimiter))
                                 headers = ['col'+str(i) for i in range(fields_len)]
                                 reader = csv.DictReader(tsv_text, delimiter=delimiter,fieldnames=headers)
@@ -845,7 +847,7 @@ def parse_csv(input_files, delimiter='\t', no_colnames=False, aggregate_duplicat
                             
         else:          
             with open(input_file, 'r') as f:
-                if no_colnames:
+                if no_headers:
                     fields_len = len(next(f).split(delimiter))
                     headers = ['col'+str(i) for i in range(fields_len)]
                     reader = csv.DictReader(f, delimiter=delimiter, fieldnames=headers)
@@ -1331,7 +1333,7 @@ def get_range(input_range):
     #column_list_idx = [i for i in range(column_start, column_end+1)]
     return column_start, column_end
 
-def parse_emapper_annotations(input_file, delimiter='\t', no_colnames=False):
+def parse_emapper_annotations(input_file, delimiter='\t', no_headers=False):
     metadata = {}
     columns = defaultdict(list)
     prop2type = {}
@@ -1344,7 +1346,7 @@ def parse_emapper_annotations(input_file, delimiter='\t', no_colnames=False):
         # Skip lines starting with '##'
         filtered_lines = (line for line in f if not line.startswith('##'))
 
-        if no_colnames:
+        if no_headers:
             reader = csv.DictReader(filtered_lines, delimiter=delimiter, fieldnames=headers)
         else:
             reader = csv.DictReader(filtered_lines, delimiter=delimiter)
