@@ -929,7 +929,7 @@ def parse_tsv_to_array(input_files, delimiter='\t', no_headers=True):
                 row = line.strip().split(delimiter)
                 node = row[0]  
                 value = row[1:]  # The rest of the items as value
-                np_array = np.array(value).astype(np.float)
+                np_array = np.array(value).astype(np.float64)
                 leaf2array[node] = np_array.tolist()
 
         matrix2array[prefix] = leaf2array        

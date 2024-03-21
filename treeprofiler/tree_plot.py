@@ -1021,9 +1021,7 @@ def categorical2matrix(tree, profiling_props, dtype=str):
             leaf2matrix[node.name] = []
             for profiling_prop in profiling_props:
                 if node.props.get(profiling_prop) is not None:
-                    if dtype == float:
-                        val = float(node.props.get(profiling_prop))
-                    elif dtype == str:
+                    if dtype == str:
                         val = node.props.get(profiling_prop)
                     leaf2matrix[node.name].append(val)
                 else:
@@ -1049,15 +1047,11 @@ def numerical2matrix(tree, profiling_props, dtype=float):
                         for array in node.props.get(profiling_prop):
                             if dtype == float:
                                 val = float(array)
-                            elif dtype == str:
-                                val = val
                             leaf2matrix[node.name].append(val)
                     else:
                         if node.props.get(profiling_prop) is not None:
                             if dtype == float:
                                 val = float(node.props.get(profiling_prop))
-                            elif dtype == str:
-                                val = node.props.get(profiling_prop)
                             leaf2matrix[node.name].append(val)
                 else:
                     leaf2matrix[node.name].append(None)
