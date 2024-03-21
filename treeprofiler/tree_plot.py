@@ -3,6 +3,8 @@ import numbers
 import math
 import sys
 import os
+import argparse
+import csv
 
 from collections import defaultdict
 from itertools import islice
@@ -109,6 +111,13 @@ def poplulate_plot_args(plot_args_p):
         default=None,
         help="find the barplot column as scale anchor.[default: None]"
     )
+    group.add_argument('--color-config',
+        type=argparse.FileType('r'),
+        default=None,
+        help="Path to the file to find the color for each variables. [default: None]"
+    )
+    group.add_argument('--config-sep', default='\t',
+        help="column separator of color table [default: \\t]")
     # group.add_argument('--profiling_width',
     #     type=int,
     #     default=None,
@@ -326,6 +335,11 @@ def run(args):
     # numerical representative mearsure 
     internal_num_rep = args.internal_plot_measure
 
+    # color configuration
+    color_config = {}
+    if args.color_config:
+        color_config = read_config_to_dict(args.color_config, delimiter=args.config_sep)
+
     # Get the input arguments in order
     input_order = []
     for arg in sys.argv[1:]:
@@ -333,7 +347,7 @@ def run(args):
             input_order.append(arg[2:])
         else:
             continue
-
+    
     visualized_props = []
     for layout in input_order:
         if layout == 'acr-discrete-layout':
@@ -363,7 +377,7 @@ def run(args):
             visualized_props.extend(args.heatmap_layout)
 
         if layout == 'label-layout':
-            label_layouts, level, color_dict = get_label_layouts(tree, args.label_layout, level, prop2type=prop2type, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y)
+            label_layouts, level, color_dict = get_label_layouts(tree, args.label_layout, level, prop2type=prop2type, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config)
             layouts.extend(label_layouts)
             total_color_dict.append(color_dict)
             visualized_props.extend(args.label_layout)
@@ -371,7 +385,7 @@ def run(args):
         if layout == 'colorbranch-layout':
             categorical_props = [prop for prop in args.colorbranch_layout if prop2type[prop] in [str, list, bool]]
             if categorical_props:
-                colorbranch_layouts, level, color_dict = get_colorbranch_layouts(tree, categorical_props, level, prop2type=prop2type, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y)
+                colorbranch_layouts, level, color_dict = get_colorbranch_layouts(tree, categorical_props, level, prop2type=prop2type, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config)
                 layouts.extend(colorbranch_layouts)
                 total_color_dict.append(color_dict)
                 visualized_props.extend(categorical_props)
@@ -392,7 +406,7 @@ def run(args):
             visualized_props.extend([add_suffix(prop, 'counter') for prop in args.piechart_layout])
 
         if layout == 'rectangle-layout':
-            rectangle_layouts, level, color_dict = get_rectangle_layouts(tree, args.rectangle_layout, level, prop2type=prop2type, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y)
+            rectangle_layouts, level, color_dict = get_rectangle_layouts(tree, args.rectangle_layout, level, prop2type=prop2type, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config)
             layouts.extend(rectangle_layouts)
             total_color_dict.append(color_dict)
             visualized_props.extend(args.rectangle_layout)
@@ -653,6 +667,31 @@ def wrtie_color(color_dict):
                         f.write('COLOR'+'\t'+ sub_v+'\n')
                     f.write('\n')
 
+def read_config_to_dict(file_obj, delimiter):
+    """
+    Reads a configuration file to a dictionary.
+
+    The configuration file should have the format:
+    prop,value,color
+    random_type,low,green
+    ...
+
+    :param filename: Path to the file.
+    :return: A dictionary with (prop, value) tuple as keys and color as values.
+    """
+    config_dict = {}
+    # Reset file pointer to start, in case it's been accessed before
+    file_obj.seek(0)
+    reader = csv.DictReader(file_obj, delimiter=delimiter)
+    for row in reader:
+        prop = row['PROP']
+        value = row['VALUE']
+        color = row['COLOR']
+        if prop not in config_dict:
+            config_dict[prop] = {}
+        config_dict[prop][value] = color
+    return config_dict
+
 def get_acr_discrete_layouts(tree, props, level, prop2type, column_width=70, padding_x=1, padding_y=0):
     prop_color_dict = {}
     layouts = []
@@ -752,38 +791,44 @@ def get_piechart_layouts(tree, props, prop2type, padding_x=1, padding_y=0, radiu
         layouts.append(layout)
     return layouts
 
-def get_label_layouts(tree, props, level, prop2type, column_width=70, padding_x=1, padding_y=0):
+def get_label_layouts(tree, props, level, prop2type, column_width=70, padding_x=1, padding_y=0, color_config=None):
     prop_color_dict = {}
     layouts = []
     for prop in props:
-        color_dict = {} 
-        if prop2type and prop2type.get(prop) == list:
-            leaf_values = list(map(list,set(map(tuple,tree_prop_array(tree, prop)))))
-            prop_values = [val for sublist in leaf_values for val in sublist]
-        else:
-            prop_values = sorted(list(set(tree_prop_array(tree, prop))))
+        color_dict = {}
+        if color_config and color_config.get(prop):
+            color_dict = color_config.get(prop)
+        else: 
+            if prop2type and prop2type.get(prop) == list:
+                leaf_values = list(map(list,set(map(tuple,tree_prop_array(tree, prop)))))
+                prop_values = [val for sublist in leaf_values for val in sublist]
+            else:
+                prop_values = sorted(list(set(tree_prop_array(tree, prop))))
 
-        color_dict = assign_color_to_values(prop_values, paired_color)
-        
+            color_dict = assign_color_to_values(prop_values, paired_color)
+
         layout = text_layouts.LayoutText(name='Label_'+prop, column=level, 
         color_dict=color_dict, text_prop=prop, width=column_width, padding_x=padding_x, padding_y=padding_y)
         layouts.append(layout)
         level += 1
     return layouts, level, prop_color_dict
 
-def get_colorbranch_layouts(tree, props, level, prop2type, column_width=70, padding_x=1, padding_y=0):
+def get_colorbranch_layouts(tree, props, level, prop2type, column_width=70, padding_x=1, padding_y=0, color_config=None):
     prop_color_dict = {}
     layouts = []
     for prop in props:
         color_dict = {} # key = value, value = color id
-        if prop2type and prop2type.get(prop) == list:
-            leaf_values = list(map(list,set(map(tuple,tree_prop_array(tree, prop)))))    
-            prop_values = [val for sublist in leaf_values for val in sublist]
-        else:
-            prop_values = sorted(list(set(tree_prop_array(tree, prop))))
-        
-        # normal text prop
-        color_dict = assign_color_to_values(prop_values, paired_color)
+        if color_config and color_config.get(prop):
+            color_dict = color_config.get(prop)
+        else: 
+            if prop2type and prop2type.get(prop) == list:
+                leaf_values = list(map(list,set(map(tuple,tree_prop_array(tree, prop)))))    
+                prop_values = [val for sublist in leaf_values for val in sublist]
+            else:
+                prop_values = sorted(list(set(tree_prop_array(tree, prop))))
+            
+            # normal text prop
+            color_dict = assign_color_to_values(prop_values, paired_color)
 
         layout = text_layouts.LayoutColorbranch(name='Colorbranch_'+prop, column=level, \
             color_dict=color_dict, text_prop=prop, width=column_width, \
@@ -792,19 +837,22 @@ def get_colorbranch_layouts(tree, props, level, prop2type, column_width=70, padd
         level += 1
     return layouts, level, prop_color_dict
 
-def get_rectangle_layouts(tree, props, level, prop2type, column_width=70, padding_x=1, padding_y=0):
+def get_rectangle_layouts(tree, props, level, prop2type, column_width=70, padding_x=1, padding_y=0, color_config=None):
     prop_color_dict = {}
     layouts = []
     for prop in props:
         color_dict = {} # key = value, value = color id
-        if prop2type and prop2type.get(prop) == list:
-            leaf_values = list(map(list,set(map(tuple,tree_prop_array(tree, prop)))))    
-            prop_values = [val for sublist in leaf_values for val in sublist]
+        if color_config and color_config.get(prop):
+            color_dict = color_config.get(prop)
         else:
-            prop_values = sorted(list(set(tree_prop_array(tree, prop))))
-        
-        # normal text prop
-        color_dict = assign_color_to_values(prop_values, paired_color)
+            if prop2type and prop2type.get(prop) == list:
+                leaf_values = list(map(list,set(map(tuple,tree_prop_array(tree, prop)))))    
+                prop_values = [val for sublist in leaf_values for val in sublist]
+            else:
+                prop_values = sorted(list(set(tree_prop_array(tree, prop))))
+            
+            # normal text prop
+            color_dict = assign_color_to_values(prop_values, paired_color)
 
         layout = text_layouts.LayoutRect(name='Rectangular_'+prop, column=level,
                     color_dict=color_dict, text_prop=prop,
@@ -896,7 +944,6 @@ def get_barplot_layouts(tree, props, level, prop2type, column_width=70, padding_
             prop_color_dict[prop] = barplot_color
             layouts.append(layout)  
             level += 1
-
         pass
     else: 
         for prop in props:
