@@ -813,8 +813,8 @@ class ProfileFace(Face):
             #     'max_fsize': fsize,
             #     'ftype': 'sans-serif', # default sans-serif
             #    }
-            tooltip = f'<p>{seq}</p>'
-            yield draw_array(sm_box, [self.value2color[x] if x is not None else self.absence_color for x in seq], tooltip=tooltip)
+            # tooltip = f'<p>{seq}</p>'
+            yield draw_array(sm_box, [self.value2color[x] if x is not None else self.absence_color for x in seq])
             #yield draw_text(sm_box, for i in seq, "jjj", style=style)
             
         if self.seq_format == "categorical":
@@ -822,5 +822,5 @@ class ProfileFace(Face):
             sm_x = sm_x if drawer.TYPE == 'rect' else x0
             y, h = get_height(sm_x, y)
             sm_box = Box(sm_x+sm_x0, y, posw * len(seq), h)
-            tooltip = f'<p>{seq}</p>'
-            yield draw_array(sm_box, [self.value2color[x] if x is not None else self.absence_color for x in seq], tooltip=tooltip)
+            #tooltip = f'<p>{seq}</p>'
+            yield draw_array(sm_box, [self.value2color[x] if x is not None else self.absence_color for x in seq])
