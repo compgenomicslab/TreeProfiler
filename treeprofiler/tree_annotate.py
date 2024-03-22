@@ -53,7 +53,7 @@ def populate_annotate_args(parser):
     # add('--data-matrix', nargs='+',
     #     help="<data_matrix.csv> .csv, .tsv. optional input")
     add('--data-matrix',  nargs='+',
-        help="<datamatrix.csv> .csv, .tsv. matrix data metadata table as array to tree")
+        help="<datamatrix.csv> .csv, .tsv. matrix data metadata table as array to tree, please do not provide column headers in this file")
     add('-sep', '--metadata-sep', default='\t',
         help="column separator of metadata table [default: \\t]")
     add('--no-headers', action='store_true',
