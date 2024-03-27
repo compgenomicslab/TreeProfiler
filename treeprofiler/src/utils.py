@@ -390,15 +390,12 @@ def random_color(h=None, l=None, s=None, num=None, sep=None, seed=None):
 def assign_color_to_values(values, paired_colors):
     """Assigns colors to values, either from a predefined list or generates new ones."""
     color_dict = {}
-
     if len(values) <= len(paired_colors):
         # Use predefined colors if enough are available
         color_dict = {val: paired_colors[i] for i, val in enumerate(values)}
-    elif len(values) <= 20:
-        # Use the assign_colors function to generate colors if not enough predefined colors
-        color_dict = assign_colors(values, cmap_name='tab20')
     else:
         color_dict = assign_colors(values, cmap_name='terrain')
+        
     return dict(sorted(color_dict.items()))
 
 def rgba_to_hex(rgba):
