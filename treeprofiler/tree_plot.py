@@ -117,7 +117,7 @@ def poplulate_plot_args(plot_args_p):
         default=None,
         help="Path to the file to find the color for each variables. [default: None]"
     )
-    group.add_argument('--config-sep', default='\t',
+    group.add_argument('-d', '--config-sep', default='\t',
         help="column separator of color table [default: \\t]")
     # group.add_argument('--profiling_width',
     #     type=int,
@@ -401,7 +401,7 @@ def run(args):
                 visualized_props.extend(numerical_props)
 
         if layout == "piechart-layout":
-            piechart_layouts = get_piechart_layouts(tree, args.piechart_layout, prop2type=prop2type, padding_x=args.padding_x, padding_y=args.padding_y)
+            piechart_layouts = get_piechart_layouts(tree, args.piechart_layout, prop2type=prop2type, padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config)
             layouts.extend(piechart_layouts)
             visualized_props.extend(args.piechart_layout)
             visualized_props.extend([add_suffix(prop, 'counter') for prop in args.piechart_layout])
@@ -426,7 +426,7 @@ def run(args):
             visualized_props.extend(args.revbinary_layout)
 
         if layout == 'barplot-layout':
-            barplot_layouts, level,color_dict = get_barplot_layouts(tree, args.barplot_layout, level, prop2type, column_width=args.barplot_width, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep, anchor_column=args.barplot_anchor)
+            barplot_layouts, level, color_dict = get_barplot_layouts(tree, args.barplot_layout, level, prop2type, column_width=args.barplot_width, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep, anchor_column=args.barplot_anchor)
             layouts.extend(barplot_layouts)
             total_color_dict.append(color_dict)
             visualized_props.extend(args.barplot_layout)
@@ -787,17 +787,20 @@ def get_ls_layouts(tree, props, level, prop2type, padding_x=1, padding_y=0):
 
     return layouts, ls_props
 
-def get_piechart_layouts(tree, props, prop2type, padding_x=1, padding_y=0, radius=20):
+def get_piechart_layouts(tree, props, prop2type, padding_x=1, padding_y=0, radius=20, color_config=None):
     layouts = []
     for prop in props:
-        color_dict = {} 
-        if prop2type and prop2type.get(prop) == list:
-            leaf_values = list(map(list,set(map(tuple,tree_prop_array(tree, prop)))))
-            prop_values = [val for sublist in leaf_values for val in sublist]
-        else:
-            prop_values = sorted(list(set(tree_prop_array(tree, prop))))
-        
-        color_dict = assign_color_to_values(prop_values, paired_color)
+        color_dict = {}
+        if color_config and color_config.get(prop):
+            color_dict = color_config.get(prop)
+        else: 
+            if prop2type and prop2type.get(prop) == list:
+                leaf_values = list(map(list,set(map(tuple,tree_prop_array(tree, prop)))))
+                prop_values = [val for sublist in leaf_values for val in sublist]
+            else:
+                prop_values = sorted(list(set(tree_prop_array(tree, prop))))
+            
+            color_dict = assign_color_to_values(prop_values, paired_color)
         layout = text_layouts.LayoutPiechart(name='Piechart_'+prop, color_dict=color_dict, text_prop=prop, radius=radius)
         layouts.append(layout)
     return layouts
@@ -982,7 +985,6 @@ def get_barplot_layouts(tree, props, level, prop2type, column_width=70, padding_
             prop_color_dict[prop] = barplot_color
             layouts.append(layout)  
             level += 1
-
     return layouts, level, prop_color_dict
 
 def get_heatmap_layouts(tree, props, level, column_width=70, padding_x=1, padding_y=0, internal_rep='avg'):
