@@ -7,7 +7,7 @@ import re
 from ete4.smartview import TreeStyle, NodeStyle, TreeLayout, PieChartFace
 from ete4.smartview  import (RectFace, CircleFace, SeqMotifFace, TextFace, OutlineFace, \
                             SelectedFace, SelectedCircleFace, SelectedRectFace, LegendFace,
-                            SeqFace, Face, ScaleFace, AlignmentFace)
+                            SeqFace, Face, AlignmentFace)
 from ete4.smartview.renderer.draw_helpers import draw_text, draw_line, draw_array
 from ete4 import SeqGroup
 from treeprofiler.layouts.general_layouts import get_piechartface, get_heatmapface, color_gradient
@@ -91,7 +91,7 @@ class LayoutPropsMatrix(TreeLayout):
         if self.length:
             face = TextScaleFace(width=self.width, scale_range=self.scale_range, 
                                 headers=self.matrix_props, padding_y=0, rotation=270)
-            #face = ScaleFace(width=self.width, scale_range=self.scale_range, padding_y=0)
+            #face = MatrixScaleFace(width=self.width, scale_range=self.scale_range, padding_y=0)
             tree_style.aligned_panel_header.add_face(face, column=self.column)
             if self.matrix_type == 'categorical':
                 colormap = {value: profilecolors[letter] for value, letter in self.value_color.items()}
@@ -156,6 +156,98 @@ class LayoutPropsMatrix(TreeLayout):
             node.add_face(seqFace, column=self.column, position='aligned', 
                     collapsed_only=(not node.is_leaf))
 
+class LayoutPropsMatrixOld(TreeLayout):
+    def __init__(self, name="Profile", matrix=None, matrix_type='categorical', \
+            matrix_props=None, is_list=False, width=None, poswidth=20, height=20,
+            column=0, range=None, summarize_inner_nodes=False, value_range=[], \
+            value_color={}, legend=True, active=True):
+        super().__init__(name, active=active)
+        self.matrix = matrix
+        self.matrix_type = matrix_type
+        self.matrix_props = matrix_props
+        self.is_list = is_list
+
+        if width:
+            self.width = width
+        else:
+            self.width = poswidth * len(matrix_props)
+
+        self.height = height
+        self.column = column
+        self.aligned_faces = True
+
+        self.length = len(next(iter(self.matrix))[0]) if self.matrix else None
+        self.scale_range = range or (0, self.length)
+        self.value_range = value_range
+        self.value_color = value_color
+
+        self.summarize_inner_nodes = summarize_inner_nodes
+        self.legend = legend
+
+    def set_tree_style(self, tree, tree_style):
+        if self.length:
+            if self.is_list:
+                ncols = len(next(iter(self.matrix.values())))
+                face = MatrixScaleFace(width=self.width, scale_range=(0, ncols), padding_y=0)
+                header = self.matrix_props[0]
+                title = TextFace(header, min_fsize=5, max_fsize=12, 
+                    padding_x=0, padding_y=2, width=self.width)
+                tree_style.aligned_panel_header.add_face(face, column=self.column)
+                tree_style.aligned_panel_header.add_face(title, column=self.column)
+                
+            else:
+                face = TextScaleFace(width=self.width, scale_range=self.scale_range, 
+                                    headers=self.matrix_props, padding_y=0, rotation=270)
+                tree_style.aligned_panel_header.add_face(face, column=self.column)
+
+        if self.legend:
+            if self.matrix_type == 'numerical':
+                keys_list = list(self.value_color.keys())  
+                middle_index = len(keys_list) // 2  
+                middle_key = keys_list[middle_index]  
+                middle_value = self.value_color[middle_key]  
+
+                if self.value_range:
+                    color_gradient = [
+                        self.value_color[self.value_range[1]], 
+                        middle_value,
+                        self.value_color[self.value_range[0]]
+                        ]
+                    tree_style.add_legend(title=self.name,
+                                    variable="continuous",
+                                    value_range=self.value_range,
+                                    color_range=color_gradient,
+                                    )
+            if self.matrix_type == 'categorical':
+                tree_style.add_legend(title=self.name,
+                                    variable='discrete',
+                                    colormap=self.value_color,
+                                    )
+    def _get_array(self, node):
+        if self.matrix:
+            return self.matrix.get(node.name)
+
+    def get_array(self, node):
+        if node.is_leaf:
+            return self._get_array(node)
+        else:
+            first_leaf = next(node.leaves())
+            return self._get_array(first_leaf)
+
+    def set_node_style(self, node):
+        array = self.get_array(node)
+        if len(self.matrix_props) > 1:
+            poswidth = self.width / (len(self.matrix_props)-1 )
+        else:
+            poswidth = self.width
+        
+        if array:
+            profileFace = ProfileFace(array, self.value_color, gap_format=None, \
+            seq_format=self.matrix_type, width=self.width, height=self.height, \
+            poswidth=poswidth)
+            node.add_face(profileFace, column=self.column, position='aligned', \
+                collapsed_only=(not node.is_leaf))
+
 class LayoutProfile(TreeLayout):
     def __init__(self, name="Profile", mode='profiles',
             alignment=None, seq_format='profiles', profiles=None, 
@@ -195,7 +287,7 @@ class LayoutProfile(TreeLayout):
         if self.length:
             face = TextScaleFace(width=self.width, scale_range=self.scale_range, 
                                 headers=self.profiles, padding_y=0, rotation=270)
-            #face = ScaleFace(width=self.width, scale_range=self.scale_range, padding_y=0)
+            #face = MatrixScaleFace(width=self.width, scale_range=self.scale_range, padding_y=0)
             tree_style.aligned_panel_header.add_face(face, column=self.column)
 
         if self.legend:
@@ -797,94 +889,129 @@ class ProfileFace(Face):
             #tooltip = f'<p>{seq}</p>'
             yield draw_array(sm_box, [self.value2color[x] if x is not None else self.absence_color for x in seq])
 
-class LayoutPropsMatrixOld(TreeLayout):
-    def __init__(self, name="Profile", matrix=None, matrix_type='categorical', \
-            matrix_props=None, is_list=False, width=None, poswidth=20, height=20,
-            column=0, range=None, summarize_inner_nodes=False, value_range=[], \
-            value_color={}, legend=True, active=True):
-        super().__init__(name, active=active)
-        self.matrix = matrix
-        self.matrix_type = matrix_type
-        self.matrix_props = matrix_props
-        self.is_list = is_list
+class MatrixScaleFace(Face):
+    def __init__(self, name='', width=None, color='black',
+            scale_range=(0, 0), tick_width=80, line_width=1,
+            formatter='%.0f',
+            min_fsize=6, max_fsize=12, ftype='sans-serif',
+            padding_x=0, padding_y=0):
 
-        if width:
-            self.width = width
+        Face.__init__(self, name=name,
+                padding_x=padding_x, padding_y=padding_y)
+
+        self.width = width
+        self.height = None
+        self.range = scale_range
+
+        self.color = color
+        self.min_fsize = min_fsize
+        self.max_fsize = max_fsize
+        self._fsize = max_fsize
+        self.ftype = ftype
+        self.formatter = formatter
+
+        self.tick_width = tick_width
+        self.line_width = line_width
+
+        self.vt_line_height = 10
+
+    def __name__(self):
+        return "ScaleFace"
+
+    def compute_bounding_box(self,
+            drawer,
+            point, size,
+            dx_to_closest_child,
+            bdx, bdy,
+            bdy0, bdy1,
+            pos, row,
+            n_row, n_col,
+            dx_before, dy_before):
+
+        if drawer.TYPE == 'circ' and abs(point[1]) >= pi/2:
+            pos = swap_pos(pos)
+
+        box = super().compute_bounding_box(
+            drawer,
+            point, size,
+            dx_to_closest_child,
+            bdx, bdy,
+            bdy0, bdy1,
+            pos, row,
+            n_row, n_col,
+            dx_before, dy_before)
+
+        x, y, _, dy = box
+        zx, zy = self.zoom
+
+        self.viewport = (drawer.viewport.x, drawer.viewport.x + drawer.viewport.dx)
+
+        self.height = (self.line_width + 10 + self.max_fsize) / zy
+
+        height = min(dy, self.height)
+
+        if pos == "aligned_bottom":
+            y = y + dy - height
+
+        self._box = Box(x, y, self.width / zx, height)
+        return self._box
+
+    def draw(self, drawer):
+        x0, y, _, dy = self._box
+        zx, zy = self.zoom
+
+        p1 = (x0, y + dy - 5 / zy)
+        p2 = (x0 + self.width, y + dy - self.vt_line_height / (2 * zy))
+        if drawer.TYPE == 'circ':
+            p1 = cartesian(p1)
+            p2 = cartesian(p2)
+        yield draw_line(p1, p2, style={'stroke-width': self.line_width,
+                                       'stroke': self.color})
+
+
+        nticks = round((self.width * zx) / self.tick_width)
+
+        # avoid nticks = 0 
+        if not nticks:
+            nticks = 2
+
+        dx = self.width / nticks
+
+        range_factor = (self.range[1] - self.range[0]) / self.width
+
+        if self.viewport:
+            sm_start = round(max(self.viewport[0] - self.viewport_margin - x0, 0) / dx)
+            sm_end = nticks - round(max(x0 + self.width - (self.viewport[1] +
+                self.viewport_margin), 0) / dx)
         else:
-            self.width = poswidth * len(matrix_props)
+            sm_start, sm_end = 0, nticks
 
-        self.height = height
-        self.column = column
-        self.aligned_faces = True
+        for i in range(sm_start, sm_end + 1):
+            x = x0 + i * dx
+            number = range_factor * i * dx
 
-        self.length = len(next(iter(self.matrix))[0]) if self.matrix else None
-        self.scale_range = range or (0, self.length)
-        self.value_range = value_range
-        self.value_color = value_color
-
-        self.summarize_inner_nodes = summarize_inner_nodes
-        self.legend = legend
-
-    def set_tree_style(self, tree, tree_style):
-        if self.length:
-            if self.is_list:
-                ncols = len(next(iter(self.matrix.values())))
-                face = ScaleFace(width=self.width, scale_range=(0, ncols), padding_y=0)
-                header = self.matrix_props[0]
-                title = TextFace(header, min_fsize=5, max_fsize=12, 
-                    padding_x=0, padding_y=2, width=self.width)
-                tree_style.aligned_panel_header.add_face(face, column=self.column)
-                tree_style.aligned_panel_header.add_face(title, column=self.column)
-                
+            if number == 0:
+                text = "0"
             else:
-                face = TextScaleFace(width=self.width, scale_range=self.scale_range, 
-                                    headers=self.matrix_props, padding_y=0, rotation=270)
-                tree_style.aligned_panel_header.add_face(face, column=self.column)
+                text = self.formatter % number if self.formatter else str(number)
 
-        if self.legend:
-            if self.matrix_type == 'numerical':
-                keys_list = list(self.value_color.keys())  
-                middle_index = len(keys_list) // 2  
-                middle_key = keys_list[middle_index]  
-                middle_value = self.value_color[middle_key]  
+            text = text.rstrip('0').rstrip('.') if '.' in text else text
 
-                if self.value_range:
-                    color_gradient = [
-                        self.value_color[self.value_range[1]], 
-                        middle_value,
-                        self.value_color[self.value_range[0]]
-                        ]
-                    tree_style.add_legend(title=self.name,
-                                    variable="continuous",
-                                    value_range=self.value_range,
-                                    color_range=color_gradient,
-                                    )
-            if self.matrix_type == 'categorical':
-                tree_style.add_legend(title=self.name,
-                                    variable='discrete',
-                                    colormap=self.value_color,
-                                    )
-    def _get_array(self, node):
-        if self.matrix:
-            return self.matrix.get(node.name)
+            self.compute_fsize(self.tick_width / len(text), dy, zx, zy)
+            text_style = {
+                'max_fsize': self._fsize,
+                'text_anchor': 'middle',
+                'ftype': f'{self.ftype}, sans-serif', # default sans-serif
+                }
+            text_box = Box(x,
+                    y,
+                    # y + (dy - self._fsize / (zy * r)) / 2,
+                    dx, dy)
 
-    def get_array(self, node):
-        if node.is_leaf:
-            return self._get_array(node)
-        else:
-            first_leaf = next(node.leaves())
-            return self._get_array(first_leaf)
+            yield draw_text(text_box, text, style=text_style)
 
-    def set_node_style(self, node):
-        array = self.get_array(node)
-        if len(self.matrix_props) > 1:
-            poswidth = self.width / (len(self.matrix_props)-1 )
-        else:
-            poswidth = self.width
-        
-        if array:
-            profileFace = ProfileFace(array, self.value_color, gap_format=None, \
-            seq_format=self.matrix_type, width=self.width, height=self.height, \
-            poswidth=poswidth)
-            node.add_face(profileFace, column=self.column, position='aligned', \
-                collapsed_only=(not node.is_leaf))
+            p1 = (x, y + dy - self.vt_line_height / zy)
+            p2 = (x, y + dy)
+
+            yield draw_line(p1, p2, style={'stroke-width': self.line_width,
+                                           'stroke': self.color})
