@@ -1,6 +1,7 @@
 from io import StringIO 
 from collections import OrderedDict, namedtuple
 import numpy as np
+import math
 import re
 
 from ete4.smartview import TreeStyle, NodeStyle, TreeLayout, PieChartFace
@@ -93,7 +94,6 @@ class LayoutPropsMatrix(TreeLayout):
             #face = ScaleFace(width=self.width, scale_range=self.scale_range, padding_y=0)
             tree_style.aligned_panel_header.add_face(face, column=self.column)
             if self.matrix_type == 'categorical':
-                print(self.value_color)
                 colormap = {value: profilecolors[letter] for value, letter in self.value_color.items()}
                 tree_style.add_legend(title=self.name,
                                     variable='discrete',
@@ -158,8 +158,10 @@ class LayoutPropsMatrix(TreeLayout):
 
 class LayoutProfile(TreeLayout):
     def __init__(self, name="Profile", mode='profiles',
-            alignment=None, seq_format='profiles', profiles=None, width=None, poswidth=20, height=20,
-            column=0, range=None, summarize_inner_nodes=False, value_range=[], value_color={}, legend=True,
+            alignment=None, seq_format='profiles', profiles=None, 
+            width=None, poswidth=20, height=20,
+            column=0, range=None, summarize_inner_nodes=False, 
+            value_range=[], value_color={}, legend=True,
             active=True):
         super().__init__(name, active=active)
         self.alignment = SeqGroup(alignment) if alignment else None
@@ -799,6 +801,33 @@ class ProfileFace(Face):
         self._box = Box(x, y, self.width / zx, dy)
         return self._box
     
+    def get_rep_numbers(self, num_array, rep_num):
+        def find_closest(numbers, target):
+            # Find the number in 'numbers' that is closest to calculated target
+            return min(numbers, key=lambda x: abs(x - target))
+
+        # get the representative numbers from given array
+        seg_size = math.ceil(len(num_array) / rep_num)
+        rep_elements = []
+
+        for i in range(rep_num):
+            start_index = int(i * seg_size)
+            end_index = int((i + 1) * seg_size)
+            if i == rep_num - 1:
+                end_index = len(num_array)
+
+            segment = num_array[start_index:end_index]
+            if segment:
+                if len(segment) != 0:
+                    segment_average = sum(segment) / len(segment)
+                else:
+                    segment_average = 0
+                
+                # Find the cloest number to the average
+                closest_number = find_closest(segment, segment_average)
+                rep_elements.append(closest_number)
+        return rep_elements
+            
     def draw(self, drawer):
         def get_height(x, y):
             r = (x or 1e-10) if drawer.TYPE == 'circ' else 1
@@ -832,21 +861,33 @@ class ProfileFace(Face):
         w = self.seqlength * posw
         sm_x0 = x0 if drawer.TYPE == "rect" else 0
         sm_end = self.seqlength - round(max(sm_x0 + w - viewport_end, 0) / posw)
+        
+        # total width of the matrix: self.width
+        # total number of column: self.seqlength
+        # at least 1px per column
 
         if self.seq_format == "numerical":
             seq = self.get_seq(sm_start, sm_end)
             sm_x = sm_x if drawer.TYPE == 'rect' else x0
             y, h = get_height(sm_x, y)
             sm_box = Box(sm_x+sm_x0, y, posw * len(seq), h)
-            # fsize = self.get_fsize(dx / len(seq), dy, zx, zy, 20)
-            # style = {
-            #     'fill': "black",
-            #     'max_fsize': fsize,
-            #     'ftype': 'sans-serif', # default sans-serif
-            #    }
-            # tooltip = f'<p>{seq}</p>'
-            yield draw_array(sm_box, [self.value2color[x] if x is not None else self.absence_color for x in seq])
-            #yield draw_text(sm_box, for i in seq, "jjj", style=style)
+
+            if too_small: # only happens in data-matrix visualization            
+                #ncols_per_px = math.ceil(self.seqlength / (zx * sm_box.dx)) #jordi's idea
+                ncols_per_px = math.ceil(self.width * zx)
+                rep_elements = self.get_rep_numbers(seq, ncols_per_px)
+                yield draw_array(sm_box, [self.value2color[x] if x is not None else self.absence_color for x in rep_elements])
+            else:
+                # fsize = self.get_fsize(dx / len(seq), dy, zx, zy, 20)
+                # style = {
+                #     'fill': "black",
+                #     'max_fsize': fsize,
+                #     'ftype': 'sans-serif', # default sans-serif
+                #    }
+                # tooltip = f'<p>{seq}</p>'
+                # yield draw_text(sm_box, for i in seq, "jjj", style=style)
+                yield draw_array(sm_box, [self.value2color[x] if x is not None else self.absence_color for x in seq])
+            
             
         if self.seq_format == "categorical":
             seq = self.get_seq(sm_start, sm_end)
@@ -858,13 +899,14 @@ class ProfileFace(Face):
 
 class LayoutPropsMatrixOld(TreeLayout):
     def __init__(self, name="Profile", matrix=None, matrix_type='categorical', \
-            matrix_props=None, width=None, poswidth=20, height=20,
+            matrix_props=None, is_list=False, width=None, poswidth=20, height=20,
             column=0, range=None, summarize_inner_nodes=False, value_range=[], \
             value_color={}, legend=True, active=True):
         super().__init__(name, active=active)
         self.matrix = matrix
         self.matrix_type = matrix_type
         self.matrix_props = matrix_props
+        self.is_list = is_list
 
         if width:
             self.width = width
@@ -885,18 +927,27 @@ class LayoutPropsMatrixOld(TreeLayout):
 
     def set_tree_style(self, tree, tree_style):
         if self.length:
-            face = TextScaleFace(width=self.width, scale_range=self.scale_range, 
-                                headers=self.matrix_props, padding_y=0, rotation=270)
-            #face = ScaleFace(width=self.width, scale_range=self.scale_range, padding_y=0)
-            tree_style.aligned_panel_header.add_face(face, column=self.column)
+            if self.is_list:
+                ncols = len(next(iter(self.matrix.values())))
+                face = ScaleFace(width=self.width, scale_range=(0, ncols), padding_y=0)
+                header = self.matrix_props[0]
+                title = TextFace(header, min_fsize=5, max_fsize=12, 
+                    padding_x=0, padding_y=2, width=self.width)
+                tree_style.aligned_panel_header.add_face(face, column=self.column)
+                tree_style.aligned_panel_header.add_face(title, column=self.column)
+                
+            else:
+                face = TextScaleFace(width=self.width, scale_range=self.scale_range, 
+                                    headers=self.matrix_props, padding_y=0, rotation=270)
+                tree_style.aligned_panel_header.add_face(face, column=self.column)
 
-        keys_list = list(self.value_color.keys())  
-        middle_index = len(keys_list) // 2  
-        middle_key = keys_list[middle_index]  
-        middle_value = self.value_color[middle_key]  
-        
         if self.legend:
             if self.matrix_type == 'numerical':
+                keys_list = list(self.value_color.keys())  
+                middle_index = len(keys_list) // 2  
+                middle_key = keys_list[middle_index]  
+                middle_value = self.value_color[middle_key]  
+
                 if self.value_range:
                     color_gradient = [
                         self.value_color[self.value_range[1]], 

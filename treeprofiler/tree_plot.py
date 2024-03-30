@@ -493,20 +493,20 @@ def run(args):
         # numerical matrix
         if layout == 'numerical-matrix-layout':
             numerical_props = args.numerical_matrix_layout
-            matrix, value2color = float2matrix(tree, numerical_props)
-            all_values = list(value2color.keys())
-            min_val, max_val = min(all_values), max(all_values)
-            matrix_layout = profile_layouts.LayoutPropsMatrix(name=f'Numerical_matrix_{numerical_props}', 
-                matrix_type='numerical', alignment=matrix, matrix_props=numerical_props, 
-                profiles=all_values, column=level, summarize_inner_nodes=False, 
-                value_range = [min_val, max_val], value_color=value2color,
-                poswidth=args.column_width)
-
-            # matrix, minval, maxval, value2color = numerical2matrix(tree, numerical_props)
-            # matrix_layout = profile_layouts.LayoutPropsMatrixOld(name=f"Numerical_matrix_{numerical_props}", 
-            #     matrix=matrix, matrix_type='numerical', matrix_props=numerical_props, 
-            #     value_color=value2color, value_range=[minval, maxval], column=level, 
+            # matrix, value2color = float2matrix(tree, numerical_props)
+            # all_values = list(value2color.keys())
+            # min_val, max_val = min(all_values), max(all_values)
+            # matrix_layout = profile_layouts.LayoutPropsMatrix(name=f'Numerical_matrix_{numerical_props}', 
+            #     matrix_type='numerical', alignment=matrix, matrix_props=numerical_props, 
+            #     profiles=all_values, column=level, summarize_inner_nodes=False, 
+            #     value_range = [min_val, max_val], value_color=value2color,
             #     poswidth=args.column_width)
+
+            matrix, minval, maxval, value2color, is_list = numerical2matrix(tree, numerical_props)
+            matrix_layout = profile_layouts.LayoutPropsMatrixOld(name=f"Numerical_matrix_{numerical_props}", 
+                matrix=matrix, matrix_type='numerical', matrix_props=numerical_props, is_list=is_list, 
+                value_color=value2color, value_range=[minval, maxval], column=level,
+                poswidth=args.column_width)
 
             level += 1
             layouts.append(matrix_layout)
@@ -1061,24 +1061,28 @@ def numerical2matrix(tree, profiling_props, dtype=float):
     A dictionary of matrix representation of the tree leaves and their properties.
     A sorted dictionary mapping property values to their corresponding colors.
     """
-    gradientscolor = build_color_gradient(20, colormap_name='coolwarm')
+    gradientscolor = build_color_gradient(20, colormap_name='Reds')
     leaf2matrix = {}
+    is_list = False
     for node in tree.traverse():
         if node.is_leaf:
             leaf2matrix[node.name] = []
             for profiling_prop in profiling_props:
-                if node.props.get(profiling_prop):
-                    if type(node.props.get(profiling_prop)) == list:
-                        for array in node.props.get(profiling_prop):
-                            if dtype == float:
-                                val = float(array)
-                            leaf2matrix[node.name].append(val)
-                    else:
-                        if node.props.get(profiling_prop) is not None:
-                            if dtype == float:
-                                val = float(node.props.get(profiling_prop))
-                            leaf2matrix[node.name].append(val)
-                else:
+                prop_value = node.props.get(profiling_prop)  
+                if prop_value is not None:  
+                    if isinstance(prop_value, list):  # Check if the property value is a list
+                        is_list = True  # Set is_array to True upon finding the first list
+                        for array_element in prop_value:
+                            if dtype == float:  
+                                leaf2matrix[node.name].append(float(array_element))
+                            else:  
+                                leaf2matrix[node.name].append(array_element)
+                    else:  # If not a list, directly handle the single value case
+                        if dtype == float:  
+                            leaf2matrix[node.name].append(float(prop_value))
+                        else:  
+                            leaf2matrix[node.name].append(prop_value)
+                else:  # If prop_value is None, append None
                     leaf2matrix[node.name].append(None)
     
     #get color
@@ -1091,7 +1095,7 @@ def numerical2matrix(tree, profiling_props, dtype=float):
     for search_value in all_values:
         index = np.abs(index_values - search_value).argmin()+1
         value2color[search_value] = gradientscolor[index]
-    return leaf2matrix, minval, maxval, value2color
+    return leaf2matrix, minval, maxval, value2color, is_list
 
 def float2matrix(tree, profiling_props):
     """
