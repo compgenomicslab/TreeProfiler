@@ -426,7 +426,7 @@ def run(args):
             visualized_props.extend(args.revbinary_layout)
 
         if layout == 'barplot-layout':
-            barplot_layouts, level, color_dict = get_barplot_layouts(tree, args.barplot_layout, level, prop2type, column_width=args.barplot_width, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep, anchor_column=args.barplot_anchor)
+            barplot_layouts, level, color_dict = get_barplot_layouts(tree, args.barplot_layout, level, prop2type, column_width=args.barplot_width, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep, anchor_column=args.barplot_anchor, color_config=color_config)
             layouts.extend(barplot_layouts)
             total_color_dict.append(color_dict)
             visualized_props.extend(args.barplot_layout)
@@ -925,66 +925,78 @@ def get_branchscore_layouts(tree, props, prop2type, padding_x=1, padding_y=0, in
         layouts.append(layout)
     return layouts
 
-def get_barplot_layouts(tree, props, level, prop2type, column_width=70, padding_x=1, padding_y=0, internal_rep='avg', anchor_column=None):
+def get_barplot_layouts(tree, props, level, prop2type, column_width=70, padding_x=1, padding_y=0, internal_rep='avg', anchor_column=None, color_config=None, paired_color=[]):
+    def get_barplot_color(level):
+        global paired_color
+        """Determines the color for the barplot based on the level and available paired colors."""
+        if level > len(paired_color):
+            return random_color(h=None)
+        else:
+            return paired_color[level]
+
+    def process_prop_values(tree, prop):
+        """Extracts and processes property values, excluding NaNs."""
+        prop_values = np.array(list(set(tree_prop_array(tree, prop)))).astype('float64')
+        return prop_values[~np.isnan(prop_values)]
+
+    def calculate_column_width(prop_values, anchormax=None):
+        """Calculates new column width based on property values and optional anchormax."""
+        if anchormax is not None:
+            minval, maxval = prop_values.min(), prop_values.max()
+            return maxval / (anchormax / column_width)
+        return column_width
+
+    def configure_layout(prop, new_column_width, color_dict, color_prop, size_prop):
+        """Configures and returns the layout for the current property."""
+        layout_params = {
+            'name': f'Barplot_{prop}',
+            'prop': prop,
+            'width': new_column_width,
+            'color': None if color_dict else barplot_color,
+            'colors': color_dict,
+            'color_prop': color_prop,
+            'size_prop': size_prop,
+            'column': level,
+            'internal_rep': internal_rep,
+            'padding_x': padding_x * 10,
+        }
+        if color_dict is None:
+            del layout_params['colors']
+            del layout_params['color_prop']
+        else:
+            del layout_params['color']
+        return staple_layouts.LayoutBarplot(**layout_params)
+
     prop_color_dict = {}
     layouts = []
-    barplot_padding_x = padding_x * 10
+
+    # Initialize anchor column values if provided
+    anchormax = None
     if anchor_column:
-        anchor_column_values = np.array(list(set(tree_prop_array(tree, anchor_column)))).astype('float64')
-        anchor_column_values = anchor_column_values[~np.isnan(anchor_column_values)]
-        anchormin, anchormax = anchor_column_values.min(), anchor_column_values.max()
-        for prop in props:
-            color_dict = {}
-            prop_values = np.array(list(set(tree_prop_array(tree, prop)))).astype('float64')
-            prop_values = prop_values[~np.isnan(prop_values)]
-            minval, maxval = prop_values.min(), prop_values.max()
-            new_column_width = maxval / (anchormax / column_width)
-            if prop_values.any():
-                size_prop = prop
-            else:
-                size_prop = prop+'_'+internal_rep
+        anchor_column_values = process_prop_values(tree, anchor_column)
+        anchormax = anchor_column_values.max()
 
-            if level > len(paired_color):
-                barplot_color =  random_color(h=None)
-            else:
-                barplot_color = paired_color[level]
-            
-            layout =  staple_layouts.LayoutBarplot(name='Barplot_'+prop, prop=prop, 
-                                        width=new_column_width, color=barplot_color, 
-                                        size_prop=size_prop, column=level, 
-                                        internal_rep=internal_rep, padding_x=barplot_padding_x
-                                        )
+    for prop in props:
+        prop_values = process_prop_values(tree, prop)
+        size_prop = prop if prop_values.any() else f"{prop}_{internal_rep}"
+        new_column_width = calculate_column_width(prop_values, anchormax)
 
+        # Determine color configuration if available
+        if color_config and (color_config.get(prop) or color_config.get("name")):
+            color_dict = color_config.get(prop, color_config.get("name"))
+            color_prop = prop if color_config.get(prop) else "name"
+        else:
+            # Apply default color logic
+            color_dict = None
+            color_prop = None
+            barplot_color = get_barplot_color(level)
             prop_color_dict[prop] = barplot_color
-            layouts.append(layout)  
-            level += 1
-        pass
-    else: 
-        for prop in props:
-            color_dict = {} # key = value, value = color id
-            prop_values = np.array(list(set(tree_prop_array(tree, prop)))).astype('float64')
-            prop_values = prop_values[~np.isnan(prop_values)]
-            minval, maxval = prop_values.min(), prop_values.max()
-            
-            if prop_values.any():
-                size_prop = prop
-            else:
-                size_prop = prop+'_'+internal_rep
 
-            if level > len(paired_color):
-                barplot_color =  random_color(h=None)
-            else:
-                barplot_color = paired_color[level]
-            
-            layout =  staple_layouts.LayoutBarplot(name='Barplot_'+prop, prop=prop, 
-                                        width=column_width, color=barplot_color, 
-                                        size_prop=size_prop, column=level, 
-                                        internal_rep=internal_rep, padding_x=barplot_padding_x
-                                        )
-
-            prop_color_dict[prop] = barplot_color
-            layouts.append(layout)  
-            level += 1
+        # Configure and add layout
+        layout = configure_layout(prop, new_column_width, color_dict, color_prop, size_prop)
+        layouts.append(layout)
+        level += 1
+    
     return layouts, level, prop_color_dict
 
 def get_heatmap_layouts(tree, props, level, column_width=70, padding_x=1, padding_y=0, internal_rep='avg'):
