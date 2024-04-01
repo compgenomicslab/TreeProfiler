@@ -3,8 +3,11 @@ import numbers
 import math
 import sys
 import os
+import argparse
+import csv
 
 from collections import defaultdict
+from collections import OrderedDict
 from itertools import islice
 from io import StringIO
 import matplotlib.pyplot as plt
@@ -109,6 +112,13 @@ def poplulate_plot_args(plot_args_p):
         default=None,
         help="find the barplot column as scale anchor.[default: None]"
     )
+    group.add_argument('--color-config',
+        type=argparse.FileType('r'),
+        default=None,
+        help="Path to the file to find the color for each variables. [default: None]"
+    )
+    group.add_argument('--config-sep', default='\t',
+        help="column separator of color table [default: \\t]")
     # group.add_argument('--profiling_width',
     #     type=int,
     #     default=None,
@@ -326,6 +336,11 @@ def run(args):
     # numerical representative mearsure 
     internal_num_rep = args.internal_plot_measure
 
+    # color configuration
+    color_config = {}
+    if args.color_config:
+        color_config = read_config_to_dict(args.color_config, delimiter=args.config_sep)
+
     # Get the input arguments in order
     input_order = []
     for arg in sys.argv[1:]:
@@ -333,7 +348,7 @@ def run(args):
             input_order.append(arg[2:])
         else:
             continue
-
+    
     visualized_props = []
     for layout in input_order:
         if layout == 'acr-discrete-layout':
@@ -363,7 +378,7 @@ def run(args):
             visualized_props.extend(args.heatmap_layout)
 
         if layout == 'label-layout':
-            label_layouts, level, color_dict = get_label_layouts(tree, args.label_layout, level, prop2type=prop2type, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y)
+            label_layouts, level, color_dict = get_label_layouts(tree, args.label_layout, level, prop2type=prop2type, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config)
             layouts.extend(label_layouts)
             total_color_dict.append(color_dict)
             visualized_props.extend(args.label_layout)
@@ -371,7 +386,7 @@ def run(args):
         if layout == 'colorbranch-layout':
             categorical_props = [prop for prop in args.colorbranch_layout if prop2type[prop] in [str, list, bool]]
             if categorical_props:
-                colorbranch_layouts, level, color_dict = get_colorbranch_layouts(tree, categorical_props, level, prop2type=prop2type, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y)
+                colorbranch_layouts, level, color_dict = get_colorbranch_layouts(tree, categorical_props, level, prop2type=prop2type, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config)
                 layouts.extend(colorbranch_layouts)
                 total_color_dict.append(color_dict)
                 visualized_props.extend(categorical_props)
@@ -392,7 +407,7 @@ def run(args):
             visualized_props.extend([add_suffix(prop, 'counter') for prop in args.piechart_layout])
 
         if layout == 'rectangle-layout':
-            rectangle_layouts, level, color_dict = get_rectangle_layouts(tree, args.rectangle_layout, level, prop2type=prop2type, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y)
+            rectangle_layouts, level, color_dict = get_rectangle_layouts(tree, args.rectangle_layout, level, prop2type=prop2type, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config)
             layouts.extend(rectangle_layouts)
             total_color_dict.append(color_dict)
             visualized_props.extend(args.rectangle_layout)
@@ -432,23 +447,15 @@ def run(args):
         if layout == 'domain-layout':
             domain_layout = seq_layouts.LayoutDomain(name="Domain_layout", prop='dom_arq')
             layouts.append(domain_layout)
-        
+
         # presence-absence profiling based on categorical data
-        # if layout == 'profiling-layout':
-        #     profiling_props = args.profiling_layout
-        #     for profiling_prop in profiling_props:
-        #         matrix, all_values = single2profile(tree, profiling_prop)
-        #         profile_layout = profile_layouts.LayoutProfile(name=f'Profiling_{profiling_prop}', mode='multi',
-        #             alignment=matrix, seq_format='profiles', profiles=all_values, column=level, summarize_inner_nodes=True, poswidth=args.column_width)
-        #         level += 1
-        #         layouts.append(profile_layout)
-        
         if layout == 'profiling-layout':
             profiling_props = args.profiling_layout
             for profiling_prop in profiling_props:
-                matrix, all_values = single2profile(tree, profiling_prop)
-                profile_layout = profile_layouts.LayoutProfile(name=f'Profiling_{profiling_prop}', mode='multi',
-                    alignment=matrix, seq_format='profiles', profiles=all_values, column=level, summarize_inner_nodes=True, poswidth=args.column_width)
+                matrix, all_values = single2profile(tree, profiling_prop) # create mimic msa
+                profile_layout = profile_layouts.LayoutProfile(name=f'Profiling_{profiling_prop}', 
+                    mode='profiles', alignment=matrix, seq_format='profiles', profiles=all_values, 
+                    column=level, summarize_inner_nodes=True, poswidth=args.column_width)
                 level += 1
                 layouts.append(profile_layout)
 
@@ -456,18 +463,28 @@ def run(args):
         if layout == 'multi-profiling-layout':
             profiling_props = args.multi_profiling_layout
             for profiling_prop in profiling_props:
-                matrix, all_values = multiple2profile(tree, profiling_prop)
-                profile_layout = profile_layouts.LayoutProfile(name=f'Profiling_{profiling_prop}', mode='multi',
-                alignment=matrix, seq_format='profiles', profiles=all_values, column=level, summarize_inner_nodes=False, poswidth=args.column_width)
+                matrix, all_values = multiple2profile(tree, profiling_prop) # create mimic msa
+                profile_layout = profile_layouts.LayoutProfile(name=f'Profiling_{profiling_prop}', 
+                mode='profiles', alignment=matrix, seq_format='profiles', profiles=all_values, 
+                column=level, summarize_inner_nodes=False, 
+                poswidth=args.column_width)
                 level += 1
                 layouts.append(profile_layout)
         
         # categorical matrix
         if layout == 'categorical-matrix-layout':
             categorical_props = args.categorical_matrix_layout
+            # matrix, value2color = str2matrix(tree, categorical_props)
+            # all_values = list(value2color.keys())
+            # matrix_layout = profile_layouts.LayoutPropsMatrix(name=f'Categorical_matrix_{categorical_props}', 
+            #     matrix_type='categorical', alignment=matrix, matrix_props=categorical_props, 
+            #     profiles=all_values, column=level, summarize_inner_nodes=False, value_color=value2color,
+            #     poswidth=args.column_width)
+
+            # drawing as array in matrix
             matrix, value2color = categorical2matrix(tree, categorical_props)
-            matrix_layout = profile_layouts.LayoutPropsMatrix(name=f"Categorical_matrix_{categorical_props}", \
-                matrix=matrix, matrix_type='categorical', matrix_props=categorical_props, \
+            matrix_layout = profile_layouts.LayoutPropsMatrixOld(name=f"Categorical_matrix_{categorical_props}",
+                matrix=matrix, matrix_type='categorical', matrix_props=categorical_props,
                 value_color=value2color, column=level, poswidth=args.column_width)
             
             level += 1
@@ -476,11 +493,19 @@ def run(args):
         # numerical matrix
         if layout == 'numerical-matrix-layout':
             numerical_props = args.numerical_matrix_layout
+            # matrix, value2color = float2matrix(tree, numerical_props)
+            # all_values = list(value2color.keys())
+            # min_val, max_val = min(all_values), max(all_values)
+            # matrix_layout = profile_layouts.LayoutPropsMatrix(name=f'Numerical_matrix_{numerical_props}', 
+            #     matrix_type='numerical', alignment=matrix, matrix_props=numerical_props, 
+            #     profiles=all_values, column=level, summarize_inner_nodes=False, 
+            #     value_range = [min_val, max_val], value_color=value2color,
+            #     poswidth=args.column_width)
 
-            matrix, minval, maxval, value2color = numerical2matrix(tree, numerical_props)
-            matrix_layout = profile_layouts.LayoutPropsMatrix(name=f"Numerical_matrix_{numerical_props}", \
-                matrix=matrix, matrix_type='numerical', matrix_props=numerical_props, \
-                value_color=value2color, value_range=[minval, maxval], column=level, \
+            matrix, minval, maxval, value2color, is_list = numerical2matrix(tree, numerical_props)
+            matrix_layout = profile_layouts.LayoutPropsMatrixOld(name=f"Numerical_matrix_{numerical_props}", 
+                matrix=matrix, matrix_type='numerical', matrix_props=numerical_props, is_list=is_list, 
+                value_color=value2color, value_range=[minval, maxval], column=level,
                 poswidth=args.column_width)
 
             level += 1
@@ -562,7 +587,7 @@ def run(args):
             matrix, all_values = multiple2profile(tree, multiple_text_prop)
             multiple_text_prop_layout = profile_layouts.LayoutProfile(
                 name="Profiling_"+multiple_text_prop, 
-                mode='multi', 
+                mode='profiles', 
                 alignment=matrix, 
                 profiles=all_values, 
                 active=False,
@@ -652,6 +677,31 @@ def wrtie_color(color_dict):
                         f.write('VAR'+'\t'+ sub_k+'\n')
                         f.write('COLOR'+'\t'+ sub_v+'\n')
                     f.write('\n')
+
+def read_config_to_dict(file_obj, delimiter):
+    """
+    Reads a configuration file to a dictionary.
+
+    The configuration file should have the format:
+    prop,value,color
+    random_type,low,green
+    ...
+
+    :param filename: Path to the file.
+    :return: A dictionary with (prop, value) tuple as keys and color as values.
+    """
+    config_dict = {}
+    # Reset file pointer to start, in case it's been accessed before
+    file_obj.seek(0)
+    reader = csv.DictReader(file_obj, delimiter=delimiter)
+    for row in reader:
+        prop = row['PROP']
+        value = row['VALUE']
+        color = row['COLOR']
+        if prop not in config_dict:
+            config_dict[prop] = {}
+        config_dict[prop][value] = color
+    return config_dict
 
 def get_acr_discrete_layouts(tree, props, level, prop2type, column_width=70, padding_x=1, padding_y=0):
     prop_color_dict = {}
@@ -752,38 +802,44 @@ def get_piechart_layouts(tree, props, prop2type, padding_x=1, padding_y=0, radiu
         layouts.append(layout)
     return layouts
 
-def get_label_layouts(tree, props, level, prop2type, column_width=70, padding_x=1, padding_y=0):
+def get_label_layouts(tree, props, level, prop2type, column_width=70, padding_x=1, padding_y=0, color_config=None):
     prop_color_dict = {}
     layouts = []
     for prop in props:
-        color_dict = {} 
-        if prop2type and prop2type.get(prop) == list:
-            leaf_values = list(map(list,set(map(tuple,tree_prop_array(tree, prop)))))
-            prop_values = [val for sublist in leaf_values for val in sublist]
-        else:
-            prop_values = sorted(list(set(tree_prop_array(tree, prop))))
+        color_dict = {}
+        if color_config and color_config.get(prop):
+            color_dict = color_config.get(prop)
+        else: 
+            if prop2type and prop2type.get(prop) == list:
+                leaf_values = list(map(list,set(map(tuple,tree_prop_array(tree, prop)))))
+                prop_values = [val for sublist in leaf_values for val in sublist]
+            else:
+                prop_values = sorted(list(set(tree_prop_array(tree, prop))))
 
-        color_dict = assign_color_to_values(prop_values, paired_color)
-        
+            color_dict = assign_color_to_values(prop_values, paired_color)
+
         layout = text_layouts.LayoutText(name='Label_'+prop, column=level, 
         color_dict=color_dict, text_prop=prop, width=column_width, padding_x=padding_x, padding_y=padding_y)
         layouts.append(layout)
         level += 1
     return layouts, level, prop_color_dict
 
-def get_colorbranch_layouts(tree, props, level, prop2type, column_width=70, padding_x=1, padding_y=0):
+def get_colorbranch_layouts(tree, props, level, prop2type, column_width=70, padding_x=1, padding_y=0, color_config=None):
     prop_color_dict = {}
     layouts = []
     for prop in props:
         color_dict = {} # key = value, value = color id
-        if prop2type and prop2type.get(prop) == list:
-            leaf_values = list(map(list,set(map(tuple,tree_prop_array(tree, prop)))))    
-            prop_values = [val for sublist in leaf_values for val in sublist]
-        else:
-            prop_values = sorted(list(set(tree_prop_array(tree, prop))))
-        
-        # normal text prop
-        color_dict = assign_color_to_values(prop_values, paired_color)
+        if color_config and color_config.get(prop):
+            color_dict = color_config.get(prop)
+        else: 
+            if prop2type and prop2type.get(prop) == list:
+                leaf_values = list(map(list,set(map(tuple,tree_prop_array(tree, prop)))))    
+                prop_values = [val for sublist in leaf_values for val in sublist]
+            else:
+                prop_values = sorted(list(set(tree_prop_array(tree, prop))))
+            
+            # normal text prop
+            color_dict = assign_color_to_values(prop_values, paired_color)
 
         layout = text_layouts.LayoutColorbranch(name='Colorbranch_'+prop, column=level, \
             color_dict=color_dict, text_prop=prop, width=column_width, \
@@ -792,19 +848,22 @@ def get_colorbranch_layouts(tree, props, level, prop2type, column_width=70, padd
         level += 1
     return layouts, level, prop_color_dict
 
-def get_rectangle_layouts(tree, props, level, prop2type, column_width=70, padding_x=1, padding_y=0):
+def get_rectangle_layouts(tree, props, level, prop2type, column_width=70, padding_x=1, padding_y=0, color_config=None):
     prop_color_dict = {}
     layouts = []
     for prop in props:
         color_dict = {} # key = value, value = color id
-        if prop2type and prop2type.get(prop) == list:
-            leaf_values = list(map(list,set(map(tuple,tree_prop_array(tree, prop)))))    
-            prop_values = [val for sublist in leaf_values for val in sublist]
+        if color_config and color_config.get(prop):
+            color_dict = color_config.get(prop)
         else:
-            prop_values = sorted(list(set(tree_prop_array(tree, prop))))
-        
-        # normal text prop
-        color_dict = assign_color_to_values(prop_values, paired_color)
+            if prop2type and prop2type.get(prop) == list:
+                leaf_values = list(map(list,set(map(tuple,tree_prop_array(tree, prop)))))    
+                prop_values = [val for sublist in leaf_values for val in sublist]
+            else:
+                prop_values = sorted(list(set(tree_prop_array(tree, prop))))
+            
+            # normal text prop
+            color_dict = assign_color_to_values(prop_values, paired_color)
 
         layout = text_layouts.LayoutRect(name='Rectangular_'+prop, column=level,
                     color_dict=color_dict, text_prop=prop,
@@ -896,7 +955,6 @@ def get_barplot_layouts(tree, props, level, prop2type, column_width=70, padding_
             prop_color_dict[prop] = barplot_color
             layouts.append(layout)  
             level += 1
-
         pass
     else: 
         for prop in props:
@@ -960,23 +1018,26 @@ def get_prop2type(node):
         elif type(value) == list:
             output[prop] = list
         else:
-            output[prop] = str
-
-    # for prop, value in prop2value.items():
-    #     output[prop] = type(value)
-    
+            output[prop] = str    
     return output
 
 def categorical2matrix(tree, profiling_props, dtype=str):
+    """
+    Input:
+    tree: A tree structure with nodes, each having properties.
+    profiling_props: A list of property names to be processed for each leaf in the tree.
+    
+    Output:
+    A dictionary of matrix representation of the tree leaves and their properties.
+    A sorted dictionary mapping property values to their corresponding colors.
+    """
     leaf2matrix = {}
     for node in tree.traverse():
         if node.is_leaf:
             leaf2matrix[node.name] = []
             for profiling_prop in profiling_props:
                 if node.props.get(profiling_prop) is not None:
-                    if dtype == float:
-                        val = float(node.props.get(profiling_prop))
-                    elif dtype == str:
+                    if dtype == str:
                         val = node.props.get(profiling_prop)
                     leaf2matrix[node.name].append(val)
                 else:
@@ -991,19 +1052,37 @@ def categorical2matrix(tree, profiling_props, dtype=str):
     return leaf2matrix, value2color
 
 def numerical2matrix(tree, profiling_props, dtype=float):
-    gradientscolor = build_color_gradient(20, colormap_name='bwr')
+    """
+    Input:
+    tree: A tree structure with nodes, each having properties.
+    profiling_props: A list of property names to be processed for each leaf in the tree.
+
+    Output:
+    A dictionary of matrix representation of the tree leaves and their properties.
+    A sorted dictionary mapping property values to their corresponding colors.
+    """
+    gradientscolor = build_color_gradient(20, colormap_name='Reds')
     leaf2matrix = {}
+    is_list = False
     for node in tree.traverse():
         if node.is_leaf:
             leaf2matrix[node.name] = []
             for profiling_prop in profiling_props:
-                if node.props.get(profiling_prop) is not None:
-                    if dtype == float:
-                        val = float(node.props.get(profiling_prop))
-                    elif dtype == str:
-                        val = node.props.get(profiling_prop)
-                    leaf2matrix[node.name].append(val)
-                else:
+                prop_value = node.props.get(profiling_prop)  
+                if prop_value is not None:  
+                    if isinstance(prop_value, list):  # Check if the property value is a list
+                        is_list = True  # Set is_array to True upon finding the first list
+                        for array_element in prop_value:
+                            if dtype == float:  
+                                leaf2matrix[node.name].append(float(array_element))
+                            else:  
+                                leaf2matrix[node.name].append(array_element)
+                    else:  # If not a list, directly handle the single value case
+                        if dtype == float:  
+                            leaf2matrix[node.name].append(float(prop_value))
+                        else:  
+                            leaf2matrix[node.name].append(prop_value)
+                else:  # If prop_value is None, append None
                     leaf2matrix[node.name].append(None)
     
     #get color
@@ -1016,9 +1095,77 @@ def numerical2matrix(tree, profiling_props, dtype=float):
     for search_value in all_values:
         index = np.abs(index_values - search_value).argmin()+1
         value2color[search_value] = gradientscolor[index]
-    return leaf2matrix, minval, maxval, value2color
+    return leaf2matrix, minval, maxval, value2color, is_list
 
-def props2matrix(tree, profiling_props, dtype=float):
+def float2matrix(tree, profiling_props):
+    """
+    Input:
+    tree: A tree structure with nodes, each having properties.
+    profiling_props: A list of property names to be processed for each leaf in the tree.
+    
+    Output:
+    A fasta text output of matrix representation of the tree leaves and their properties in color codes.
+    A sorted dictionary mapping property values to their corresponding colors in the gradient.
+    """
+    def process_value(value):
+        """Process a single value or list of values to float."""
+        if isinstance(value, list):
+            return [float(v) if v is not None else None for v in value]
+        else:
+            return float(value) if value is not None else None
+
+    gradients = [
+    'a', 'b', 'c',
+    'd', 'e', 'f',
+    'g', 'h', 'i',
+    'j', 'k', 'l',
+    'm', 'n', 'o',
+    'p', 'q', 'r', 
+    's', 't'
+    ] #white to red
+    absence_color = '-'
+    leaf2matrix = {}
+    for node in tree.traverse():
+        if node.is_leaf:
+            #leaf2matrix[node.name] = [float(node.props.get(prop)) if node.props.get(prop) is not None else None for prop in profiling_props]
+            leaf2matrix[node.name] = []
+            for prop in profiling_props:
+                value = node.props.get(prop)
+                processed_value = process_value(value)
+                leaf2matrix[node.name].extend(processed_value if isinstance(processed_value, list) else [processed_value])
+
+    value2color = {}
+    all_values = list(set(flatten(leaf2matrix.values())))
+    all_values = sorted([x for x in all_values if x is not None and not math.isnan(x)])
+    maxval, minval = max(all_values), min(all_values)
+    num = len(gradients)
+    values = np.linspace(minval, maxval, num)
+
+    matrix = ''
+    for leaf, prop in leaf2matrix.items():
+        matrix += '\n' + '>' + leaf + '\n'
+        for search_value in prop:
+            if search_value is not None:
+                index = np.abs(values - search_value).argmin()
+                matrix += gradients[index]
+                value2color[search_value] = gradients[index]
+            else:
+                matrix += '-'
+                value2color[search_value] = absence_color
+
+    sorted_value2color = OrderedDict(sorted((k, v) for k, v in value2color.items() if k is not None))
+    return matrix, sorted_value2color
+
+def str2matrix(tree, profiling_props):
+    """
+    Input:
+    tree: A tree structure with nodes, each having properties.
+    profiling_props: A list of property names to be processed for each leaf in the tree.
+    
+    Output:
+    A fasta text output of matrix representation of the tree leaves and their properties in color codes.
+    A sorted dictionary mapping property values to their corresponding colors in the 20 amino acid color codes.
+    """
     aa = [
         'A', 'R', 'N',
         'D', 'C', 'Q',
@@ -1030,113 +1177,30 @@ def props2matrix(tree, profiling_props, dtype=float):
         'Y', 'X'
     ]
     absence_color = 'G'
-    gradients = [
-    'a', 'b', 'c',
-    'd', 'e', 'f',
-    'g', 'h', 'i',
-    'j', 'k', 'l',
-    'm', 'n', 'o',
-    'p', 'q', 'r', 
-    's', 't'
-    ] #blue to red
-
     leaf2matrix = {}
     for node in tree.traverse():
         if node.is_leaf:
-            leaf2matrix[node.name] = []
-            for profiling_prop in profiling_props:
-                if node.props.get(profiling_prop) is not None:
-                    if dtype == float:
-                        val = float(node.props.get(profiling_prop))
-                    elif dtype == str:
-                        val = node.props.get(profiling_prop)
-                    leaf2matrix[node.name].append(val)
-                else:
-                    leaf2matrix[node.name].append(None)
-    
-    # gain all values from metadata
-    if dtype == float:
-        all_values = list(set(flatten([sublist for sublist in leaf2matrix.values()])))
-        all_values = sorted(list(filter(lambda x: x is not None and not math.isnan(x), all_values)))
-        maxval = max(all_values)
-        minval = min(all_values)
-        num = len(gradients)
-        values = np.linspace(minval, maxval, num)
-        matrix = ''
-        for leaf, prop in leaf2matrix.items():
-            matrix += '\n'+'>'+leaf+'\n'
-            for i in range(len(prop)):
-                search_value = prop[i]
-                if search_value:
-                    # Find the index of the closest element to the search value
-                    index = np.abs(values - search_value).argmin()
-                    matrix += gradients[index]
-                else:
-                    matrix += '-'
-        return matrix, maxval, minval
-    
-    elif dtype == str:
-        value2color = {}
-        all_values = sorted(list(set(flatten([sublist for sublist in leaf2matrix.values()]))))
-        for i in range(len(all_values)):
-            val = all_values[i]
-            if val != 'NaN':
-                value2color[val] = aa[i]
-            else:
-                value2color[val] = absence_color
-        
-        matrix = ''
-        for leaf, prop in leaf2matrix.items():
-            matrix += '\n'+'>'+leaf+'\n'
-            for item in prop:
-                matrix += value2color[item]
-        
-        return matrix, value2color
-  
-# def categorical2profile(tree, profiling_prop):
-#     aa = [
-#         'A', 'R', 'N',
-#         'D', 'C', 'Q',
-#         'E', 'H',
-#         'I', 'S', 'K',
-#         'M', 'F', 'P',
-#         'L', 'T', 'W',
-#         'Z', 'V', 'B',
-#         'Y', 'X'
-#     ]
-#     absence_color = 'G'
+            leaf2matrix[node.name] = [node.props.get(prop) if node.props.get(prop) is not None else None for prop in profiling_props]
 
-#     leaf2matrix = {}
-#     for node in tree.traverse():
-#         if node.is_leaf:
-#             leaf2matrix[node.name] = []
-#             #for profiling_prop in profiling_props:
-#             if node.props.get(profiling_prop):
-#                 val = node.props.get(profiling_prop)
-#                 leaf2matrix[node.name].append(val)
-#             else:
-#                 leaf2matrix[node.name].append(None)
+    value2color = {}
+    all_values = sorted(set(flatten(leaf2matrix.values())))
+    for i, val in enumerate(all_values):
+        if val != 'NaN':
+            value2color[val] = aa[i % len(aa)]  # Use modulo to avoid out-of-range errors
+        else:
+            value2color[val] = absence_color
 
-#     value2color = {}
-#     all_values = list(set(flatten([sublist for sublist in leaf2matrix.values()])))
-#     for i in range(len(all_values)):
-#         val = all_values[i]
-#         if val != 'NaN':
-#             value2color[val] = aa[i]
-#         else:
-#             value2color[val] = absence_color
-    
-#     matrix = ''
-#     for leaf, prop in leaf2matrix.items():
-#         matrix += '\n'+'>'+leaf+'\n'
-#         for item in prop:
-#             matrix += value2color[item]
-#     return matrix, value2color
+    matrix = ''
+    for leaf, prop in leaf2matrix.items():
+        matrix += '\n' + '>' + leaf + '\n' + ''.join([value2color.get(item, '-') for item in prop])
+
+    return matrix, value2color
+
 
 def single2profile(tree, profiling_prop):
     all_values = sorted(list(set(flatten(tree_prop_array(tree, profiling_prop)))), key=lambda x: (x != 'NaN', x))
-    presence = 'a' # #E60A0A red
-    absence = '-' # #EBEBEB lightgrey
+    presence = 'p' # #E60A0A red
+    absence = 'z' # #EBEBEB lightgrey
     matrix = ''
     for leaf in tree.leaves():
         matrix += '\n'+'>'+leaf.name+'\n'
@@ -1152,8 +1216,8 @@ def single2profile(tree, profiling_prop):
     
 def multiple2profile(tree, profiling_prop):
     all_values = sorted(list(set(flatten(tree_prop_array(tree, profiling_prop)))), key=lambda x: (x != 'NaN', x))
-    presence = 'a' # #E60A0A red
-    absence = '-' # #EBEBEB lightgrey
+    presence = 'p' # #E60A0A red
+    absence = 'z' # #EBEBEB lightgrey
     matrix = ''
     for leaf in tree.leaves():
         matrix += '\n'+'>'+leaf.name+'\n'
