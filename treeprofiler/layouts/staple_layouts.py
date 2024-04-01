@@ -195,10 +195,10 @@ class LayoutBarplot(LayoutPlot):
             else:
                 colormap = self.colors
 
-            # tree_style.add_legend(title=self.prop,
-            #                         variable='discrete',
-            #                         colormap=colormap
-            #                         )
+            tree_style.add_legend(title=self.prop,
+                                    variable='discrete',
+                                    colormap=colormap
+                                    )
 
     def get_color(self, node, color_prop, color_dict):
         if color_dict and color_prop:

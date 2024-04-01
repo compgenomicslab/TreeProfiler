@@ -26,9 +26,10 @@ from treeprofiler.layouts import (
 from treeprofiler.src.utils import (
     validate_tree, TreeFormatError,
     taxatree_prune, conditional_prune,
-    tree_prop_array, children_prop_array, children_prop_array_missing, 
+    tree_prop_array, children_prop_array, 
     flatten, get_consensus_seq, random_color, assign_color_to_values, 
-    add_suffix, build_color_gradient, str2bool, str2dict)
+    add_suffix, build_color_gradient, build_custom_gradient, 
+    str2bool, str2dict)
 from treeprofiler.tree_annotate import can_convert_to_bool
 
 paired_color = [
@@ -373,7 +374,7 @@ def run(args):
             visualized_props.extend(ls_props)
             
         if layout == 'heatmap-layout':
-            heatmap_layouts, level = get_heatmap_layouts(tree, args.heatmap_layout, level, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep)
+            heatmap_layouts, level = get_heatmap_layouts(tree, args.heatmap_layout, level, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep, color_config=color_config)
             layouts.extend(heatmap_layouts)
             visualized_props.extend(args.heatmap_layout)
 
@@ -696,11 +697,20 @@ def read_config_to_dict(file_obj, delimiter):
     reader = csv.DictReader(file_obj, delimiter=delimiter)
     for row in reader:
         prop = row['PROP']
+        detail = row['DETAIL']
         value = row['VALUE']
         color = row['COLOR']
+
+        # Initialize property if not present
         if prop not in config_dict:
-            config_dict[prop] = {}
-        config_dict[prop][value] = color
+            config_dict[prop] = {"value2color": {}, "detail2color": {}}
+
+        # Assign colors based on presence of detail or value
+        if detail:
+            config_dict[prop]["detail2color"][detail.lower()] = color
+        elif value:
+            config_dict[prop]["value2color"][value] = color
+
     return config_dict
 
 def get_acr_discrete_layouts(tree, props, level, prop2type, column_width=70, padding_x=1, padding_y=0):
@@ -792,7 +802,8 @@ def get_piechart_layouts(tree, props, prop2type, padding_x=1, padding_y=0, radiu
     for prop in props:
         color_dict = {}
         if color_config and color_config.get(prop):
-            color_dict = color_config.get(prop)
+            if color_config.get(prop).get('value2color'):
+                color_dict = color_config.get(prop).get('value2color')
         else: 
             if prop2type and prop2type.get(prop) == list:
                 leaf_values = list(map(list,set(map(tuple,tree_prop_array(tree, prop)))))
@@ -811,7 +822,8 @@ def get_label_layouts(tree, props, level, prop2type, column_width=70, padding_x=
     for prop in props:
         color_dict = {}
         if color_config and color_config.get(prop):
-            color_dict = color_config.get(prop)
+            if color_config.get(prop).get('value2color'):
+                color_dict = color_config.get(prop).get('value2color')
         else: 
             if prop2type and prop2type.get(prop) == list:
                 leaf_values = list(map(list,set(map(tuple,tree_prop_array(tree, prop)))))
@@ -833,7 +845,8 @@ def get_colorbranch_layouts(tree, props, level, prop2type, column_width=70, padd
     for prop in props:
         color_dict = {} # key = value, value = color id
         if color_config and color_config.get(prop):
-            color_dict = color_config.get(prop)
+            if color_config.get(prop).get('value2color'):
+                color_dict = color_config.get(prop).get('value2color')
         else: 
             if prop2type and prop2type.get(prop) == list:
                 leaf_values = list(map(list,set(map(tuple,tree_prop_array(tree, prop)))))    
@@ -857,7 +870,8 @@ def get_rectangle_layouts(tree, props, level, prop2type, column_width=70, paddin
     for prop in props:
         color_dict = {} # key = value, value = color id
         if color_config and color_config.get(prop):
-            color_dict = color_config.get(prop)
+            if color_config.get(prop).get('value2color'):
+                color_dict = color_config.get(prop).get('value2color')
         else:
             if prop2type and prop2type.get(prop) == list:
                 leaf_values = list(map(list,set(map(tuple,tree_prop_array(tree, prop)))))    
@@ -946,7 +960,7 @@ def get_barplot_layouts(tree, props, level, prop2type, column_width=70, padding_
             return maxval / (anchormax / column_width)
         return column_width
 
-    def configure_layout(prop, new_column_width, color_dict, color_prop, size_prop):
+    def configure_layout(prop, new_column_width, color_dict, color_prop, size_prop, barplot_color=None):
         """Configures and returns the layout for the current property."""
         layout_params = {
             'name': f'Barplot_{prop}',
@@ -980,32 +994,59 @@ def get_barplot_layouts(tree, props, level, prop2type, column_width=70, padding_
         prop_values = process_prop_values(tree, prop)
         size_prop = prop if prop_values.any() else f"{prop}_{internal_rep}"
         new_column_width = calculate_column_width(prop_values, anchormax)
+        barplot_color = get_barplot_color(level)
 
         # Determine color configuration if available
         if color_config and (color_config.get(prop) or color_config.get("name")):
-            color_dict = color_config.get(prop, color_config.get("name"))
+            color_dict = color_config.get(prop, color_config.get("name")).get('value2color')
             color_prop = prop if color_config.get(prop) else "name"
+            if color_prop != "name":
+                # Convert all keys in color_dict to float
+                try:
+                    color_dict = {float(key): value for key, value in color_dict.items()}
+                except ValueError:
+                    print(f"Warning: Unable to convert all keys to float for property '{prop}'.")
+                    # Optionally, you could handle this situation differently, e.g., skipping the conversion,
+                    # using the original keys, or halting execution with an error message.
         else:
             # Apply default color logic
             color_dict = None
             color_prop = None
-            barplot_color = get_barplot_color(level)
+            #barplot_color = get_barplot_color(level)
             prop_color_dict[prop] = barplot_color
 
         # Configure and add layout
-        layout = configure_layout(prop, new_column_width, color_dict, color_prop, size_prop)
+        layout = configure_layout(prop, new_column_width, color_dict, color_prop, size_prop, barplot_color)
         layouts.append(layout)
         level += 1
     
     return layouts, level, prop_color_dict
 
-def get_heatmap_layouts(tree, props, level, column_width=70, padding_x=1, padding_y=0, internal_rep='avg'):
-    gradientscolor = build_color_gradient(20, colormap_name="Reds")
+def get_heatmap_layouts(tree, props, level, column_width=70, padding_x=1, padding_y=0, internal_rep='avg', color_config=None):
+
     layouts = []
     all_prop_values = [list(set(tree_prop_array(tree, prop))) for prop in props]
     all_prop_values = np.array(flatten(all_prop_values)).astype('float64')
     for prop in props:
+        if color_config and color_config.get(prop) is not None:
+            prop_config = color_config[prop]
+            
+            color_dict = {}
 
+            # First, try to use value2color mappings if they exist and are applicable
+            if 'value2color' in prop_config and prop_config['value2color']:
+                color_dict = prop_config['value2color']
+                sorted_color_dict = {float(key): value for key, value in color_dict.items()}
+                gradientscolor = sorted_color_dict.values()
+            elif 'detail2color' in prop_config and prop_config['detail2color']:
+                min_color = prop_config['detail2color'].get('color_min', 'white')
+                max_color = prop_config['detail2color'].get('color_max', 'red')
+                mid_color = prop_config['detail2color'].get('color_mid', 'red')
+
+                gradientscolor = build_custom_gradient(20, min_color, max_color, mid_color)
+        else:
+            gradientscolor = build_color_gradient(20, colormap_name="Reds")
+        
         minval, maxval = all_prop_values.min(), all_prop_values.max()
         # layout =  staple_layouts.LayoutHeatmap(name='Heatmap_'+prop, column=level, 
         #             width=column_width, padding_x=padding_x, padding_y=padding_y, \
