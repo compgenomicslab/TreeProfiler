@@ -89,10 +89,14 @@ class LayoutPropsMatrix(TreeLayout):
 
     def set_tree_style(self, tree, tree_style):
         if self.length:
-            face = TextScaleFace(width=self.width, scale_range=self.scale_range, 
-                                headers=self.matrix_props, padding_y=0, rotation=270)
-            #face = MatrixScaleFace(width=self.width, scale_range=self.scale_range, padding_y=0)
+            #face = TextScaleFace(width=self.width, scale_range=self.scale_range, 
+            #                    headers=self.matrix_props, padding_y=0, rotation=270)
+            face = MatrixScaleFace(width=self.width, scale_range=(0, self.length), padding_y=0)
+            header = self.matrix_props[0]
+            title = TextFace(header, min_fsize=5, max_fsize=12, 
+                    padding_x=self.width/2, padding_y=2, width=self.width/2)
             tree_style.aligned_panel_header.add_face(face, column=self.column)
+            tree_style.aligned_panel_header.add_face(title, column=self.column)
             if self.matrix_type == 'categorical':
                 colormap = {value: profilecolors[letter] for value, letter in self.value_color.items()}
                 tree_style.add_legend(title=self.name,
