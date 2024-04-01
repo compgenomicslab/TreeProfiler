@@ -109,28 +109,28 @@ class LayoutPlot(TreeLayout):
             self.size_range = vals["size"][1:3]
             
 
-        if self.color_prop:
-            unique = vals["color"][3]
-            if len(unique):
-                colors = self.colors or random_color(num=len(unique))
-                if type(colors) == dict:
-                    self.colors = colors.copy()
-                else:
-                    colors = list(colors)
-                    self.colors = {}
-                    for idx, value in enumerate(unique):
-                        self.colors[value] = colors[idx % len(colors)]
-                if self.legend:
-                    tree_style.add_legend(title=self.name,
-                            variable="discrete",
-                            colormap=self.colors)
-            else:
-                self.color_range = vals["color"][1:3]
-                if self.legend:
-                    tree_style.add_legend(title=self.name, 
-                            variable="continuous",
-                            value_range=self.color_range,
-                            color_range=self.color_gradient)
+        # if self.color_prop:
+        #     unique = vals["color"][3]
+        #     if len(unique):
+        #         colors = self.colors or random_color(num=len(unique))
+        #         if type(colors) == dict:
+        #             self.colors = colors.copy()
+        #         else:
+        #             colors = list(colors)
+        #             self.colors = {}
+        #             for idx, value in enumerate(unique):
+        #                 self.colors[value] = colors[idx % len(colors)]
+        #         if self.legend:
+        #             tree_style.add_legend(title=self.name,
+        #                     variable="discrete",
+        #                     colormap=self.colors)
+        #     else:
+        #         self.color_range = vals["color"][1:3]
+        #         if self.legend:
+        #             tree_style.add_legend(title=self.name, 
+        #                     variable="continuous",
+        #                     value_range=self.color_range,
+        #                     color_range=self.color_gradient)
 
     # def get_size(self, node, prop):
     #     if self.size_range != [0, 0]:
@@ -163,7 +163,7 @@ class LayoutPlot(TreeLayout):
 class LayoutBarplot(LayoutPlot):
     def __init__(self, name=None, prop=None, width=200, size_prop=None,
             color_prop=None, position="aligned", column=0, 
-            color_gradient=None, color="red", colors=None, 
+            color_gradient=None, color=None, colors=None, 
             padding_x=10, padding_y=0, scale=True, legend=True, active=True, 
             internal_rep='avg', scale_size=None, scale_range=None):
 
@@ -171,7 +171,8 @@ class LayoutBarplot(LayoutPlot):
         super().__init__(name=name, prop=prop, width=width, size_prop=size_prop,
                 color_prop=color_prop, position=position, column=column,
                 color_gradient=color_gradient, colors=colors, color=color,
-                padding_x=padding_x, padding_y=padding_y,scale=scale, legend=legend, active=active,
+                padding_x=padding_x, padding_y=padding_y,scale=scale, legend=legend, 
+                active=active,
                 internal_rep=internal_rep)
 
     def set_tree_style(self, tree, tree_style):
@@ -188,19 +189,33 @@ class LayoutBarplot(LayoutPlot):
             tree_style.aligned_panel_header.add_face(text, column=self.column)
         
         if self.legend:
-            colormap = { self.prop: self.color
-                        }
+            if self.color:
+                colormap = {self.prop: self.color
+                            }
+            else:
+                colormap = self.colors
+
             tree_style.add_legend(title=self.prop,
                                     variable='discrete',
                                     colormap=colormap
                                     )
-        
+
+    def get_color(self, node, color_prop, color_dict):
+        if color_dict and color_prop:
+            prop = node.props.get(color_prop)
+            if prop is None:
+                return None
+            else:
+                return color_dict.get(prop, None)
+        else:
+            return self.color
+
     def set_node_style(self, node):
         internal_prop = self.prop + '_' + self.internal_rep  
         if node.props.get(self.prop) is not None:
             if node.is_leaf:
                 width = self.get_size(node, self.prop)
-                color = self.color
+                color = self.get_color(node, self.color_prop, self.colors)
                 tooltip = ""
                 if node.name:
                     tooltip += f'<b>{node.name}</b><br>'
@@ -215,7 +230,7 @@ class LayoutBarplot(LayoutPlot):
         
         elif node.is_leaf and node.props.get(internal_prop):
             width = self.get_size(node, internal_prop)
-            color = self.color
+            color = self.get_color(node, self.color_prop, self.colors)
             tooltip = ""
             if node.name:
                 tooltip += f'<b>{node.name}</b><br>'
@@ -230,7 +245,7 @@ class LayoutBarplot(LayoutPlot):
 
         elif node.props.get(internal_prop):
             width = self.get_size(node, internal_prop)
-            color = self.color
+            color = self.get_color(node, self.color_prop, self.colors)
             tooltip = ""
             if node.name:
                 tooltip += f'<b>{node.name}</b><br>'

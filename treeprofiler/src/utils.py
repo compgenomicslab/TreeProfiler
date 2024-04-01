@@ -426,6 +426,45 @@ def build_color_gradient(n_colors, colormap_name="viridis"):
     color_gradient = {i: mcolors.rgb2hex(cmap(idx)) for i, idx in enumerate(indices, 1)}
     return color_gradient
 
+def build_custom_gradient(n_colors, min_color, max_color, mid_color=None):
+    """
+    Build a color gradient between two specified colors.
+
+    Parameters:
+    n_colors (int): Number of distinct colors to include in the gradient.
+    min_color (str): Hex code or named color for the start of the gradient.
+    max_color (str): Hex code or named color for the end of the gradient.
+
+    Returns:
+    dict: A dictionary mapping indices to colors in the generated gradient.
+    """
+    # Convert min and max colors to RGB
+    min_rgb = mcolors.to_rgb(min_color)
+    max_rgb = mcolors.to_rgb(max_color)
+    mid_rgb = mcolors.to_rgb(mid_color) if mid_color else None
+    
+    color_gradient = {}
+    # Determine if we're using a mid_color and split the range accordingly
+    if mid_color:
+        # Halfway point for the gradient transition
+        mid_point = n_colors // 2
+        
+        for i in range(1, n_colors + 1):
+            if i <= mid_point:
+                # Transition from min_color to mid_color
+                interpolated_rgb = [(mid_c - min_c) * (i - 1) / (mid_point - 1) + min_c for min_c, mid_c in zip(min_rgb, mid_rgb)]
+            else:
+                # Transition from mid_color to max_color
+                interpolated_rgb = [(max_c - mid_c) * (i - mid_point - 1) / (n_colors - mid_point - 1) + mid_c for mid_c, max_c in zip(mid_rgb, max_rgb)]
+            color_gradient[i] = mcolors.to_hex(interpolated_rgb)
+    else:
+        # If no mid_color, interpolate between min_color and max_color directly
+        for i in range(1, n_colors + 1):
+            interpolated_rgb = [(max_c - min_c) * (i - 1) / (n_colors - 1) + min_c for min_c, max_c in zip(min_rgb, max_rgb)]
+            color_gradient[i] = mcolors.to_hex(interpolated_rgb)
+    
+    return color_gradient
+    
 def clear_extra_features(forest, features):
     features = set(features) | {'name', 'dist', 'support'}
     for tree in forest:
