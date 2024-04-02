@@ -30,6 +30,7 @@ from treeprofiler.src.utils import (
     flatten, get_consensus_seq, random_color, assign_color_to_values, 
     add_suffix, build_color_gradient, build_custom_gradient, 
     str2bool, str2dict)
+import treeprofiler.src.utils as utils
 from treeprofiler.tree_annotate import can_convert_to_bool
 
 paired_color = [
@@ -1045,11 +1046,11 @@ def get_barplot_layouts(tree, props, level, prop2type, column_width=70, padding_
     
     return layouts, level, prop_color_dict
 
-def get_heatmap_layouts(tree, props, level, column_width=70, padding_x=1, padding_y=0, internal_rep='avg', color_config=None):
-
+def get_heatmap_layouts(tree, props, level, column_width=70, padding_x=1, padding_y=0, internal_rep='avg', color_config=None, norm_method='min-max'):
     layouts = []
     all_prop_values = [list(set(tree_prop_array(tree, prop))) for prop in props]
     all_prop_values = np.array(flatten(all_prop_values)).astype('float64')
+    
     for prop in props:
         if color_config and color_config.get(prop) is not None:
             prop_config = color_config[prop]
@@ -1065,19 +1066,25 @@ def get_heatmap_layouts(tree, props, level, column_width=70, padding_x=1, paddin
                 min_color = prop_config['detail2color'].get('color_min', 'white')
                 max_color = prop_config['detail2color'].get('color_max', 'red')
                 mid_color = prop_config['detail2color'].get('color_mid', 'red')
-
                 gradientscolor = build_custom_gradient(20, min_color, max_color, mid_color)
         else:
-            gradientscolor = build_color_gradient(20, colormap_name="Reds")
-        
+            if norm_method == 'min-max':
+                gradientscolor = build_color_gradient(20, colormap_name="Reds")
+            else:
+                gradientscolor = build_color_gradient(20, colormap_name="coolwarm")
+                
         minval, maxval = all_prop_values.min(), all_prop_values.max()
+        mean_val = all_prop_values.mean()
+        std_val = all_prop_values.std()
+        
         # layout =  staple_layouts.LayoutHeatmap(name='Heatmap_'+prop, column=level, 
         #             width=column_width, padding_x=padding_x, padding_y=padding_y, \
         #             internal_rep=internal_rep, prop=prop, maxval=maxval, minval=minval)
         layout = staple_layouts.LayoutHeatmap(name='Heatmap_'+prop, column=level, 
                     width=column_width, padding_x=padding_x, padding_y=padding_y, \
                     internal_rep=internal_rep, prop=prop, maxval=maxval, minval=minval,\
-                    color_dict=gradientscolor)
+                    mean_val=mean_val, std_val=std_val, \
+                    color_dict=gradientscolor, norm_method=norm_method)
         layouts.append(layout)  
         level += 1
 

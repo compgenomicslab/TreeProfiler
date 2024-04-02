@@ -260,7 +260,8 @@ class LayoutBarplot(LayoutPlot):
 
 class LayoutHeatmap(TreeLayout):
     def __init__(self, name=None, column=0, width=70, height=None, padding_x=1, padding_y=0, \
-        internal_rep=None, prop=None, maxval=100, minval=0, color_dict=None, legend=True):
+            internal_rep=None, prop=None, maxval=100, minval=0, mean_val=0, std_val=0, \
+            norm_method='min-max', color_dict=None, legend=True):
         super().__init__(name)
         self.aligned_faces = True
         self.num_prop = prop
@@ -268,6 +269,10 @@ class LayoutHeatmap(TreeLayout):
         self.color_dict = color_dict
         self.maxval = maxval
         self.minval = minval
+        self.mean_val = mean_val
+        self.std_val = std_val
+        self.norm_method = norm_method
+
         self.internal_prop = add_suffix(prop, internal_rep)
         self.width = width
         self.height = height
@@ -292,11 +297,31 @@ class LayoutHeatmap(TreeLayout):
                                     ]
                                     )
 
-    def _get_color(self, search_value):
+    def min_max_normalize(self, value):
+        return (value - self.minval) / (self.maxval - self.minval)
+
+    def mean_normalize(self, value):
+        return (value - self.mean_val) / (self.maxval - self.minval)
+
+    def z_score_normalize(self, value):
+        return (value - self.mean_val) / self.std_val
+
+    def _get_color(self, search_value, norm_method='min-max'):
         num = len(self.color_dict)
         search_value = float(search_value)
-        index_values = np.linspace(self.minval, self.maxval, num)
-        index = np.abs(index_values - search_value).argmin() + 1
+        if norm_method == "min-max":
+            normalized_value = self.min_max_normalize(search_value)
+            index_values = np.linspace(0, 1, num)
+        elif norm_method == "mean":
+            normalized_value = self.mean_normalize(search_value)
+            index_values = np.linspace(-1, 1, num)
+        elif norm_method == "zscore":
+            normalized_value = self.z_score_normalize(search_value)
+            index_values = np.linspace(-3, 3, num)
+        else:
+            raise ValueError("Unsupported normalization method.")
+        index = np.abs(index_values - normalized_value).argmin() + 1
+        #index = np.abs(index_values - search_value).argmin() + 1
         return self.color_dict.get(index, "")
 
     def set_node_style(self, node):
@@ -309,7 +334,7 @@ class LayoutHeatmap(TreeLayout):
                 if self.num_prop:
                     tooltip += f'<br>{self.num_prop}: {node.props.get(self.num_prop)}<br>'
 
-                gradient_color = self._get_color(node.props.get(self.num_prop))
+                gradient_color = self._get_color(node.props.get(self.num_prop), norm_method=self.norm_method)
                 if gradient_color:
                     identF = RectFace(width=self.width, height=self.height, text="%.2f" % (float(node.props.get(self.num_prop))), \
                     color=gradient_color, padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
@@ -328,7 +353,7 @@ class LayoutHeatmap(TreeLayout):
             if self.num_prop:
                 tooltip += f'<br>{self.internal_prop}: {node.props.get(self.internal_prop)}<br>'
             
-            gradient_color = self._get_color(node.props.get(self.internal_prop))
+            gradient_color = self._get_color(node.props.get(self.internal_prop), norm_method=self.norm_method)
             if gradient_color:
                 identF = RectFace(width=self.width, height=self.height, text="%.2f" % (float(node.props.get(self.internal_prop))), \
                 color=gradient_color, padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
@@ -346,7 +371,7 @@ class LayoutHeatmap(TreeLayout):
             if self.num_prop:
                 tooltip += f'<br>{self.internal_prop}: {node.props.get(self.internal_prop)}<br>'
             
-            gradient_color = self._get_color(node.props.get(self.internal_prop))
+            gradient_color = self._get_color(node.props.get(self.internal_prop), norm_method=self.norm_method)
             if gradient_color:
                 identF = RectFace(width=self.width, height=self.height, text="%.2f" % (float(node.props.get(self.internal_prop))), \
                 color=gradient_color, padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)

@@ -10,6 +10,7 @@ from itertools import chain
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import numpy as np
+from scipy import stats
 import random
 import colorsys
 import operator
@@ -482,3 +483,89 @@ def clear_extra_features(forest, features):
 
 def add_suffix(name, suffix, delimiter='_'):
     return str(name) + delimiter + str(suffix)
+
+def normalize_values(values, normalization_method="min-max"):
+    """
+    Normalizes a list of numeric values using the specified method.
+    
+    Parameters:
+    - values: List of elements to be normalized.
+    - normalization_method: String indicating the normalization method. 
+      Options are "min-max", "mean-norm", and "z-score".
+      
+    Returns:
+    - A numpy array of normalized values.
+    """
+    
+    def try_convert_to_float(values):
+        """Attempts to convert values to float, raises error for non-convertible values."""
+        converted = []
+        for v in values:
+            try:
+                if v.lower() != 'nan':  # Assuming 'nan' is used to denote missing values
+                    converted.append(float(v))
+                else:
+                    converted.append(np.nan)  # Convert 'nan' string to numpy NaN for consistency
+            except ValueError:
+                raise ValueError(f"Cannot treat value '{v}' as a number.")
+        return np.array(converted)
+    
+    numeric_values = try_convert_to_float(values)
+    valid_values = numeric_values[~np.isnan(numeric_values)]
+    
+    if normalization_method == "min-max":
+        normalized = (valid_values - valid_values.min()) / (valid_values.max() - valid_values.min())
+    elif normalization_method == "mean-norm":
+        normalized = (valid_values - valid_values.mean()) / (valid_values.max() - valid_values.min())
+    elif normalization_method == "z-score":
+        normalized = stats.zscore(valid_values)
+    else:
+        raise ValueError("Unsupported normalization method.")
+    
+    return normalized
+    
+# def transform_columns(columns, treat_as_whole=True, normalization_method="min-max"):
+#     transformed = defaultdict(dict)
+    
+#     def normalize(values, method):
+#         if method == "min-max":
+#             return (values - values.min()) / (values.max() - values.min())
+#         elif method == "mean-norm":
+#             return (values - values.mean()) / (values.max() - values.min())
+#         elif method == "z-score":
+#             return stats.zscore(values)
+#         else:
+#             raise ValueError("Unsupported normalization method.")
+
+#     def try_convert_to_float(values):
+#         converted = []
+#         for v in values:
+#             try:
+#                 if v != 'NaN':  # Assuming 'NaN' is used to denote missing values
+#                     converted.append(float(v))
+#                 else:
+#                     converted.append(np.nan)  # Convert 'NaN' string to numpy NaN for consistency
+#             except ValueError:
+#                 raise ValueError(f"Cannot treat value '{v}' as a number.")
+#         return np.array(converted)
+    
+#     if treat_as_whole:
+#         # Attempt to concatenate all numeric columns into one array
+#         all_numeric_values = np.concatenate([
+#             try_convert_to_float(values) for values in columns.values()
+#         ])
+        
+#         normalized_values = normalize(all_numeric_values[~np.isnan(all_numeric_values)], normalization_method)
+        
+#         start_idx = 0
+#         for prop, values in columns.items():
+#             num_values = len([v for v in values if v != 'NaN'])
+#             transformed[prop][normalization_method] = normalized_values[start_idx:start_idx+num_values]
+#             start_idx += num_values
+#     else:
+#         for prop, values in columns.items():
+#             numeric_values = try_convert_to_float(values)
+#             # Normalize only the non-NaN values
+#             transformed[prop][normalization_method] = normalize(numeric_values[~np.isnan(numeric_values)], normalization_method)
+
+#     return transformed
