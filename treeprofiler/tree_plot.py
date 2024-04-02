@@ -474,6 +474,12 @@ def run(args):
             total_color_dict.append(color_dict)
             visualized_props.extend(args.barplot_layout)
         
+        # if layout == 'bubble-layout':
+        #     barplot_layouts, level, color_dict = get_barplot_layouts(tree, args.barplot_layout, level, prop2type, column_width=args.barplot_width, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep, anchor_column=args.barplot_anchor, color_config=color_config)
+        #     layouts.extend(barplot_layouts)
+        #     total_color_dict.append(color_dict)
+        #     visualized_props.extend(args.barplot_layout)
+
         if layout == "branchscore-layout":
             branchscore_layouts = get_branchscore_layouts(tree, args.branchscore_layout, prop2type, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep='avg')
             layouts.extend(branchscore_layouts)
