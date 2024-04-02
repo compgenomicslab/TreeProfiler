@@ -176,6 +176,14 @@ def poplulate_plot_args(plot_args_p):
         nargs='+',
         required=False,
         help="<prop1> <prop2> names of numerical properties which need to be read as heatmap-layout")
+    group.add_argument('--heatmap-mean-layout',
+        nargs='+',
+        required=False,
+        help="<prop1> <prop2> names of numerical properties which need to be read as heatmap-layout")
+    group.add_argument('--heatmap-zscore-layout',
+        nargs='+',
+        required=False,
+        help="<prop1> <prop2> names of numerical properties which need to be read as heatmap-layout")
     group.add_argument('--barplot-layout',
         nargs='+',
         required=False,
@@ -378,10 +386,20 @@ def run(args):
             visualized_props.extend(ls_props)
             
         if layout == 'heatmap-layout':
-            heatmap_layouts, level = get_heatmap_layouts(tree, args.heatmap_layout, level, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep, color_config=color_config)
+            heatmap_layouts, level = get_heatmap_layouts(tree, args.heatmap_layout, level, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep, color_config=color_config, norm_method='min-max')
             layouts.extend(heatmap_layouts)
             visualized_props.extend(args.heatmap_layout)
 
+        if layout == 'heatmap-mean-layout':
+            heatmap_mean_layouts, level = get_heatmap_layouts(tree, args.heatmap_mean_layout, level, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep, color_config=color_config, norm_method='mean')
+            layouts.extend(heatmap_mean_layouts)
+            visualized_props.extend(args.heatmap_mean_layout)
+
+        if layout == 'heatmap-zscore-layout':
+            heatmap_zscore_layouts, level = get_heatmap_layouts(tree, args.heatmap_zscore_layout, level, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep, color_config=color_config, norm_method='zscore')
+            layouts.extend(heatmap_zscore_layouts)
+            visualized_props.extend(args.heatmap_zscore_layout)
+            
         if layout == 'label-layout':
             label_layouts, level, color_dict = get_label_layouts(tree, args.label_layout, level, prop2type=prop2type, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config)
             layouts.extend(label_layouts)
@@ -1070,9 +1088,9 @@ def get_heatmap_layouts(tree, props, level, column_width=70, padding_x=1, paddin
         else:
             if norm_method == 'min-max':
                 gradientscolor = build_color_gradient(20, colormap_name="Reds")
-            else:
+            else: # "mean" "zscore"
                 gradientscolor = build_color_gradient(20, colormap_name="coolwarm")
-                
+
         minval, maxval = all_prop_values.min(), all_prop_values.max()
         mean_val = all_prop_values.mean()
         std_val = all_prop_values.std()
@@ -1087,7 +1105,6 @@ def get_heatmap_layouts(tree, props, level, column_width=70, padding_x=1, paddin
                     color_dict=gradientscolor, norm_method=norm_method)
         layouts.append(layout)  
         level += 1
-
     return layouts, level
 
 def get_prop2type(node):
