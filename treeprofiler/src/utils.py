@@ -171,11 +171,11 @@ def validate_tree(tree_path, input_type, internal_parser=None):
                 raise TreeFormatError(f"Error loading tree in 'ete' format: {e}")
 
     if input_type in ['newick', 'auto'] and tree is None:
-        try:
-            tree = ete4_parse(open(tree_path), internal_parser=internal_parser)
-        except Exception as e:
-            raise TreeFormatError(f"Error loading tree in 'newick' format: {e}\n"
-                                  "Please try using the correct parser with --internal-parser option, or check the newick format.")
+        #try:
+        tree = ete4_parse(open(tree_path), internal_parser=internal_parser)
+        #except Exception as e:
+        #    raise TreeFormatError(f"Error loading tree in 'newick' format: {e}\n"
+        #                          "Please try using the correct parser with --internal-parser option, or check the newick format.")
 
     # if tree is None:
     #     raise TreeFormatError("Failed to load the tree in either 'ete' or 'newick' format.")
