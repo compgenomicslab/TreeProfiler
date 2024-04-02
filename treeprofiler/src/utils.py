@@ -523,7 +523,28 @@ def normalize_values(values, normalization_method="min-max"):
         raise ValueError("Unsupported normalization method.")
     
     return normalized
-    
+
+def find_bool_representations(column, rep=True):
+    true_values = {'true', 't', 'yes', 'y', '1'}
+    false_values = {'false', 'f', 'no', 'n', '0'}
+    ignore_values = {'nan', 'none', ''}  # Add other representations of NaN as needed
+
+    # Initialize sets to hold the representations of true and false values
+    count = 0
+
+    for value in column:
+        str_val = str(value).strip().lower()  # Normalize the string value
+        if str_val in ignore_values:
+            continue  # Skip this value
+        if rep:
+            if str_val in true_values:
+                count += 1
+        else:
+            if str_val in false_values:
+               count += 1
+
+    return count 
+
 # def transform_columns(columns, treat_as_whole=True, normalization_method="min-max"):
 #     transformed = defaultdict(dict)
     

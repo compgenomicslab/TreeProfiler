@@ -8,6 +8,7 @@ import csv
 
 from collections import defaultdict
 from collections import OrderedDict
+from collections import Counter
 from itertools import islice
 from io import StringIO
 import matplotlib.pyplot as plt
@@ -982,7 +983,17 @@ def get_binary_layouts(tree, props, level, prop2type, column_width=70, reverse=F
     layouts = []
     
     for prop in props:
-        prop_values = sorted(list(set(tree_prop_array(tree, prop, leaf_only=True))))
+        #prop_values = sorted(list(set(tree_prop_array(tree, prop, leaf_only=True))))
+        prop_values = tree_prop_array(tree, prop, leaf_only=True)
+
+        if not reverse:
+            max_count = utils.find_bool_representations(prop_values)
+        else:
+            max_count = utils.find_bool_representations(prop_values, rep=False)
+
+        # If you still need a sorted list of unique property values
+        prop_values = sorted(set(prop_values))
+
         if can_convert_to_bool(prop_values):
             if color_config and color_config.get(prop):
                 if color_config.get(prop).get('value2color'):
@@ -1000,9 +1011,9 @@ def get_binary_layouts(tree, props, level, prop2type, column_width=70, reverse=F
                         color = paired_color[level]
 
             if not reverse:
-                layout = conditional_layouts.LayoutBinary('Binary_'+prop, level, bool_prop=prop, color=color, width=column_width, padding_x=padding_x, padding_y=padding_y, reverse=reverse, aggregate=aggregate)
+                layout = conditional_layouts.LayoutBinary('Binary_'+prop, level, bool_prop=prop, color=color, width=column_width, padding_x=padding_x, padding_y=padding_y, reverse=reverse, aggregate=aggregate, max_count=max_count)
             else:
-                layout = conditional_layouts.LayoutBinary('ReverseBinary_'+prop, level, bool_prop=prop, width=column_width, padding_x=padding_x, padding_y=0, reverse=reverse, aggregate=aggregate)
+                layout = conditional_layouts.LayoutBinary('ReverseBinary_'+prop, level, bool_prop=prop, width=column_width, padding_x=padding_x, padding_y=0, reverse=reverse, aggregate=aggregate, max_count=max_count)
             
             internal_prop = add_suffix(prop, 'counter')
 

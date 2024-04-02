@@ -95,6 +95,7 @@ def collapsed_by_layout(conditions, level, prop2type={}, color='red'):
 class LayoutBinary(TreeLayout):
     def __init__(self, name=None, level=1, color='#E60A0A', \
             bool_prop=None, reverse=False, aggregate=False, \
+            max_count=0, \
             radius=25, padding_x=1, padding_y=0, width=70, \
             legend=True):
         super().__init__(name)
@@ -106,6 +107,7 @@ class LayoutBinary(TreeLayout):
         self.internal_prop = bool_prop+'_counter'
         self.reverse = reverse
         self.aggregate = aggregate
+        self.max_count = max_count
         self.radius = radius
         self.padding_x = padding_x
         self.padding_y = padding_y
@@ -193,14 +195,14 @@ class LayoutBinary(TreeLayout):
         
         elif node.is_leaf and node.props.get(self.internal_prop):
             if self.aggregate:
-                heatmapFace = get_aggregated_heatmapface(node, self.internal_prop, max_color=self.color, width=self.width, height=self.height, padding_x=self.padding_x,)
+                heatmapFace = get_aggregated_heatmapface(node, self.internal_prop, max_color=self.color, width=self.width, height=self.height, padding_x=self.padding_x, max_count=self.max_count)
             else:
                 heatmapFace = get_heatmapface(node, self.internal_prop, max_color=self.color, width=self.width, height=self.height, padding_x=self.padding_x,)
             node.add_face(heatmapFace, column = self.column, position = "aligned", collapsed_only=False)
 
         elif node.props.get(self.internal_prop):
             if self.aggregate:
-                heatmapFace = get_aggregated_heatmapface(node, self.internal_prop, max_color=self.color, width=self.width, height=self.height, padding_x=self.padding_x,)
+                heatmapFace = get_aggregated_heatmapface(node, self.internal_prop, max_color=self.color, width=self.width, height=self.height, padding_x=self.padding_x, max_count=self.max_count)
             else:
                 heatmapFace = get_heatmapface(node, self.internal_prop, max_color=self.color, width=self.width, height=self.height, padding_x=self.padding_x,)
             node.add_face(heatmapFace, column = self.column, position = "aligned", collapsed_only=True)
