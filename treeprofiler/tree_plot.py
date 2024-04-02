@@ -435,7 +435,7 @@ def run(args):
             if numerical_props:
                 branchscore_layouts = get_branchscore_layouts(tree, numerical_props, 
                 prop2type, padding_x=args.padding_x, padding_y=args.padding_y, 
-                internal_rep=internal_num_rep)
+                internal_rep=internal_num_rep, color_config=color_config)
                 layouts.extend(branchscore_layouts)
                 visualized_props.extend(numerical_props)
 
@@ -1012,8 +1012,7 @@ def get_binary_layouts(tree, props, level, prop2type, column_width=70, reverse=F
             raise ValueError(f"Property {prop} is not binary trait.")
     return layouts, level, prop_color_dict
 
-def get_branchscore_layouts(tree, props, prop2type, padding_x=1, padding_y=0, internal_rep='avg'):
-    gradientscolor = build_color_gradient(20, colormap_name='jet')
+def get_branchscore_layouts(tree, props, prop2type, padding_x=1, padding_y=0, internal_rep='avg', color_config=None):
     layouts = []
     for prop in props:
         all_values = np.array(sorted(list(set(tree_prop_array(tree, prop))))).astype('float64')
@@ -1028,6 +1027,24 @@ def get_branchscore_layouts(tree, props, prop2type, padding_x=1, padding_y=0, in
         #     index = np.abs(index_values - search_value).argmin()+1
         #     value2color[search_value] = gradientscolor[index]
 
+        if color_config and color_config.get(prop) is not None:
+            prop_config = color_config[prop]
+            
+            color_dict = {}
+
+            # First, try to use value2color mappings if they exist and are applicable
+            if 'value2color' in prop_config and prop_config['value2color']:
+                color_dict = prop_config['value2color']
+                sorted_color_dict = {float(key): value for key, value in color_dict.items()}
+                gradientscolor = sorted_color_dict.values()
+            elif 'detail2color' in prop_config and prop_config['detail2color']:
+                min_color = prop_config['detail2color'].get('color_min', 'white')
+                max_color = prop_config['detail2color'].get('color_max', 'red')
+                mid_color = prop_config['detail2color'].get('color_mid', None)
+                gradientscolor = build_custom_gradient(20, min_color, max_color, mid_color)
+        else:
+            gradientscolor = build_color_gradient(20, colormap_name='jet')
+            
         # get corresponding gradient color on the fly of visualization
         layout = staple_layouts.LayoutBranchScore(name='BranchScore_'+prop, \
             color_dict=gradientscolor, score_prop=prop, internal_rep=internal_rep, \
@@ -1138,7 +1155,7 @@ def get_heatmap_layouts(tree, props, level, column_width=70, padding_x=1, paddin
             elif 'detail2color' in prop_config and prop_config['detail2color']:
                 min_color = prop_config['detail2color'].get('color_min', 'white')
                 max_color = prop_config['detail2color'].get('color_max', 'red')
-                mid_color = prop_config['detail2color'].get('color_mid', 'red')
+                mid_color = prop_config['detail2color'].get('color_mid', None)
                 gradientscolor = build_custom_gradient(20, min_color, max_color, mid_color)
         else:
             if norm_method == 'min-max':
