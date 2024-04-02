@@ -152,10 +152,18 @@ def poplulate_plot_args(plot_args_p):
         nargs='+',
         required=False,
         help="<prop1> <prop2> names of properties which need to be plot as binary-layout which highlights the postives")
+    group.add_argument('--binary-aggregate-layout',
+        nargs='+',
+        required=False,
+        help="<prop1> <prop2> names of properties which need to be plot as binary-aggregate-layout which highlights the postives")
     group.add_argument('--binary2-layout',
         nargs='+',
         required=False,
         help="<prop1> <prop2> names of properties which need to be plot as binary-layout which highlights the postives")
+    group.add_argument('--binary2-aggregate-layout',
+        nargs='+',
+        required=False,
+        help="<prop1> <prop2> names of properties which need to be plot as binary-aggregate-layout which highlights the postives")
     group.add_argument('--revbinary-layout',
         nargs='+',
         required=False,
@@ -445,16 +453,28 @@ def run(args):
             visualized_props.extend([add_suffix(prop, 'counter') for prop in args.rectangle_layout])
 
         if layout == 'binary-layout':
-            binary_layouts, level, color_dict = get_binary_layouts(tree, args.binary_layout, level, prop2type=prop2type, column_width=args.column_width, reverse=False, padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config, same_color=False)
+            binary_layouts, level, color_dict = get_binary_layouts(tree, args.binary_layout, level, prop2type=prop2type, column_width=args.column_width, reverse=False, padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config, same_color=False, aggregate=False)
             layouts.extend(binary_layouts)
             total_color_dict.append(color_dict)
             visualized_props.extend(args.binary_layout)
 
+        if layout == 'binary-aggregate-layout':
+            binary_aggregate_layouts, level, color_dict = get_binary_layouts(tree, args.binary_aggregate_layout, level, prop2type=prop2type, column_width=args.column_width, reverse=False, padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config, same_color=False, aggregate=True)
+            layouts.extend(binary_aggregate_layouts)
+            total_color_dict.append(color_dict)
+            visualized_props.extend(args.binary_aggregate_layout)
+
         if layout == 'binary2-layout':
-            binary2_layouts, level, color_dict = get_binary_layouts(tree, args.binary2_layout, level, prop2type=prop2type, column_width=args.column_width, reverse=False, padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config, same_color=True)
+            binary2_layouts, level, color_dict = get_binary_layouts(tree, args.binary2_layout, level, prop2type=prop2type, column_width=args.column_width, reverse=False, padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config, same_color=True, aggregate=False)
             layouts.extend(binary2_layouts)
             total_color_dict.append(color_dict)
             visualized_props.extend(args.binary2_layout)
+
+        if layout == 'binary2-aggregate-layout':
+            binary2_aggregate_layouts, level, color_dict = get_binary_layouts(tree, args.binary2_aggregate_layout, level, prop2type=prop2type, column_width=args.column_width, reverse=False, padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config, same_color=True, aggregate=True)
+            layouts.extend(binary2_aggregate_layouts)
+            total_color_dict.append(color_dict)
+            visualized_props.extend(args.binary2_aggregate_layout)
 
         if layout == 'revbinary-layout':
             revbinary_layouts, level, color_dict = get_binary_layouts(tree, args.revbinary_layout, level, prop2type=prop2type, column_width=args.column_width, reverse=True,  padding_x=args.padding_x, padding_y=args.padding_y)
@@ -957,7 +977,7 @@ def get_rectangle_layouts(tree, props, level, prop2type, column_width=70, paddin
         level += 1
     return layouts, level, prop_color_dict
 
-def get_binary_layouts(tree, props, level, prop2type, column_width=70, reverse=False, padding_x=1, padding_y=0, color_config=None, same_color=False):
+def get_binary_layouts(tree, props, level, prop2type, column_width=70, reverse=False, padding_x=1, padding_y=0, color_config=None, same_color=False, aggregate=False):
     prop_color_dict = {}
     layouts = []
     
@@ -980,9 +1000,9 @@ def get_binary_layouts(tree, props, level, prop2type, column_width=70, reverse=F
                         color = paired_color[level]
 
             if not reverse:
-                layout = conditional_layouts.LayoutBinary('Binary_'+prop, level, bool_prop=prop, color=color, width=column_width, padding_x=padding_x, padding_y=padding_y, reverse=reverse)
+                layout = conditional_layouts.LayoutBinary('Binary_'+prop, level, bool_prop=prop, color=color, width=column_width, padding_x=padding_x, padding_y=padding_y, reverse=reverse, aggregate=aggregate)
             else:
-                layout = conditional_layouts.LayoutBinary('ReverseBinary_'+prop, level, bool_prop=prop, width=column_width, padding_x=padding_x, padding_y=0, reverse=reverse)
+                layout = conditional_layouts.LayoutBinary('ReverseBinary_'+prop, level, bool_prop=prop, width=column_width, padding_x=padding_x, padding_y=0, reverse=reverse, aggregate=aggregate)
             
             internal_prop = add_suffix(prop, 'counter')
 

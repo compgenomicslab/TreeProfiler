@@ -6,6 +6,7 @@ from Bio.Align.AlignInfo import SummaryInfo
 import numpy as np
 from distutils.util import strtobool
 import matplotlib as mpl
+import matplotlib.colors as mcolors
 from itertools import chain
 
 from ete4.smartview import TreeStyle, NodeStyle, TreeLayout, PieChartFace, LegendFace, RectFace
@@ -37,6 +38,50 @@ def color_gradient(c1, c2, mix=0):
     c1 = np.array(mpl.colors.to_rgb(c1))
     c2 = np.array(mpl.colors.to_rgb(c2))
     return mpl.colors.to_hex((1-mix)*c1 + mix*c2)
+
+def make_color_darker(hex_color, darkening_factor):
+    """Darkens the hex color by a factor. Simplified version for illustration."""
+    # Simple darkening logic for demonstration
+    c = mcolors.hex2color(hex_color)  # Convert hex to RGB
+    darker_c = [max(0, x - darkening_factor) for x in c]  # Darken color
+    return mcolors.to_hex(darker_c)
+
+def get_aggregated_heatmapface(node, prop, min_color="#EBEBEB", max_color="#971919", tooltip=None,
+                               width=70, height=None, padding_x=1, padding_y=0, count_missing=True):
+    counter_props = node.props.get(prop).split('||')
+    total = 0
+    positive = 0
+    for counter_prop in counter_props:
+        k, v = counter_prop.split('--')
+        if count_missing:
+            if not check_nan(k):
+                if strtobool(k):
+                    positive += float(v)
+            total += float(v)  # Consider missing data in total
+        else:
+            if not check_nan(k):
+                total += float(v)  # Doesn't consider missing data in total
+                if strtobool(k):
+                    positive += float(v)
+    
+    total = int(total)
+    # ratio = positive / total if total != 0 else 0
+    # if ratio < 0.05 and ratio != 0:  # Show minimum color for too low
+    #     ratio = 0.05
+    
+    # Adjust the maximum color based on 'total' to simulate darkening
+    adjusted_max_color = make_color_darker(max_color, darkening_factor=total*0.01)  # Example factor
+    #gradient_color = color_gradient(min_color, adjusted_max_color, mix=ratio)
+    
+    if not tooltip:
+        tooltip = f'<b>{node.name}</b><br>' if node.name else ''
+        if prop:
+            tooltip += f'<br>{prop}: {positive} / {total} <br>'
+    if positive == 0:
+        aggregateFace = RectFace(width=width, text=int(positive), height=height, color=min_color, padding_x=padding_x, padding_y=padding_y, tooltip=tooltip)
+    else:
+        aggregateFace = RectFace(width=width, text=int(positive), height=height, color=adjusted_max_color, padding_x=padding_x, padding_y=padding_y, tooltip=tooltip)
+    return aggregateFace
 
 def get_heatmapface(node, prop, min_color="#EBEBEB", max_color="#971919", tooltip=None, width=70, height=None, padding_x=1, padding_y=0, count_missing=True):
     counter_props = node.props.get(prop).split('||')
