@@ -91,7 +91,7 @@ def populate_annotate_args(parser):
     #           "reference tree from taxonomic database"))
     add('--taxadb', type=str.upper,
         choices=['NCBI', 'GTDB'],
-        help="<NCBI|GTDB> for taxonomic profiling or fetch taxatree")
+        help="<NCBI|GTDB> for taxonomic annotation or fetch taxatree")
     add('--taxa-dump', type=str,
         help='Path to taxonomic database dump file for specific version, such as https://github.com/etetoolkit/ete-data/raw/main/gtdb_taxonomy/gtdblatest/gtdb_latest_dump.tar.gz')
     add('--taxon-column',

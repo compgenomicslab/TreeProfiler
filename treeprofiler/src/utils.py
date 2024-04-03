@@ -10,6 +10,7 @@ from itertools import chain
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import numpy as np
+from scipy import stats
 import random
 import colorsys
 import operator
@@ -170,11 +171,11 @@ def validate_tree(tree_path, input_type, internal_parser=None):
                 raise TreeFormatError(f"Error loading tree in 'ete' format: {e}")
 
     if input_type in ['newick', 'auto'] and tree is None:
-        try:
-            tree = ete4_parse(open(tree_path), internal_parser=internal_parser)
-        except Exception as e:
-            raise TreeFormatError(f"Error loading tree in 'newick' format: {e}\n"
-                                  "Please try using the correct parser with --internal-parser option, or check the newick format.")
+        #try:
+        tree = ete4_parse(open(tree_path), internal_parser=internal_parser)
+        #except Exception as e:
+        #    raise TreeFormatError(f"Error loading tree in 'newick' format: {e}\n"
+        #                          "Please try using the correct parser with --internal-parser option, or check the newick format.")
 
     # if tree is None:
     #     raise TreeFormatError("Failed to load the tree in either 'ete' or 'newick' format.")
@@ -204,11 +205,21 @@ def ete4_parse(newick, internal_parser="name"):
 # pruning
 def taxatree_prune(tree, rank_limit='subspecies'):
     for node in tree.traverse("preorder"):
-        if node.props.get('rank') == rank_limit:
+        rank = node.props.get('rank')
+        if rank == rank_limit:
             children = node.children.copy()
             for ch in children:
                 print("prune", ch.name)
                 remove(ch)
+        lca_dict = node.props.get('lca')
+        if lca_dict:
+            lca = lca_dict.get(rank_limit, None)
+            if lca:
+                node.name = lca
+                children = node.children.copy()
+                for ch in children:
+                    print("prune", ch.name)
+                    remove(ch)
     return tree
 
 def conditional_prune(tree, conditions_input, prop2type):
@@ -482,3 +493,110 @@ def clear_extra_features(forest, features):
 
 def add_suffix(name, suffix, delimiter='_'):
     return str(name) + delimiter + str(suffix)
+
+def normalize_values(values, normalization_method="min-max"):
+    """
+    Normalizes a list of numeric values using the specified method.
+    
+    Parameters:
+    - values: List of elements to be normalized.
+    - normalization_method: String indicating the normalization method. 
+      Options are "min-max", "mean-norm", and "z-score".
+      
+    Returns:
+    - A numpy array of normalized values.
+    """
+    
+    def try_convert_to_float(values):
+        """Attempts to convert values to float, raises error for non-convertible values."""
+        converted = []
+        for v in values:
+            try:
+                if v.lower() != 'nan':  # Assuming 'nan' is used to denote missing values
+                    converted.append(float(v))
+                else:
+                    converted.append(np.nan)  # Convert 'nan' string to numpy NaN for consistency
+            except ValueError:
+                raise ValueError(f"Cannot treat value '{v}' as a number.")
+        return np.array(converted)
+    
+    numeric_values = try_convert_to_float(values)
+    valid_values = numeric_values[~np.isnan(numeric_values)]
+    
+    if normalization_method == "min-max":
+        normalized = (valid_values - valid_values.min()) / (valid_values.max() - valid_values.min())
+    elif normalization_method == "mean-norm":
+        normalized = (valid_values - valid_values.mean()) / (valid_values.max() - valid_values.min())
+    elif normalization_method == "z-score":
+        normalized = stats.zscore(valid_values)
+    else:
+        raise ValueError("Unsupported normalization method.")
+    
+    return normalized
+
+def find_bool_representations(column, rep=True):
+    true_values = {'true', 't', 'yes', 'y', '1'}
+    false_values = {'false', 'f', 'no', 'n', '0'}
+    ignore_values = {'nan', 'none', ''}  # Add other representations of NaN as needed
+
+    # Initialize sets to hold the representations of true and false values
+    count = 0
+
+    for value in column:
+        str_val = str(value).strip().lower()  # Normalize the string value
+        if str_val in ignore_values:
+            continue  # Skip this value
+        if rep:
+            if str_val in true_values:
+                count += 1
+        else:
+            if str_val in false_values:
+               count += 1
+
+    return count 
+
+# def transform_columns(columns, treat_as_whole=True, normalization_method="min-max"):
+#     transformed = defaultdict(dict)
+    
+#     def normalize(values, method):
+#         if method == "min-max":
+#             return (values - values.min()) / (values.max() - values.min())
+#         elif method == "mean-norm":
+#             return (values - values.mean()) / (values.max() - values.min())
+#         elif method == "z-score":
+#             return stats.zscore(values)
+#         else:
+#             raise ValueError("Unsupported normalization method.")
+
+#     def try_convert_to_float(values):
+#         converted = []
+#         for v in values:
+#             try:
+#                 if v != 'NaN':  # Assuming 'NaN' is used to denote missing values
+#                     converted.append(float(v))
+#                 else:
+#                     converted.append(np.nan)  # Convert 'NaN' string to numpy NaN for consistency
+#             except ValueError:
+#                 raise ValueError(f"Cannot treat value '{v}' as a number.")
+#         return np.array(converted)
+    
+#     if treat_as_whole:
+#         # Attempt to concatenate all numeric columns into one array
+#         all_numeric_values = np.concatenate([
+#             try_convert_to_float(values) for values in columns.values()
+#         ])
+        
+#         normalized_values = normalize(all_numeric_values[~np.isnan(all_numeric_values)], normalization_method)
+        
+#         start_idx = 0
+#         for prop, values in columns.items():
+#             num_values = len([v for v in values if v != 'NaN'])
+#             transformed[prop][normalization_method] = normalized_values[start_idx:start_idx+num_values]
+#             start_idx += num_values
+#     else:
+#         for prop, values in columns.items():
+#             numeric_values = try_convert_to_float(values)
+#             # Normalize only the non-NaN values
+#             transformed[prop][normalization_method] = normalize(numeric_values[~np.isnan(numeric_values)], normalization_method)
+
+#     return transformed

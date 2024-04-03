@@ -8,6 +8,7 @@ import csv
 
 from collections import defaultdict
 from collections import OrderedDict
+from collections import Counter
 from itertools import islice
 from io import StringIO
 import matplotlib.pyplot as plt
@@ -30,6 +31,7 @@ from treeprofiler.src.utils import (
     flatten, get_consensus_seq, random_color, assign_color_to_values, 
     add_suffix, build_color_gradient, build_custom_gradient, 
     str2bool, str2dict)
+import treeprofiler.src.utils as utils
 from treeprofiler.tree_annotate import can_convert_to_bool
 
 paired_color = [
@@ -151,7 +153,23 @@ def poplulate_plot_args(plot_args_p):
         nargs='+',
         required=False,
         help="<prop1> <prop2> names of properties which need to be plot as binary-layout which highlights the postives")
+    group.add_argument('--binary-aggregate-layout',
+        nargs='+',
+        required=False,
+        help="<prop1> <prop2> names of properties which need to be plot as binary-aggregate-layout which highlights the postives")
+    group.add_argument('--binary2-layout',
+        nargs='+',
+        required=False,
+        help="<prop1> <prop2> names of properties which need to be plot as binary-layout which highlights the postives")
+    group.add_argument('--binary2-aggregate-layout',
+        nargs='+',
+        required=False,
+        help="<prop1> <prop2> names of properties which need to be plot as binary-aggregate-layout which highlights the postives")
     group.add_argument('--revbinary-layout',
+        nargs='+',
+        required=False,
+        help="<prop1> <prop2> names of properties which need to be plot as revbinary-layout which highlights the negatives")
+    group.add_argument('--revbinary2-layout',
         nargs='+',
         required=False,
         help="<prop1> <prop2> names of properties which need to be plot as revbinary-layout which highlights the negatives")
@@ -172,6 +190,14 @@ def poplulate_plot_args(plot_args_p):
         required=False,
         help="<prop1> <prop2> names of properties whose internal nodes need to be plot as piechart-layout.")
     group.add_argument('--heatmap-layout',
+        nargs='+',
+        required=False,
+        help="<prop1> <prop2> names of numerical properties which need to be read as heatmap-layout")
+    group.add_argument('--heatmap-mean-layout',
+        nargs='+',
+        required=False,
+        help="<prop1> <prop2> names of numerical properties which need to be read as heatmap-layout")
+    group.add_argument('--heatmap-zscore-layout',
         nargs='+',
         required=False,
         help="<prop1> <prop2> names of numerical properties which need to be read as heatmap-layout")
@@ -377,10 +403,20 @@ def run(args):
             visualized_props.extend(ls_props)
             
         if layout == 'heatmap-layout':
-            heatmap_layouts, level = get_heatmap_layouts(tree, args.heatmap_layout, level, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep, color_config=color_config)
+            heatmap_layouts, level = get_heatmap_layouts(tree, args.heatmap_layout, level, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep, color_config=color_config, norm_method='min-max')
             layouts.extend(heatmap_layouts)
             visualized_props.extend(args.heatmap_layout)
 
+        if layout == 'heatmap-mean-layout':
+            heatmap_mean_layouts, level = get_heatmap_layouts(tree, args.heatmap_mean_layout, level, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep, color_config=color_config, norm_method='mean')
+            layouts.extend(heatmap_mean_layouts)
+            visualized_props.extend(args.heatmap_mean_layout)
+
+        if layout == 'heatmap-zscore-layout':
+            heatmap_zscore_layouts, level = get_heatmap_layouts(tree, args.heatmap_zscore_layout, level, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep, color_config=color_config, norm_method='zscore')
+            layouts.extend(heatmap_zscore_layouts)
+            visualized_props.extend(args.heatmap_zscore_layout)
+            
         if layout == 'label-layout':
             label_layouts, level, color_dict = get_label_layouts(tree, args.label_layout, level, prop2type=prop2type, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config)
             layouts.extend(label_layouts)
@@ -400,7 +436,7 @@ def run(args):
             if numerical_props:
                 branchscore_layouts = get_branchscore_layouts(tree, numerical_props, 
                 prop2type, padding_x=args.padding_x, padding_y=args.padding_y, 
-                internal_rep=internal_num_rep)
+                internal_rep=internal_num_rep, color_config=color_config)
                 layouts.extend(branchscore_layouts)
                 visualized_props.extend(numerical_props)
 
@@ -418,16 +454,40 @@ def run(args):
             visualized_props.extend([add_suffix(prop, 'counter') for prop in args.rectangle_layout])
 
         if layout == 'binary-layout':
-            label_layouts, level, color_dict = get_binary_layouts(tree, args.binary_layout, level, prop2type=prop2type, column_width=args.column_width, reverse=False, padding_x=args.padding_x, padding_y=args.padding_y)
-            layouts.extend(label_layouts)
+            binary_layouts, level, color_dict = get_binary_layouts(tree, args.binary_layout, level, prop2type=prop2type, column_width=args.column_width, reverse=False, padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config, same_color=False, aggregate=False)
+            layouts.extend(binary_layouts)
             total_color_dict.append(color_dict)
             visualized_props.extend(args.binary_layout)
 
+        if layout == 'binary-aggregate-layout':
+            binary_aggregate_layouts, level, color_dict = get_binary_layouts(tree, args.binary_aggregate_layout, level, prop2type=prop2type, column_width=args.column_width, reverse=False, padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config, same_color=False, aggregate=True)
+            layouts.extend(binary_aggregate_layouts)
+            total_color_dict.append(color_dict)
+            visualized_props.extend(args.binary_aggregate_layout)
+
+        if layout == 'binary2-layout':
+            binary2_layouts, level, color_dict = get_binary_layouts(tree, args.binary2_layout, level, prop2type=prop2type, column_width=args.column_width, reverse=False, padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config, same_color=True, aggregate=False)
+            layouts.extend(binary2_layouts)
+            total_color_dict.append(color_dict)
+            visualized_props.extend(args.binary2_layout)
+
+        if layout == 'binary2-aggregate-layout':
+            binary2_aggregate_layouts, level, color_dict = get_binary_layouts(tree, args.binary2_aggregate_layout, level, prop2type=prop2type, column_width=args.column_width, reverse=False, padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config, same_color=True, aggregate=True)
+            layouts.extend(binary2_aggregate_layouts)
+            total_color_dict.append(color_dict)
+            visualized_props.extend(args.binary2_aggregate_layout)
+
         if layout == 'revbinary-layout':
-            label_layouts, level, color_dict = get_binary_layouts(tree, args.revbinary_layout, level, prop2type=prop2type, column_width=args.column_width, reverse=True,  padding_x=args.padding_x, padding_y=args.padding_y)
-            layouts.extend(label_layouts)
+            revbinary_layouts, level, color_dict = get_binary_layouts(tree, args.revbinary_layout, level, prop2type=prop2type, column_width=args.column_width, reverse=True,  padding_x=args.padding_x, padding_y=args.padding_y)
+            layouts.extend(revbinary_layouts)
             total_color_dict.append(color_dict)
             visualized_props.extend(args.revbinary_layout)
+
+        if layout == 'revbinary2-layout':
+            revbinary2_layouts, level, color_dict = get_binary_layouts(tree, args.revbinary2_layout, level, prop2type=prop2type, column_width=args.column_width, reverse=True,  padding_x=args.padding_x, padding_y=args.padding_y)
+            layouts.extend(revbinary2_layouts)
+            total_color_dict.append(color_dict)
+            visualized_props.extend(args.revbinary2_layout)
 
         if layout == 'barplot-layout':
             barplot_layouts, level, color_dict = get_barplot_layouts(tree, args.barplot_layout, level, prop2type, column_width=args.barplot_width, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep, anchor_column=args.barplot_anchor, color_config=color_config)
@@ -435,6 +495,12 @@ def run(args):
             total_color_dict.append(color_dict)
             visualized_props.extend(args.barplot_layout)
         
+        # if layout == 'bubble-layout':
+        #     barplot_layouts, level, color_dict = get_barplot_layouts(tree, args.barplot_layout, level, prop2type, column_width=args.barplot_width, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep, anchor_column=args.barplot_anchor, color_config=color_config)
+        #     layouts.extend(barplot_layouts)
+        #     total_color_dict.append(color_dict)
+        #     visualized_props.extend(args.barplot_layout)
+
         if layout == "branchscore-layout":
             branchscore_layouts = get_branchscore_layouts(tree, args.branchscore_layout, prop2type, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep='avg')
             layouts.extend(branchscore_layouts)
@@ -497,40 +563,40 @@ def run(args):
         # numerical matrix
         if layout == 'numerical-matrix-layout':
             numerical_props = args.numerical_matrix_layout
-            matrix, value2color = float2matrix(tree, numerical_props, count_negative=True)
-            all_values = list(value2color.keys())
-            min_val, max_val = min(all_values), max(all_values)
-            matrix_layout = profile_layouts.LayoutPropsMatrix(name=f'Numerical_matrix_{numerical_props}', 
-                matrix_type='numerical', alignment=matrix, matrix_props=numerical_props, 
-                profiles=all_values, column=level, summarize_inner_nodes=False, 
-                value_range = [min_val, max_val], value_color=value2color,
-                poswidth=args.column_width)
-
-            # matrix, minval, maxval, value2color, is_list = numerical2matrix(tree, numerical_props, count_negative=True)
-            # matrix_layout = profile_layouts.LayoutPropsMatrixOld(name=f"Numerical_matrix_{numerical_props}", 
-            #     matrix=matrix, matrix_type='numerical', matrix_props=numerical_props, is_list=is_list, 
-            #     value_color=value2color, value_range=[minval, maxval], column=level,
+            # matrix, value2color = float2matrix(tree, numerical_props, count_negative=True)
+            # all_values = list(value2color.keys())
+            # min_val, max_val = min(all_values), max(all_values)
+            # matrix_layout = profile_layouts.LayoutPropsMatrix(name=f'Numerical_matrix_{numerical_props}', 
+            #     matrix_type='numerical', alignment=matrix, matrix_props=numerical_props, 
+            #     profiles=all_values, column=level, summarize_inner_nodes=False, 
+            #     value_range = [min_val, max_val], value_color=value2color,
             #     poswidth=args.column_width)
+
+            matrix, minval, maxval, value2color, is_list = numerical2matrix(tree, numerical_props, count_negative=True)
+            matrix_layout = profile_layouts.LayoutPropsMatrixOld(name=f"Numerical_matrix_{numerical_props}", 
+                matrix=matrix, matrix_type='numerical', matrix_props=numerical_props, is_list=is_list, 
+                value_color=value2color, value_range=[minval, maxval], column=level,
+                poswidth=args.column_width)
 
             level += 1
             layouts.append(matrix_layout)
 
         if layout == 'numerical-matrix2-layout':
             numerical_props = args.numerical_matrix2_layout
-            matrix, value2color = float2matrix(tree, numerical_props, count_negative=False)
-            all_values = list(value2color.keys())
-            min_val, max_val = min(all_values), max(all_values)
-            matrix_layout = profile_layouts.LayoutPropsMatrix(name=f'Numerical_matrix_{numerical_props}', 
-                matrix_type='numerical', alignment=matrix, matrix_props=numerical_props, 
-                profiles=all_values, column=level, summarize_inner_nodes=False, 
-                value_range = [min_val, max_val], value_color=value2color,
-                poswidth=args.column_width)
-
-            # matrix, minval, maxval, value2color, is_list = numerical2matrix(tree, numerical_props, count_negative=False)
-            # matrix_layout = profile_layouts.LayoutPropsMatrixOld(name=f"Numerical_matrix_{numerical_props}", 
-            #     matrix=matrix, matrix_type='numerical', matrix_props=numerical_props, is_list=is_list, 
-            #     value_color=value2color, value_range=[minval, maxval], column=level,
+            # matrix, value2color = float2matrix(tree, numerical_props, count_negative=False)
+            # all_values = list(value2color.keys())
+            # min_val, max_val = min(all_values), max(all_values)
+            # matrix_layout = profile_layouts.LayoutPropsMatrix(name=f'Numerical_matrix_{numerical_props}', 
+            #     matrix_type='numerical', alignment=matrix, matrix_props=numerical_props, 
+            #     profiles=all_values, column=level, summarize_inner_nodes=False, 
+            #     value_range = [min_val, max_val], value_color=value2color,
             #     poswidth=args.column_width)
+
+            matrix, minval, maxval, value2color, is_list = numerical2matrix(tree, numerical_props, count_negative=False)
+            matrix_layout = profile_layouts.LayoutPropsMatrixOld(name=f"Numerical_matrix_{numerical_props}", 
+                matrix=matrix, matrix_type='numerical', matrix_props=numerical_props, is_list=is_list, 
+                value_color=value2color, value_range=[minval, maxval], column=level,
+                poswidth=args.column_width)
 
             level += 1
             layouts.append(matrix_layout)
@@ -912,23 +978,42 @@ def get_rectangle_layouts(tree, props, level, prop2type, column_width=70, paddin
         level += 1
     return layouts, level, prop_color_dict
 
-def get_binary_layouts(tree, props, level, prop2type, column_width=70, reverse=False, padding_x=1, padding_y=0):
+def get_binary_layouts(tree, props, level, prop2type, column_width=70, reverse=False, padding_x=1, padding_y=0, color_config=None, same_color=False, aggregate=False):
     prop_color_dict = {}
     layouts = []
     
     for prop in props:
-        prop_values = sorted(list(set(tree_prop_array(tree, prop, leaf_only=True))))
+        #prop_values = sorted(list(set(tree_prop_array(tree, prop, leaf_only=True))))
+        prop_values = tree_prop_array(tree, prop, leaf_only=True)
+
+        if not reverse:
+            max_count = utils.find_bool_representations(prop_values)
+        else:
+            max_count = utils.find_bool_representations(prop_values, rep=False)
+
+        # If you still need a sorted list of unique property values
+        prop_values = sorted(set(prop_values))
+
         if can_convert_to_bool(prop_values):
-            nvals = len(prop_values)
-            if level > len(paired_color):
-                color =  random_color(h=None)
+            if color_config and color_config.get(prop):
+                if color_config.get(prop).get('value2color'):
+                    color_dict = color_config.get(prop).get('value2color')
+                    if can_convert_to_bool(color_dict.keys()):
+                        color_dict = {bool(k): v for k, v in color_dict.items()}
+                        color = color_dict.get(True, "#ff0000") #get true color
             else:
-                color = paired_color[level]
+                if same_color:
+                    color = "#ff0000"
+                else:
+                    if level > len(paired_color):
+                        color =  random_color(h=None)
+                    else:
+                        color = paired_color[level]
 
             if not reverse:
-                layout = conditional_layouts.LayoutBinary('Binary_'+prop, level, bool_prop=prop, color=color, width=column_width, padding_x=padding_x, padding_y=padding_y, reverse=reverse)
+                layout = conditional_layouts.LayoutBinary('Binary_'+prop, level, bool_prop=prop, color=color, width=column_width, padding_x=padding_x, padding_y=padding_y, reverse=reverse, aggregate=aggregate, max_count=max_count)
             else:
-                layout = conditional_layouts.LayoutBinary('ReverseBinary_'+prop, level, bool_prop=prop, width=column_width, padding_x=padding_x, padding_y=0, reverse=reverse)
+                layout = conditional_layouts.LayoutBinary('ReverseBinary_'+prop, level, bool_prop=prop, width=column_width, padding_x=padding_x, padding_y=0, reverse=reverse, aggregate=aggregate, max_count=max_count)
             
             internal_prop = add_suffix(prop, 'counter')
 
@@ -938,8 +1023,7 @@ def get_binary_layouts(tree, props, level, prop2type, column_width=70, reverse=F
             raise ValueError(f"Property {prop} is not binary trait.")
     return layouts, level, prop_color_dict
 
-def get_branchscore_layouts(tree, props, prop2type, padding_x=1, padding_y=0, internal_rep='avg'):
-    gradientscolor = build_color_gradient(20, colormap_name='jet')
+def get_branchscore_layouts(tree, props, prop2type, padding_x=1, padding_y=0, internal_rep='avg', color_config=None):
     layouts = []
     for prop in props:
         all_values = np.array(sorted(list(set(tree_prop_array(tree, prop))))).astype('float64')
@@ -954,6 +1038,24 @@ def get_branchscore_layouts(tree, props, prop2type, padding_x=1, padding_y=0, in
         #     index = np.abs(index_values - search_value).argmin()+1
         #     value2color[search_value] = gradientscolor[index]
 
+        if color_config and color_config.get(prop) is not None:
+            prop_config = color_config[prop]
+            
+            color_dict = {}
+
+            # First, try to use value2color mappings if they exist and are applicable
+            if 'value2color' in prop_config and prop_config['value2color']:
+                color_dict = prop_config['value2color']
+                sorted_color_dict = {float(key): value for key, value in color_dict.items()}
+                gradientscolor = sorted_color_dict.values()
+            elif 'detail2color' in prop_config and prop_config['detail2color']:
+                min_color = prop_config['detail2color'].get('color_min', 'white')
+                max_color = prop_config['detail2color'].get('color_max', 'red')
+                mid_color = prop_config['detail2color'].get('color_mid', None)
+                gradientscolor = build_custom_gradient(20, min_color, max_color, mid_color)
+        else:
+            gradientscolor = build_color_gradient(20, colormap_name='jet')
+            
         # get corresponding gradient color on the fly of visualization
         layout = staple_layouts.LayoutBranchScore(name='BranchScore_'+prop, \
             color_dict=gradientscolor, score_prop=prop, internal_rep=internal_rep, \
@@ -1045,11 +1147,11 @@ def get_barplot_layouts(tree, props, level, prop2type, column_width=70, padding_
     
     return layouts, level, prop_color_dict
 
-def get_heatmap_layouts(tree, props, level, column_width=70, padding_x=1, padding_y=0, internal_rep='avg', color_config=None):
-
+def get_heatmap_layouts(tree, props, level, column_width=70, padding_x=1, padding_y=0, internal_rep='avg', color_config=None, norm_method='min-max'):
     layouts = []
     all_prop_values = [list(set(tree_prop_array(tree, prop))) for prop in props]
     all_prop_values = np.array(flatten(all_prop_values)).astype('float64')
+    
     for prop in props:
         if color_config and color_config.get(prop) is not None:
             prop_config = color_config[prop]
@@ -1064,23 +1166,28 @@ def get_heatmap_layouts(tree, props, level, column_width=70, padding_x=1, paddin
             elif 'detail2color' in prop_config and prop_config['detail2color']:
                 min_color = prop_config['detail2color'].get('color_min', 'white')
                 max_color = prop_config['detail2color'].get('color_max', 'red')
-                mid_color = prop_config['detail2color'].get('color_mid', 'red')
-
+                mid_color = prop_config['detail2color'].get('color_mid', None)
                 gradientscolor = build_custom_gradient(20, min_color, max_color, mid_color)
         else:
-            gradientscolor = build_color_gradient(20, colormap_name="Reds")
-        
+            if norm_method == 'min-max':
+                gradientscolor = build_color_gradient(20, colormap_name="Reds")
+            else: # "mean" "zscore"
+                gradientscolor = build_color_gradient(20, colormap_name="coolwarm")
+
         minval, maxval = all_prop_values.min(), all_prop_values.max()
+        mean_val = all_prop_values.mean()
+        std_val = all_prop_values.std()
+        
         # layout =  staple_layouts.LayoutHeatmap(name='Heatmap_'+prop, column=level, 
         #             width=column_width, padding_x=padding_x, padding_y=padding_y, \
         #             internal_rep=internal_rep, prop=prop, maxval=maxval, minval=minval)
         layout = staple_layouts.LayoutHeatmap(name='Heatmap_'+prop, column=level, 
                     width=column_width, padding_x=padding_x, padding_y=padding_y, \
                     internal_rep=internal_rep, prop=prop, maxval=maxval, minval=minval,\
-                    color_dict=gradientscolor)
+                    mean_val=mean_val, std_val=std_val, \
+                    color_dict=gradientscolor, norm_method=norm_method)
         layouts.append(layout)  
         level += 1
-
     return layouts, level
 
 def get_prop2type(node):
