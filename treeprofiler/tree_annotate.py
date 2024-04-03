@@ -51,7 +51,7 @@ def populate_annotate_args(parser):
     add('-d', '--metadata', nargs='+',
         help="<metadata.csv> .csv, .tsv. mandatory input")
     # add('--data-matrix', nargs='+',
-    #     help="<data_matrix.csv> .csv, .tsv. optional input")
+    #     help="<metadata.csv> .csv, .tsv. optional input")
     add('--data-matrix',  nargs='+',
         help="<datamatrix.csv> .csv, .tsv. matrix data metadata table as array to tree, please do not provide column headers in this file")
     add('-sep', '--metadata-sep', default='\t',
@@ -620,7 +620,6 @@ def run_tree_annotate(tree, input_annotated_tree=False,
 
 
 def run_array_annotate(tree, array_dict):
-    #print(array_dict)
     for node in tree.traverse():
         if node.is_leaf:
             for filename, array in array_dict.items():
