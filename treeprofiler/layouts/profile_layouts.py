@@ -337,15 +337,25 @@ class LayoutPropsMatrixOld(TreeLayout):
         if self.matrix:
             return self.matrix.get(node.name)
 
+    # def get_array(self, node):
+    #     if node.is_leaf:
+    #         return self._get_array(node)
+    #     else:
+    #         first_leaf = next(node.leaves())
+    #         return self._get_array(first_leaf)
+
     def get_array(self, node):
-        if node.is_leaf:
-            return self._get_array(node)
+        if self.matrix.get(node.name):
+            self.matrix.get(node.name)
+            return self.matrix.get(node.name)
         else:
             first_leaf = next(node.leaves())
             return self._get_array(first_leaf)
 
     def set_node_style(self, node):
+        
         array = self.get_array(node)
+        #array = self.get_array(node)
         if len(self.matrix_props) > 1:
             poswidth = self.width / (len(self.matrix_props)-1 )
         else:
@@ -875,7 +885,8 @@ class ProfileFace(Face):
                 #ncols_per_px = math.ceil(self.seqlength / (zx * sm_box.dx)) #jordi's idea
                 ncols_per_px = math.ceil(self.width * zx)
                 rep_elements = self.get_rep_numbers(seq, ncols_per_px)
-                yield draw_array(sm_box, [self.value2color[x] if x is not None else self.absence_color for x in rep_elements])
+                tooltip = f'<p>{seq}</p>'
+                yield draw_array(sm_box, [self.value2color[x] if x is not None else self.absence_color for x in rep_elements], tooltip=tooltip)
             else:
                 # fsize = self.get_fsize(dx / len(seq), dy, zx, zy, 20)
                 # style = {
@@ -883,9 +894,9 @@ class ProfileFace(Face):
                 #     'max_fsize': fsize,
                 #     'ftype': 'sans-serif', # default sans-serif
                 #    }
-                # tooltip = f'<p>{seq}</p>'
+                tooltip = f'<p>{seq}</p>'
                 # yield draw_text(sm_box, for i in seq, "jjj", style=style)
-                yield draw_array(sm_box, [self.value2color[x] if x is not None else self.absence_color for x in seq])
+                yield draw_array(sm_box, [self.value2color[x] if x is not None else self.absence_color for x in seq], tooltip=tooltip)
             
             
         if self.seq_format == "categorical":
