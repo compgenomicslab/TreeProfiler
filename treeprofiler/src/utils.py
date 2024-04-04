@@ -57,6 +57,20 @@ def str2dict(value):
 def str2bool_exc(value):
     return str2bool(value, raise_exc=True)
 
+def check_float_array(array):
+    """
+    Checks if all elements in the array can be treated as floats
+    
+    :param array: The array to check.
+    :return: True if all elements can be converted to floats, False otherwise.
+    """
+    try:
+        # Attempt to convert the list to a NumPy array of floats
+        np_array = np.array(array, dtype=np.float64)
+        return not np.isnan(np_array).any()  # Check if the conversion resulted in any NaNs
+    except ValueError:
+        return False  # Conversion to float failed, indicating non-numerical data
+
 def check_nan(value):
     try:
         return math.isnan (float(value))

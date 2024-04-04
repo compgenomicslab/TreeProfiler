@@ -563,7 +563,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
             # For single-threaded execution, process nodes sequentially
             results = map(process_node, nodes_data)
 
-        # Integrate the results back into your tree?
+        # Integrate the results back into tree
         for node, result in zip(nodes, results):
             internal_props, consensus_seq = result
 
@@ -619,12 +619,27 @@ def run_tree_annotate(tree, input_annotated_tree=False,
     return annotated_tree, prop2type
 
 
-def run_array_annotate(tree, array_dict):
+def run_array_annotate(tree, array_dict, num_stat='none'):
+    matrix_props = list(array_dict.keys())
+    # annotate to the leaves
     for node in tree.traverse():
         if node.is_leaf:
             for filename, array in array_dict.items():
                 if array.get(node.name):
                     node.add_prop(filename, array.get(node.name))
+
+
+    # merge annotations to internal nodes
+    for node in tree.traverse():
+        if not node.is_leaf:
+            for prop in matrix_props:
+                # get the array from the children leaf nodes
+                arrays = [child.get_prop(prop) for child in node.leaves()]
+                stats = compute_matrix_statistics(arrays, num_stat=num_stat)
+                if stats:
+                    for stat, value in stats.items():
+                        node.add_prop(add_suffix(prop, stat), value.tolist())
+                        #prop2type[add_suffix(prop, stat)] = float
     return tree
 
 
@@ -732,8 +747,9 @@ def run(args):
             threads=args.threads, outdir=args.outdir)
 
     if args.data_matrix:
-        annotated_tree = run_array_annotate(annotated_tree, array_dict)
+        annotated_tree = run_array_annotate(annotated_tree, array_dict, num_stat=args.num_stat)
 
+    
     if args.outdir:
         base=os.path.splitext(os.path.basename(args.tree))[0]
         out_newick = base + '_annotated.nw'
@@ -918,6 +934,7 @@ def parse_tsv_to_array(input_files, delimiter='\t', no_headers=True):
     :param filename: Path to the TSV file to be parsed.
     :return: A dictionary with keys as the first item of each row and values as lists of the remaining items.
     """
+    is_float = True
     matrix2array = {}
     leaf2array = {}
     for input_file in input_files:
@@ -928,8 +945,14 @@ def parse_tsv_to_array(input_files, delimiter='\t', no_headers=True):
                 row = line.strip().split(delimiter)
                 node = row[0]  
                 value = row[1:]  # The rest of the items as value
-                np_array = np.array(value).astype(np.float64)
-                leaf2array[node] = np_array.tolist()
+                try:
+                    np_array = np.array(value).astype(np.float64)
+                    leaf2array[node] = np_array.tolist()
+                except ValueError:
+                    # Handle the case where conversion fails
+                    print(f"Warning: Non-numeric data found in {prefix} for node {node}. Skipping.")
+                    leaf2array[node] = None
+                    is_float = False
 
         matrix2array[prefix] = leaf2array        
     return matrix2array
@@ -1255,6 +1278,36 @@ def merge_num_annotations(nodes, target_props, column2method):
         return internal_props
     else:
         return None
+
+def compute_matrix_statistics(matrix, num_stat=None):
+    """
+    Computes specified statistics for the given matrix based on the num_stat parameter.
+    
+    :param matrix: A list of lists representing the matrix.
+    :param num_stat: Specifies which statistics to compute. Can be "avg", "max", "min", "sum", "std", "all", or None.
+    :return: A dictionary with the requested statistics or an empty dict/message.
+    """
+    np_matrix = np.array(matrix)
+    stats = {}
+
+    if num_stat == 'none':
+        return stats  # Return an empty dictionary if no statistics are requested
+
+    available_stats = {
+        'avg': np_matrix.mean(axis=0),
+        'max': np_matrix.max(axis=0),
+        'min': np_matrix.min(axis=0),
+        'sum': np_matrix.sum(axis=0),
+        'std': np_matrix.std(axis=0)
+    }
+
+    if num_stat == "all":
+        return available_stats
+    elif num_stat in available_stats:
+        stats[num_stat] = available_stats[num_stat]
+    else:
+        raise ValueError(f"Unsupported stat '{num_stat}'. Supported stats are 'avg', 'max', 'min', 'sum', 'std', or 'all'.")
+    return stats
 
 def name_nodes(tree):
     for i, node in enumerate(tree.traverse("postorder")):

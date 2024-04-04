@@ -1275,7 +1275,6 @@ def numerical2matrix(tree, profiling_props, dtype=float, count_negative=True, in
     #                 leaf2matrix[node.name].append(None)
     node2matrix = {}
     for node in tree.traverse():
-        
         node2matrix[node.name] = []
         for profiling_prop in profiling_props:
             if node.is_leaf:
