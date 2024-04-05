@@ -368,6 +368,8 @@ class LayoutPropsMatrixOld(TreeLayout):
             node.add_face(profileFace, column=self.column, position='aligned', \
                 collapsed_only=(not node.is_leaf))
 
+
+#Faces
 class TextScaleFace(Face):
     def __init__(self, name='', width=None, color='black',
             scale_range=(0, 0), headers=None, tick_width=100, line_width=1,
