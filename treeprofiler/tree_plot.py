@@ -67,6 +67,7 @@ def poplulate_plot_args(plot_args_p):
     group.add_argument('--internal-plot-measure',
         default='avg',
         choices=['sum', 'avg', 'max', 'min', 'std', 'none'],
+        choices=['sum', 'avg', 'max', 'min', 'std', 'none'],
         type=str,
         required=False,
         help="statistic measures to be shown in numerical layout for internal nodes, [default: avg]")  
@@ -748,6 +749,8 @@ def run(args):
 
     #### Output #####
     popup_prop_keys.extend(list(set(visualized_props)))
+    popup_prop_keys = tuple(popup_prop_keys)
+    
     if args.out_colordict:
         wrtie_color(total_color_dict)
     if args.plot:
