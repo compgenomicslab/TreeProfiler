@@ -523,12 +523,17 @@ def run(args):
         if layout == 'profiling-layout':
             profiling_props = args.profiling_layout
             for profiling_prop in profiling_props:
-                matrix, all_values = single2profile(tree, profiling_prop) # create mimic msa
-                profile_layout = profile_layouts.LayoutProfile(name=f'Profiling_{profiling_prop}', 
-                    mode='profiles', alignment=matrix, seq_format='profiles', profiles=all_values, 
-                    column=level, summarize_inner_nodes=True, poswidth=args.column_width)
+                # matrix, all_values = single2profile(tree, profiling_prop) # create mimic msa
+                # profile_layout = profile_layouts.LayoutProfile(name=f'Profiling_{profiling_prop}', 
+                #     mode='profiles', alignment=matrix, seq_format='profiles', profiles=all_values, 
+                #     column=level, summarize_inner_nodes=True, poswidth=args.column_width)
+                
+                matrix, value2color, all_values = single2matrix(tree, profiling_prop)
+                matrix_layout = profile_layouts.LayoutPropsMatrixOld(name=f"Profiling_{profiling_prop}",
+                matrix=matrix, matrix_type='categorical', matrix_props=all_values,
+                value_color=value2color, column=level, poswidth=args.column_width)
                 level += 1
-                layouts.append(profile_layout)
+                layouts.append(matrix_layout)
 
         # presence-absence profiling based on list data
         if layout == 'multi-profiling-layout':
@@ -564,20 +569,20 @@ def run(args):
         # numerical matrix
         if layout == 'numerical-matrix-layout':
             numerical_props = args.numerical_matrix_layout
-            # matrix, value2color = float2matrix(tree, numerical_props, count_negative=True)
-            # all_values = list(value2color.keys())
-            # min_val, max_val = min(all_values), max(all_values)
-            # matrix_layout = profile_layouts.LayoutPropsMatrix(name=f'Numerical_matrix_{numerical_props}', 
-            #     matrix_type='numerical', alignment=matrix, matrix_props=numerical_props, 
-            #     profiles=all_values, column=level, summarize_inner_nodes=False, 
-            #     value_range = [min_val, max_val], value_color=value2color,
-            #     poswidth=args.column_width)
-
-            matrix, minval, maxval, value2color, is_list = numerical2matrix(tree, numerical_props, count_negative=True, internal_num_rep=internal_num_rep)
-            matrix_layout = profile_layouts.LayoutPropsMatrixOld(name=f"Numerical_matrix_{numerical_props}", 
-                matrix=matrix, matrix_type='numerical', matrix_props=numerical_props, is_list=is_list, 
-                value_color=value2color, value_range=[minval, maxval], column=level,
+            matrix, value2color = float2matrix(tree, numerical_props, count_negative=True)
+            all_values = list(value2color.keys())
+            min_val, max_val = min(all_values), max(all_values)
+            matrix_layout = profile_layouts.LayoutPropsMatrix(name=f'Numerical_matrix_{numerical_props}', 
+                matrix_type='numerical', alignment=matrix, matrix_props=numerical_props, 
+                profiles=all_values, column=level, summarize_inner_nodes=False, 
+                value_range = [min_val, max_val], value_color=value2color,
                 poswidth=args.column_width)
+
+            # matrix, minval, maxval, value2color, is_list = numerical2matrix(tree, numerical_props, count_negative=True, internal_num_rep=internal_num_rep)
+            # matrix_layout = profile_layouts.LayoutPropsMatrixOld(name=f"Numerical_matrix_{numerical_props}", 
+            #     matrix=matrix, matrix_type='numerical', matrix_props=numerical_props, is_list=is_list, 
+            #     value_color=value2color, value_range=[minval, maxval], column=level,
+            #     poswidth=args.column_width)
 
             level += 1
             layouts.append(matrix_layout)
@@ -1249,7 +1254,7 @@ def numerical2matrix(tree, profiling_props, dtype=float, count_negative=True, in
     """
     gradientscolor = build_color_gradient(20, colormap_name='Reds')
     negative_color = 'black'
-
+    #color_0 = 'blue'
     is_list = False
     #leaf2matrix = {}
     # for node in tree.traverse():
@@ -1331,6 +1336,8 @@ def numerical2matrix(tree, profiling_props, dtype=float, count_negative=True, in
     for search_value in all_values:
         if not count_negative and search_value < 0:
             value2color[search_value] = negative_color
+        # elif search_value == 0:
+        #     value2color[search_value] = color_0
         else:
             index = np.abs(index_values - search_value).argmin()+1
             value2color[search_value] = gradientscolor[index]
@@ -1445,6 +1452,21 @@ def str2matrix(tree, profiling_props):
         matrix += '\n' + '>' + leaf + '\n' + ''.join([value2color.get(item, '-') for item in prop])
 
     return matrix, value2color
+
+def single2matrix(tree, profiling_prop):
+    precence_color = '#E60A0A' # #E60A0A red
+    absence_color = '#EBEBEB' # #EBEBEB lightgrey
+    all_values = sorted(list(set(flatten(tree_prop_array(tree, profiling_prop)))), key=lambda x: (x != 'NaN', x))
+    leaf2matrix = {}
+    for leaf in tree.leaves():
+        leaf2matrix[leaf.name] = []
+        for val in all_values:
+            if val == leaf.props.get(profiling_prop):
+                leaf2matrix[leaf.name].append(1)
+            else:
+                leaf2matrix[leaf.name].append(0)
+    value2color = {1: precence_color, 0: absence_color}
+    return leaf2matrix, value2color, all_values
 
 
 def single2profile(tree, profiling_prop):
