@@ -69,6 +69,7 @@ class LayoutPlot(TreeLayout):
 
         self.size_prop = size_prop
         self.color_prop = color_prop
+        self.size_range = size_range
 
         self.color = color
         self.colors = colors
