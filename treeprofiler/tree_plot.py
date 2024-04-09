@@ -62,6 +62,7 @@ def poplulate_plot_args(plot_args_p):
     
     group.add_argument('--internal-plot-measure',
         default='avg',
+        choices=['sum', 'avg', 'max', 'min', 'std', 'none'],
         type=str,
         required=False,
         help="statistic measures to be shown in numerical layout for internal nodes, [default: avg]")  
@@ -641,6 +642,8 @@ def run(args):
 
     #### Output #####
     popup_prop_keys.extend(list(set(visualized_props)))
+    popup_prop_keys = tuple(popup_prop_keys)
+    
     if args.out_colordict:
         wrtie_color(total_color_dict)
     if args.plot:
@@ -915,6 +918,7 @@ def get_barplot_layouts(tree, props, level, prop2type, column_width=70, padding_
     prop_color_dict = {}
     layouts = []
     barplot_padding_x = padding_x * 10
+    barplot_minval = 0
     if anchor_column:
         anchor_column_values = np.array(list(set(tree_prop_array(tree, anchor_column)))).astype('float64')
         anchor_column_values = anchor_column_values[~np.isnan(anchor_column_values)]
@@ -924,6 +928,9 @@ def get_barplot_layouts(tree, props, level, prop2type, column_width=70, padding_
             prop_values = np.array(list(set(tree_prop_array(tree, prop)))).astype('float64')
             prop_values = prop_values[~np.isnan(prop_values)]
             minval, maxval = prop_values.min(), prop_values.max()
+            
+            size_range = [barplot_minval, maxval]
+            
             new_column_width = maxval / (anchormax / column_width)
             if prop_values.any():
                 size_prop = prop
@@ -937,7 +944,7 @@ def get_barplot_layouts(tree, props, level, prop2type, column_width=70, padding_
             
             layout =  staple_layouts.LayoutBarplot(name='Barplot_'+prop, prop=prop, 
                                         width=new_column_width, color=barplot_color, 
-                                        size_prop=size_prop, column=level, 
+                                        size_prop=size_prop, column=level, size_range=size_range,
                                         internal_rep=internal_rep, padding_x=barplot_padding_x
                                         )
 
@@ -962,16 +969,15 @@ def get_barplot_layouts(tree, props, level, prop2type, column_width=70, padding_
             else:
                 barplot_color = paired_color[level]
             
+            size_range = [barplot_minval, maxval]
             layout =  staple_layouts.LayoutBarplot(name='Barplot_'+prop, prop=prop, 
                                         width=column_width, color=barplot_color, 
-                                        size_prop=size_prop, column=level, 
+                                        size_prop=size_prop, column=level, size_range=size_range,
                                         internal_rep=internal_rep, padding_x=barplot_padding_x
                                         )
-
             prop_color_dict[prop] = barplot_color
             layouts.append(layout)  
             level += 1
-
     return layouts, level, prop_color_dict
 
 def get_heatmap_layouts(tree, props, level, column_width=70, padding_x=1, padding_y=0, internal_rep='avg'):
