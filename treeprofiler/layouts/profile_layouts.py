@@ -286,7 +286,7 @@ class LayoutPropsMatrixOld(TreeLayout):
         self.column = column
         self.aligned_faces = True
 
-        self.length = next((value for value in self.matrix.values() if value != [None]), None)
+        self.length = len(next((value for value in self.matrix.values() if value != [None]), None)) if any(value != [None] for value in self.matrix.values()) else 0
         self.scale_range = range or (0, self.length)
         self.value_range = value_range
         self.value_color = value_color
@@ -1003,7 +1003,7 @@ class MatrixScaleFace(Face):
             nticks = 2
 
         dx = self.width / nticks
-
+        print(self.range[1], self.range[0])
         range_factor = (self.range[1] - self.range[0]) / self.width
 
         if self.viewport:
