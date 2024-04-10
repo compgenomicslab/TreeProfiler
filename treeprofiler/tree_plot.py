@@ -569,20 +569,20 @@ def run(args):
         # numerical matrix
         if layout == 'numerical-matrix-layout':
             numerical_props = args.numerical_matrix_layout
-            matrix, value2color = float2matrix(tree, numerical_props, count_negative=True)
-            all_values = list(value2color.keys())
-            min_val, max_val = min(all_values), max(all_values)
-            matrix_layout = profile_layouts.LayoutPropsMatrix(name=f'Numerical_matrix_{numerical_props}', 
-                matrix_type='numerical', alignment=matrix, matrix_props=numerical_props, 
-                profiles=all_values, column=level, summarize_inner_nodes=False, 
-                value_range = [min_val, max_val], value_color=value2color,
-                poswidth=args.column_width)
-
-            # matrix, minval, maxval, value2color, is_list = numerical2matrix(tree, numerical_props, count_negative=True, internal_num_rep=internal_num_rep)
-            # matrix_layout = profile_layouts.LayoutPropsMatrixOld(name=f"Numerical_matrix_{numerical_props}", 
-            #     matrix=matrix, matrix_type='numerical', matrix_props=numerical_props, is_list=is_list, 
-            #     value_color=value2color, value_range=[minval, maxval], column=level,
+            # matrix, value2color = float2matrix(tree, numerical_props, count_negative=True)
+            # all_values = list(value2color.keys())
+            # min_val, max_val = min(all_values), max(all_values)
+            # matrix_layout = profile_layouts.LayoutPropsMatrix(name=f'Numerical_matrix_{numerical_props}', 
+            #     matrix_type='numerical', alignment=matrix, matrix_props=numerical_props, 
+            #     profiles=all_values, column=level, summarize_inner_nodes=False, 
+            #     value_range = [min_val, max_val], value_color=value2color,
             #     poswidth=args.column_width)
+
+            matrix, minval, maxval, value2color, is_list = numerical2matrix(tree, numerical_props, count_negative=True, internal_num_rep=internal_num_rep)
+            matrix_layout = profile_layouts.LayoutPropsMatrixOld(name=f"Numerical_matrix_{numerical_props}", 
+                matrix=matrix, matrix_type='numerical', matrix_props=numerical_props, is_list=is_list, 
+                value_color=value2color, value_range=[minval, maxval], column=level,
+                poswidth=args.column_width)
 
             level += 1
             layouts.append(matrix_layout)

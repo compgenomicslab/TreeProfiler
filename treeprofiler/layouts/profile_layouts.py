@@ -1003,7 +1003,6 @@ class MatrixScaleFace(Face):
             nticks = 2
 
         dx = self.width / nticks
-        print(self.range[1], self.range[0])
         range_factor = (self.range[1] - self.range[0]) / self.width
 
         if self.viewport:
