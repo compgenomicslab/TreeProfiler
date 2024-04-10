@@ -286,7 +286,7 @@ class LayoutPropsMatrixOld(TreeLayout):
         self.column = column
         self.aligned_faces = True
 
-        self.length = len(next(iter(self.matrix))[0]) if self.matrix else None
+        self.length = next((value for value in self.matrix.values() if value != [None]), None)
         self.scale_range = range or (0, self.length)
         self.value_range = value_range
         self.value_color = value_color
@@ -297,7 +297,8 @@ class LayoutPropsMatrixOld(TreeLayout):
     def set_tree_style(self, tree, tree_style):
         if self.length:
             if self.is_list:
-                ncols = len(next(iter(self.matrix.values())))
+                # first not None list to set the column
+                ncols = len(next((value for value in self.matrix.values() if value != [None]), None)) if any(value != [None] for value in self.matrix.values()) else 0
                 face = MatrixScaleFace(width=self.width, scale_range=(0, ncols), padding_y=0)
                 header = self.matrix_props[0]
                 title = TextFace(header, min_fsize=5, max_fsize=12, 
@@ -346,7 +347,6 @@ class LayoutPropsMatrixOld(TreeLayout):
 
     def get_array(self, node):
         if self.matrix.get(node.name):
-            self.matrix.get(node.name)
             return self.matrix.get(node.name)
         else:
             first_leaf = next(node.leaves())
@@ -364,7 +364,7 @@ class LayoutPropsMatrixOld(TreeLayout):
         if array:
             profileFace = ProfileFace(array, self.value_color, gap_format=None, \
             seq_format=self.matrix_type, width=self.width, height=self.height, \
-            poswidth=poswidth)
+            poswidth=poswidth, tooltip=False)
             node.add_face(profileFace, column=self.column, position='aligned', \
                 collapsed_only=(not node.is_leaf))
 
@@ -718,7 +718,7 @@ class ProfileFace(Face):
             width=None, height=None, # max height
             gap_linewidth=0.2,
             max_fsize=12, ftype='sans-serif', poswidth=5,
-            padding_x=0, padding_y=0):
+            padding_x=0, padding_y=0, tooltip=False):
 
         Face.__init__(self, padding_x=padding_x, padding_y=padding_y)
 
@@ -738,6 +738,7 @@ class ProfileFace(Face):
         self.w_scale = 1
         self.width = width    # sum of all regions' width if not provided
         self.height = None  # dynamically computed if not provided
+        self.tooltip = tooltip
 
         total_width = self.seqlength * self.poswidth
         if self.width:
@@ -887,7 +888,10 @@ class ProfileFace(Face):
                 #ncols_per_px = math.ceil(self.seqlength / (zx * sm_box.dx)) #jordi's idea
                 ncols_per_px = math.ceil(self.width * zx)
                 rep_elements = self.get_rep_numbers(seq, ncols_per_px)
-                tooltip = f'<p>{seq}</p>'
+                if self.tooltip:
+                    tooltip = f'<p>{seq}</p>'
+                else:
+                    tooltip = ''
                 yield draw_array(sm_box, [self.value2color[x] if x is not None else self.absence_color for x in rep_elements], tooltip=tooltip)
             else:
                 # fsize = self.get_fsize(dx / len(seq), dy, zx, zy, 20)
@@ -896,7 +900,10 @@ class ProfileFace(Face):
                 #     'max_fsize': fsize,
                 #     'ftype': 'sans-serif', # default sans-serif
                 #    }
-                tooltip = f'<p>{seq}</p>'
+                if self.tooltip:
+                    tooltip = f'<p>{seq}</p>'
+                else:
+                    tooltip = ''
                 # yield draw_text(sm_box, for i in seq, "jjj", style=style)
                 yield draw_array(sm_box, [self.value2color[x] if x is not None else self.absence_color for x in seq], tooltip=tooltip)
             
