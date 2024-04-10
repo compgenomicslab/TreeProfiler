@@ -335,6 +335,7 @@ def run(args):
                 'evoltype': str,
                 'dup_sp': str,
                 'dup_percent': float,
+                'lca': str,
                 }
         popup_prop_keys = list(prop2type.keys()) 
 
