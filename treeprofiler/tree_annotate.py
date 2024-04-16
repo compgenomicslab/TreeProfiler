@@ -634,7 +634,7 @@ def run_array_annotate(tree, array_dict, num_stat='none'):
         if not node.is_leaf:
             for prop in matrix_props:
                 # get the array from the children leaf nodes
-                arrays = [child.get_prop(prop) for child in node.leaves()]
+                arrays = [child.get_prop(prop) for child in node.leaves() if child.get_prop(prop) is not None]
                 stats = compute_matrix_statistics(arrays, num_stat=num_stat)
                 if stats:
                     for stat, value in stats.items():
@@ -1287,26 +1287,38 @@ def compute_matrix_statistics(matrix, num_stat=None):
     :param num_stat: Specifies which statistics to compute. Can be "avg", "max", "min", "sum", "std", "all", or None.
     :return: A dictionary with the requested statistics or an empty dict/message.
     """
-    np_matrix = np.array(matrix)
+    
     stats = {}
 
     if num_stat == 'none':
         return stats  # Return an empty dictionary if no statistics are requested
-
-    available_stats = {
-        'avg': np_matrix.mean(axis=0),
-        'max': np_matrix.max(axis=0),
-        'min': np_matrix.min(axis=0),
-        'sum': np_matrix.sum(axis=0),
-        'std': np_matrix.std(axis=0)
-    }
-
-    if num_stat == "all":
-        return available_stats
-    elif num_stat in available_stats:
-        stats[num_stat] = available_stats[num_stat]
+    
+    # Replace None with np.nan or another appropriate value before creating the array
+    if matrix is not None:
+        cleaned_matrix = [[0 if x is None else x for x in row] for row in matrix]
+        np_matrix = np.array(cleaned_matrix, dtype=np.float64)
     else:
-        raise ValueError(f"Unsupported stat '{num_stat}'. Supported stats are 'avg', 'max', 'min', 'sum', 'std', or 'all'.")
+        return {}  # Return an empty dictionary if the matrix is empty
+
+    if np_matrix.size == 0:
+        return {}  # Return an empty dictionary if the matrix is empty
+
+ 
+    if np_matrix.ndim == 2 and np_matrix.shape[1] > 0:
+        available_stats = {
+            'avg': np_matrix.mean(axis=0),
+            'max': np_matrix.max(axis=0),
+            'min': np_matrix.min(axis=0),
+            'sum': np_matrix.sum(axis=0),
+            'std': np_matrix.std(axis=0)
+        }
+
+        if num_stat == "all":
+            return available_stats
+        elif num_stat in available_stats:
+            stats[num_stat] = available_stats[num_stat]
+        else:
+            raise ValueError(f"Unsupported stat '{num_stat}'. Supported stats are 'avg', 'max', 'min', 'sum', 'std', or 'all'.")
     return stats
 
 def name_nodes(tree):
