@@ -121,7 +121,7 @@ def poplulate_plot_args(plot_args_p):
         default=None,
         help="Path to the file to find the color for each variables. [default: None]"
     )
-    group.add_argument('-d', '--config-sep', default='\t',
+    group.add_argument('-sep', '--config-sep', default='\t',
         help="column separator of color table [default: \\t]")
     # group.add_argument('--profiling_width',
     #     type=int,
@@ -335,6 +335,7 @@ def run(args):
                 'evoltype': str,
                 'dup_sp': str,
                 'dup_percent': float,
+                #'lca':str
                 }
         popup_prop_keys = list(prop2type.keys()) 
 
@@ -598,6 +599,7 @@ def run(args):
 
         if layout == 'numerical-matrix2-layout':
             numerical_props = args.numerical_matrix2_layout
+            
             # matrix, value2color = float2matrix(tree, numerical_props, count_negative=False)
             # all_values = list(value2color.keys())
             # min_val, max_val = min(all_values), max(all_values)
