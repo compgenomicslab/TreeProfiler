@@ -1359,10 +1359,11 @@ def numerical2matrix(tree, profiling_props, dtype=float, count_negative=True, in
 
     else:
         gradientscolor = build_color_gradient(20, colormap_name='Reds')
-
+    
     # everything
     all_values_raw = list(set(flatten([sublist for sublist in node2matrix.values()])))
     all_values = sorted(list(filter(lambda x: x is not None and not math.isnan(x), all_values_raw)))
+    
     if not count_negative:
         # remove negative values
         positive_values = sorted(list(filter(lambda x: x is not None and not math.isnan(x) and x >= 0, all_values)))
@@ -1417,8 +1418,9 @@ def binary2matrix(tree, profiling_props, color_config=None):
             
             else: # for internal nodes parse counter of True/Total percentage 
                 representative_prop = add_suffix(profiling_prop, "counter")
-                ratio = utils.counter2ratio(node, representative_prop)
-                node2matrix[node.name].append(ratio)
+                if node.props.get(representative_prop):
+                    ratio = utils.counter2ratio(node, representative_prop)
+                    node2matrix[node.name].append(ratio)
 
     #get color
     gradientscolor = build_color_gradient(20, colormap_name='Reds')
@@ -1433,7 +1435,7 @@ def binary2matrix(tree, profiling_props, color_config=None):
         if search_value not in value2color:
             index = np.abs(index_values - search_value).argmin() + 1
             value2color[search_value] = gradientscolor[index]
-
+    
     return node2matrix, value2color, is_list
 
 def float2matrix(tree, profiling_props, count_negative=True):

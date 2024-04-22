@@ -1257,7 +1257,6 @@ def merge_num_annotations(nodes, target_props, column2method):
                     elif num_stat == 'avg':
                         internal_props[add_suffix(target_prop, 'avg')] = sm
                     elif num_stat == 'sum':
-                        #print(target_prop)
                         internal_props[add_suffix(target_prop, 'sum')] = np.sum(prop_array)
                     elif num_stat == 'max':
                         internal_props[add_suffix(target_prop, 'max')] = smax
