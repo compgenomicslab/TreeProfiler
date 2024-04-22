@@ -201,6 +201,29 @@ def counter2ratio(node, prop, minimum=0.05):
     
     return ratio
 
+def categorical2ratio(node, prop, all_values, minimum=0.05):
+    counter_separator = '||'
+    items_separator = '--'
+    count_missing = True
+    total = 0
+    positive = 0
+    ratios = []
+
+    counter_props = node.props.get(prop).split(counter_separator)
+    counter_dict = {k: v for k, v in [counter_prop.split('--') for counter_prop in counter_props]}
+    total = sum([int(v) for v in counter_dict.values()])
+    for value in all_values:
+        if value in counter_dict:
+            positive = int(counter_dict[value])
+        else:
+            positive = 0
+        ratio = positive / total
+        if ratio < minimum and ratio != 0: # show minimum color for too low
+            ratio = 0.05
+        ratios.append(ratio)
+    
+    return ratios
+
 # validate tree format
 class TreeFormatError(Exception):
     pass
