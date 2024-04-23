@@ -389,7 +389,7 @@ def run(args):
     visualized_props = []
     for layout in input_order:
         if layout == 'acr-discrete-layout':
-            acr_discrete_layouts, level, color_dict = get_acr_discrete_layouts(tree, args.acr_discrete_layout, level, prop2type=prop2type, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y)
+            acr_discrete_layouts, level, color_dict = get_acr_discrete_layouts(tree, args.acr_discrete_layout, level, prop2type=prop2type, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config)
             layouts.extend(acr_discrete_layouts)
             total_color_dict.append(color_dict)
             visualized_props.extend(args.acr_discrete_layout)
@@ -404,7 +404,7 @@ def run(args):
             visualized_props.extend(args.acr_continuous_layout)
 
         if layout == 'ls-layout':
-            ls_layouts, ls_props = get_ls_layouts(tree, args.ls_layout, level, prop2type=prop2type, padding_x=args.padding_x, padding_y=args.padding_y)
+            ls_layouts, ls_props = get_ls_layouts(tree, args.ls_layout, level, prop2type=prop2type, padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config)
             layouts.extend(ls_layouts)
             visualized_props.extend(args.ls_layout)
             visualized_props.extend(ls_props)
@@ -854,19 +854,31 @@ def read_config_to_dict(file_obj, delimiter):
 
     return config_dict
 
-def get_acr_discrete_layouts(tree, props, level, prop2type, column_width=70, padding_x=1, padding_y=0):
+def get_acr_discrete_layouts(tree, props, level, prop2type, column_width=70, padding_x=1, padding_y=0, color_config=None):
     prop_color_dict = {}
     layouts = []
     for prop in props:
-        color_dict = {} # key = value, value = color id
         if prop2type and prop2type.get(prop) == list:
             leaf_values = list(map(list,set(map(tuple, tree_prop_array(tree, prop)))))    
             prop_values = [val for sublist in leaf_values for val in sublist]
         else:
             prop_values = sorted(list(set(tree_prop_array(tree, prop))))
         
-        # normal text prop
-        color_dict = assign_color_to_values(prop_values, paired_color)
+        color_dict = {} # key = value, value = color id
+        if color_config and color_config.get(prop):
+            if color_config.get(prop).get('value2color'):
+                color_dict = color_config.get(prop).get('value2color')
+
+            # Check if all property values have an assigned color
+            existing_values = set(color_dict.keys())
+            additional_values = set(prop_values) - existing_values
+            if additional_values:
+                # Fetch new colors for the additional values
+                additional_colors = assign_color_to_values(sorted(additional_values), paired_color)
+                color_dict.update(additional_colors)
+        else:
+            # normal text prop
+            color_dict = assign_color_to_values(prop_values, paired_color)
 
         layout = phylosignal_layouts.LayoutACRDiscrete(name='acr_'+prop, column=level, \
             color_dict=color_dict, acr_prop=prop, width=column_width, \
@@ -894,7 +906,7 @@ def get_acr_continuous_layouts(tree, props, level, prop2type, padding_x=1, paddi
         layouts.append(layout)
     return layouts
 
-def get_ls_layouts(tree, props, level, prop2type, padding_x=1, padding_y=0):
+def get_ls_layouts(tree, props, level, prop2type, padding_x=1, padding_y=0, color_config=None):
     precision_suffix = "prec"
     sensitivity_suffix = "sens"
     f1_suffix  = "f1"
@@ -902,11 +914,26 @@ def get_ls_layouts(tree, props, level, prop2type, padding_x=1, padding_y=0):
     ls_clade_props = [add_suffix(prop, ls_clade_suffix) for prop in props]
     lsprop2color = assign_color_to_values(ls_clade_props, paired_color)
 
-    gradientscolor = build_color_gradient(20, colormap_name='bwr')
-    
     layouts = []
     ls_props = []
     for prop in props:
+        if color_config and color_config.get(prop) is not None:
+            prop_config = color_config[prop]
+            
+            color_dict = {}
+            # First, try to use value2color mappings if they exist and are applicable
+            if 'value2color' in prop_config and prop_config['value2color']:
+                color_dict = prop_config['value2color']
+                sorted_color_dict = {float(key): value for key, value in color_dict.items()}
+                gradientscolor = sorted_color_dict.values()
+            elif 'detail2color' in prop_config and prop_config['detail2color']:
+                min_color = prop_config['detail2color'].get('color_min', 'white')
+                max_color = prop_config['detail2color'].get('color_max', 'red')
+                mid_color = prop_config['detail2color'].get('color_mid', None)
+                gradientscolor = build_custom_gradient(20, min_color, max_color, mid_color)
+        else:
+            gradientscolor = build_color_gradient(20, colormap_name='bwr')
+
         for suffix in [precision_suffix, sensitivity_suffix, f1_suffix]:
             ls_prop = add_suffix(prop, suffix)
             minval, maxval = 0, 1
