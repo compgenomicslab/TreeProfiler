@@ -1360,6 +1360,22 @@ def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field
         except (IndexError, ValueError):
             return gtdb_accession_to_taxid(leaf.props.get(taxid_attr))
 
+    def merge_dictionaries(dict_ranks, dict_names):
+        """
+        Merges two dictionaries into one where the key is the rank from dict_ranks 
+        and the value is the corresponding name from dict_names.
+
+        :param dict_ranks: Dictionary where the key is a numeric id and the value is a rank.
+        :param dict_names: Dictionary where the key is the same numeric id and the value is a name.
+        :return: A new dictionary where the rank is the key and the name is the value.
+        """
+        merged_dict = {}
+        for key, rank in dict_ranks.items():
+            if key in dict_names:  # Ensure the key exists in both dictionaries
+                if rank not in merged_dict or rank == 'no rank':  # Handle 'no rank' by not overwriting existing entries unless it's the first encounter
+                    merged_dict[rank] = dict_names[key]
+        return merged_dict
+
     if db == "GTDB":
         gtdb = GTDBTaxa()
         tree.set_species_naming_function(return_spcode_gtdb)
@@ -1393,6 +1409,14 @@ def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field
         # extract sp codes from leaf names
         tree.set_species_naming_function(return_spcode_ncbi)
         ncbi.annotate_tree(tree, taxid_attr="species")
+        for n in tree.traverse():
+            if n.props.get('lineage'):
+                lca_dict = {}
+                #for taxa in n.props.get("lineage"):
+                lineage2rank = ncbi.get_rank(n.props.get("lineage"))
+                taxid2name = ncbi.get_taxid_translator(n.props.get("lineage"))
+                lca_dict = merge_dictionaries(lineage2rank, taxid2name)
+                n.add_prop("lca", lca_dict)
 
     # tree.annotate_gtdb_taxa(taxid_attr='name')
     # assign internal node as sci_name
