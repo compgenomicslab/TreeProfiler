@@ -1646,7 +1646,6 @@ def multiple2matrix(tree, profiling_prop):
             representative_prop = add_suffix(profiling_prop, "counter")
             if node.props.get(representative_prop):
                 ratios = utils.categorical2ratio(node, representative_prop, all_categorical_values)
-                print(node.name, ratios)
                 node2matrix[node.name] = ratios
     
     # get color
