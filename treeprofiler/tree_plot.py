@@ -719,14 +719,21 @@ def run(args):
         ]
         
         for multiple_text_prop in multiple_text_props:
-            matrix, all_values = multiple2profile(tree, multiple_text_prop)
-            multiple_text_prop_layout = profile_layouts.LayoutProfile(
-                name="Profiling_"+multiple_text_prop, 
-                mode='profiles', 
-                alignment=matrix, 
-                profiles=all_values, 
-                active=False,
-                column=level)
+            matrix, value2color, all_profiling_values = multiple2matrix(tree, multiple_text_prop)
+            multiple_text_prop_layout = profile_layouts.LayoutPropsMatrixBinary(name=f"Profiling_{multiple_text_prop}",
+            matrix=matrix, matrix_props=all_profiling_values, value_range=[0,1],
+            active=False,
+            value_color=value2color, column=level, poswidth=args.column_width)
+
+            # matrix, all_values = multiple2profile(tree, multiple_text_prop)
+            # multiple_text_prop_layout = profile_layouts.LayoutProfile(
+            #     name="Profiling_"+multiple_text_prop, 
+            #     mode='profiles', 
+            #     alignment=matrix, 
+            #     profiles=all_values, 
+            #     active=False,
+            #     column=level)
+
             level += 1
             layouts.append(multiple_text_prop_layout)
             
@@ -1567,7 +1574,8 @@ def single2matrix(tree, profiling_prop):
     for node in tree.traverse():
         if node.is_leaf:
             # Leaf node processing for presence/absence
-            node2matrix[node.name] = [1 if val == node.props.get(profiling_prop) else 0 for val in all_categorical_values]
+            if node.props.get(profiling_prop):
+                node2matrix[node.name] = [1 if val == node.props.get(profiling_prop) else 0 for val in all_categorical_values]
         else:
             # Internal node processing to add a counter of True/Total percentage
             representative_prop = add_suffix(profiling_prop, "counter")
@@ -1632,11 +1640,13 @@ def multiple2matrix(tree, profiling_prop):
     node2matrix = {}
     for node in tree.traverse():
         if node.is_leaf:
-            node2matrix[node.name] = [1 if val in node.props.get(profiling_prop) else 0 for val in all_categorical_values]
+            if node.props.get(profiling_prop):
+                node2matrix[node.name] = [1 if val in node.props.get(profiling_prop) else 0 for val in all_categorical_values]
         else:
             representative_prop = add_suffix(profiling_prop, "counter")
             if node.props.get(representative_prop):
                 ratios = utils.categorical2ratio(node, representative_prop, all_categorical_values)
+                print(node.name, ratios)
                 node2matrix[node.name] = ratios
     
     # get color
