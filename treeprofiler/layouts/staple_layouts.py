@@ -48,7 +48,7 @@ def swap_pos(pos, angle):
 class LayoutPlot(TreeLayout):
     def __init__(self, name=None, prop=None, width=200, size_prop=None, 
             color_prop=None, color_gradient=None, color="red", colors=None,
-            position="aligned", column=0, padding_x=10, padding_y=0,
+            position="aligned", column=0, padding_x=10, padding_y=0, size_range=[],
             internal_rep='avg', scale=True, legend=True, active=True):
         super().__init__(name, 
                 aligned_faces=True if position == "aligned" else False,
@@ -69,6 +69,7 @@ class LayoutPlot(TreeLayout):
 
         self.size_prop = size_prop
         self.color_prop = color_prop
+        self.size_range = size_range
 
         self.color = color
         self.colors = colors
@@ -93,44 +94,45 @@ class LayoutPlot(TreeLayout):
             except:
                 pass
 
-        vals = { 
-            "size": [ self.size_prop, 0, 0, set() ],    # min, max, unique
-            "color":  [ self.color_prop,  0, 0, set() ] # min, max, unique
-            }
-        
-        for node in tree.traverse():
-            if self.size_prop:
-                update_vals("size", node)
-
-            if self.color_prop:
-                update_vals("color", node)
-                
-        if self.size_prop:
-            self.size_range = vals["size"][1:3]
+        # only when size_range is not provided, calculate min and max values
+        if self.size_range == []:
+            vals = { 
+                "size": [ self.size_prop, 0, 0, set() ],    # min, max, unique
+                "color":  [ self.color_prop,  0, 0, set() ] # min, max, unique
+                }
             
+            for node in tree.traverse():
+                if self.size_prop:
+                    update_vals("size", node)
 
-        # if self.color_prop:
-        #     unique = vals["color"][3]
-        #     if len(unique):
-        #         colors = self.colors or random_color(num=len(unique))
-        #         if type(colors) == dict:
-        #             self.colors = colors.copy()
-        #         else:
-        #             colors = list(colors)
-        #             self.colors = {}
-        #             for idx, value in enumerate(unique):
-        #                 self.colors[value] = colors[idx % len(colors)]
-        #         if self.legend:
-        #             tree_style.add_legend(title=self.name,
-        #                     variable="discrete",
-        #                     colormap=self.colors)
-        #     else:
-        #         self.color_range = vals["color"][1:3]
-        #         if self.legend:
-        #             tree_style.add_legend(title=self.name, 
-        #                     variable="continuous",
-        #                     value_range=self.color_range,
-        #                     color_range=self.color_gradient)
+                if self.color_prop:
+                    update_vals("color", node)
+                    
+            if self.size_prop:
+                self.size_range = vals["size"][1:3]
+            
+            # if self.color_prop:
+            #     unique = vals["color"][3]
+            #     if len(unique):
+            #         colors = self.colors or random_color(num=len(unique))
+            #         if type(colors) == dict:
+            #             self.colors = colors.copy()
+            #         else:
+            #             colors = list(colors)
+            #             self.colors = {}
+            #             for idx, value in enumerate(unique):
+            #                 self.colors[value] = colors[idx % len(colors)]
+            #         if self.legend:
+            #             tree_style.add_legend(title=self.name,
+            #                     variable="discrete",
+            #                     colormap=self.colors)
+            #     else:
+            #         self.color_range = vals["color"][1:3]
+            #         if self.legend:
+            #             tree_style.add_legend(title=self.name, 
+            #                     variable="continuous",
+            #                     value_range=self.color_range,
+            #                     color_range=self.color_gradient)
 
     # def get_size(self, node, prop):
     #     if self.size_range != [0, 0]:
@@ -165,14 +167,14 @@ class LayoutBarplot(LayoutPlot):
             color_prop=None, position="aligned", column=0, 
             color_gradient=None, color=None, colors=None, 
             padding_x=10, padding_y=0, scale=True, legend=True, active=True, 
-            internal_rep='avg', scale_size=None, scale_range=None):
+            internal_rep='avg', scale_size=None, size_range=None, scale_range=None):
 
         name = name or f'Barplot_{size_prop}_{color_prop}'
         super().__init__(name=name, prop=prop, width=width, size_prop=size_prop,
                 color_prop=color_prop, position=position, column=column,
                 color_gradient=color_gradient, colors=colors, color=color,
-                padding_x=padding_x, padding_y=padding_y,scale=scale, legend=legend, 
-                active=active,
+                padding_x=padding_x, padding_y=padding_y, scale=scale, size_range=size_range, 
+                legend=legend, active=active,
                 internal_rep=internal_rep)
 
     def set_tree_style(self, tree, tree_style):

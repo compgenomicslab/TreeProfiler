@@ -51,7 +51,7 @@ def populate_annotate_args(parser):
     add('-d', '--metadata', nargs='+',
         help="<metadata.csv> .csv, .tsv. mandatory input")
     # add('--data-matrix', nargs='+',
-    #     help="<data_matrix.csv> .csv, .tsv. optional input")
+    #     help="<metadata.csv> .csv, .tsv. optional input")
     add('--data-matrix',  nargs='+',
         help="<datamatrix.csv> .csv, .tsv. matrix data metadata table as array to tree, please do not provide column headers in this file")
     add('-sep', '--metadata-sep', default='\t',
@@ -563,7 +563,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
             # For single-threaded execution, process nodes sequentially
             results = map(process_node, nodes_data)
 
-        # Integrate the results back into your tree?
+        # Integrate the results back into tree
         for node, result in zip(nodes, results):
             internal_props, consensus_seq = result
 
@@ -619,13 +619,27 @@ def run_tree_annotate(tree, input_annotated_tree=False,
     return annotated_tree, prop2type
 
 
-def run_array_annotate(tree, array_dict):
-    #print(array_dict)
+def run_array_annotate(tree, array_dict, num_stat='none'):
+    matrix_props = list(array_dict.keys())
+    # annotate to the leaves
     for node in tree.traverse():
         if node.is_leaf:
             for filename, array in array_dict.items():
                 if array.get(node.name):
                     node.add_prop(filename, array.get(node.name))
+
+
+    # merge annotations to internal nodes
+    for node in tree.traverse():
+        if not node.is_leaf:
+            for prop in matrix_props:
+                # get the array from the children leaf nodes
+                arrays = [child.get_prop(prop) for child in node.leaves() if child.get_prop(prop) is not None]
+                stats = compute_matrix_statistics(arrays, num_stat=num_stat)
+                if stats:
+                    for stat, value in stats.items():
+                        node.add_prop(add_suffix(prop, stat), value.tolist())
+                        #prop2type[add_suffix(prop, stat)] = float
     return tree
 
 
@@ -733,8 +747,9 @@ def run(args):
             threads=args.threads, outdir=args.outdir)
 
     if args.data_matrix:
-        annotated_tree = run_array_annotate(annotated_tree, array_dict)
+        annotated_tree = run_array_annotate(annotated_tree, array_dict, num_stat=args.num_stat)
 
+    
     if args.outdir:
         base=os.path.splitext(os.path.basename(args.tree))[0]
         out_newick = base + '_annotated.nw'
@@ -919,6 +934,7 @@ def parse_tsv_to_array(input_files, delimiter='\t', no_headers=True):
     :param filename: Path to the TSV file to be parsed.
     :return: A dictionary with keys as the first item of each row and values as lists of the remaining items.
     """
+    is_float = True
     matrix2array = {}
     leaf2array = {}
     for input_file in input_files:
@@ -929,8 +945,14 @@ def parse_tsv_to_array(input_files, delimiter='\t', no_headers=True):
                 row = line.strip().split(delimiter)
                 node = row[0]  
                 value = row[1:]  # The rest of the items as value
-                np_array = np.array(value).astype(np.float64)
-                leaf2array[node] = np_array.tolist()
+                try:
+                    np_array = np.array(value).astype(np.float64)
+                    leaf2array[node] = np_array.tolist()
+                except ValueError:
+                    # Handle the case where conversion fails
+                    print(f"Warning: Non-numeric data found in {prefix} for node {node}. Skipping.")
+                    leaf2array[node] = None
+                    is_float = False
 
         matrix2array[prefix] = leaf2array        
     return matrix2array
@@ -1235,7 +1257,6 @@ def merge_num_annotations(nodes, target_props, column2method):
                     elif num_stat == 'avg':
                         internal_props[add_suffix(target_prop, 'avg')] = sm
                     elif num_stat == 'sum':
-                        #print(target_prop)
                         internal_props[add_suffix(target_prop, 'sum')] = np.sum(prop_array)
                     elif num_stat == 'max':
                         internal_props[add_suffix(target_prop, 'max')] = smax
@@ -1256,6 +1277,48 @@ def merge_num_annotations(nodes, target_props, column2method):
         return internal_props
     else:
         return None
+
+def compute_matrix_statistics(matrix, num_stat=None):
+    """
+    Computes specified statistics for the given matrix based on the num_stat parameter.
+    
+    :param matrix: A list of lists representing the matrix.
+    :param num_stat: Specifies which statistics to compute. Can be "avg", "max", "min", "sum", "std", "all", or None.
+    :return: A dictionary with the requested statistics or an empty dict/message.
+    """
+    
+    stats = {}
+
+    if num_stat == 'none':
+        return stats  # Return an empty dictionary if no statistics are requested
+    
+    # Replace None with np.nan or another appropriate value before creating the array
+    if matrix is not None:
+        cleaned_matrix = [[0 if x is None else x for x in row] for row in matrix]
+        np_matrix = np.array(cleaned_matrix, dtype=np.float64)
+    else:
+        return {}  # Return an empty dictionary if the matrix is empty
+
+    if np_matrix.size == 0:
+        return {}  # Return an empty dictionary if the matrix is empty
+
+ 
+    if np_matrix.ndim == 2 and np_matrix.shape[1] > 0:
+        available_stats = {
+            'avg': np_matrix.mean(axis=0),
+            'max': np_matrix.max(axis=0),
+            'min': np_matrix.min(axis=0),
+            'sum': np_matrix.sum(axis=0),
+            'std': np_matrix.std(axis=0)
+        }
+
+        if num_stat == "all":
+            return available_stats
+        elif num_stat in available_stats:
+            stats[num_stat] = available_stats[num_stat]
+        else:
+            raise ValueError(f"Unsupported stat '{num_stat}'. Supported stats are 'avg', 'max', 'min', 'sum', 'std', or 'all'.")
+    return stats
 
 def name_nodes(tree):
     for i, node in enumerate(tree.traverse("postorder")):
@@ -1297,6 +1360,22 @@ def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field
         except (IndexError, ValueError):
             return gtdb_accession_to_taxid(leaf.props.get(taxid_attr))
 
+    def merge_dictionaries(dict_ranks, dict_names):
+        """
+        Merges two dictionaries into one where the key is the rank from dict_ranks 
+        and the value is the corresponding name from dict_names.
+
+        :param dict_ranks: Dictionary where the key is a numeric id and the value is a rank.
+        :param dict_names: Dictionary where the key is the same numeric id and the value is a name.
+        :return: A new dictionary where the rank is the key and the name is the value.
+        """
+        merged_dict = {}
+        for key, rank in dict_ranks.items():
+            if key in dict_names:  # Ensure the key exists in both dictionaries
+                if rank not in merged_dict or rank == 'no rank':  # Handle 'no rank' by not overwriting existing entries unless it's the first encounter
+                    merged_dict[rank] = dict_names[key]
+        return merged_dict
+
     if db == "GTDB":
         gtdb = GTDBTaxa()
         tree.set_species_naming_function(return_spcode_gtdb)
@@ -1330,6 +1409,14 @@ def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field
         # extract sp codes from leaf names
         tree.set_species_naming_function(return_spcode_ncbi)
         ncbi.annotate_tree(tree, taxid_attr="species")
+        for n in tree.traverse():
+            if n.props.get('lineage'):
+                lca_dict = {}
+                #for taxa in n.props.get("lineage"):
+                lineage2rank = ncbi.get_rank(n.props.get("lineage"))
+                taxid2name = ncbi.get_taxid_translator(n.props.get("lineage"))
+                lca_dict = merge_dictionaries(lineage2rank, taxid2name)
+                n.add_prop("lca", lca_dict)
 
     # tree.annotate_gtdb_taxa(taxid_attr='name')
     # assign internal node as sci_name
@@ -1340,10 +1427,10 @@ def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field
         if n.props.get('rank') and n.props.get('rank') != 'Unknown':
             rank2values[n.props.get('rank')].append(n.props.get('sci_name',''))
 
-        if n.name:
-            pass
-        else:
-            n.name = n.props.get("sci_name", "")
+        # if n.name:
+        #     pass
+        # else:
+        #     n.name = n.props.get("sci_name", "")
         
     return tree, rank2values
 

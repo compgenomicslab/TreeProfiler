@@ -152,7 +152,7 @@ class TaxaRectangular(TreeLayout):
             level = get_level(node, level=self.column)
             tooltip = ""
             if node.name:
-                tooltip += f'<b>{node.name}</b><br>'
+                tooltip += f'<b>{node_sciname}</b><br>'
             if lca:
                 tooltip += f'rank: {node_rank}<br>'
                 tooltip += f'sci_name: {lca}<br>'
