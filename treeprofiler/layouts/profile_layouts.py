@@ -364,7 +364,7 @@ class LayoutPropsMatrixOld(TreeLayout):
         if array:
             profileFace = ProfileFace(array, self.value_color, gap_format=None, \
             seq_format=self.matrix_type, width=self.width, height=self.height, \
-            poswidth=poswidth, tooltip=False)
+            poswidth=poswidth, tooltip=True)
             node.add_face(profileFace, column=self.column, position='aligned', \
                 collapsed_only=(not node.is_leaf))
 
@@ -462,7 +462,7 @@ class LayoutPropsMatrixBinary(TreeLayout):
         if array:
             profileFace = ProfileFace(array, self.value_color, gap_format=None, \
             seq_format='numerical', width=self.width, height=self.height, \
-            poswidth=poswidth, tooltip=False)
+            poswidth=poswidth, tooltip=True)
             node.add_face(profileFace, column=self.column, position='aligned', \
                 collapsed_only=(not node.is_leaf))
 
@@ -817,7 +817,7 @@ class ProfileFace(Face):
             width=None, height=None, # max height
             gap_linewidth=0.2,
             max_fsize=12, ftype='sans-serif', poswidth=5,
-            padding_x=0, padding_y=0, tooltip=False):
+            padding_x=0, padding_y=0, tooltip=True):
 
         Face.__init__(self, padding_x=padding_x, padding_y=padding_y)
 
