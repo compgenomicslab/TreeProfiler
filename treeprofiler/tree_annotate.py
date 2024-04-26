@@ -1416,6 +1416,7 @@ def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field
                 lineage2rank = ncbi.get_rank(n.props.get("lineage"))
                 taxid2name = ncbi.get_taxid_translator(n.props.get("lineage"))
                 lca_dict = merge_dictionaries(lineage2rank, taxid2name)
+                n.add_prop("named_lineage", list(taxid2name.values()))
                 n.add_prop("lca", lca_dict)
 
     # tree.annotate_gtdb_taxa(taxid_attr='name')
