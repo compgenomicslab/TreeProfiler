@@ -101,6 +101,8 @@ def populate_annotate_args(parser):
         help="delimiter of taxa columns. [default: None]")
     add('--taxa-field', type=int, default=0,
         help="field of taxa name after delimiter. [default: 0]")
+    add('--ignore-unclassified', action='store_true',
+        help="Ignore unclassified taxa in taxonomic annotation")
     add('--emapper-annotations',
         help="attach eggNOG-mapper output out.emapper.annotations")
     add('--emapper-pfam',
@@ -215,7 +217,8 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         bool_prop=[], bool_prop_idx=[], prop2type_file=None, alignment=None, emapper_pfam=None,
         emapper_smart=None, counter_stat='raw', num_stat='all', column2method={},
         taxadb='GTDB', taxa_dump=None, taxon_column=None,
-        taxon_delimiter='', taxa_field=0, rank_limit=None, pruned_by=None, 
+        taxon_delimiter='', taxa_field=0, ignore_unclassified=False,
+        rank_limit=None, pruned_by=None, 
         acr_discrete_columns=None, prediction_method="MPPA", model="F81", 
         delta_stats=False, ent_type="SE", 
         iteration=100, lambda0=0.1, se=0.5, thin=10, burn=100, 
@@ -425,7 +428,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
     
     if not input_annotated_tree:
         if taxon_column: # to identify taxon column as taxa property from metadata
-            annotated_tree = load_metadata_to_tree(tree, metadata_dict, prop2type=prop2type, taxon_column=taxon_column, taxon_delimiter=taxon_delimiter, taxa_field=taxa_field)
+            annotated_tree = load_metadata_to_tree(tree, metadata_dict, prop2type=prop2type, taxon_column=taxon_column, taxon_delimiter=taxon_delimiter, taxa_field=taxa_field, ignore_unclassified=ignore_unclassified)
         else:
             annotated_tree = load_metadata_to_tree(tree, metadata_dict, prop2type=prop2type)
     else:
@@ -594,7 +597,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
                 NCBITaxa().update_taxonomy_database(taxa_dump)
                 
             annotated_tree, rank2values = annotate_taxa(annotated_tree, db=taxadb, \
-                taxid_attr=taxon_column, sp_delimiter=taxon_delimiter, sp_field=taxa_field)
+                taxid_attr=taxon_column, sp_delimiter=taxon_delimiter, sp_field=taxa_field, ignore_unclassified=ignore_unclassified)
                 
         # evolutionary events annotation
         annotated_tree = annotate_evol_events(annotated_tree, sp_delimiter=taxon_delimiter, sp_field=taxa_field)
@@ -634,7 +637,7 @@ def run_array_annotate(tree, array_dict, num_stat='none'):
         if not node.is_leaf:
             for prop in matrix_props:
                 # get the array from the children leaf nodes
-                arrays = [child.get_prop(prop) for child in node.leaves()]
+                arrays = [child.get_prop(prop) for child in node.leaves() if child.get_prop(prop) is not None]
                 stats = compute_matrix_statistics(arrays, num_stat=num_stat)
                 if stats:
                     for stat, value in stats.items():
@@ -736,7 +739,7 @@ def run(args):
             emapper_pfam=args.emapper_pfam, emapper_smart=args.emapper_smart, 
             counter_stat=args.counter_stat, num_stat=args.num_stat, column2method=column2method, 
             taxadb=args.taxadb, taxa_dump=args.taxa_dump, taxon_column=args.taxon_column,
-            taxon_delimiter=args.taxon_delimiter, taxa_field=args.taxa_field,
+            taxon_delimiter=args.taxon_delimiter, taxa_field=args.taxa_field, ignore_unclassified=args.ignore_unclassified,
             rank_limit=args.rank_limit, pruned_by=args.pruned_by, 
             acr_discrete_columns=args.acr_discrete_columns, 
             prediction_method=args.prediction_method, model=args.model, 
@@ -1065,7 +1068,7 @@ def infer_dtype(column):
                 return dtype
         return None
 
-def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, taxon_delimiter='', taxa_field=0):
+def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, taxon_delimiter='', taxa_field=0, ignore_unclassified=False):
     #name2leaf = {}
     multi_text_seperator = ','
 
@@ -1257,7 +1260,6 @@ def merge_num_annotations(nodes, target_props, column2method):
                     elif num_stat == 'avg':
                         internal_props[add_suffix(target_prop, 'avg')] = sm
                     elif num_stat == 'sum':
-                        #print(target_prop)
                         internal_props[add_suffix(target_prop, 'sum')] = np.sum(prop_array)
                     elif num_stat == 'max':
                         internal_props[add_suffix(target_prop, 'max')] = smax
@@ -1287,26 +1289,38 @@ def compute_matrix_statistics(matrix, num_stat=None):
     :param num_stat: Specifies which statistics to compute. Can be "avg", "max", "min", "sum", "std", "all", or None.
     :return: A dictionary with the requested statistics or an empty dict/message.
     """
-    np_matrix = np.array(matrix)
+    
     stats = {}
 
     if num_stat == 'none':
         return stats  # Return an empty dictionary if no statistics are requested
-
-    available_stats = {
-        'avg': np_matrix.mean(axis=0),
-        'max': np_matrix.max(axis=0),
-        'min': np_matrix.min(axis=0),
-        'sum': np_matrix.sum(axis=0),
-        'std': np_matrix.std(axis=0)
-    }
-
-    if num_stat == "all":
-        return available_stats
-    elif num_stat in available_stats:
-        stats[num_stat] = available_stats[num_stat]
+    
+    # Replace None with np.nan or another appropriate value before creating the array
+    if matrix is not None:
+        cleaned_matrix = [[0 if x is None else x for x in row] for row in matrix]
+        np_matrix = np.array(cleaned_matrix, dtype=np.float64)
     else:
-        raise ValueError(f"Unsupported stat '{num_stat}'. Supported stats are 'avg', 'max', 'min', 'sum', 'std', or 'all'.")
+        return {}  # Return an empty dictionary if the matrix is empty
+
+    if np_matrix.size == 0:
+        return {}  # Return an empty dictionary if the matrix is empty
+
+ 
+    if np_matrix.ndim == 2 and np_matrix.shape[1] > 0:
+        available_stats = {
+            'avg': np_matrix.mean(axis=0),
+            'max': np_matrix.max(axis=0),
+            'min': np_matrix.min(axis=0),
+            'sum': np_matrix.sum(axis=0),
+            'std': np_matrix.std(axis=0)
+        }
+
+        if num_stat == "all":
+            return available_stats
+        elif num_stat in available_stats:
+            stats[num_stat] = available_stats[num_stat]
+        else:
+            raise ValueError(f"Unsupported stat '{num_stat}'. Supported stats are 'avg', 'max', 'min', 'sum', 'std', or 'all'.")
     return stats
 
 def name_nodes(tree):
@@ -1329,7 +1343,7 @@ def gtdb_accession_to_taxid(accession):
         else:
             return accession
 
-def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field=0):
+def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field=0, ignore_unclassified=False):
     global rank2values
     logging.info(f"\n==============Annotating tree with {db} taxonomic database============")
     
@@ -1349,10 +1363,26 @@ def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field
         except (IndexError, ValueError):
             return gtdb_accession_to_taxid(leaf.props.get(taxid_attr))
 
+    def merge_dictionaries(dict_ranks, dict_names):
+        """
+        Merges two dictionaries into one where the key is the rank from dict_ranks 
+        and the value is the corresponding name from dict_names.
+
+        :param dict_ranks: Dictionary where the key is a numeric id and the value is a rank.
+        :param dict_names: Dictionary where the key is the same numeric id and the value is a name.
+        :return: A new dictionary where the rank is the key and the name is the value.
+        """
+        merged_dict = {}
+        for key, rank in dict_ranks.items():
+            if key in dict_names:  # Ensure the key exists in both dictionaries
+                if rank not in merged_dict or rank == 'no rank':  # Handle 'no rank' by not overwriting existing entries unless it's the first encounter
+                    merged_dict[rank] = dict_names[key]
+        return merged_dict
+
     if db == "GTDB":
         gtdb = GTDBTaxa()
         tree.set_species_naming_function(return_spcode_gtdb)
-        gtdb.annotate_tree(tree,  taxid_attr="species")
+        gtdb.annotate_tree(tree,  taxid_attr="species", ignore_unclassified=ignore_unclassified)
         suffix_to_rank_dict = {
             'd__': 'superkingdom',  # Domain or Superkingdom
             'p__': 'phylum',
@@ -1381,7 +1411,16 @@ def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field
         ncbi = NCBITaxa()
         # extract sp codes from leaf names
         tree.set_species_naming_function(return_spcode_ncbi)
-        ncbi.annotate_tree(tree, taxid_attr="species")
+        ncbi.annotate_tree(tree, taxid_attr="species", ignore_unclassified=ignore_unclassified)
+        for n in tree.traverse():
+            if n.props.get('lineage'):
+                lca_dict = {}
+                #for taxa in n.props.get("lineage"):
+                lineage2rank = ncbi.get_rank(n.props.get("lineage"))
+                taxid2name = ncbi.get_taxid_translator(n.props.get("lineage"))
+                lca_dict = merge_dictionaries(lineage2rank, taxid2name)
+                n.add_prop("named_lineage", list(taxid2name.values()))
+                n.add_prop("lca", lca_dict)
 
     # tree.annotate_gtdb_taxa(taxid_attr='name')
     # assign internal node as sci_name
@@ -1392,10 +1431,10 @@ def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field
         if n.props.get('rank') and n.props.get('rank') != 'Unknown':
             rank2values[n.props.get('rank')].append(n.props.get('sci_name',''))
 
-        if n.name:
-            pass
-        else:
-            n.name = n.props.get("sci_name", "")
+        # if n.name:
+        #     pass
+        # else:
+        #     n.name = n.props.get("sci_name", "")
         
     return tree, rank2values
 

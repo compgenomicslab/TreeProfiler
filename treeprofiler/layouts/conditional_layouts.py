@@ -156,42 +156,43 @@ class LayoutBinary(TreeLayout):
 
                 
     def set_node_style(self, node):
-        if node.is_leaf:
-            if node.props.get(self.bool_prop):
-                prop_bool = node.props.get(self.bool_prop)
-                
-                if not check_nan(prop_bool):
-                    str2bool = strtobool(prop_bool)
-                    tooltip = ""
-                    if node.name:
-                        tooltip += f'<b>{node.name}</b><br>'
-                    if self.bool_prop:
-                        tooltip += f'<br>{self.bool_prop}: {node.props.get(self.bool_prop)}<br>'
+        # need to correct
+        if node.is_leaf and node.props.get(self.bool_prop):
+            #if node.props.get(self.bool_prop):
+            prop_bool = node.props.get(self.bool_prop)
+            
+            if not check_nan(prop_bool):
+                str2bool = strtobool(prop_bool)
+                tooltip = ""
+                if node.name:
+                    tooltip += f'<b>{node.name}</b><br>'
+                if self.bool_prop:
+                    tooltip += f'<br>{self.bool_prop}: {node.props.get(self.bool_prop)}<br>'
 
-                    if self.reverse:
-                        if not bool(str2bool):
-                            #prop_face = CircleFace(radius=self.radius, color=self.color, padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
-                            prop_face = RectFace(width=self.width, height=self.height, color=self.color,  padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
-                            node.add_face(prop_face, column=self.column, position = "aligned")
-                        else:
-                            #prop_face = CircleFace(radius=self.radius, color=self.negative_color, padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
-                            prop_face = RectFace(width=self.width, height=self.height, color=self.negative_color,  padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
-                            node.add_face(prop_face, column=self.column, position = "aligned")
+                if self.reverse:
+                    if not bool(str2bool):
+                        #prop_face = CircleFace(radius=self.radius, color=self.color, padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
+                        prop_face = RectFace(width=self.width, height=self.height, color=self.color,  padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
+                        node.add_face(prop_face, column=self.column, position = "aligned")
                     else:
-                        if bool(str2bool):
-                            #prop_face = CircleFace(radius=self.radius, color=self.color, padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
-                            prop_face = RectFace(width=self.width, height=self.height, color=self.color,  padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
-                            node.add_face(prop_face, column=self.column, position = "aligned")
-                        else:
-                            #prop_face = CircleFace(radius=self.radius, color=self.negative_color, padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
-                            prop_face = RectFace(width=self.width, height=self.height, color=self.negative_color,  padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
-                            node.add_face(prop_face, column=self.column, position = "aligned")
-                else: #mising
-                    prop_face = RectFace(width=self.width, height=self.height, text="NA", color=self.negative_color,  padding_x=self.padding_x, padding_y=self.padding_y, stroke_color=self.negative_color, tooltip=None)
-                    node.add_face(prop_face, column=self.column, position = "aligned")
-            else:
+                        #prop_face = CircleFace(radius=self.radius, color=self.negative_color, padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
+                        prop_face = RectFace(width=self.width, height=self.height, color=self.negative_color,  padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
+                        node.add_face(prop_face, column=self.column, position = "aligned")
+                else:
+                    if bool(str2bool):
+                        #prop_face = CircleFace(radius=self.radius, color=self.color, padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
+                        prop_face = RectFace(width=self.width, height=self.height, color=self.color,  padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
+                        node.add_face(prop_face, column=self.column, position = "aligned")
+                    else:
+                        #prop_face = CircleFace(radius=self.radius, color=self.negative_color, padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
+                        prop_face = RectFace(width=self.width, height=self.height, color=self.negative_color,  padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
+                        node.add_face(prop_face, column=self.column, position = "aligned")
+            else: #mising
                 prop_face = RectFace(width=self.width, height=self.height, text="NA", color=self.negative_color,  padding_x=self.padding_x, padding_y=self.padding_y, stroke_color=self.negative_color, tooltip=None)
                 node.add_face(prop_face, column=self.column, position = "aligned")
+            # else:
+            #     prop_face = RectFace(width=self.width, height=self.height, text="NA", color=self.negative_color,  padding_x=self.padding_x, padding_y=self.padding_y, stroke_color=self.negative_color, tooltip=None)
+            #     node.add_face(prop_face, column=self.column, position = "aligned")
         
         elif node.is_leaf and node.props.get(self.internal_prop):
             if self.aggregate:
