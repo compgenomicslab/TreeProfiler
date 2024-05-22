@@ -11,6 +11,7 @@ import tarfile
 from collections import defaultdict, Counter
 import numpy as np
 from scipy import stats
+import requests
 
 from ete4.parser.newick import NewickError
 from ete4 import SeqGroup
@@ -90,10 +91,13 @@ def populate_annotate_args(parser):
     #     help=("<kingdom|phylum|class|order|family|genus|species|subspecies> "
     #           "reference tree from taxonomic database"))
     add('--taxadb', type=str.upper,
-        choices=['NCBI', 'GTDB'],
+        choices=['NCBI', 'GTDB', 'customdb'],
         help="<NCBI|GTDB> for taxonomic annotation or fetch taxatree")
+    add('--gtdb-version', type=int,
+        choices=[95, 202, 207, 214, 220],
+        help='GTDB version for taxonomic annotation, such as 220. If it is not provided, the latest version will be used.')
     add('--taxa-dump', type=str,
-        help='Path to taxonomic database dump file for specific version, such as https://github.com/etetoolkit/ete-data/raw/main/gtdb_taxonomy/gtdblatest/gtdb_latest_dump.tar.gz')
+        help='Path to taxonomic database dump file for specific version, such as gtdb taxadump https://github.com/etetoolkit/ete-data/raw/main/gtdb_taxonomy/gtdblatest/gtdb_latest_dump.tar.gz or NCBI taxadump https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz')
     add('--taxon-column',
         help="Activate taxonomic annotation using <col1> name of columns which need to be read as taxon data. \
             Unless taxon data in leaf name, please use 'name' as input such as --taxon-column name")
@@ -216,7 +220,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         text_prop=[], text_prop_idx=[], multiple_text_prop=[], num_prop=[], num_prop_idx=[],
         bool_prop=[], bool_prop_idx=[], prop2type_file=None, alignment=None, emapper_pfam=None,
         emapper_smart=None, counter_stat='raw', num_stat='all', column2method={},
-        taxadb='GTDB', taxa_dump=None, taxon_column=None,
+        taxadb='GTDB', gtdb_version = None, taxa_dump=None, taxon_column=None,
         taxon_delimiter='', taxa_field=0, ignore_unclassified=False,
         rank_limit=None, pruned_by=None, 
         acr_discrete_columns=None, prediction_method="MPPA", model="F81", 
@@ -581,23 +585,36 @@ def run_tree_annotate(tree, input_annotated_tree=False,
     end = time.time()
     print('Time for merge annotations to run: ', end - start)
 
-
     # taxa annotations
     start = time.time()
     if taxon_column:
         if not taxadb:
             raise Exception('Please specify which taxa db using --taxadb <GTDB|NCBI>')
         else:
-            
-            if taxa_dump and taxadb == 'GTDB':
-                logging.info(f"Loading GTDB database dump file {taxa_dump}...")
-                GTDBTaxa().update_taxonomy_database(taxa_dump)
-            elif taxa_dump and taxadb == 'NCBI':
-                logging.info(f"Loading NCBI database dump file {taxa_dump}...")
-                NCBITaxa().update_taxonomy_database(taxa_dump)
+            if taxadb == 'GTDB':
+                if gtdb_version and taxa_dump:
+                    raise Exception('Please specify either GTDB version or taxa dump file, not both.')
+                if gtdb_version:
+                    # get taxadump from ete-data
+                    gtdbtaxadump = get_gtdbtaxadump(gtdb_version)
+                    logging.info(f"Loading GTDB database dump file {gtdbtaxadump}...")
+                    GTDBTaxa().update_taxonomy_database(gtdbtaxadump)
+                elif taxa_dump:
+                    logging.info(f"Loading GTDB database dump file {taxa_dump}...")
+                    GTDBTaxa().update_taxonomy_database(taxa_dump)
+                else:
+                    logging.info("No specific version or dump file provided; using latest GTDB data...")
+                    GTDBTaxa().update_taxonomy_database()
+            elif taxadb == 'NCBI':
+                if taxa_dump:
+                    logging.info(f"Loading NCBI database dump file {taxa_dump}...")
+                    NCBITaxa().update_taxonomy_database(taxa_dump)
+                # else:
+                #     NCBITaxa().update_taxonomy_database()
                 
             annotated_tree, rank2values = annotate_taxa(annotated_tree, db=taxadb, \
-                taxid_attr=taxon_column, sp_delimiter=taxon_delimiter, sp_field=taxa_field, ignore_unclassified=ignore_unclassified)
+                    taxid_attr=taxon_column, sp_delimiter=taxon_delimiter, sp_field=taxa_field, \
+                    ignore_unclassified=ignore_unclassified)
                 
         # evolutionary events annotation
         annotated_tree = annotate_evol_events(annotated_tree, sp_delimiter=taxon_delimiter, sp_field=taxa_field)
@@ -738,7 +755,8 @@ def run(args):
             prop2type_file=args.prop2type, alignment=args.alignment,
             emapper_pfam=args.emapper_pfam, emapper_smart=args.emapper_smart, 
             counter_stat=args.counter_stat, num_stat=args.num_stat, column2method=column2method, 
-            taxadb=args.taxadb, taxa_dump=args.taxa_dump, taxon_column=args.taxon_column,
+            taxadb=args.taxadb, gtdb_version=args.gtdb_version, 
+            taxa_dump=args.taxa_dump, taxon_column=args.taxon_column,
             taxon_delimiter=args.taxon_delimiter, taxa_field=args.taxa_field, ignore_unclassified=args.ignore_unclassified,
             rank_limit=args.rank_limit, pruned_by=args.pruned_by, 
             acr_discrete_columns=args.acr_discrete_columns, 
@@ -1342,6 +1360,17 @@ def gtdb_accession_to_taxid(accession):
             return prefix+accession
         else:
             return accession
+
+def get_gtdbtaxadump(version):
+    """
+    Download GTDB taxonomy dump
+    """
+    url = f"https://github.com/etetoolkit/ete-data/raw/main/gtdb_taxonomy/gtdb{version}/gtdb{version}dump.tar.gz"
+    fname = f"gtdb{version}dump.tar.gz"
+    logging.info(f'Downloading GTDB taxa dump fname from {url} ...')
+    with open(fname, 'wb') as f:
+        f.write(requests.get(url).content)
+    return fname
 
 def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field=0, ignore_unclassified=False):
     global rank2values
