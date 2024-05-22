@@ -101,6 +101,8 @@ def populate_annotate_args(parser):
         help="delimiter of taxa columns. [default: None]")
     add('--taxa-field', type=int, default=0,
         help="field of taxa name after delimiter. [default: 0]")
+    add('--ignore-unclassified', action='store_true',
+        help="Ignore unclassified taxa in taxonomic annotation")
     add('--emapper-annotations',
         help="attach eggNOG-mapper output out.emapper.annotations")
     add('--emapper-pfam',
@@ -215,7 +217,8 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         bool_prop=[], bool_prop_idx=[], prop2type_file=None, alignment=None, emapper_pfam=None,
         emapper_smart=None, counter_stat='raw', num_stat='all', column2method={},
         taxadb='GTDB', taxa_dump=None, taxon_column=None,
-        taxon_delimiter='', taxa_field=0, rank_limit=None, pruned_by=None, 
+        taxon_delimiter='', taxa_field=0, ignore_unclassified=False,
+        rank_limit=None, pruned_by=None, 
         acr_discrete_columns=None, prediction_method="MPPA", model="F81", 
         delta_stats=False, ent_type="SE", 
         iteration=100, lambda0=0.1, se=0.5, thin=10, burn=100, 
@@ -425,7 +428,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
     
     if not input_annotated_tree:
         if taxon_column: # to identify taxon column as taxa property from metadata
-            annotated_tree = load_metadata_to_tree(tree, metadata_dict, prop2type=prop2type, taxon_column=taxon_column, taxon_delimiter=taxon_delimiter, taxa_field=taxa_field)
+            annotated_tree = load_metadata_to_tree(tree, metadata_dict, prop2type=prop2type, taxon_column=taxon_column, taxon_delimiter=taxon_delimiter, taxa_field=taxa_field, ignore_unclassified=ignore_unclassified)
         else:
             annotated_tree = load_metadata_to_tree(tree, metadata_dict, prop2type=prop2type)
     else:
@@ -594,7 +597,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
                 NCBITaxa().update_taxonomy_database(taxa_dump)
                 
             annotated_tree, rank2values = annotate_taxa(annotated_tree, db=taxadb, \
-                taxid_attr=taxon_column, sp_delimiter=taxon_delimiter, sp_field=taxa_field)
+                taxid_attr=taxon_column, sp_delimiter=taxon_delimiter, sp_field=taxa_field, ignore_unclassified=ignore_unclassified)
                 
         # evolutionary events annotation
         annotated_tree = annotate_evol_events(annotated_tree, sp_delimiter=taxon_delimiter, sp_field=taxa_field)
@@ -736,7 +739,7 @@ def run(args):
             emapper_pfam=args.emapper_pfam, emapper_smart=args.emapper_smart, 
             counter_stat=args.counter_stat, num_stat=args.num_stat, column2method=column2method, 
             taxadb=args.taxadb, taxa_dump=args.taxa_dump, taxon_column=args.taxon_column,
-            taxon_delimiter=args.taxon_delimiter, taxa_field=args.taxa_field,
+            taxon_delimiter=args.taxon_delimiter, taxa_field=args.taxa_field, ignore_unclassified=args.ignore_unclassified,
             rank_limit=args.rank_limit, pruned_by=args.pruned_by, 
             acr_discrete_columns=args.acr_discrete_columns, 
             prediction_method=args.prediction_method, model=args.model, 
@@ -1065,7 +1068,7 @@ def infer_dtype(column):
                 return dtype
         return None
 
-def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, taxon_delimiter='', taxa_field=0):
+def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, taxon_delimiter='', taxa_field=0, ignore_unclassified=False):
     #name2leaf = {}
     multi_text_seperator = ','
 
@@ -1340,7 +1343,7 @@ def gtdb_accession_to_taxid(accession):
         else:
             return accession
 
-def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field=0):
+def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field=0, ignore_unclassified=False):
     global rank2values
     logging.info(f"\n==============Annotating tree with {db} taxonomic database============")
     
@@ -1379,7 +1382,7 @@ def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field
     if db == "GTDB":
         gtdb = GTDBTaxa()
         tree.set_species_naming_function(return_spcode_gtdb)
-        gtdb.annotate_tree(tree,  taxid_attr="species")
+        gtdb.annotate_tree(tree,  taxid_attr="species", ignore_unclassified=ignore_unclassified)
         suffix_to_rank_dict = {
             'd__': 'superkingdom',  # Domain or Superkingdom
             'p__': 'phylum',
@@ -1408,7 +1411,7 @@ def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field
         ncbi = NCBITaxa()
         # extract sp codes from leaf names
         tree.set_species_naming_function(return_spcode_ncbi)
-        ncbi.annotate_tree(tree, taxid_attr="species")
+        ncbi.annotate_tree(tree, taxid_attr="species", ignore_unclassified=ignore_unclassified)
         for n in tree.traverse():
             if n.props.get('lineage'):
                 lca_dict = {}
