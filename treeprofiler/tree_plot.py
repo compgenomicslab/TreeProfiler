@@ -63,10 +63,8 @@ def poplulate_plot_args(plot_args_p):
     """
     group = plot_args_p.add_argument_group(title='Conditional display arguments',
         description="Conditional display  parameters")
-    
     group.add_argument('--internal-plot-measure',
         default='avg',
-        choices=['sum', 'avg', 'max', 'min', 'std', 'none'],
         choices=['sum', 'avg', 'max', 'min', 'std', 'none'],
         type=str,
         required=False,
