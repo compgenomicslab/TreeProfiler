@@ -48,7 +48,7 @@ def swap_pos(pos, angle):
 class LayoutPlot(TreeLayout):
     def __init__(self, name=None, prop=None, width=200, size_prop=None, 
             color_prop=None, color_gradient=None, color="red", colors=None,
-            position="aligned", column=0, padding_x=10, padding_y=0, size_range=[],
+            position="aligned", column=0, padding_x=10, padding_y=0, size_range=[], 
             internal_rep='avg', scale=True, legend=True, active=True):
         super().__init__(name, 
                 aligned_faces=True if position == "aligned" else False,
@@ -69,6 +69,7 @@ class LayoutPlot(TreeLayout):
 
         self.size_prop = size_prop
         self.color_prop = color_prop
+        self.size_range = size_range
         self.size_range = size_range
 
         self.color = color
@@ -93,25 +94,24 @@ class LayoutPlot(TreeLayout):
                     uniqvals.add(prop)
             except:
                 pass
-
+        
         # only when size_range is not provided, calculate min and max values
         if self.size_range == []:
             vals = { 
-                "size": [ self.size_prop, 0, 0, set() ],    # min, max, unique
-                "color":  [ self.color_prop,  0, 0, set() ] # min, max, unique
-                }
-            
+                    "size": [ self.size_prop, 0, 0, set() ],    # min, max, unique
+                    "color":  [ self.color_prop,  0, 0, set() ] # min, max, unique
+                    }
+                
             for node in tree.traverse():
                 if self.size_prop:
                     update_vals("size", node)
 
                 if self.color_prop:
                     update_vals("color", node)
-                    
+            
             if self.size_prop:
                 self.size_range = vals["size"][1:3]
-            
-            # if self.color_prop:
+                            # if self.color_prop:
             #     unique = vals["color"][3]
             #     if len(unique):
             #         colors = self.colors or random_color(num=len(unique))
@@ -173,13 +173,12 @@ class LayoutBarplot(LayoutPlot):
         super().__init__(name=name, prop=prop, width=width, size_prop=size_prop,
                 color_prop=color_prop, position=position, column=column,
                 color_gradient=color_gradient, colors=colors, color=color,
-                padding_x=padding_x, padding_y=padding_y, scale=scale, size_range=size_range, 
+                padding_x=padding_x, padding_y=padding_y,  scale=scale, size_range=size_range, 
                 legend=legend, active=active,
                 internal_rep=internal_rep)
 
     def set_tree_style(self, tree, tree_style):
         super().set_tree_style(tree, tree_style)
-        
         if self.scale and self.size_range:
             self.scale_width = self.width
             self.scale_range = self.size_range

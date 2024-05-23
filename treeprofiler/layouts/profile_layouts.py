@@ -300,7 +300,7 @@ class LayoutPropsMatrixOld(TreeLayout):
                 # first not None list to set the column
                 ncols = len(next((value for value in self.matrix.values() if value != [None]), None)) if any(value != [None] for value in self.matrix.values()) else 0
                 face = MatrixScaleFace(width=self.width, scale_range=(0, ncols), padding_y=0)
-                header = self.matrix_props[0]
+                header = self.matrix_props
                 title = TextFace(header, min_fsize=5, max_fsize=12, 
                     padding_x=0, padding_y=2, width=self.width)
                 tree_style.aligned_panel_header.add_face(face, column=self.column)

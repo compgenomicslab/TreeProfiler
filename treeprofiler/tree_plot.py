@@ -63,7 +63,6 @@ def poplulate_plot_args(plot_args_p):
     """
     group = plot_args_p.add_argument_group(title='Conditional display arguments',
         description="Conditional display  parameters")
-    
     group.add_argument('--internal-plot-measure',
         default='avg',
         choices=['sum', 'avg', 'max', 'min', 'std', 'none'],
@@ -600,18 +599,31 @@ def run(args):
             #     profiles=all_values, column=level, summarize_inner_nodes=False, 
             #     value_range = [min_val, max_val], value_color=value2color,
             #     poswidth=args.column_width)
-
-            matrix, minval, maxval, value2color, is_list = numerical2matrix(tree, 
+            
+            # if is list, it should provide more than one matrix
+            matrix, minval, maxval, value2color, results_list, list_props = numerical2matrix(tree, 
                 numerical_props, count_negative=True, internal_num_rep=internal_num_rep, 
                 color_config=color_config)
+            
+            if not list_props:
+                matrix_layout = profile_layouts.LayoutPropsMatrixOld(name=f"Numerical_matrix_{numerical_props}", 
+                    matrix=matrix, matrix_type='numerical', matrix_props=numerical_props, is_list=False, 
+                    value_color=value2color, value_range=[minval, maxval], column=level,
+                    poswidth=args.column_width)
 
-            matrix_layout = profile_layouts.LayoutPropsMatrixOld(name=f"Numerical_matrix_{numerical_props}", 
-                matrix=matrix, matrix_type='numerical', matrix_props=numerical_props, is_list=is_list, 
-                value_color=value2color, value_range=[minval, maxval], column=level,
-                poswidth=args.column_width)
+                level += 1
+                layouts.append(matrix_layout)
+            else:
+                list_props = list(list_props)
+                for list_prop in list_props:
+                    matrix, minval, maxval, value2color = results_list[list_prop]
+                    matrix_layout = profile_layouts.LayoutPropsMatrixOld(name=f"Numerical_matrix_{list_prop}", 
+                        matrix=matrix, matrix_type='numerical', matrix_props=list_prop, is_list=True, 
+                        value_color=value2color, value_range=[minval, maxval], column=level,
+                        poswidth=args.column_width)
 
-            level += 1
-            layouts.append(matrix_layout)
+                    level += 1
+                    layouts.append(matrix_layout)
 
         if layout == 'numerical-matrix2-layout':
             numerical_props = args.numerical_matrix2_layout
@@ -625,14 +637,28 @@ def run(args):
             #     value_range = [min_val, max_val], value_color=value2color,
             #     poswidth=args.column_width)
 
-            matrix, minval, maxval, value2color, is_list = numerical2matrix(tree, numerical_props, count_negative=False, internal_num_rep=internal_num_rep)
-            matrix_layout = profile_layouts.LayoutPropsMatrixOld(name=f"Numerical_matrix_{numerical_props}", 
-                matrix=matrix, matrix_type='numerical', matrix_props=numerical_props, is_list=is_list, 
-                value_color=value2color, value_range=[minval, maxval], column=level,
-                poswidth=args.column_width)
-
-            level += 1
-            layouts.append(matrix_layout)
+            # if is list, it should provide more than one matrix
+            matrix, minval, maxval, value2color, results_list, list_props = numerical2matrix(tree, 
+                numerical_props, count_negative=False, internal_num_rep=internal_num_rep, 
+                color_config=color_config)
+            
+            if not list_props:
+                matrix_layout = profile_layouts.LayoutPropsMatrixOld(name=f"Numerical_matrix_{numerical_props}", 
+                    matrix=matrix, matrix_type='numerical', matrix_props=numerical_props, is_list=False, 
+                    value_color=value2color, value_range=[minval, maxval], column=level,
+                    poswidth=args.column_width)
+                level += 1
+                layouts.append(matrix_layout)
+            else:
+                list_props = list(list_props)
+                for list_prop in list_props:
+                    matrix, minval, maxval, value2color = results_list[list_prop]
+                    matrix_layout = profile_layouts.LayoutPropsMatrixOld(name=f"Numerical_matrix_{list_prop}", 
+                        matrix=matrix, matrix_type='numerical', matrix_props=list_prop, is_list=True, 
+                        value_color=value2color, value_range=[minval, maxval], column=level,
+                        poswidth=args.column_width)
+                    level += 1
+                    layouts.append(matrix_layout)
 
         if layout == 'binary-matrix-layout':
             binary_props = args.binary_matrix_layout
@@ -794,6 +820,8 @@ def run(args):
 
     #### Output #####
     popup_prop_keys.extend(list(set(visualized_props)))
+    popup_prop_keys = tuple(popup_prop_keys)
+    
     if args.out_colordict:
         wrtie_color(total_color_dict)
     if args.plot:
@@ -1318,7 +1346,7 @@ def categorical2matrix(tree, profiling_props, dtype=str, color_config=None):
 
     # get color
     value2color = {} # key = value, value = color id
-    matrix_prop = '-' # special case for matrix
+    matrix_prop = '*' # special case for matrix
     
     if color_config and color_config.get(matrix_prop):
         if color_config.get(matrix_prop).get('value2color'):
@@ -1332,7 +1360,8 @@ def categorical2matrix(tree, profiling_props, dtype=str, color_config=None):
     
     return leaf2matrix, value2color
 
-def numerical2matrix(tree, profiling_props, dtype=float, count_negative=True, internal_num_rep=None, color_config=None):
+
+def numerical2matrix(tree, profiling_props, count_negative=True, internal_num_rep=None, color_config=None):
     """
     Input:
     tree: A tree structure with nodes, each having properties.
@@ -1342,94 +1371,211 @@ def numerical2matrix(tree, profiling_props, dtype=float, count_negative=True, in
     A dictionary of matrix representation of the tree leaves and their properties.
     A sorted dictionary mapping property values to their corresponding colors.
     """
-    is_list = False
-    node2matrix = {}
+    node2matrix_single = {}
+    node2matrix_list = {prop: {} for prop in profiling_props}
+
+    single_props = set()
+    list_props = set()
+    
     for node in tree.traverse():
-        node2matrix[node.name] = []
+        node2matrix_single[node.name] = []
         for profiling_prop in profiling_props:
             if node.is_leaf:
-                prop_value = node.props.get(profiling_prop)  
-                if prop_value is not None:  
-                    if isinstance(prop_value, list):  # Check if the property value is a list
-                        is_list = True  # Set is_array to True upon finding the first list
-                        for array_element in prop_value:
-                            if dtype == float:  
-                                node2matrix[node.name].append(float(array_element))
-                            else:  
-                                node2matrix[node.name].append(array_element)
-                    else:  # If not a list, directly handle the single value case
-                        if dtype == float:  
-                            node2matrix[node.name].append(float(prop_value))
-                        else:  
-                            node2matrix[node.name].append(prop_value)
-                else:  # If prop_value is None, append None
-                    node2matrix[node.name].append(None)
+                prop_value = node.props.get(profiling_prop)
+                if prop_value is not None:
+                    if isinstance(prop_value, list):
+                        list_props.add(profiling_prop)
+                        prop_value = list(map(float, prop_value))
+                        if node.name not in node2matrix_list[profiling_prop]:
+                            node2matrix_list[profiling_prop][node.name] = []
+                        node2matrix_list[profiling_prop][node.name] = prop_value
+                    else:
+                        single_props.add(profiling_prop)
+                        node2matrix_single[node.name].append(float(prop_value))
+                else:
+                    node2matrix_single[node.name].append(None)
+                    if node.name not in node2matrix_list[profiling_prop]:
+                        node2matrix_list[profiling_prop][node.name] = []
+                    node2matrix_list[profiling_prop][node.name].append(None)
             else:
                 if internal_num_rep != 'none':
                     representative_prop = add_suffix(profiling_prop, internal_num_rep)
                     prop_value = node.props.get(representative_prop)
-                    if prop_value is not None:  
-                        if isinstance(prop_value, list):  # Check if the property value is a list
-                            is_list = True  # Set is_array to True upon finding the first list
-                            for array_element in prop_value:
-                                if dtype == float:  
-                                    node2matrix[node.name].append(float(array_element))
-                                else:  
-                                    node2matrix[node.name].append(array_element)
-                        else:  # If not a list, directly handle the single value case
-                            if dtype == float:  
-                                node2matrix[node.name].append(float(prop_value))
-                            else:  
-                                node2matrix[node.name].append(prop_value)
-                    else:  # If prop_value is None, append None
-                        node2matrix[node.name].append(None)
-    #get color
-    negative_color = 'black'
-    value2color = {}
-    matrix_prop = '-' # special case for matrix
-    if color_config and color_config.get(matrix_prop) is not None:
-        prop_config = color_config[matrix_prop]
-        
-        # First, try to use value2color mappings if they exist and are applicable
-        if 'value2color' in prop_config and prop_config['value2color']:
-            value2color = prop_config['value2color']
-            value2color = {float(key): value for key, value in value2color.items()}
-            #gradientscolor = list(sorted_value2color.values())
-        
-        if 'detail2color' in prop_config and prop_config['detail2color']:
-            min_color = prop_config['detail2color'].get('color_min', 'white')
-            max_color = prop_config['detail2color'].get('color_max', 'red')
-            mid_color = prop_config['detail2color'].get('color_mid', None)
-            gradientscolor = build_custom_gradient(20, min_color, max_color, mid_color)
-
-    else:
-        gradientscolor = build_color_gradient(20, colormap_name='Reds')
+                    if prop_value is not None:
+                        if isinstance(prop_value, list):
+                            list_props.add(profiling_prop)
+                            prop_value = list(map(float, prop_value))
+                            if node.name not in node2matrix_list[profiling_prop]:
+                                node2matrix_list[profiling_prop][node.name] = []
+                            node2matrix_list[profiling_prop][node.name] = prop_value
+                        else:
+                            node2matrix_single[node.name].append(float(prop_value))
+                    else:
+                        node2matrix_single[node.name].append(None)
+                        if node.name not in node2matrix_list[profiling_prop]:
+                            node2matrix_list[profiling_prop][node.name] = []
+                        node2matrix_list[profiling_prop][node.name].append(None)
     
-    # everything
-    all_values_raw = list(set(flatten([sublist for sublist in node2matrix.values()])))
-    all_values = sorted(list(filter(lambda x: x is not None and not math.isnan(x), all_values_raw)))
-    
-    if not count_negative:
-        # remove negative values
-        positive_values = sorted(list(filter(lambda x: x is not None and not math.isnan(x) and x >= 0, all_values)))
-        minval, maxval = min(positive_values), max(positive_values)
-    else:
-        minval, maxval = min(all_values), max(all_values)
-        
-    num = len(gradientscolor)
-    index_values = np.linspace(minval, maxval, num)
+    def flatten(l):
+        return [item for sublist in l for item in sublist]
 
-    for search_value in all_values:
-        if search_value not in value2color:
-            if not count_negative and search_value < 0:
-                value2color[search_value] = negative_color
-            # elif search_value == 0:
-            #     value2color[search_value] = color_0
+    def process_color_configuration(node2matrix):
+        # Get color configuration
+        negative_color = 'black'
+        value2color = {}
+        all_props_wildcard = '*'
+        if color_config and color_config.get(all_props_wildcard) is not None:
+            prop_config = color_config[all_props_wildcard]
+
+            if 'value2color' in prop_config and prop_config['value2color']:
+                value2color = prop_config['value2color']
+                value2color = {float(key): value for key, value in value2color.items()}
+            if 'detail2color' in prop_config and prop_config['detail2color']:
+                min_color = prop_config['detail2color'].get('color_min', 'white')
+                max_color = prop_config['detail2color'].get('color_max', 'red')
+                mid_color = prop_config['detail2color'].get('color_mid', None)
+                gradientscolor = build_custom_gradient(20, min_color, max_color, mid_color)
+        else:
+            gradientscolor = build_color_gradient(20, colormap_name='Reds')
+
+        
+        all_values_raw = list(set(flatten([sublist for sublist in node2matrix.values()])))
+        all_values = sorted(list(filter(lambda x: x is not None and not math.isnan(x), all_values_raw)))
+
+        if not count_negative:
+            positive_values = sorted(list(filter(lambda x: x is not None and not math.isnan(x) and x >= 0, all_values)))
+            minval, maxval = min(positive_values), max(positive_values)
+        else:
+            minval, maxval = min(all_values), max(all_values)
+
+        num = len(gradientscolor)
+        index_values = np.linspace(minval, maxval, num)
+        for search_value in all_values:
+            if search_value not in value2color:
+                if not count_negative and search_value < 0:
+                    value2color[search_value] = negative_color
+                else:
+                    index = np.abs(index_values - search_value).argmin() + 1 
+                    value2color[search_value] = gradientscolor[index]
+        
+        return minval, maxval, value2color
+
+    # Process single values
+    if single_props:
+        minval_single, maxval_single, value2color_single = process_color_configuration(node2matrix_single)
+    else:
+        minval_single, maxval_single, value2color_single = None, None, None
+    
+    if list_props:
+        # Process list values for each profiling_prop
+        results_list = {}
+        for prop in profiling_props:
+            if prop in list_props:
+                minval_list, maxval_list, value2color_list = process_color_configuration(node2matrix_list[prop])
+                results_list[prop] = (node2matrix_list[prop], minval_list, maxval_list, value2color_list)
             else:
-                index = np.abs(index_values - search_value).argmin()+1
-                value2color[search_value] = gradientscolor[index]
+                results_list[prop] = (None, None, None, None)
+    else:
+        results_list = None
+
+    return node2matrix_single, minval_single, maxval_single, value2color_single, results_list, list_props
+
+# def _numerical2matrix(tree, profiling_props, count_negative=True, internal_num_rep=None, color_config=None):
+#     """
+#     Input:
+#     tree: A tree structure with nodes, each having properties.
+#     profiling_props: A list of property names to be processed for each leaf in the tree.
+
+#     Output:
+#     A dictionary of matrix representation of the tree leaves and their properties.
+#     A sorted dictionary mapping property values to their corresponding colors.
+#     """
+#     is_list = False
+#     node2matrix = {}
+#     for node in tree.traverse():
+#         node2matrix[node.name] = []
+#         for profiling_prop in profiling_props:
+#             if node.is_leaf:
+#                 prop_value = node.props.get(profiling_prop)  
+#                 if prop_value is not None:  
+#                     if isinstance(prop_value, list):  # Check if the property value is a list
+#                         is_list = True  # Set is_array to True upon finding the first list
+                        
+#                         for array_element in prop_value:
+#                             node2matrix[node.name].append(float(array_element))
+
+#                         # prop_value = list(map(float, prop_value))
+#                         # node2matrix[node.name].append(prop_value)
+
+#                     else:  # If not a list, directly handle the single value case
+#                         node2matrix[node.name].append(float(prop_value))
+                        
+#                 else:  # If prop_value is None, append None
+#                     node2matrix[node.name].append(None)
+#             else:
+#                 if internal_num_rep != 'none':
+#                     representative_prop = add_suffix(profiling_prop, internal_num_rep)
+#                     prop_value = node.props.get(representative_prop)
+#                     if prop_value is not None:  
+#                         if isinstance(prop_value, list):  # Check if the property value is a list
+#                             is_list = True  # Set is_array to True upon finding the first list
+#                             for array_element in prop_value:
+#                                 node2matrix[node.name].append(float(array_element))
+#                             # prop_value = list(map(float, prop_value))
+#                             # node2matrix[node.name].append(prop_value)
+#                         else:  # If not a list, directly handle the single value case
+#                             node2matrix[node.name].append(float(prop_value))
+                            
+#                     else:  # If prop_value is None, append None
+#                         node2matrix[node.name].append(None)
     
-    return node2matrix, minval, maxval, value2color, is_list
+#     #get color
+#     negative_color = 'black'
+#     value2color = {}
+#     matrix_prop = '-' # special case for matrix
+#     if color_config and color_config.get(matrix_prop) is not None:
+#         prop_config = color_config[matrix_prop]
+        
+#         # First, try to use value2color mappings if they exist and are applicable
+#         if 'value2color' in prop_config and prop_config['value2color']:
+#             value2color = prop_config['value2color']
+#             value2color = {float(key): value for key, value in value2color.items()}
+#             #gradientscolor = list(sorted_value2color.values())
+        
+#         if 'detail2color' in prop_config and prop_config['detail2color']:
+#             min_color = prop_config['detail2color'].get('color_min', 'white')
+#             max_color = prop_config['detail2color'].get('color_max', 'red')
+#             mid_color = prop_config['detail2color'].get('color_mid', None)
+#             gradientscolor = build_custom_gradient(20, min_color, max_color, mid_color)
+
+#     else:
+#         gradientscolor = build_color_gradient(20, colormap_name='Reds')
+    
+#     # everything
+#     all_values_raw = list(set(flatten([sublist for sublist in node2matrix.values()])))
+#     all_values = sorted(list(filter(lambda x: x is not None and not math.isnan(x), all_values_raw)))
+    
+#     if not count_negative:
+#         # remove negative values
+#         positive_values = sorted(list(filter(lambda x: x is not None and not math.isnan(x) and x >= 0, all_values)))
+#         minval, maxval = min(positive_values), max(positive_values)
+#     else:
+#         minval, maxval = min(all_values), max(all_values)
+        
+#     num = len(gradientscolor)
+#     index_values = np.linspace(minval, maxval, num)
+
+#     for search_value in all_values:
+#         if search_value not in value2color:
+#             if not count_negative and search_value < 0:
+#                 value2color[search_value] = negative_color
+#             # elif search_value == 0:
+#             #     value2color[search_value] = color_0
+#             else:
+#                 index = np.abs(index_values - search_value).argmin()+1
+#                 value2color[search_value] = gradientscolor[index]
+    
+#     return node2matrix, minval, maxval, value2color, is_list
 
 def binary2matrix(tree, profiling_props, color_config=None):
     """
