@@ -957,8 +957,9 @@ def parse_tsv_to_array(input_files, delimiter='\t', no_headers=True):
     """
     is_float = True
     matrix2array = {}
-    leaf2array = {}
+    
     for input_file in input_files:
+        leaf2array = {}
         prefix = os.path.basename(input_file)
         with open(input_file, 'r') as file:
             for line in file:
