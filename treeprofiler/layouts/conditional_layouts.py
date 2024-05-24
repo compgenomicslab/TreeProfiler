@@ -42,7 +42,7 @@ def highlight_layout(conditions, level, prop2type={}, color='purple'):
         
         if final_call:
             
-            prop_face = SelectedRectFace(name='prop')
+            #prop_face = SelectedRectFace(name='prop')
             node.sm_style["bgcolor"] = color # highligh clade
             #node.sm_style["hz_line_width"] = 5
             #node.add_face(prop_face, column=level, position = "branch_right")

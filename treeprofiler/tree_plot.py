@@ -185,6 +185,10 @@ def poplulate_plot_args(plot_args_p):
         nargs='+',
         required=False,
         help="<prop1> <prop2> names  of properties where values will be label as rectangular color block on the aligned panel.")
+    group.add_argument('--background-layout',
+        nargs='+',
+        required=False,
+        help="<prop1> <prop2> names of properties where values will be label as rectangular color block on the aligned panel.")
     group.add_argument('--piechart-layout',
         nargs='+',
         required=False,
@@ -458,6 +462,13 @@ def run(args):
             total_color_dict.append(color_dict)
             visualized_props.extend(args.rectangle_layout)
             visualized_props.extend([add_suffix(prop, 'counter') for prop in args.rectangle_layout])
+
+        if layout == 'background-layout':
+            background_layouts, level, color_dict = get_background_layouts(tree, args.background_layout, level, prop2type=prop2type, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config)
+            layouts.extend(background_layouts)
+            total_color_dict.append(color_dict)
+            visualized_props.extend(args.background_layout)
+            visualized_props.extend([add_suffix(prop, 'counter') for prop in args.background_layout])
 
         if layout == 'binary-layout':
             binary_layouts, level, color_dict = get_binary_layouts(tree, args.binary_layout, level, prop2type=prop2type, column_width=args.column_width, reverse=False, padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config, same_color=False, aggregate=False)
@@ -1043,6 +1054,16 @@ def get_colorbranch_layouts(tree, props, level, prop2type, column_width=70, padd
         if color_config and color_config.get(prop):
             if color_config.get(prop).get('value2color'):
                 color_dict = color_config.get(prop).get('value2color')
+            
+            # Check if all property values have an assigned color
+            # prop_values = sorted(list(set(tree_prop_array(tree, prop))))
+            # existing_values = set(color_dict.keys())
+            # additional_values = set(prop_values) - existing_values
+            # if additional_values:
+            #     # Fetch new colors for the additional values
+            #     additional_colors = assign_color_to_values(sorted(additional_values), paired_color)
+            #     color_dict.update(additional_colors)
+
         else: 
             if prop2type and prop2type.get(prop) == list:
                 leaf_values = list(map(list,set(map(tuple,tree_prop_array(tree, prop)))))    
@@ -1084,6 +1105,34 @@ def get_rectangle_layouts(tree, props, level, prop2type, column_width=70, paddin
         layouts.append(layout)
         level += 1
     return layouts, level, prop_color_dict
+
+def get_background_layouts(tree, props, level, prop2type, column_width, padding_x=1, padding_y=0, color_config=None):
+    prop_color_dict = {}
+    layouts = []
+    for prop in props:
+        color_dict = {} # key = value, value = color id
+        if color_config and color_config.get(prop):
+            if color_config.get(prop).get('value2color'):
+                color_dict = color_config.get(prop).get('value2color')
+        else:
+            if prop2type and prop2type.get(prop) == list:
+                leaf_values = list(map(list,set(map(tuple,tree_prop_array(tree, prop)))))    
+                prop_values = [val for sublist in leaf_values for val in sublist]
+            else:
+                prop_values = sorted(list(set(tree_prop_array(tree, prop))))
+            
+            # normal text prop
+            color_dict = assign_color_to_values(prop_values, paired_color)
+
+        layout = text_layouts.LayoutBackground(name='Background_'+prop, 
+                    column=level, width=column_width,
+                    color_dict=color_dict, text_prop=prop,
+                    padding_x=padding_x, padding_y=padding_y)
+
+        layouts.append(layout)
+        level += 1
+    return layouts, level, prop_color_dict
+
 
 def get_binary_layouts(tree, props, level, prop2type, column_width=70, reverse=False, padding_x=1, padding_y=0, color_config=None, same_color=False, aggregate=False):
     prop_color_dict = {}
