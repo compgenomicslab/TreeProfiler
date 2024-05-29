@@ -284,10 +284,11 @@ def poplulate_plot_args(plot_args_p):
         type=str,
         default=5000,
         help="run interactive session on custom port.[default: 5000]")
-    group.add_argument('--plot',
-        type=str,
+    group.add_argument('--render',
+        #type=str,
+        action="store_true", 
         required=False,
-        help="output as pdf")
+        help="output as svg")
     group.add_argument('--out-colordict',
         action="store_true", 
         required=False,
@@ -835,8 +836,9 @@ def run(args):
     
     if args.out_colordict:
         wrtie_color(total_color_dict)
-    if args.plot:
-        get_image(tree, layouts, args.port, os.path.abspath(args.plot))
+    if args.render:
+        file_path = "tree-1.svg"
+        get_image(tree, layouts, args.port, os.path.abspath(file_path))
     else:
         tree.explore(keep_server=True, compress=False, quiet=args.verbose, 
         layouts=layouts, port=args.port, include_props=sorted(popup_prop_keys),
