@@ -460,5 +460,81 @@ class LayoutBranchScore(TreeLayout):
                     TextFace("%.2f" % (float(prop_score)), color=self._get_color(prop_score)),
                     position="branch_bottom")
 
-            
-            
+class LayoutBubble(TreeLayout):
+    def __init__(self, name=None, prop=None, position="aligned", 
+            column=0, color=None, max_radius=10, abs_maxval=None,
+            padding_x=2, padding_y=0, 
+            scale=True, legend=True, active=True, 
+            internal_rep='avg'):
+
+        name = name or f'Barplot_{size_prop}_{color_prop}'
+        super().__init__(name)
+
+        self.aligned_faces = True
+        self.num_prop = prop
+        self.internal_prop = add_suffix(prop, internal_rep)
+        
+        self.column = column
+        self.position = position
+        self.color = color
+        self.positive_color = "red"
+        self.negative_color = "blue"
+        self.internal_rep = internal_rep
+        self.max_radius = float(max_radius)
+        self.abs_maxval = float(abs_maxval)
+
+        self.padding_x = padding_x
+        self.padding_y = padding_y
+        
+        self.legend = legend
+        self.active = active
+
+    def set_tree_style(self, tree, tree_style):
+        super().set_tree_style(tree, tree_style)
+        text = TextFace(self.num_prop, min_fsize=5, max_fsize=15, padding_x=self.padding_x, rotation=315)
+        tree_style.aligned_panel_header.add_face(text, column=self.column)
+        colormap = {
+            "> 0": self.positive_color,
+            "< 0": self.negative_color
+            }
+        if self.legend:
+            tree_style.add_legend(title=self.num_prop,
+                                    variable='discrete',
+                                    colormap=colormap
+                                    )
+
+    def _get_bubble_size(self, search_value):
+        search_value = abs(float(search_value))
+        bubble_size = search_value / self.abs_maxval * self.max_radius
+        return bubble_size
+
+
+    def set_node_style(self, node):
+        number = node.props.get(self.num_prop)
+        if number is not None:
+            bubble_size = self._get_bubble_size(number)
+            #bubble_size = self.max_radius
+            if number > 0:
+                bubble_color = self.positive_color
+            else:
+                bubble_color = self.negative_color
+            node.sm_style["size"] = bubble_size
+            node.sm_style["fgcolor"] = bubble_color
+        
+        elif node.is_leaf and node.props.get(self.internal_prop):
+            if number > 0:
+                bubble_color = self.positive_color
+            else:
+                bubble_color = self.negative_color
+            bubble_size = self._get_bubble_size(number)
+            node.sm_style["size"] = bubble_size
+            node.sm_style["fgcolor"] = bubble_color
+        
+        elif node.props.get(self.internal_prop):
+            if number > 0:
+                bubble_color = self.positive_color
+            else:
+                bubble_color = self.negative_color
+            bubble_size = self._get_bubble_size(number)
+            node.sm_style["size"] = bubble_size
+            node.sm_style["fgcolor"] = bubble_color

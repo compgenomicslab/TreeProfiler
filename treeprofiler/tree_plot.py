@@ -185,6 +185,10 @@ def poplulate_plot_args(plot_args_p):
         nargs='+',
         required=False,
         help="<prop1> <prop2> names  of properties where values will be label as rectangular color block on the aligned panel.")
+    group.add_argument('--bubble-layout',
+        nargs='+',
+        required=False,
+        help="<prop1> <prop2> names of properties which need to be plot as bubble-layout")
     group.add_argument('--background-layout',
         nargs='+',
         required=False,
@@ -450,6 +454,11 @@ def run(args):
                 internal_rep=internal_num_rep, color_config=color_config)
                 layouts.extend(branchscore_layouts)
                 visualized_props.extend(numerical_props)
+        
+        if layout == 'bubble-layout':
+            bubble_layouts, level = get_bubble_layouts(tree, args.bubble_layout, level=level, prop2type=prop2type, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep, color_config=color_config)
+            layouts.extend(bubble_layouts)
+            visualized_props.extend(args.bubble_layout)
 
         if layout == "piechart-layout":
             piechart_layouts = get_piechart_layouts(tree, args.piechart_layout, prop2type=prop2type, padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config)
@@ -844,7 +853,6 @@ def run(args):
         layouts=layouts, port=args.port, include_props=sorted(popup_prop_keys),
         show_leaf_name=args.hide_leaf_name, show_branch_support=args.hide_branch_support,
         show_branch_length=args.hide_branch_distance)
-    
 
 def wrtie_color(color_dict):
     with open('color_dict.txt','w') as f:
@@ -1311,6 +1319,32 @@ def get_barplot_layouts(tree, props, level, prop2type, column_width=70, padding_
         level += 1
     
     return layouts, level, prop_color_dict
+
+def get_bubble_layouts(tree, props, level, prop2type, padding_x=0, padding_y=0, internal_rep='avg', color_config=None, paired_color=[]):
+    def process_prop_values(tree, prop):
+        """Extracts and processes property values, excluding NaNs."""
+        prop_values = np.array(list(set(tree_prop_array(tree, prop)))).astype('float64')
+        return prop_values[~np.isnan(prop_values)]
+
+    prop_color_dict = {}
+    layouts = []
+    max_radius = 15
+
+    for prop in props:
+        prop_values = process_prop_values(tree, prop)
+
+        #minval, maxval = all_prop_values.min(), all_prop_values.max()
+        abs_maxval = np.abs(prop_values).max()
+        size_prop = prop if prop_values.any() else f"{prop}_{internal_rep}"
+
+        # Configure and add layout
+        layout = staple_layouts.LayoutBubble(name=f'Bubble_{prop}', column=level, 
+        prop=prop, max_radius=max_radius, abs_maxval=abs_maxval, 
+        padding_x=padding_x, padding_y=padding_y)
+        layouts.append(layout)
+        level += 1
+
+    return layouts, level
 
 def get_heatmap_layouts(tree, props, level, column_width=70, padding_x=1, padding_y=0, internal_rep='avg', color_config=None, norm_method='min-max'):
     layouts = []
