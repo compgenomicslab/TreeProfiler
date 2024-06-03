@@ -888,7 +888,7 @@ def read_config_to_dict(file_obj, delimiter):
         prop = row_dict['PROP']
         value = row_dict['VALUE']
         color = row_dict['COLOR']
-        detail = row_dict.get('SPECIAL_CASE')
+        detail = row_dict.get('HUE')
 
         # Initialize property if not present
         if prop not in config_dict:
