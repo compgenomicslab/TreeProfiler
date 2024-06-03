@@ -494,8 +494,8 @@ class LayoutBubble(TreeLayout):
         text = TextFace(self.num_prop, min_fsize=5, max_fsize=15, padding_x=self.padding_x, rotation=315)
         tree_style.aligned_panel_header.add_face(text, column=self.column)
         colormap = {
-            "> 0": self.positive_color,
-            "< 0": self.negative_color
+            "positive": self.positive_color,
+            "negative": self.negative_color
             }
         if self.legend:
             tree_style.add_legend(title=self.num_prop,
