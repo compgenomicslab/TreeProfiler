@@ -245,10 +245,10 @@ def poplulate_plot_args(plot_args_p):
         nargs='+',
         required=False,
         help="<prop1> <prop2> names of properties which need to be convert to presence-absence profiling matrix of each value")
-    group.add_argument('--multi-profiling-layout',
-        nargs='+',
-        required=False,
-        help="<prop1> <prop2> names of properties containing values as list which need to be convert to presence-absence profiling matrix")
+    # group.add_argument('--multi-profiling-layout',
+    #     nargs='+',
+    #     required=False,
+    #     help="<prop1> <prop2> names of properties containing values as list which need to be convert to presence-absence profiling matrix")
     group.add_argument('--categorical-matrix-layout',
         nargs='+',
         required=False,
@@ -549,38 +549,6 @@ def run(args):
         if layout == 'profiling-layout':
             profiling_props = args.profiling_layout
             for profiling_prop in profiling_props:
-                # matrix, all_values = single2profile(tree, profiling_prop) # create mimic msa
-                # profile_layout = profile_layouts.LayoutProfile(name=f'Profiling_{profiling_prop}', 
-                #     mode='profiles', alignment=matrix, seq_format='profiles', profiles=all_values, 
-                #     column=level, summarize_inner_nodes=True, poswidth=args.column_width)
-                
-                
-                # matrix_layout = profile_layouts.LayoutPropsMatrixOld(name=f"Profiling_{profiling_prop}",
-                # matrix=matrix, matrix_type='categorical', matrix_props=all_values,
-                # value_color=value2color, column=level, poswidth=args.column_width)
-
-                matrix, value2color, all_profiling_values = single2matrix(tree, profiling_prop)
-                matrix_layout = profile_layouts.LayoutPropsMatrixBinary(name=f"Profiling_{all_profiling_values}",
-                matrix=matrix, matrix_props=all_profiling_values, value_range=[0,1],
-                value_color=value2color, column=level, poswidth=args.column_width)
-
-                level += 1
-                layouts.append(matrix_layout)
-
-        # presence-absence profiling based on list data
-        if layout == 'multi-profiling-layout':
-            profiling_props = args.multi_profiling_layout
-            for profiling_prop in profiling_props:
-                # matrix, all_values = multiple2profile(tree, profiling_prop) # create mimic msa
-                # profile_layout = profile_layouts.LayoutProfile(name=f'Profiling_{profiling_prop}', 
-                # mode='profiles', alignment=matrix, seq_format='profiles', profiles=all_values, 
-                # column=level, summarize_inner_nodes=False, 
-                # poswidth=args.column_width)
-
-                # matrix, value2color, all_values = multiple2matrix(tree, profiling_prop)
-                # matrix_layout = profile_layouts.LayoutPropsMatrixOld(name=f"Profiling_{profiling_prop}",
-                # matrix=matrix, matrix_type='categorical', matrix_props=all_values,
-                # value_color=value2color, column=level, poswidth=args.column_width)
 
                 matrix, value2color, all_profiling_values = multiple2matrix(tree, profiling_prop)
                 matrix_layout = profile_layouts.LayoutPropsMatrixBinary(name=f"Profiling_{all_profiling_values}",
@@ -589,6 +557,29 @@ def run(args):
 
                 level += 1
                 layouts.append(matrix_layout)
+
+        # presence-absence profiling based on list data
+        # if layout == 'multi-profiling-layout':
+        #     profiling_props = args.multi_profiling_layout
+        #     for profiling_prop in profiling_props:
+        #         # matrix, all_values = multiple2profile(tree, profiling_prop) # create mimic msa
+        #         # profile_layout = profile_layouts.LayoutProfile(name=f'Profiling_{profiling_prop}', 
+        #         # mode='profiles', alignment=matrix, seq_format='profiles', profiles=all_values, 
+        #         # column=level, summarize_inner_nodes=False, 
+        #         # poswidth=args.column_width)
+
+        #         # matrix, value2color, all_values = multiple2matrix(tree, profiling_prop)
+        #         # matrix_layout = profile_layouts.LayoutPropsMatrixOld(name=f"Profiling_{profiling_prop}",
+        #         # matrix=matrix, matrix_type='categorical', matrix_props=all_values,
+        #         # value_color=value2color, column=level, poswidth=args.column_width)
+
+        #         matrix, value2color, all_profiling_values = multiple2matrix(tree, profiling_prop)
+        #         matrix_layout = profile_layouts.LayoutPropsMatrixBinary(name=f"Profiling_{all_profiling_values}",
+        #         matrix=matrix, matrix_props=all_profiling_values, value_range=[0,1],
+        #         value_color=value2color, column=level, poswidth=args.column_width)
+
+        #         level += 1
+        #         layouts.append(matrix_layout)
         
         # categorical matrix
         if layout == 'categorical-matrix-layout':
@@ -877,19 +868,27 @@ def read_config_to_dict(file_obj, delimiter):
     prop,value,color
     random_type,low,green
     ...
-
     :param filename: Path to the file.
+    :param delimiter: Delimiter used in the configuration file.
     :return: A dictionary with (prop, value) tuple as keys and color as values.
     """
     config_dict = {}
     # Reset file pointer to start, in case it's been accessed before
     file_obj.seek(0)
-    reader = csv.DictReader(file_obj, delimiter=delimiter)
+    lines = file_obj.readlines()
+    filtered_lines = [line for line in lines if not line.strip().startswith('#') and line.strip()]
+
+    #reader = csv.DictReader(file_obj, delimiter=delimiter)
+    reader = csv.reader(filtered_lines, delimiter=delimiter)
+    headers = next(reader)  # Get the headers
     for row in reader:
-        prop = row['PROP']
-        detail = row['DETAIL']
-        value = row['VALUE']
-        color = row['COLOR']
+        # Map the headers to the row values
+        row_dict = dict(zip(headers, row))
+
+        prop = row_dict['PROP']
+        value = row_dict['VALUE']
+        color = row_dict['COLOR']
+        detail = row_dict.get('SPECIAL_CASE')
 
         # Initialize property if not present
         if prop not in config_dict:
