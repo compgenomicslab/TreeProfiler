@@ -477,8 +477,8 @@ class LayoutBubble(TreeLayout):
         self.column = column
         self.position = position
         self.color = color
-        self.positive_color = "red"
-        self.negative_color = "blue"
+        self.positive_color = "#ff0000"
+        self.negative_color = "#0000ff"
         self.internal_rep = internal_rep
         self.max_radius = float(max_radius)
         self.abs_maxval = float(abs_maxval)
