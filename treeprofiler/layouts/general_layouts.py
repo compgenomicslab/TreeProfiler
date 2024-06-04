@@ -72,7 +72,7 @@ def get_aggregated_heatmapface(node, prop, min_color="#EBEBEB", max_color="#9719
         aggregateFace = RectFace(width=width, text=int(positive), height=height, color=adjusted_max_color, padding_x=padding_x, padding_y=padding_y, tooltip=tooltip)
     return aggregateFace
 
-def get_heatmapface(node, prop, min_color="#EBEBEB", max_color="#971919", tooltip=None, width=70, height=None, padding_x=1, padding_y=0, count_missing=True):
+def get_heatmapface(node, prop, min_color="#EBEBEB", max_color="#971919", tooltip=None, width=70, height=None, padding_x=1, padding_y=0, count_missing=True, reverse=False):
     counter_props = node.props.get(prop).split('||')
     total = 0
     positive = 0
@@ -94,9 +94,13 @@ def get_heatmapface(node, prop, min_color="#EBEBEB", max_color="#971919", toolti
         ratio = positive / total
     else:
         ratio = 0
+    
+    if reverse:
+        ratio = 1 - ratio
+
     if ratio < 0.05 and ratio != 0: # show minimum color for too low
         ratio = 0.05
-    
+
     c1 = min_color
     c2 = max_color
     gradient_color = utils.color_gradient(c1, c2, mix=ratio)

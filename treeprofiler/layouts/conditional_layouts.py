@@ -205,7 +205,7 @@ class LayoutBinary(TreeLayout):
             if self.aggregate:
                 heatmapFace = get_aggregated_heatmapface(node, self.internal_prop, max_color=self.color, width=self.width, height=self.height, padding_x=self.padding_x, max_count=self.max_count)
             else:
-                heatmapFace = get_heatmapface(node, self.internal_prop, max_color=self.color, width=self.width, height=self.height, padding_x=self.padding_x,)
+                heatmapFace = get_heatmapface(node, self.internal_prop, max_color=self.color, width=self.width, height=self.height, padding_x=self.padding_x,reverse=self.reverse)
             node.add_face(heatmapFace, column = self.column, position = "aligned", collapsed_only=True)
         # else:
         #     prop_face = RectFace(width=self.width, height=self.height, text="NA", color=self.negative_color,  padding_x=self.padding_x, padding_y=self.padding_y, stroke_color=self.negative_color, tooltip=None)
