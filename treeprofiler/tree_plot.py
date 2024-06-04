@@ -416,21 +416,39 @@ def run(args):
             layouts.extend(ls_layouts)
             visualized_props.extend(args.ls_layout)
             visualized_props.extend(ls_props)
-            
+
         if layout == 'heatmap-layout':
-            heatmap_layouts, level = get_heatmap_layouts(tree, args.heatmap_layout, level, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep, color_config=color_config, norm_method='min-max')
+            numerical_props = args.heatmap_layout
+            norm_method = 'min-max'
+            heatmap_layouts, level = get_heatmap_layout(layout, numerical_props, norm_method, internal_num_rep, color_config, args, level)
             layouts.extend(heatmap_layouts)
-            visualized_props.extend(args.heatmap_layout)
 
-        if layout == 'heatmap-mean-layout':
-            heatmap_mean_layouts, level = get_heatmap_layouts(tree, args.heatmap_mean_layout, level, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep, color_config=color_config, norm_method='mean')
-            layouts.extend(heatmap_mean_layouts)
-            visualized_props.extend(args.heatmap_mean_layout)
+        elif layout == 'heatmap-mean-layout':
+            numerical_props = args.heatmap_mean_layout
+            norm_method = 'mean'
+            heatmap_layouts, level = get_heatmap_layout(layout, numerical_props, norm_method, internal_num_rep, color_config, args, level)
+            layouts.extend(heatmap_layouts)
 
-        if layout == 'heatmap-zscore-layout':
-            heatmap_zscore_layouts, level = get_heatmap_layouts(tree, args.heatmap_zscore_layout, level, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep, color_config=color_config, norm_method='zscore')
-            layouts.extend(heatmap_zscore_layouts)
-            visualized_props.extend(args.heatmap_zscore_layout)
+        elif layout == 'heatmap-zscore-layout':
+            numerical_props = args.heatmap_zscore_layout
+            norm_method = 'zscore'
+            heatmap_layouts, level = get_heatmap_layout(layout, numerical_props, norm_method, internal_num_rep, color_config, args, level)
+            layouts.extend(heatmap_layouts)
+
+        # if layout == 'heatmap-layout':
+        #     heatmap_layouts, level = get_heatmap_layouts(tree, args.heatmap_layout, level, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep, color_config=color_config, norm_method='min-max')
+        #     layouts.extend(heatmap_layouts)
+        #     visualized_props.extend(args.heatmap_layout)
+
+        # if layout == 'heatmap-mean-layout':
+        #     heatmap_mean_layouts, level = get_heatmap_layouts(tree, args.heatmap_mean_layout, level, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep, color_config=color_config, norm_method='mean')
+        #     layouts.extend(heatmap_mean_layouts)
+        #     visualized_props.extend(args.heatmap_mean_layout)
+
+        # if layout == 'heatmap-zscore-layout':
+        #     heatmap_zscore_layouts, level = get_heatmap_layouts(tree, args.heatmap_zscore_layout, level, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep, color_config=color_config, norm_method='zscore')
+        #     layouts.extend(heatmap_zscore_layouts)
+        #     visualized_props.extend(args.heatmap_zscore_layout)
             
         if layout == 'label-layout':
             label_layouts, level, color_dict = get_label_layouts(tree, args.label_layout, level, prop2type=prop2type, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config)
@@ -527,12 +545,6 @@ def run(args):
             layouts.extend(barplot_layouts)
             total_color_dict.append(color_dict)
             visualized_props.extend(args.barplot_layout)
-        
-        # if layout == 'bubble-layout':
-        #     barplot_layouts, level, color_dict = get_barplot_layouts(tree, args.barplot_layout, level, prop2type, column_width=args.barplot_width, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep, anchor_column=args.barplot_anchor, color_config=color_config)
-        #     layouts.extend(barplot_layouts)
-        #     total_color_dict.append(color_dict)
-        #     visualized_props.extend(args.barplot_layout)
 
         if layout == "branchscore-layout":
             branchscore_layouts = get_branchscore_layouts(tree, args.branchscore_layout, prop2type, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep='avg')
@@ -621,7 +633,7 @@ def run(args):
             # if is list, it should provide more than one matrix
             matrix, minval, maxval, value2color, results_list, list_props = numerical2matrix(tree, 
                 numerical_props, count_negative=True, internal_num_rep=internal_num_rep, 
-                color_config=color_config)
+                color_config=color_config, norm_method='min-max')
             
             if not list_props:
                 matrix_layout = profile_layouts.LayoutPropsMatrixOld(name=f"Numerical_matrix_{numerical_props}", 
@@ -1367,47 +1379,87 @@ def get_bubble_layouts(tree, props, level, prop2type, padding_x=0, padding_y=0, 
 
     return layouts, level
 
-def get_heatmap_layouts(tree, props, level, column_width=70, padding_x=1, padding_y=0, internal_rep='avg', color_config=None, norm_method='min-max'):
-    layouts = []
-    all_prop_values = [list(set(tree_prop_array(tree, prop))) for prop in props]
-    all_prop_values = np.array(flatten(all_prop_values)).astype('float64')
+# def get_heatmap_layouts(tree, props, level, column_width=70, padding_x=1, padding_y=0, internal_rep='avg', color_config=None, norm_method='min-max'):
+#     layouts = []
+#     all_prop_values = [list(set(tree_prop_array(tree, prop))) for prop in props]
+#     all_prop_values = np.array(flatten(all_prop_values)).astype('float64')
     
-    for prop in props:
-        if color_config and color_config.get(prop) is not None:
-            prop_config = color_config[prop]
+#     for prop in props:
+#         if color_config and color_config.get(prop) is not None:
+#             prop_config = color_config[prop]
             
-            color_dict = {}
+#             color_dict = {}
 
-            # First, try to use value2color mappings if they exist and are applicable
-            if 'value2color' in prop_config and prop_config['value2color']:
-                color_dict = prop_config['value2color']
-                sorted_color_dict = {float(key): value for key, value in color_dict.items()}
-                gradientscolor = sorted_color_dict.values()
-            elif 'detail2color' in prop_config and prop_config['detail2color']:
-                min_color = prop_config['detail2color'].get('color_min', 'white')
-                max_color = prop_config['detail2color'].get('color_max', 'red')
-                mid_color = prop_config['detail2color'].get('color_mid', None)
-                gradientscolor = build_custom_gradient(20, min_color, max_color, mid_color)
-        else:
-            if norm_method == 'min-max':
-                gradientscolor = build_color_gradient(20, colormap_name="Reds")
-            else: # "mean" "zscore"
-                gradientscolor = build_color_gradient(20, colormap_name="coolwarm")
+#             # First, try to use value2color mappings if they exist and are applicable
+#             if 'value2color' in prop_config and prop_config['value2color']:
+#                 color_dict = prop_config['value2color']
+#                 sorted_color_dict = {float(key): value for key, value in color_dict.items()}
+#                 gradientscolor = sorted_color_dict.values()
+#             elif 'detail2color' in prop_config and prop_config['detail2color']:
+#                 min_color = prop_config['detail2color'].get('color_min', 'white')
+#                 max_color = prop_config['detail2color'].get('color_max', 'red')
+#                 mid_color = prop_config['detail2color'].get('color_mid', None)
+#                 gradientscolor = build_custom_gradient(20, min_color, max_color, mid_color)
+#         else:
+#             if norm_method == 'min-max':
+#                 gradientscolor = build_color_gradient(20, colormap_name="Reds")
+#             else: # "mean" "zscore"
+#                 gradientscolor = build_color_gradient(20, colormap_name="coolwarm")
 
-        minval, maxval = all_prop_values.min(), all_prop_values.max()
-        mean_val = all_prop_values.mean()
-        std_val = all_prop_values.std()
+#         minval, maxval = all_prop_values.min(), all_prop_values.max()
+#         mean_val = all_prop_values.mean()
+#         std_val = all_prop_values.std()
         
-        # layout =  staple_layouts.LayoutHeatmap(name='Heatmap_'+prop, column=level, 
-        #             width=column_width, padding_x=padding_x, padding_y=padding_y, \
-        #             internal_rep=internal_rep, prop=prop, maxval=maxval, minval=minval)
-        layout = staple_layouts.LayoutHeatmap(name='Heatmap_'+prop, column=level, 
-                    width=column_width, padding_x=padding_x, padding_y=padding_y, \
-                    internal_rep=internal_rep, prop=prop, maxval=maxval, minval=minval,\
-                    mean_val=mean_val, std_val=std_val, \
-                    color_dict=gradientscolor, norm_method=norm_method)
-        layouts.append(layout)  
+#         # layout =  staple_layouts.LayoutHeatmap(name='Heatmap_'+prop, column=level, 
+#         #             width=column_width, padding_x=padding_x, padding_y=padding_y, \
+#         #             internal_rep=internal_rep, prop=prop, maxval=maxval, minval=minval)
+#         layout = staple_layouts.LayoutHeatmap(name='Heatmap_'+prop, column=level, 
+#                     width=column_width, padding_x=padding_x, padding_y=padding_y, \
+#                     internal_rep=internal_rep, prop=prop, maxval=maxval, minval=minval,\
+#                     mean_val=mean_val, std_val=std_val, \
+#                     color_dict=gradientscolor, norm_method=norm_method)
+#         layouts.append(layout)  
+#         level += 1
+#     return layouts, level
+
+def get_heatmap_layout(layout_name, numerical_props, norm_method, internal_num_rep, color_config, args, level):
+    layouts = []
+    matrix, minval, maxval, value2color, results_list, list_props = numerical2matrix(tree,
+                                                            numerical_props,
+                                                            count_negative=True,
+                                                            internal_num_rep=internal_num_rep,
+                                                            color_config=color_config,
+                                                            norm_method=norm_method)
+
+    if not list_props:
+        matrix_layout = profile_layouts.LayoutPropsMatrixOld(name=f"Heatmap_{numerical_props}",
+                                                            matrix=matrix,
+                                                            matrix_type='numerical',
+                                                            matrix_props=numerical_props,
+                                                            is_list=False,
+                                                            value_color=value2color,
+                                                            value_range=[minval, maxval],
+                                                            column=level,
+                                                            poswidth=args.column_width)
+
         level += 1
+        layouts.append(matrix_layout)
+    else:
+        list_props = list(list_props)
+        for list_prop in list_props:
+            matrix, minval, maxval, value2color = results_list[list_prop]
+            matrix_layout = profile_layouts.LayoutPropsMatrixOld(name=f"Heatmap_{list_prop}",
+                                                            matrix=matrix,
+                                                            matrix_type='numerical',
+                                                            matrix_props=list_prop,
+                                                            is_list=True,
+                                                            value_color=value2color,
+                                                            value_range=[minval, maxval],
+                                                            column=level,
+                                                            poswidth=args.column_width)
+
+            level += 1
+            layouts.append(matrix_layout)
     return layouts, level
 
 def get_prop2type(node):
@@ -1467,7 +1519,7 @@ def categorical2matrix(tree, profiling_props, dtype=str, color_config=None):
     return leaf2matrix, value2color
 
 
-def numerical2matrix(tree, profiling_props, count_negative=True, internal_num_rep=None, color_config=None):
+def numerical2matrix(tree, profiling_props, count_negative=True, internal_num_rep=None, color_config=None, norm_method='min-max'):
     """
     Input:
     tree: A tree structure with nodes, each having properties.
@@ -1525,25 +1577,75 @@ def numerical2matrix(tree, profiling_props, count_negative=True, internal_num_re
     def flatten(l):
         return [item for sublist in l for item in sublist]
 
-    def process_color_configuration(node2matrix):
+    def min_max_normalize(value, minval, maxval):
+        if maxval - minval == 0:
+            return 0
+        else:
+            return (value - minval) / (maxval - minval)
+
+    def mean_normalize(value, mean_val, minval, maxval):
+        if maxval - minval == 0:
+            return 0
+        else:
+            return (value - mean_val) / (maxval - minval)
+
+    def z_score_normalize(value, mean_val, std_val):
+        if std_val == 0:
+            return 0
+        else:
+            return (value - mean_val) / std_val
+
+    def _get_color(search_value, color_dict, norm_method='min-max'):
+        num = len(color_dict)
+        search_value = float(search_value)
+        if norm_method == "min-max":
+            normalized_value = min_max_normalize(search_value)
+            index_values = np.linspace(0, 1, num)
+        elif norm_method == "mean":
+            normalized_value = mean_normalize(search_value)
+            index_values = np.linspace(-1, 1, num)
+        elif norm_method == "zscore":
+            normalized_value = z_score_normalize(search_value)
+            index_values = np.linspace(-3, 3, num)
+        else:
+            raise ValueError("Unsupported normalization method.")
+        index = np.abs(index_values - normalized_value).argmin() + 1
+        #index = np.abs(index_values - search_value).argmin() + 1
+        return color_dict.get(index, "")
+
+    def process_color_configuration(node2matrix, profiling_props=None):
         # Get color configuration
         negative_color = 'black'
         value2color = {}
         all_props_wildcard = '*'
-        if color_config and color_config.get(all_props_wildcard) is not None:
-            prop_config = color_config[all_props_wildcard]
-
-            if 'value2color' in prop_config and prop_config['value2color']:
-                value2color = prop_config['value2color']
-                value2color = {float(key): value for key, value in value2color.items()}
-            if 'detail2color' in prop_config and prop_config['detail2color']:
-                min_color = prop_config['detail2color'].get('color_min', 'white')
-                max_color = prop_config['detail2color'].get('color_max', 'red')
-                mid_color = prop_config['detail2color'].get('color_mid', None)
-                gradientscolor = build_custom_gradient(20, min_color, max_color, mid_color)
+        if color_config:
+            if color_config.get(all_props_wildcard) is not None:
+                prop_config = color_config[all_props_wildcard]
+                if 'value2color' in prop_config and prop_config['value2color']:
+                    value2color = prop_config['value2color']
+                    value2color = {float(key): value for key, value in value2color.items()}
+                if 'detail2color' in prop_config and prop_config['detail2color']:
+                    min_color = prop_config['detail2color'].get('color_min', 'white')
+                    max_color = prop_config['detail2color'].get('color_max', 'red')
+                    mid_color = prop_config['detail2color'].get('color_mid', None)
+                    gradientscolor = build_custom_gradient(20, min_color, max_color, mid_color)
+            if profiling_props:
+                for profiling_prop in profiling_props:
+                    if color_config.get(profiling_prop) is not None:
+                        prop_config = color_config[profiling_prop]
+                        if 'value2color' in prop_config and prop_config['value2color']:
+                            value2color = prop_config['value2color']
+                            value2color = {float(key): value for key, value in value2color.items()}
+                        if 'detail2color' in prop_config and prop_config['detail2color']:
+                            min_color = prop_config['detail2color'].get('color_min', 'white')
+                            max_color = prop_config['detail2color'].get('color_max', 'red')
+                            mid_color = prop_config['detail2color'].get('color_mid', None)
+                            gradientscolor = build_custom_gradient(20, min_color, max_color, mid_color)
         else:
-            gradientscolor = build_color_gradient(20, colormap_name='Reds')
-
+            if norm_method == 'min-max':
+                gradientscolor = build_color_gradient(20, colormap_name="Reds")
+            else: # "mean" "zscore"
+                gradientscolor = build_color_gradient(20, colormap_name="coolwarm")
         
         all_values_raw = list(set(flatten([sublist for sublist in node2matrix.values()])))
         all_values = sorted(list(filter(lambda x: x is not None and not math.isnan(x), all_values_raw)))
@@ -1551,24 +1653,50 @@ def numerical2matrix(tree, profiling_props, count_negative=True, internal_num_re
         if not count_negative:
             positive_values = sorted(list(filter(lambda x: x is not None and not math.isnan(x) and x >= 0, all_values)))
             minval, maxval = min(positive_values), max(positive_values)
+            mean_val = np.mean(positive_values)
+            std_val = np.std(positive_values)
         else:
             minval, maxval = min(all_values), max(all_values)
+            mean_val = np.mean(all_values)
+            std_val = np.std(all_values)
 
+        # num = len(gradientscolor)
+        # index_values = np.linspace(minval, maxval, num)
+        # for search_value in all_values:
+        #     if search_value not in value2color:
+        #         if not count_negative and search_value < 0:
+        #             value2color[search_value] = negative_color
+        #         else:
+
+        #             index = np.abs(index_values - search_value).argmin() + 1 
+        #             value2color[search_value] = gradientscolor[index]
+        
         num = len(gradientscolor)
-        index_values = np.linspace(minval, maxval, num)
         for search_value in all_values:
+            #value2color[search_value] = _get_color(search_value, gradientscolor, norm_method)
+            search_value = float(search_value)
             if search_value not in value2color:
                 if not count_negative and search_value < 0:
                     value2color[search_value] = negative_color
                 else:
-                    index = np.abs(index_values - search_value).argmin() + 1 
-                    value2color[search_value] = gradientscolor[index]
-        
+                    if norm_method == "min-max":
+                        normalized_value = min_max_normalize(search_value, minval, maxval)
+                        index_values = np.linspace(0, 1, num)
+                    elif norm_method == "mean":
+                        normalized_value = mean_normalize(search_value, mean_val, minval, maxval)
+                        index_values = np.linspace(-1, 1, num)
+                    elif norm_method == "zscore":
+                        normalized_value = z_score_normalize(search_value, mean_val, std_val)
+                        index_values = np.linspace(-3, 3, num)
+                    else:
+                        raise ValueError("Unsupported normalization method.")
+                    index = np.abs(index_values - normalized_value).argmin() + 1
+                    value2color[search_value] = gradientscolor.get(index, "")
         return minval, maxval, value2color
 
     # Process single values
     if single_props:
-        minval_single, maxval_single, value2color_single = process_color_configuration(node2matrix_single)
+        minval_single, maxval_single, value2color_single = process_color_configuration(node2matrix_single, profiling_props)
     else:
         minval_single, maxval_single, value2color_single = None, None, None
     
