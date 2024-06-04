@@ -409,23 +409,23 @@ class LayoutBranchScore(TreeLayout):
                                     value_range=self.value_range,
                                     color_range=self.color_range,
                                     )
-    def _get_color(self, search_value):
-        num = len(self.color_dict)
-        index_values = np.linspace(self.value_range[0], self.value_range[1], num)
-        index = np.abs(index_values - search_value).argmin() + 1
-        return self.color_dict.get(index, self.absence_color)
+
+    # def _get_color(self, search_value):
+    #     num = len(self.color_dict)
+    #     index_values = np.linspace(self.value_range[0], self.value_range[1], num)
+    #     index = np.abs(index_values - search_value).argmin() + 1
+    #     return self.color_dict.get(index, self.absence_color)
 
     def set_node_style(self, node):
         prop_score = node.props.get(self.score_prop)
         if prop_score is not None:
             prop_score = float(prop_score)
-            # node.add_face(TextFace(node.name, color = self.color_dict.get(prop_text,""), 
-            # padding_x=self.padding_x),column=0, position="branch_right")
-            node.sm_style["hz_line_color"] = self._get_color(prop_score)
+            node.sm_style["hz_line_color"] = self.color_dict.get(prop_score)
             node.sm_style["hz_line_width"] = self.line_width
-            node.sm_style["vt_line_color"] = self._get_color(prop_score)
+            node.sm_style["vt_line_color"] = self.color_dict.get(prop_score)
             node.sm_style["vt_line_width"] = self.line_width
-            node.sm_style["outline_color"] = self._get_color(prop_score)
+            node.sm_style["outline_color"] = self.color_dict.get(prop_score)
+            
 
             if self.show_score:                
                 node.add_face(
@@ -435,11 +435,11 @@ class LayoutBranchScore(TreeLayout):
         elif node.is_leaf and node.props.get(self.internal_prop):
             prop_score = node.props.get(self.internal_prop)
             prop_score = float(prop_score)
-            node.sm_style["hz_line_color"] = self._get_color(prop_score)
+            node.sm_style["hz_line_color"] = self.color_dict.get(prop_score)
             node.sm_style["hz_line_width"] = self.line_width
-            node.sm_style["vt_line_color"] = self._get_color(prop_score)
+            node.sm_style["vt_line_color"] = self.color_dict.get(prop_score)
             node.sm_style["vt_line_width"] = self.line_width
-            node.sm_style["outline_color"] = self._get_color(prop_score)
+            node.sm_style["outline_color"] = self.color_dict.get(prop_score)
             
             if self.show_score:                
                 node.add_face(
@@ -449,11 +449,11 @@ class LayoutBranchScore(TreeLayout):
         elif node.props.get(self.internal_prop):
             prop_score = node.props.get(self.internal_prop)
             prop_score = float(prop_score)
-            node.sm_style["hz_line_color"] = self._get_color(prop_score)
+            node.sm_style["hz_line_color"] = self.color_dict.get(prop_score)
             node.sm_style["hz_line_width"] = self.line_width
-            node.sm_style["vt_line_color"] = self._get_color(prop_score)
+            node.sm_style["vt_line_color"] = self.color_dict.get(prop_score)
             node.sm_style["vt_line_width"] = self.line_width
-            node.sm_style["outline_color"] = self._get_color(prop_score)
+            node.sm_style["outline_color"] = self.color_dict.get(prop_score)
 
             if self.show_score:                
                 node.add_face(

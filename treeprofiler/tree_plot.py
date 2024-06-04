@@ -1198,20 +1198,24 @@ def get_binary_layouts(tree, props, level, prop2type, column_width=70, reverse=F
     return layouts, level, prop_color_dict
 
 def get_branchscore_layouts(tree, props, prop2type, padding_x=1, padding_y=0, internal_rep='avg', color_config=None):
+    """
+    output dictionary of each score prop and corresponding color 
+    """
+
     layouts = []
     for prop in props:
-        all_values = np.array(sorted(list(set(tree_prop_array(tree, prop))))).astype('float64')
+        # get leaf values of each prop
+        leaf_all_values = np.array(sorted(list(set(tree_prop_array(tree, prop))))).astype('float64')
+        
+        # get internal values of each prop
+        internal_prop = add_suffix(prop, internal_rep)
+        internalnode_all_values = np.array(sorted(list(set(tree_prop_array(tree, internal_prop))))).astype('float64')
+        all_values = np.concatenate((leaf_all_values, internalnode_all_values))
         all_values = all_values[~np.isnan(all_values)]
+
         minval, maxval = all_values.min(), all_values.max()
 
-        # preload corresponding gradient color of each value
-        # num = len(gradientscolor)
-        # index_values = np.linspace(minval, maxval, num)
-        # value2color = {}
-        # for search_value in all_values:
-        #     index = np.abs(index_values - search_value).argmin()+1
-        #     value2color[search_value] = gradientscolor[index]
-
+        value2color = {}
         if color_config and color_config.get(prop) is not None:
             prop_config = color_config[prop]
             
@@ -1220,9 +1224,9 @@ def get_branchscore_layouts(tree, props, prop2type, padding_x=1, padding_y=0, in
             # First, try to use value2color mappings if they exist and are applicable
             if 'value2color' in prop_config and prop_config['value2color']:
                 color_dict = prop_config['value2color']
-                sorted_color_dict = {float(key): value for key, value in color_dict.items()}
-                gradientscolor = sorted_color_dict.values()
-            elif 'detail2color' in prop_config and prop_config['detail2color']:
+                value2color = {float(key): value for key, value in color_dict.items()}
+                #gradientscolor = sorted_color_dict.values()
+            if 'detail2color' in prop_config and prop_config['detail2color']:
                 min_color = prop_config['detail2color'].get('color_min', 'white')
                 max_color = prop_config['detail2color'].get('color_max', 'red')
                 mid_color = prop_config['detail2color'].get('color_mid', None)
@@ -1230,9 +1234,18 @@ def get_branchscore_layouts(tree, props, prop2type, padding_x=1, padding_y=0, in
         else:
             gradientscolor = build_color_gradient(20, colormap_name='jet')
         
+        # preload corresponding gradient color of each value
+        num = len(gradientscolor)
+        index_values = np.linspace(minval, maxval, num)
+        
+        for search_value in all_values:
+            if search_value not in value2color:
+                index = np.abs(index_values - search_value).argmin()+1
+                value2color[search_value] = gradientscolor[index]
+
         # get corresponding gradient color on the fly of visualization
         layout = staple_layouts.LayoutBranchScore(name='BranchScore_'+prop, \
-            color_dict=gradientscolor, score_prop=prop, internal_rep=internal_rep, \
+            color_dict=value2color, score_prop=prop, internal_rep=internal_rep, \
             value_range=[minval, maxval], \
             color_range=[gradientscolor[20], gradientscolor[10], gradientscolor[1]])
         layouts.append(layout)
