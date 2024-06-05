@@ -257,10 +257,6 @@ def poplulate_plot_args(plot_args_p):
         nargs='+',
         required=False,
         help="numerical matrix that take into account ALL values into gradient from white to red. <prop1> <prop2> names which need to be plot as numerical_matrix_layout for numerical values ")
-    group.add_argument('--numerical-matrix2-layout',
-        nargs='+',
-        required=False,
-        help="numerical matrix that take into account only POSITIVE values into gradient from white to red, NEGATIVE values shown as black.<prop1> <prop2> names which need to be plot as numerical_matrix_layout for numerical values ")
     group.add_argument('--binary-matrix-layout',
         nargs='+',
         required=False,
@@ -417,38 +413,38 @@ def run(args):
             visualized_props.extend(args.ls_layout)
             visualized_props.extend(ls_props)
 
-        if layout == 'heatmap-layout':
-            numerical_props = args.heatmap_layout
-            norm_method = 'min-max'
-            heatmap_layouts, level = get_heatmap_layout(layout, numerical_props, norm_method, internal_num_rep, color_config, args, level)
-            layouts.extend(heatmap_layouts)
-
-        elif layout == 'heatmap-mean-layout':
-            numerical_props = args.heatmap_mean_layout
-            norm_method = 'mean'
-            heatmap_layouts, level = get_heatmap_layout(layout, numerical_props, norm_method, internal_num_rep, color_config, args, level)
-            layouts.extend(heatmap_layouts)
-
-        elif layout == 'heatmap-zscore-layout':
-            numerical_props = args.heatmap_zscore_layout
-            norm_method = 'zscore'
-            heatmap_layouts, level = get_heatmap_layout(layout, numerical_props, norm_method, internal_num_rep, color_config, args, level)
-            layouts.extend(heatmap_layouts)
-
         # if layout == 'heatmap-layout':
-        #     heatmap_layouts, level = get_heatmap_layouts(tree, args.heatmap_layout, level, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep, color_config=color_config, norm_method='min-max')
+        #     numerical_props = args.heatmap_layout
+        #     norm_method = 'min-max'
+        #     heatmap_layouts, level = get_heatmap_matrix_layouts(layout, numerical_props, norm_method, internal_num_rep, color_config, args, level)
         #     layouts.extend(heatmap_layouts)
-        #     visualized_props.extend(args.heatmap_layout)
 
         # if layout == 'heatmap-mean-layout':
-        #     heatmap_mean_layouts, level = get_heatmap_layouts(tree, args.heatmap_mean_layout, level, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep, color_config=color_config, norm_method='mean')
-        #     layouts.extend(heatmap_mean_layouts)
-        #     visualized_props.extend(args.heatmap_mean_layout)
+        #     numerical_props = args.heatmap_mean_layout
+        #     norm_method = 'mean'
+        #     heatmap_layouts, level = get_heatmap_matrix_layouts(layout, numerical_props, norm_method, internal_num_rep, color_config, args, level)
+        #     layouts.extend(heatmap_layouts)
 
         # if layout == 'heatmap-zscore-layout':
-        #     heatmap_zscore_layouts, level = get_heatmap_layouts(tree, args.heatmap_zscore_layout, level, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep, color_config=color_config, norm_method='zscore')
-        #     layouts.extend(heatmap_zscore_layouts)
-        #     visualized_props.extend(args.heatmap_zscore_layout)
+        #     numerical_props = args.heatmap_zscore_layout
+        #     norm_method = 'zscore'
+        #     heatmap_layouts, level = get_heatmap_matrix_layouts(layout, numerical_props, norm_method, internal_num_rep, color_config, args, level)
+        #     layouts.extend(heatmap_layouts)
+
+        if layout == 'heatmap-layout':
+            heatmap_layouts, level = get_heatmap_layouts(tree, args.heatmap_layout, level, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep, color_config=color_config, norm_method='min-max')
+            layouts.extend(heatmap_layouts)
+            visualized_props.extend(args.heatmap_layout)
+
+        if layout == 'heatmap-mean-layout':
+            heatmap_mean_layouts, level = get_heatmap_layouts(tree, args.heatmap_mean_layout, level, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep, color_config=color_config, norm_method='mean')
+            layouts.extend(heatmap_mean_layouts)
+            visualized_props.extend(args.heatmap_mean_layout)
+
+        if layout == 'heatmap-zscore-layout':
+            heatmap_zscore_layouts, level = get_heatmap_layouts(tree, args.heatmap_zscore_layout, level, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep, color_config=color_config, norm_method='zscore')
+            layouts.extend(heatmap_zscore_layouts)
+            visualized_props.extend(args.heatmap_zscore_layout)
             
         if layout == 'label-layout':
             label_layouts, level, color_dict = get_label_layouts(tree, args.label_layout, level, prop2type=prop2type, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config)
@@ -655,44 +651,9 @@ def run(args):
                     level += 1
                     layouts.append(matrix_layout)
 
-        if layout == 'numerical-matrix2-layout':
-            numerical_props = args.numerical_matrix2_layout
-            
-            # matrix, value2color = float2matrix(tree, numerical_props, count_negative=False)
-            # all_values = list(value2color.keys())
-            # min_val, max_val = min(all_values), max(all_values)
-            # matrix_layout = profile_layouts.LayoutPropsMatrix(name=f'Numerical_matrix_{numerical_props}', 
-            #     matrix_type='numerical', alignment=matrix, matrix_props=numerical_props, 
-            #     profiles=all_values, column=level, summarize_inner_nodes=False, 
-            #     value_range = [min_val, max_val], value_color=value2color,
-            #     poswidth=args.column_width)
-
-            # if is list, it should provide more than one matrix
-            matrix, minval, maxval, value2color, results_list, list_props = numerical2matrix(tree, 
-                numerical_props, count_negative=False, internal_num_rep=internal_num_rep, 
-                color_config=color_config)
-            
-            if not list_props:
-                matrix_layout = profile_layouts.LayoutPropsMatrixOld(name=f"Numerical_matrix_{numerical_props}", 
-                    matrix=matrix, matrix_type='numerical', matrix_props=numerical_props, is_list=False, 
-                    value_color=value2color, value_range=[minval, maxval], column=level,
-                    poswidth=args.column_width)
-                level += 1
-                layouts.append(matrix_layout)
-            else:
-                list_props = list(list_props)
-                for list_prop in list_props:
-                    matrix, minval, maxval, value2color = results_list[list_prop]
-                    matrix_layout = profile_layouts.LayoutPropsMatrixOld(name=f"Numerical_matrix_{list_prop}", 
-                        matrix=matrix, matrix_type='numerical', matrix_props=list_prop, is_list=True, 
-                        value_color=value2color, value_range=[minval, maxval], column=level,
-                        poswidth=args.column_width)
-                    level += 1
-                    layouts.append(matrix_layout)
-
         if layout == 'binary-matrix-layout':
             binary_props = args.binary_matrix_layout
-            matrix, value2color, is_list = binary2matrix(tree, binary_props)
+            matrix, value2color, is_list = binary2matrix(tree, binary_props, color_config=color_config)
             all_values = list(value2color.keys())
 
             matrix_layout = profile_layouts.LayoutPropsMatrixBinary(name=f"Binary_matrix_{binary_props}",
@@ -1379,50 +1340,50 @@ def get_bubble_layouts(tree, props, level, prop2type, padding_x=0, padding_y=0, 
 
     return layouts, level
 
-# def get_heatmap_layouts(tree, props, level, column_width=70, padding_x=1, padding_y=0, internal_rep='avg', color_config=None, norm_method='min-max'):
-#     layouts = []
-#     all_prop_values = [list(set(tree_prop_array(tree, prop))) for prop in props]
-#     all_prop_values = np.array(flatten(all_prop_values)).astype('float64')
+def get_heatmap_layouts(tree, props, level, column_width=70, padding_x=1, padding_y=0, internal_rep='avg', color_config=None, norm_method='min-max'):
+    layouts = []
+    all_prop_values = [list(set(tree_prop_array(tree, prop))) for prop in props]
+    all_prop_values = np.array(flatten(all_prop_values)).astype('float64')
     
-#     for prop in props:
-#         if color_config and color_config.get(prop) is not None:
-#             prop_config = color_config[prop]
+    for prop in props:
+        if color_config and color_config.get(prop) is not None:
+            prop_config = color_config[prop]
             
-#             color_dict = {}
+            color_dict = {}
 
-#             # First, try to use value2color mappings if they exist and are applicable
-#             if 'value2color' in prop_config and prop_config['value2color']:
-#                 color_dict = prop_config['value2color']
-#                 sorted_color_dict = {float(key): value for key, value in color_dict.items()}
-#                 gradientscolor = sorted_color_dict.values()
-#             elif 'detail2color' in prop_config and prop_config['detail2color']:
-#                 min_color = prop_config['detail2color'].get('color_min', 'white')
-#                 max_color = prop_config['detail2color'].get('color_max', 'red')
-#                 mid_color = prop_config['detail2color'].get('color_mid', None)
-#                 gradientscolor = build_custom_gradient(20, min_color, max_color, mid_color)
-#         else:
-#             if norm_method == 'min-max':
-#                 gradientscolor = build_color_gradient(20, colormap_name="Reds")
-#             else: # "mean" "zscore"
-#                 gradientscolor = build_color_gradient(20, colormap_name="coolwarm")
+            # First, try to use value2color mappings if they exist and are applicable
+            if 'value2color' in prop_config and prop_config['value2color']:
+                color_dict = prop_config['value2color']
+                sorted_color_dict = {float(key): value for key, value in color_dict.items()}
+                gradientscolor = sorted_color_dict.values()
+            elif 'detail2color' in prop_config and prop_config['detail2color']:
+                min_color = prop_config['detail2color'].get('color_min', 'white')
+                max_color = prop_config['detail2color'].get('color_max', 'red')
+                mid_color = prop_config['detail2color'].get('color_mid', None)
+                gradientscolor = build_custom_gradient(20, min_color, max_color, mid_color)
+        else:
+            if norm_method == 'min-max':
+                gradientscolor = build_color_gradient(20, colormap_name="Reds")
+            else: # "mean" "zscore"
+                gradientscolor = build_color_gradient(20, colormap_name="coolwarm")
 
-#         minval, maxval = all_prop_values.min(), all_prop_values.max()
-#         mean_val = all_prop_values.mean()
-#         std_val = all_prop_values.std()
+        minval, maxval = all_prop_values.min(), all_prop_values.max()
+        mean_val = all_prop_values.mean()
+        std_val = all_prop_values.std()
         
-#         # layout =  staple_layouts.LayoutHeatmap(name='Heatmap_'+prop, column=level, 
-#         #             width=column_width, padding_x=padding_x, padding_y=padding_y, \
-#         #             internal_rep=internal_rep, prop=prop, maxval=maxval, minval=minval)
-#         layout = staple_layouts.LayoutHeatmap(name='Heatmap_'+prop, column=level, 
-#                     width=column_width, padding_x=padding_x, padding_y=padding_y, \
-#                     internal_rep=internal_rep, prop=prop, maxval=maxval, minval=minval,\
-#                     mean_val=mean_val, std_val=std_val, \
-#                     color_dict=gradientscolor, norm_method=norm_method)
-#         layouts.append(layout)  
-#         level += 1
-#     return layouts, level
+        # layout =  staple_layouts.LayoutHeatmap(name='Heatmap_'+prop, column=level, 
+        #             width=column_width, padding_x=padding_x, padding_y=padding_y, \
+        #             internal_rep=internal_rep, prop=prop, maxval=maxval, minval=minval)
+        layout = staple_layouts.LayoutHeatmap(name='Heatmap_'+prop, column=level, 
+                    width=column_width, padding_x=padding_x, padding_y=padding_y, \
+                    internal_rep=internal_rep, prop=prop, maxval=maxval, minval=minval,\
+                    mean_val=mean_val, std_val=std_val, \
+                    color_dict=gradientscolor, norm_method=norm_method)
+        layouts.append(layout)  
+        level += 1
+    return layouts, level
 
-def get_heatmap_layout(layout_name, numerical_props, norm_method, internal_num_rep, color_config, args, level):
+def get_heatmap_matrix_layouts(layout_name, numerical_props, norm_method, internal_num_rep, color_config, args, level):
     layouts = []
     matrix, minval, maxval, value2color, results_list, list_props = numerical2matrix(tree,
                                                             numerical_props,
@@ -1825,6 +1786,9 @@ def binary2matrix(tree, profiling_props, color_config=None):
     binary2color = {True: 1, False: 0}
     node2matrix = {}
     counter_separator = '||'
+    all_props_wildcard = '*'
+    value2color = {}
+
     for node in tree.traverse():
         node2matrix[node.name] = []
         for profiling_prop in profiling_props:
@@ -1833,7 +1797,6 @@ def binary2matrix(tree, profiling_props, color_config=None):
                 if prop_value is not None:  
                     if isinstance(prop_value, list):  # Check if the property value is a list
                         is_list = True  # Set is_array to True upon finding the first list
-                        
                         for array_element in prop_value:
                             node2matrix[node.name].append(binary2color.get(utils.str2bool(array_element)))
                     else:  # If not a list, directly handle the single value case
@@ -1847,9 +1810,21 @@ def binary2matrix(tree, profiling_props, color_config=None):
                     ratio = utils.counter2ratio(node, representative_prop)
                     node2matrix[node.name].append(ratio)
 
-    #get color
+    if color_config:
+        if color_config.get(all_props_wildcard) is not None:
+            prop_config = color_config[all_props_wildcard]
+            if 'value2color' in prop_config and prop_config['value2color']:
+                value2color = prop_config['value2color']
+                value2color = {float(key): value for key, value in value2color.items()}
+        if profiling_props:
+            for profiling_prop in profiling_props:
+                if color_config.get(profiling_prop) is not None:
+                    prop_config = color_config[profiling_prop]
+                    if 'value2color' in prop_config and prop_config['value2color']:
+                        value2color = prop_config['value2color']
+                        value2color = {float(key): value for key, value in value2color.items()}
+    
     gradientscolor = build_color_gradient(20, colormap_name='Reds')
-    value2color = {}
     
     # get color for binary value 0 to 1
     all_values_raw = list(set(flatten([sublist for sublist in node2matrix.values()])))
