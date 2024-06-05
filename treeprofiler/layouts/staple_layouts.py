@@ -531,6 +531,7 @@ class LayoutBubble(TreeLayout):
             node.sm_style["fgcolor"] = bubble_color
         
         elif node.props.get(self.internal_prop):
+            number = node.props.get(self.internal_prop)
             if number > 0:
                 bubble_color = self.positive_color
             else:

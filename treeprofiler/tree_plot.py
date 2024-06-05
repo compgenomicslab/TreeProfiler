@@ -188,7 +188,7 @@ def poplulate_plot_args(plot_args_p):
     group.add_argument('--bubble-layout',
         nargs='+',
         required=False,
-        help="<prop1> <prop2> names of properties which need to be plot as bubble-layout")
+        help="(experimental) <prop1> <prop2> names of properties which need to be plot as bubble-layout")
     group.add_argument('--background-layout',
         nargs='+',
         required=False,
