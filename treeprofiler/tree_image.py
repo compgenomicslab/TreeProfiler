@@ -10,9 +10,10 @@ DRIVER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'chromedriver'
 
 def tree_session(tree, layouts, port):
     #t = Tree(TREEFILE, format=1)
-    tree.explore(tree_name='example', layouts=layouts, show_leaf_name=True, 
-                show_branch_length=True, show_branch_support=True, port=port,
-                custom_api={}, custom_route={}) 
+    tree.explore(layouts=layouts, keep_server=True, open_browser=False, compress=False,  
+                show_leaf_name=True, show_branch_length=True, show_branch_support=True, port=port,
+    ) 
+    #time.sleep(10)
 
 def snap_tree(port, plot_file):
     url = 'http://127.0.0.1:{}/'.format(str(port))
@@ -36,7 +37,7 @@ def snap_tree(port, plot_file):
     while not os.path.exists(file_path):
         time.sleep(1)
     #file_path = 'examples/basic_example1/basic_example1_annotated.png'
-
+    
     # Move the file
     os.rename(file_path, plot_file)
 
@@ -47,9 +48,10 @@ def get_image(tree, layouts, port, plot_file):
     p2 = Process(target=snap_tree, args=(port, plot_file, ))
     print(plot_file)
     p1.start()
-    time.sleep(1)
-    p2.start()
     time.sleep(2)
-    p1.terminate()
-    p1.join()
+    p2.start()
+    time.sleep(4)
+    p1.kill()
+    p2.kill()
+    #p1.join()
 #main(annotated_tree, layouts, port, plot_file)

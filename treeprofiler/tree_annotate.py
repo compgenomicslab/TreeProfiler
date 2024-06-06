@@ -1175,12 +1175,15 @@ def process_node(node_data):
             internal_props.update(internal_props_num)
 
     # Generate consensus sequence
+    
     consensus_seq = None
     if alignment:  # Assuming 'alignment' is a condition to check
-        if name2seq is not None:
-            matrix_string = build_matrix_string(node, name2seq)  # Assuming 'name2seq' is accessible here
-            consensus_seq = get_consensus_seq(matrix_string, threshold=0.7)
-    
+        aln_sum = column2method.get('alignment')
+        if aln_sum is not None and aln_sum != 'none':
+            if name2seq is not None:
+                matrix_string = build_matrix_string(node, name2seq)  # Assuming 'name2seq' is accessible here
+                consensus_seq = get_consensus_seq(matrix_string, threshold=0.7)
+        
     return internal_props, consensus_seq
 
 def merge_text_annotations(nodes, target_props, column2method):
