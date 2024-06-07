@@ -1576,7 +1576,9 @@ def numerical2matrix(tree, profiling_props, count_negative=True, internal_num_re
 
     def process_color_configuration(node2matrix, profiling_props=None):
         # Get color configuration
-        negative_color = 'black'
+        nan_color = 'black'
+        absence_color = '#EBEBEB'
+
         value2color = {}
         all_props_wildcard = '*'
         if color_config:
@@ -1633,26 +1635,31 @@ def numerical2matrix(tree, profiling_props, count_negative=True, internal_num_re
         #             value2color[search_value] = gradientscolor[index]
         
         num = len(gradientscolor)
-        for search_value in all_values:
+        for search_value in all_values_raw:
+            if search_value is None:
+                value2color[search_value] = absence_color
+            elif math.isnan(search_value):
+                value2color[search_value] = nan_color
             #value2color[search_value] = _get_color(search_value, gradientscolor, norm_method)
-            search_value = float(search_value)
-            if search_value not in value2color:
-                if not count_negative and search_value < 0:
-                    value2color[search_value] = negative_color
-                else:
-                    if norm_method == "min-max":
-                        normalized_value = min_max_normalize(search_value, minval, maxval)
-                        index_values = np.linspace(0, 1, num)
-                    elif norm_method == "mean":
-                        normalized_value = mean_normalize(search_value, mean_val, minval, maxval)
-                        index_values = np.linspace(-1, 1, num)
-                    elif norm_method == "zscore":
-                        normalized_value = z_score_normalize(search_value, mean_val, std_val)
-                        index_values = np.linspace(-3, 3, num)
+            else:
+                search_value = float(search_value)
+                if search_value not in value2color:
+                    if not count_negative and search_value < 0:
+                        value2color[search_value] = nan_color
                     else:
-                        raise ValueError("Unsupported normalization method.")
-                    index = np.abs(index_values - normalized_value).argmin() + 1
-                    value2color[search_value] = gradientscolor.get(index, "")
+                        if norm_method == "min-max":
+                            normalized_value = min_max_normalize(search_value, minval, maxval)
+                            index_values = np.linspace(0, 1, num)
+                        elif norm_method == "mean":
+                            normalized_value = mean_normalize(search_value, mean_val, minval, maxval)
+                            index_values = np.linspace(-1, 1, num)
+                        elif norm_method == "zscore":
+                            normalized_value = z_score_normalize(search_value, mean_val, std_val)
+                            index_values = np.linspace(-3, 3, num)
+                        else:
+                            raise ValueError("Unsupported normalization method.")
+                        index = np.abs(index_values - normalized_value).argmin() + 1
+                        value2color[search_value] = gradientscolor.get(index, "")
         return minval, maxval, value2color
 
     # Process single values
