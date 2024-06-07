@@ -1091,15 +1091,16 @@ def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, 
     #name2leaf = {}
     multi_text_seperator = ','
 
-    name2leaf = defaultdict(list)
+    name2node = defaultdict(list)
     # preload all leaves to save time instead of search in tree
-    for leaf in tree.leaves():
-        name2leaf[leaf.name].append(leaf)
+    for node in tree.traverse():
+        if node.name:
+            name2node[node.name].append(node)
     
     # load all metadata to leaf nodes
     for node, props in metadata_dict.items():
-        if node in name2leaf.keys():
-            target_nodes = name2leaf[node]
+        if node in name2node.keys():
+            target_nodes = name2node[node]
             for target_node in target_nodes:
                 for key,value in props.items():
                     # taxa
