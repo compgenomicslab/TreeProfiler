@@ -293,6 +293,7 @@ class LayoutColorbranch(TreeLayout):
                 node.sm_style["hz_line_width"] = 2
                 node.sm_style["vt_line_color"] = self.color_dict.get(prop_text,"")
                 node.sm_style["vt_line_width"] = 2
+                node.sm_style['outline_color'] = self.color_dict.get(prop_text,"")
                 node.add_face(RectFace(width=self.width, height=None, color=self.absence_color, \
                     padding_x=self.padding_x , padding_y=self.padding_y, tooltip=None),column=self.column, position="aligned")
         
@@ -300,7 +301,8 @@ class LayoutColorbranch(TreeLayout):
             stackedbar_face = get_stackedbarface(node, self.internal_prop, self.color_dict, width=self.width, padding_x=self.padding_x, padding_y=self.padding_y)
             node.add_face(stackedbar_face, column = self.column, position = "aligned", collapsed_only=False)
 
-        elif node.props.get(self.internal_prop):
+
+        if node.props.get(self.internal_prop):
             stackedbar_face = get_stackedbarface(node, self.internal_prop, self.color_dict, width=self.width, padding_x=self.padding_x, padding_y=self.padding_y)
             node.add_face(stackedbar_face, column = self.column, position = "aligned", collapsed_only=True)
         
@@ -445,7 +447,6 @@ class LayoutBackground(TreeLayout):
                 prop_text = ",".join(prop_text)
             else:
                 pass
-
             tooltip = ""
             if node.name:
                 tooltip += f'<b>{node.name}</b><br>'
@@ -458,6 +459,7 @@ class LayoutBackground(TreeLayout):
                     stroke_color=color, stroke_width=2, line_type=0, opacity=0.8)
                 node.sm_style["bgcolor"] = color
                 node.sm_style["fgopacity"] = 0.5
+                node.sm_style['outline_color'] = color
                 node.add_face(align_link_face,
                     position='branch_right',
                     #column=self.column,
@@ -466,7 +468,7 @@ class LayoutBackground(TreeLayout):
             stackedbar_face = get_stackedbarface(node, self.internal_prop, self.color_dict, width=self.width, padding_x=self.padding_x, padding_y=self.padding_y)
             node.add_face(stackedbar_face, column = self.column, position = "aligned", collapsed_only=False)
 
-        elif node.props.get(self.internal_prop):
+        if node.props.get(self.internal_prop):
             stackedbar_face = get_stackedbarface(node, self.internal_prop, self.color_dict, width=self.width, padding_x=self.padding_x, padding_y=self.padding_y)
             node.add_face(stackedbar_face, column = self.column, position = "aligned", collapsed_only=True)
         # else:

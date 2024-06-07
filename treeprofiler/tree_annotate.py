@@ -1090,13 +1090,14 @@ def infer_dtype(column):
 def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, taxon_delimiter='', taxa_field=0, ignore_unclassified=False):
     #name2leaf = {}
     multi_text_seperator = ','
+    common_ancestor_seperator = '||'
 
     name2node = defaultdict(list)
     # preload all leaves to save time instead of search in tree
     for node in tree.traverse():
         if node.name:
             name2node[node.name].append(node)
-    
+
     # load all metadata to leaf nodes
     for node, props in metadata_dict.items():
         if node in name2node.keys():
@@ -1131,7 +1132,38 @@ def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, 
                     else:
                         target_node.add_prop(key, value)
         else:
-            pass
+            if common_ancestor_seperator in node:
+                # get the common ancestor
+                children = node.split(common_ancestor_seperator)
+                target_node = tree.common_ancestor(children)
+                for key,value in props.items():
+                    # taxa
+                    if key == taxon_column:
+                        if taxon_delimiter:
+                            taxon_prop = value.split(taxon_delimiter)[taxa_field]
+                        else:
+                            taxon_prop = value
+                        target_node.add_prop(key, taxon_prop)
+                    
+                    # numerical
+                    elif key in prop2type and prop2type[key]==float:
+                        try:
+                            flot_value = float(value)
+                            if math.isnan(flot_value):
+                                target_node.add_prop(key, 'NaN')
+                            else:
+                                target_node.add_prop(key, flot_value)
+                        except (ValueError,TypeError):
+                            target_node.add_prop(key, 'NaN')
+
+                    # categorical
+                    # list
+                    elif key in prop2type and prop2type[key]==list:
+                        value_list = value.split(multi_text_seperator)
+                        target_node.add_prop(key, value_list)
+                    # str
+                    else:
+                        target_node.add_prop(key, value)
 
         # hits = tree.get_leaves_by_name(node)
         # if hits:
