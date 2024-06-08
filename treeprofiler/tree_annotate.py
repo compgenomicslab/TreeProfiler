@@ -59,7 +59,7 @@ def populate_annotate_args(parser):
         help="column separator of metadata table [default: \\t]")
     add('--no-headers', action='store_true',
         help="metadata table doesn't contain columns name")
-    add('--aggregate-duplicate', action='store_true',
+    add('--duplicate', action='store_true',
         help="treeprofiler will aggregate duplicated metadata to a list as a property if metadata contains duplicated row")
     add('--text-prop', nargs='+',
         help=("<col1> <col2> names, column index or index range of columns which "
@@ -701,7 +701,7 @@ def run(args):
     # parsing metadata
     if args.metadata: # make a series of metadatas
         metadata_dict, node_props, columns, prop2type = parse_csv(args.metadata, delimiter=args.metadata_sep, \
-        no_headers=args.no_headers, aggregate_duplicate=args.aggregate_duplicate)
+        no_headers=args.no_headers, duplicate=args.duplicate)
     else: # annotated_tree
         node_props=[]
         columns = {}
@@ -829,7 +829,7 @@ def check_tar_gz(file_path):
     except tarfile.ReadError:
         return False
 
-def parse_csv(input_files, delimiter='\t', no_headers=False, aggregate_duplicate=False):
+def parse_csv(input_files, delimiter='\t', no_headers=False, duplicate=False):
     """
     Takes tsv table as input
     Return
@@ -853,7 +853,7 @@ def parse_csv(input_files, delimiter='\t', no_headers=False, aggregate_duplicate
 
             if nodename in metadata.keys():
                 for prop, value in row.items():
-                    if aggregate_duplicate:
+                    if duplicate:
                         if prop in metadata[nodename]:
                             exisiting_value = metadata[nodename][prop]
                             new_value = ','.join([exisiting_value,value])
@@ -926,7 +926,7 @@ def parse_csv(input_files, delimiter='\t', no_headers=False, aggregate_duplicate
 
                     if nodename in metadata.keys():
                         for prop, value in row.items():
-                            if aggregate_duplicate:
+                            if duplicate:
                                 if prop in metadata[nodename]:
                                     exisiting_value = metadata[nodename][prop]
                                     new_value = ','.join([exisiting_value,value])
