@@ -639,7 +639,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
     return annotated_tree, prop2type
 
 
-def run_array_annotate(tree, array_dict, num_stat='none'):
+def run_array_annotate(tree, array_dict, num_stat='none', column2method={}):
     matrix_props = list(array_dict.keys())
     # annotate to the leaves
     for node in tree.traverse():
@@ -655,6 +655,10 @@ def run_array_annotate(tree, array_dict, num_stat='none'):
             for prop in matrix_props:
                 # get the array from the children leaf nodes
                 arrays = [child.get_prop(prop) for child in node.leaves() if child.get_prop(prop) is not None]
+                
+                if column2method.get(prop) is not None:
+                    num_stat = column2method.get(prop)
+
                 stats = compute_matrix_statistics(arrays, num_stat=num_stat)
                 if stats:
                     for stat, value in stats.items():
@@ -768,7 +772,7 @@ def run(args):
             threads=args.threads, outdir=args.outdir)
 
     if args.data_matrix:
-        annotated_tree = run_array_annotate(annotated_tree, array_dict, num_stat=args.num_stat)
+        annotated_tree = run_array_annotate(annotated_tree, array_dict, num_stat=args.num_stat, column2method=column2method)
 
     
     if args.outdir:
@@ -902,17 +906,28 @@ def parse_csv(input_files, delimiter='\t', no_headers=False, duplicate=False):
 
         else:          
             with open(input_file, 'r') as f:
+                # Read the first line to determine the number of fields
+                first_line = next(f)
+                fields_len = len(first_line.split(delimiter))
+
+                
+
+                # Reset the file pointer to the beginning
+                f.seek(0)
+
                 if no_headers:
-                    fields_len = len(next(f).split(delimiter))
+                    # Generate header names
                     headers = ['col'+str(i) for i in range(fields_len)]
+                    # Create a CSV reader with the generated headers
                     reader = csv.DictReader(f, delimiter=delimiter, fieldnames=headers)
                 else:
+                    # Use the existing headers in the file
                     reader = csv.DictReader(f, delimiter=delimiter)
                     headers = reader.fieldnames
+
                 node_header, node_props = headers[0], headers[1:]
 
                 for row in reader:
-
                     nodename = row[node_header]
                     del row[node_header]
 
@@ -923,7 +938,7 @@ def parse_csv(input_files, delimiter='\t', no_headers=False, duplicate=False):
                             row[k] = 'NaN'
                         else:
                             row[k] = v
-
+                    
                     if nodename in metadata.keys():
                         for prop, value in row.items():
                             if duplicate:
