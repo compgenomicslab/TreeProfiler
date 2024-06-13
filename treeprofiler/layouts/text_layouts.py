@@ -289,6 +289,9 @@ class LayoutColorbranch(TreeLayout):
             if self.color_dict:
                 node.add_face(TextFace(node.name, color = self.color_dict.get(prop_text,""), 
                 padding_x=self.padding_x),column=0, position="branch_right")
+                node.add_face(TextFace(node.name, color = self.color_dict.get(prop_text,""), 
+                padding_x=self.padding_x),column=self.column, position="branch_right", collapsed_only=True)
+
                 node.sm_style["hz_line_color"] = self.color_dict.get(prop_text,"")
                 node.sm_style["hz_line_width"] = 2
                 node.sm_style["vt_line_color"] = self.color_dict.get(prop_text,"")

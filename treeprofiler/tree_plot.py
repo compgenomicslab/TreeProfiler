@@ -110,7 +110,7 @@ def poplulate_plot_args(plot_args_p):
         default=200,
         help="customize barplot width of barplot layout.[default: 200]"
     )
-    group.add_argument('--barplot-anchor',
+    group.add_argument('--barplot-scale',
         type=str,
         default=None,
         help="find the barplot column as scale anchor.[default: None]"
@@ -537,7 +537,7 @@ def run(args):
         if layout == 'barplot-layout':
             barplot_layouts, level, color_dict = get_barplot_layouts(tree, args.barplot_layout, level, 
             prop2type, column_width=args.barplot_width, padding_x=args.padding_x, padding_y=args.padding_y, 
-            internal_rep=internal_num_rep, anchor_column=args.barplot_anchor, color_config=color_config)
+            internal_rep=internal_num_rep, anchor_column=args.barplot_scale, color_config=color_config)
             layouts.extend(barplot_layouts)
             total_color_dict.append(color_dict)
             visualized_props.extend(args.barplot_layout)
@@ -944,6 +944,7 @@ def get_ls_layouts(tree, props, level, prop2type, padding_x=1, padding_y=0, colo
     layouts = []
     ls_props = []
     for prop in props:
+        value2color = {}
         if color_config and color_config.get(prop) is not None:
             prop_config = color_config[prop]
             
@@ -962,21 +963,32 @@ def get_ls_layouts(tree, props, level, prop2type, padding_x=1, padding_y=0, colo
             gradientscolor = build_color_gradient(20, colormap_name='bwr')
 
         for suffix in [precision_suffix, sensitivity_suffix, f1_suffix]:
+            
             ls_prop = add_suffix(prop, suffix)
             minval, maxval = 0, 1
             
+            # get value
+            internalnode_all_values = np.array(sorted(list(set(tree_prop_array(tree, ls_prop))))).astype('float64')
+            all_values = internalnode_all_values[~np.isnan(internalnode_all_values)]
+            num = len(gradientscolor)
+            index_values = np.linspace(minval, maxval, num)
+            for search_value in all_values:
+                if search_value not in value2color:
+                    index = np.abs(index_values - search_value).argmin()+1
+                    value2color[search_value] = gradientscolor[index]
+                    
             # layout = staple_layouts.LayoutBranchScore(name='BranchScore_'+prop, \
             # color_dict=gradientscolor, score_prop=prop, internal_rep=internal_rep, \
             # value_range=[minval, maxval], \
             # color_range=[gradientscolor[20], gradientscolor[10], gradientscolor[1]])
             if suffix != "f1":
                 layout = staple_layouts.LayoutBranchScore(name='ls_'+ls_prop, \
-                    color_dict=gradientscolor, score_prop=ls_prop, value_range=[minval, maxval], \
+                    color_dict=value2color, score_prop=ls_prop, value_range=[minval, maxval], \
                     color_range=[gradientscolor[20], gradientscolor[10], gradientscolor[1]], 
                     show_score=True, active=False)
             else:
                 layout = staple_layouts.LayoutBranchScore(name='ls_'+ls_prop, \
-                    color_dict=gradientscolor, score_prop=ls_prop, value_range=[minval, maxval], \
+                    color_dict=value2color, score_prop=ls_prop, value_range=[minval, maxval], \
                     color_range=[gradientscolor[20], gradientscolor[10], gradientscolor[1]], 
                     show_score=True)
             
@@ -1188,7 +1200,7 @@ def get_branchscore_layouts(tree, props, prop2type, padding_x=1, padding_y=0, in
 
         minval, maxval = all_values.min(), all_values.max()
 
-        value2color = {}
+        
         if color_config and color_config.get(prop) is not None:
             prop_config = color_config[prop]
             
@@ -1210,7 +1222,7 @@ def get_branchscore_layouts(tree, props, prop2type, padding_x=1, padding_y=0, in
         # preload corresponding gradient color of each value
         num = len(gradientscolor)
         index_values = np.linspace(minval, maxval, num)
-        
+        value2color = {}
         for search_value in all_values:
             if search_value not in value2color:
                 index = np.abs(index_values - search_value).argmin()+1

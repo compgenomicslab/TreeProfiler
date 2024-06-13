@@ -163,7 +163,7 @@ def populate_annotate_args(parser):
         required=False,
         help="Calculate delta statistic for discrete traits in ACR analysis, ONLY for MPPA or MAP prediction method.[default: False]"
     )
-    delta_group.add_argument('--ent_type',
+    delta_group.add_argument('--ent-type',
         default='SE',
         choices=['LSE', 'SE', 'GINI'],
         type=str,
@@ -449,9 +449,9 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         # need to be discrete traits
         discrete_traits = text_prop + bool_prop
         for k in acr_discrete_columns:
-            if k not in discrete_traits:
-                raise ValueError(f"Character {k} is not discrete trait, please check your input.")
-
+            if k:
+                if k not in discrete_traits:
+                    raise ValueError(f"Character {k} is not discrete trait, please check your input.")
         #############################
         start = time.time()
         acr_discrete_columns_dict = {k: v for k, v in columns.items() if k in acr_discrete_columns}
@@ -1225,12 +1225,11 @@ def process_node(node_data):
     # Generate consensus sequence
     
     consensus_seq = None
-    if alignment:  # Assuming 'alignment' is a condition to check
+    if alignment and name2seq is not None:  # Check alignment and name2seq together
         aln_sum = column2method.get('alignment')
-        if aln_sum is not None and aln_sum != 'none':
-            if name2seq is not None:
-                matrix_string = build_matrix_string(node, name2seq)  # Assuming 'name2seq' is accessible here
-                consensus_seq = get_consensus_seq(matrix_string, threshold=0.7)
+        if aln_sum is None or aln_sum != 'none':
+            matrix_string = build_matrix_string(node, name2seq)  # Assuming 'name2seq' is accessible here
+            consensus_seq = get_consensus_seq(matrix_string, threshold=0.7)
         
     return internal_props, consensus_seq
 
