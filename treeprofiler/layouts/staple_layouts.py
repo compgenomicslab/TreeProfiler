@@ -410,7 +410,7 @@ class LayoutBranchScore(TreeLayout):
                                     color_range=self.color_range,
                                     )
 
-    # def _get_color(self, search_value):
+    # def _get_color_for_score(self, search_value):
     #     num = len(self.color_dict)
     #     index_values = np.linspace(self.value_range[0], self.value_range[1], num)
     #     index = np.abs(index_values - search_value).argmin() + 1
@@ -426,10 +426,9 @@ class LayoutBranchScore(TreeLayout):
             node.sm_style["vt_line_width"] = self.line_width
             node.sm_style["outline_color"] = self.color_dict.get(prop_score)
             
-
             if self.show_score:                
                 node.add_face(
-                    TextFace("%.2f" % (float(prop_score)), color=self._get_color(prop_score)),
+                    TextFace("%.2f" % (float(prop_score)), color=self.color_dict.get(prop_score)),
                     position="branch_bottom")
 
         elif node.is_leaf and node.props.get(self.internal_prop):
@@ -443,7 +442,7 @@ class LayoutBranchScore(TreeLayout):
             
             if self.show_score:                
                 node.add_face(
-                    TextFace("%.2f" % (float(prop_score)), color=self._get_color(prop_score)),
+                    TextFace("%.2f" % (float(prop_score)), color=self.color_dict.get(prop_score)),
                     position="branch_bottom")
 
         elif node.props.get(self.internal_prop):
@@ -457,7 +456,7 @@ class LayoutBranchScore(TreeLayout):
 
             if self.show_score:                
                 node.add_face(
-                    TextFace("%.2f" % (float(prop_score)), color=self._get_color(prop_score)),
+                    TextFace("%.2f" % (float(prop_score)), color=self.color_dict.get(prop_score)),
                     position="branch_bottom")
 
 class LayoutBubble(TreeLayout):

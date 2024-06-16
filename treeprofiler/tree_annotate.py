@@ -59,7 +59,7 @@ def populate_annotate_args(parser):
         help="column separator of metadata table [default: \\t]")
     add('--no-headers', action='store_true',
         help="metadata table doesn't contain columns name")
-    add('--aggregate-duplicate', action='store_true',
+    add('--duplicate', action='store_true',
         help="treeprofiler will aggregate duplicated metadata to a list as a property if metadata contains duplicated row")
     add('--text-prop', nargs='+',
         help=("<col1> <col2> names, column index or index range of columns which "
@@ -163,7 +163,7 @@ def populate_annotate_args(parser):
         required=False,
         help="Calculate delta statistic for discrete traits in ACR analysis, ONLY for MPPA or MAP prediction method.[default: False]"
     )
-    delta_group.add_argument('--ent_type',
+    delta_group.add_argument('--ent-type',
         default='SE',
         choices=['LSE', 'SE', 'GINI'],
         type=str,
@@ -449,9 +449,9 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         # need to be discrete traits
         discrete_traits = text_prop + bool_prop
         for k in acr_discrete_columns:
-            if k not in discrete_traits:
-                raise ValueError(f"Character {k} is not discrete trait, please check your input.")
-
+            if k:
+                if k not in discrete_traits:
+                    raise ValueError(f"Character {k} is not discrete trait, please check your input.")
         #############################
         start = time.time()
         acr_discrete_columns_dict = {k: v for k, v in columns.items() if k in acr_discrete_columns}
@@ -639,7 +639,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
     return annotated_tree, prop2type
 
 
-def run_array_annotate(tree, array_dict, num_stat='none'):
+def run_array_annotate(tree, array_dict, num_stat='none', column2method={}):
     matrix_props = list(array_dict.keys())
     # annotate to the leaves
     for node in tree.traverse():
@@ -655,6 +655,10 @@ def run_array_annotate(tree, array_dict, num_stat='none'):
             for prop in matrix_props:
                 # get the array from the children leaf nodes
                 arrays = [child.get_prop(prop) for child in node.leaves() if child.get_prop(prop) is not None]
+                
+                if column2method.get(prop) is not None:
+                    num_stat = column2method.get(prop)
+
                 stats = compute_matrix_statistics(arrays, num_stat=num_stat)
                 if stats:
                     for stat, value in stats.items():
@@ -701,7 +705,7 @@ def run(args):
     # parsing metadata
     if args.metadata: # make a series of metadatas
         metadata_dict, node_props, columns, prop2type = parse_csv(args.metadata, delimiter=args.metadata_sep, \
-        no_headers=args.no_headers, aggregate_duplicate=args.aggregate_duplicate)
+        no_headers=args.no_headers, duplicate=args.duplicate)
     else: # annotated_tree
         node_props=[]
         columns = {}
@@ -768,7 +772,7 @@ def run(args):
             threads=args.threads, outdir=args.outdir)
 
     if args.data_matrix:
-        annotated_tree = run_array_annotate(annotated_tree, array_dict, num_stat=args.num_stat)
+        annotated_tree = run_array_annotate(annotated_tree, array_dict, num_stat=args.num_stat, column2method=column2method)
 
     
     if args.outdir:
@@ -829,7 +833,7 @@ def check_tar_gz(file_path):
     except tarfile.ReadError:
         return False
 
-def parse_csv(input_files, delimiter='\t', no_headers=False, aggregate_duplicate=False):
+def parse_csv(input_files, delimiter='\t', no_headers=False, duplicate=False):
     """
     Takes tsv table as input
     Return
@@ -853,7 +857,7 @@ def parse_csv(input_files, delimiter='\t', no_headers=False, aggregate_duplicate
 
             if nodename in metadata.keys():
                 for prop, value in row.items():
-                    if aggregate_duplicate:
+                    if duplicate:
                         if prop in metadata[nodename]:
                             exisiting_value = metadata[nodename][prop]
                             new_value = ','.join([exisiting_value,value])
@@ -902,17 +906,28 @@ def parse_csv(input_files, delimiter='\t', no_headers=False, aggregate_duplicate
 
         else:          
             with open(input_file, 'r') as f:
+                # Read the first line to determine the number of fields
+                first_line = next(f)
+                fields_len = len(first_line.split(delimiter))
+
+                
+
+                # Reset the file pointer to the beginning
+                f.seek(0)
+
                 if no_headers:
-                    fields_len = len(next(f).split(delimiter))
+                    # Generate header names
                     headers = ['col'+str(i) for i in range(fields_len)]
+                    # Create a CSV reader with the generated headers
                     reader = csv.DictReader(f, delimiter=delimiter, fieldnames=headers)
                 else:
+                    # Use the existing headers in the file
                     reader = csv.DictReader(f, delimiter=delimiter)
                     headers = reader.fieldnames
+
                 node_header, node_props = headers[0], headers[1:]
 
                 for row in reader:
-
                     nodename = row[node_header]
                     del row[node_header]
 
@@ -923,10 +938,10 @@ def parse_csv(input_files, delimiter='\t', no_headers=False, aggregate_duplicate
                             row[k] = 'NaN'
                         else:
                             row[k] = v
-
+                    
                     if nodename in metadata.keys():
                         for prop, value in row.items():
-                            if aggregate_duplicate:
+                            if duplicate:
                                 if prop in metadata[nodename]:
                                     exisiting_value = metadata[nodename][prop]
                                     new_value = ','.join([exisiting_value,value])
@@ -1090,13 +1105,14 @@ def infer_dtype(column):
 def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, taxon_delimiter='', taxa_field=0, ignore_unclassified=False):
     #name2leaf = {}
     multi_text_seperator = ','
+    common_ancestor_seperator = '||'
 
     name2node = defaultdict(list)
     # preload all leaves to save time instead of search in tree
     for node in tree.traverse():
         if node.name:
             name2node[node.name].append(node)
-    
+
     # load all metadata to leaf nodes
     for node, props in metadata_dict.items():
         if node in name2node.keys():
@@ -1131,7 +1147,38 @@ def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, 
                     else:
                         target_node.add_prop(key, value)
         else:
-            pass
+            if common_ancestor_seperator in node:
+                # get the common ancestor
+                children = node.split(common_ancestor_seperator)
+                target_node = tree.common_ancestor(children)
+                for key,value in props.items():
+                    # taxa
+                    if key == taxon_column:
+                        if taxon_delimiter:
+                            taxon_prop = value.split(taxon_delimiter)[taxa_field]
+                        else:
+                            taxon_prop = value
+                        target_node.add_prop(key, taxon_prop)
+                    
+                    # numerical
+                    elif key in prop2type and prop2type[key]==float:
+                        try:
+                            flot_value = float(value)
+                            if math.isnan(flot_value):
+                                target_node.add_prop(key, 'NaN')
+                            else:
+                                target_node.add_prop(key, flot_value)
+                        except (ValueError,TypeError):
+                            target_node.add_prop(key, 'NaN')
+
+                    # categorical
+                    # list
+                    elif key in prop2type and prop2type[key]==list:
+                        value_list = value.split(multi_text_seperator)
+                        target_node.add_prop(key, value_list)
+                    # str
+                    else:
+                        target_node.add_prop(key, value)
 
         # hits = tree.get_leaves_by_name(node)
         # if hits:
@@ -1178,12 +1225,11 @@ def process_node(node_data):
     # Generate consensus sequence
     
     consensus_seq = None
-    if alignment:  # Assuming 'alignment' is a condition to check
+    if alignment and name2seq is not None:  # Check alignment and name2seq together
         aln_sum = column2method.get('alignment')
-        if aln_sum is not None and aln_sum != 'none':
-            if name2seq is not None:
-                matrix_string = build_matrix_string(node, name2seq)  # Assuming 'name2seq' is accessible here
-                consensus_seq = get_consensus_seq(matrix_string, threshold=0.7)
+        if aln_sum is None or aln_sum != 'none':
+            matrix_string = build_matrix_string(node, name2seq)  # Assuming 'name2seq' is accessible here
+            consensus_seq = get_consensus_seq(matrix_string, threshold=0.7)
         
     return internal_props, consensus_seq
 
