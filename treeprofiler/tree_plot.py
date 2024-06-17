@@ -1591,6 +1591,7 @@ def numerical2matrix(tree, profiling_props, count_negative=True, internal_num_re
 
     def process_color_configuration(node2matrix, profiling_props=None):
         # Get color configuration
+        gradientscolor = None
         nan_color = 'black'
         absence_color = '#EBEBEB'
 
@@ -1611,6 +1612,7 @@ def numerical2matrix(tree, profiling_props, count_negative=True, internal_num_re
                 for profiling_prop in profiling_props:
                     if color_config.get(profiling_prop) is not None:
                         prop_config = color_config[profiling_prop]
+                        print(prop_config['detail2color'])
                         if 'value2color' in prop_config and prop_config['value2color']:
                             value2color = prop_config['value2color']
                             value2color = {float(key): value for key, value in value2color.items()}
@@ -1619,11 +1621,12 @@ def numerical2matrix(tree, profiling_props, count_negative=True, internal_num_re
                             max_color = prop_config['detail2color'].get('color_max', 'red')
                             mid_color = prop_config['detail2color'].get('color_mid', None)
                             gradientscolor = build_custom_gradient(20, min_color, max_color, mid_color)
-
-        if norm_method == 'min-max':
-            gradientscolor = build_color_gradient(20, colormap_name="Reds")
-        else: # "mean" "zscore"
-            gradientscolor = build_color_gradient(20, colormap_name="coolwarm")
+        
+        if not gradientscolor:
+            if norm_method == 'min-max':
+                gradientscolor = build_color_gradient(20, colormap_name="Reds")
+            else: # "mean" "zscore"
+                gradientscolor = build_color_gradient(20, colormap_name="coolwarm")
         
         all_values_raw = list(set(flatten([sublist for sublist in node2matrix.values()])))
         all_values = sorted(list(filter(lambda x: x is not None and not math.isnan(x), all_values_raw)))
