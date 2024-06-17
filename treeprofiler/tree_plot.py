@@ -1197,10 +1197,9 @@ def get_branchscore_layouts(tree, props, prop2type, padding_x=1, padding_y=0, in
         internalnode_all_values = np.array(sorted(list(set(tree_prop_array(tree, internal_prop))))).astype('float64')
         all_values = np.concatenate((leaf_all_values, internalnode_all_values))
         all_values = all_values[~np.isnan(all_values)]
-
+        value2color = {}
         minval, maxval = all_values.min(), all_values.max()
 
-        
         if color_config and color_config.get(prop) is not None:
             prop_config = color_config[prop]
             
@@ -1211,18 +1210,22 @@ def get_branchscore_layouts(tree, props, prop2type, padding_x=1, padding_y=0, in
                 color_dict = prop_config['value2color']
                 value2color = {float(key): value for key, value in color_dict.items()}
                 #gradientscolor = sorted_color_dict.values()
+            
             if 'detail2color' in prop_config and prop_config['detail2color']:
                 min_color = prop_config['detail2color'].get('color_min', 'white')
                 max_color = prop_config['detail2color'].get('color_max', 'red')
                 mid_color = prop_config['detail2color'].get('color_mid', None)
                 gradientscolor = build_custom_gradient(20, min_color, max_color, mid_color)
+            else:
+                gradientscolor = build_color_gradient(20, colormap_name='jet')
+
         else:
             gradientscolor = build_color_gradient(20, colormap_name='jet')
         
         # preload corresponding gradient color of each value
         num = len(gradientscolor)
         index_values = np.linspace(minval, maxval, num)
-        value2color = {}
+        
         for search_value in all_values:
             if search_value not in value2color:
                 index = np.abs(index_values - search_value).argmin()+1
@@ -1616,11 +1619,11 @@ def numerical2matrix(tree, profiling_props, count_negative=True, internal_num_re
                             max_color = prop_config['detail2color'].get('color_max', 'red')
                             mid_color = prop_config['detail2color'].get('color_mid', None)
                             gradientscolor = build_custom_gradient(20, min_color, max_color, mid_color)
-        else:
-            if norm_method == 'min-max':
-                gradientscolor = build_color_gradient(20, colormap_name="Reds")
-            else: # "mean" "zscore"
-                gradientscolor = build_color_gradient(20, colormap_name="coolwarm")
+
+        if norm_method == 'min-max':
+            gradientscolor = build_color_gradient(20, colormap_name="Reds")
+        else: # "mean" "zscore"
+            gradientscolor = build_color_gradient(20, colormap_name="coolwarm")
         
         all_values_raw = list(set(flatten([sublist for sublist in node2matrix.values()])))
         all_values = sorted(list(filter(lambda x: x is not None and not math.isnan(x), all_values_raw)))
