@@ -1612,7 +1612,6 @@ def numerical2matrix(tree, profiling_props, count_negative=True, internal_num_re
                 for profiling_prop in profiling_props:
                     if color_config.get(profiling_prop) is not None:
                         prop_config = color_config[profiling_prop]
-                        print(prop_config['detail2color'])
                         if 'value2color' in prop_config and prop_config['value2color']:
                             value2color = prop_config['value2color']
                             value2color = {float(key): value for key, value in value2color.items()}
