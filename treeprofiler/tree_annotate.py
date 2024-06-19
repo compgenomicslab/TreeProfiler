@@ -982,8 +982,10 @@ def parse_tsv_to_array(input_files, delimiter='\t', no_headers=True):
                 row = line.strip().split(delimiter)
                 node = row[0]  
                 value = row[1:]  # The rest of the items as value
+                # Replace empty string with np.nan
+                value_list = [np.nan if x == '' else x for x in value]
                 try:
-                    np_array = np.array(value).astype(np.float64)
+                    np_array = np.array(value_list).astype(np.float64)
                     leaf2array[node] = np_array.tolist()
                 except ValueError:
                     # Handle the case where conversion fails
