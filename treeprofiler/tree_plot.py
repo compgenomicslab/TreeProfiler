@@ -356,7 +356,7 @@ def run(args):
         # elif args.input_type == 'newick':
         #     popup_prop_keys = list(prop2type.keys()) 
     
-    
+    print(prop2type)
     # collapse tree by condition 
     if args.collapsed_by: # need to be wrap with quotes
         condition_strings = args.collapsed_by
@@ -1573,17 +1573,17 @@ def get_heatmap_matrix_layouts(layout_name, numerical_props, norm_method, intern
 def get_prop2type(node):
     output = {}
     prop2value = node.props
-
     if '_speciesFunction' in prop2value:
         del prop2value['_speciesFunction']
     
     for prop, value in prop2value.items():
-        if isinstance(value, numbers.Number):
-            output[prop] = float
-        elif type(value) == list:
-            output[prop] = list
-        else:
-            output[prop] = str    
+        if value != 'NaN':
+            if isinstance(value, numbers.Number):
+                output[prop] = float
+            elif type(value) == list:
+                output[prop] = list
+            else:
+                output[prop] = str    
     return output
 
 def categorical2matrix(tree, profiling_props, dtype=str, color_config=None):
@@ -1675,9 +1675,14 @@ def numerical2matrix(tree, profiling_props, count_negative=True, internal_num_re
         #index = np.abs(index_values - search_value).argmin() + 1
         return color_dict.get(index, "")
 
-    def parse_color_config(color_config, profiling_props, all_props_wildcard, min_color, max_color, mid_color, minval, maxval):
-        value2color = {}
+    def parse_color_config(color_config, profiling_props, all_props_wildcard, minval, maxval):
         gradientscolor = None
+        nan_color = '#EBEBEB'
+        #absence_color = '#EBEBEB'
+        max_color = 'red'
+        min_color = 'white'
+        mid_color = None
+        value2color = {}
         
         if color_config.get(all_props_wildcard) is not None:
             prop_config = color_config[all_props_wildcard]
@@ -1689,6 +1694,7 @@ def numerical2matrix(tree, profiling_props, count_negative=True, internal_num_re
                 temp_min_color, temp_min_val = detail2color.get('color_min', (None, None))
                 temp_max_color, temp_max_val = detail2color.get('color_max', (None, None))
                 temp_mid_color, temp_mid_val = detail2color.get('color_mid', (None, None))
+                temp_none_color, _ = detail2color.get('color_nan', (None, None))
 
                 if temp_max_color:
                     max_color = temp_max_color
@@ -1696,6 +1702,8 @@ def numerical2matrix(tree, profiling_props, count_negative=True, internal_num_re
                     min_color = temp_min_color
                 if temp_mid_color:
                     mid_color = temp_mid_color
+                if temp_none_color:
+                    nan_color = temp_none_color
                 if temp_min_val:
                     minval = float(temp_min_val)
                 if temp_max_val:
@@ -1728,15 +1736,9 @@ def numerical2matrix(tree, profiling_props, count_negative=True, internal_num_re
                             maxval = float(temp_max_val)
                         gradientscolor = build_custom_gradient(20, min_color, max_color, mid_color)
         
-        return value2color, gradientscolor, minval, maxval
+        return value2color, gradientscolor, minval, maxval, nan_color
 
     def process_color_configuration(node2matrix, profiling_props=None):
-        gradientscolor = None
-        nan_color = '#EBEBEB'
-        #absence_color = '#EBEBEB'
-        max_color = 'red'
-        min_color = 'white'
-        mid_color = None
         
         value2color = {}
         all_props_wildcard = '*'
@@ -1756,7 +1758,7 @@ def numerical2matrix(tree, profiling_props, count_negative=True, internal_num_re
             std_val = np.std(all_values)
 
         if color_config:
-            value2color, gradientscolor, minval, maxval = parse_color_config(color_config, profiling_props, all_props_wildcard, min_color, max_color, mid_color, minval, maxval)
+            value2color, gradientscolor, minval, maxval, nan_color = parse_color_config(color_config, profiling_props, all_props_wildcard, minval, maxval)
         
         if not gradientscolor:
             if norm_method == 'min-max':
