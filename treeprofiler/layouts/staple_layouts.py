@@ -273,6 +273,7 @@ class LayoutHeatmap(TreeLayout):
         self.value_color = value_color
         self.value_range = value_range
         self.color_range = color_range
+        self.absence_color = "#EBEBEB"
         self.maxval = maxval
         self.minval = minval
 
@@ -299,7 +300,7 @@ class LayoutHeatmap(TreeLayout):
                                     )
     def set_node_style(self, node):
         heatmap_num = node.props.get(self.heatmap_prop)
-        if heatmap_num is not None:
+        if heatmap_num is not None and heatmap_num != 'NaN':
             if node.is_leaf:
                 # heatmap
                 tooltip = ""
@@ -314,6 +315,7 @@ class LayoutHeatmap(TreeLayout):
                     identF = RectFace(width=self.width, height=self.height, text="%.2f" % (float(heatmap_num)), \
                     color=gradient_color, padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
                     node.add_face(identF, column = self.column,  position = 'aligned')
+            
         elif node.is_leaf and node.props.get(self.internal_prop):
             heatmap_num = node.props.get(self.internal_prop)
             # heatmap
@@ -345,6 +347,17 @@ class LayoutHeatmap(TreeLayout):
                 identF = RectFace(width=self.width, height=self.height, text="%.2f" % (float(heatmap_num)), \
                 color=gradient_color, padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
                 node.add_face(identF, column = self.column,  position = 'aligned', collapsed_only=True)
+
+        else:
+            # heatmap
+            tooltip = ""
+            if node.name:
+                tooltip += f'<b>{node.name}</b><br>'
+            if self.heatmap_prop:
+                tooltip += f'<br>{self.heatmap_prop}: {heatmap_num}<br>'
+
+            identF = RectFace(width=self.width, height=self.height, text="NA", color=self.absence_color, padding_x=self.padding_x, padding_y=self.padding_y, tooltip=None)
+            node.add_face(identF, column = self.column,  position = 'aligned', collapsed_only=False)
 
 class LayoutHeatmapOld(TreeLayout):
     def __init__(self, name=None, column=0, width=70, height=None, padding_x=1, padding_y=0, \

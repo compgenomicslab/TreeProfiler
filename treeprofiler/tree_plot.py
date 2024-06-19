@@ -918,7 +918,7 @@ def get_acr_continuous_layouts(tree, props, level, prop2type, padding_x=1, paddi
     gradientscolor = build_color_gradient(20, colormap_name='jet')
     layouts = []
     for prop in props:
-        all_values = np.array(sorted(list(set(tree_prop_array(tree, prop))))).astype('float64')
+        all_values = np.array(sorted(list(set(tree_prop_array(tree, prop, numeric=True))))).astype('float64')
         all_values = all_values[~np.isnan(all_values)]
         minval, maxval = all_values.min(), all_values.max()
         num = len(gradientscolor)
@@ -968,7 +968,7 @@ def get_ls_layouts(tree, props, level, prop2type, padding_x=1, padding_y=0, colo
             minval, maxval = 0, 1
             
             # get value
-            internalnode_all_values = np.array(sorted(list(set(tree_prop_array(tree, ls_prop))))).astype('float64')
+            internalnode_all_values = np.array(sorted(list(set(tree_prop_array(tree, ls_prop, numeric=True))))).astype('float64')
             all_values = internalnode_all_values[~np.isnan(internalnode_all_values)]
             num = len(gradientscolor)
             index_values = np.linspace(minval, maxval, num)
@@ -1225,11 +1225,11 @@ def get_branchscore_layouts(tree, props, prop2type, padding_x=1, padding_y=0, in
 
     for prop in props:
         # Get leaf values of each prop
-        leaf_all_values = np.array(sorted(list(set(tree_prop_array(tree, prop))))).astype('float64')
+        leaf_all_values = np.array(sorted(list(set(tree_prop_array(tree, prop, numeric=True))))).astype('float64')
 
         # Get internal values of each prop
         internal_prop = add_suffix(prop, internal_rep)
-        internalnode_all_values = np.array(sorted(list(set(tree_prop_array(tree, internal_prop))))).astype('float64')
+        internalnode_all_values = np.array(sorted(list(set(tree_prop_array(tree, internal_prop, numeric=True))))).astype('float64')
         all_values = np.concatenate((leaf_all_values, internalnode_all_values))
         all_values = all_values[~np.isnan(all_values)]
         value2color = {}
@@ -1437,9 +1437,9 @@ def get_heatmap_layouts(tree, props, level, column_width=70, padding_x=1, paddin
     for prop in props:
         gradientscolor = None
         value2color = {}
-        leaf_all_values = np.array(sorted(list(set(tree_prop_array(tree, prop))))).astype('float64')
+        leaf_all_values = np.array(sorted(list(set(tree_prop_array(tree, prop, numeric=True))))).astype('float64')
         internal_prop = add_suffix(prop, internal_rep)
-        internalnode_all_values = np.array(sorted(list(set(tree_prop_array(tree, internal_prop))))).astype('float64')
+        internalnode_all_values = np.array(sorted(list(set(tree_prop_array(tree, internal_prop, numeric=True))))).astype('float64')
         prop_all_values = np.concatenate((leaf_all_values, internalnode_all_values))
         prop_all_values = prop_all_values[~np.isnan(prop_all_values)]
 
@@ -1732,8 +1732,8 @@ def numerical2matrix(tree, profiling_props, count_negative=True, internal_num_re
 
     def process_color_configuration(node2matrix, profiling_props=None):
         gradientscolor = None
-        nan_color = 'black'
-        absence_color = '#EBEBEB'
+        nan_color = '#EBEBEB'
+        #absence_color = '#EBEBEB'
         max_color = 'red'
         min_color = 'white'
         mid_color = None
@@ -1767,7 +1767,7 @@ def numerical2matrix(tree, profiling_props, count_negative=True, internal_num_re
         num = len(gradientscolor)
         for search_value in all_values_raw:
             if search_value is None:
-                value2color[search_value] = absence_color
+                value2color[search_value] = nan_color
             elif math.isnan(search_value):
                 value2color[search_value] = nan_color
             #value2color[search_value] = _get_color(search_value, gradientscolor, norm_method)
