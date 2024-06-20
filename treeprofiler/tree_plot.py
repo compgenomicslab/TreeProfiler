@@ -355,8 +355,7 @@ def run(args):
                 
         # elif args.input_type == 'newick':
         #     popup_prop_keys = list(prop2type.keys()) 
-    
-    print(prop2type)
+
     # collapse tree by condition 
     if args.collapsed_by: # need to be wrap with quotes
         condition_strings = args.collapsed_by
