@@ -1482,7 +1482,7 @@ def get_heatmap_layouts(tree, props, level, column_width=70, padding_x=1, paddin
                         raise ValueError("Unsupported normalization method.")
                     index = np.abs(index_values - normalized_value).argmin() + 1
                     value2color[search_value] = gradientscolor.get(index, "")
-        print(nan_color)
+
         layout = staple_layouts.LayoutHeatmap(name=f'Heatmap_{prop}_{norm_method}', column=level,
                     width=column_width, padding_x=padding_x, padding_y=padding_y, \
                     internal_rep=internal_rep, heatmap_prop=prop, maxval=maxval, minval=minval,\
@@ -1681,6 +1681,7 @@ def numerical2matrix(tree, profiling_props, count_negative=True, internal_num_re
         return color_dict.get(index, "")
 
     def parse_color_config(color_config, profiling_props, all_props_wildcard, minval, maxval):
+        gradientscolor = None
         nan_color = '#EBEBEB'
         max_color = 'red'
         min_color = 'white'
