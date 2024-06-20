@@ -1400,6 +1400,7 @@ def get_heatmap_layouts(tree, props, level, column_width=70, padding_x=1, paddin
         max_color = 'red'
         min_color = 'white'
         mid_color = None
+        nan_color = '#EBEBEB'
         value2color = {}
 
         prop_config = color_config.get(prop, {})
@@ -1413,6 +1414,7 @@ def get_heatmap_layouts(tree, props, level, column_width=70, padding_x=1, paddin
         temp_min_color, temp_min_val = detail2color.get('color_min', (None, None))
         temp_max_color, temp_max_val = detail2color.get('color_max', (None, None))
         temp_mid_color, temp_mid_val = detail2color.get('color_mid', (None, None))
+        temp_none_color, _ = detail2color.get('color_nan', (None, None))
 
         if temp_max_color:
             max_color = temp_max_color
@@ -1420,7 +1422,8 @@ def get_heatmap_layouts(tree, props, level, column_width=70, padding_x=1, paddin
             min_color = temp_min_color
         if temp_mid_color:
             mid_color = temp_mid_color
-
+        if temp_none_color:
+            nan_color = temp_none_color
         if temp_min_val:
             minval = float(temp_min_val)
         if temp_max_val:
@@ -1428,13 +1431,13 @@ def get_heatmap_layouts(tree, props, level, column_width=70, padding_x=1, paddin
 
         gradientscolor = build_custom_gradient(20, min_color, max_color, mid_color)
 
-        return gradientscolor, value2color, minval, maxval
+        return gradientscolor, value2color, minval, maxval, nan_color
 
     layouts = []
     all_values = []
 
     for prop in props:
-        gradientscolor = None
+        
         value2color = {}
         leaf_all_values = np.array(sorted(list(set(tree_prop_array(tree, prop, numeric=True))))).astype('float64')
         internal_prop = add_suffix(prop, internal_rep)
@@ -1447,7 +1450,10 @@ def get_heatmap_layouts(tree, props, level, column_width=70, padding_x=1, paddin
         std_val = np.std(prop_all_values)
         
         if color_config and color_config.get(prop) is not None:
-            gradientscolor, value2color, minval, maxval = parse_color_config(prop, color_config, minval, maxval)
+            gradientscolor, value2color, minval, maxval, nan_color = parse_color_config(prop, color_config, minval, maxval)
+        else:
+            gradientscolor = None
+            nan_color = '#EBEBEB'
 
         if not gradientscolor:
             if norm_method == 'min-max':
@@ -1457,9 +1463,7 @@ def get_heatmap_layouts(tree, props, level, column_width=70, padding_x=1, paddin
         
         num = len(gradientscolor)
         for search_value in prop_all_values:
-            if search_value is None:
-                value2color[search_value] = absence_color
-            elif math.isnan(search_value):
+            if search_value is None or math.isnan(search_value):
                 value2color[search_value] = nan_color
             #value2color[search_value] = _get_color(search_value, gradientscolor, norm_method)
             else:
@@ -1478,11 +1482,13 @@ def get_heatmap_layouts(tree, props, level, column_width=70, padding_x=1, paddin
                         raise ValueError("Unsupported normalization method.")
                     index = np.abs(index_values - normalized_value).argmin() + 1
                     value2color[search_value] = gradientscolor.get(index, "")
-        
+        print(nan_color)
         layout = staple_layouts.LayoutHeatmap(name=f'Heatmap_{prop}_{norm_method}', column=level,
                     width=column_width, padding_x=padding_x, padding_y=padding_y, \
                     internal_rep=internal_rep, heatmap_prop=prop, maxval=maxval, minval=minval,\
-                    value_color=value2color, value_range=[minval, maxval], color_range=gradientscolor)
+                    value_color=value2color, value_range=[minval, maxval], color_range=gradientscolor,
+                    absence_color=nan_color)
+
         layouts.append(layout)
         level += 1
 
@@ -1675,9 +1681,7 @@ def numerical2matrix(tree, profiling_props, count_negative=True, internal_num_re
         return color_dict.get(index, "")
 
     def parse_color_config(color_config, profiling_props, all_props_wildcard, minval, maxval):
-        gradientscolor = None
         nan_color = '#EBEBEB'
-        #absence_color = '#EBEBEB'
         max_color = 'red'
         min_color = 'white'
         mid_color = None
@@ -1739,6 +1743,7 @@ def numerical2matrix(tree, profiling_props, count_negative=True, internal_num_re
 
     def process_color_configuration(node2matrix, profiling_props=None):
         
+
         value2color = {}
         all_props_wildcard = '*'
 
@@ -1758,7 +1763,10 @@ def numerical2matrix(tree, profiling_props, count_negative=True, internal_num_re
 
         if color_config:
             value2color, gradientscolor, minval, maxval, nan_color = parse_color_config(color_config, profiling_props, all_props_wildcard, minval, maxval)
-        
+        else:
+            gradientscolor = None
+            nan_color = '#EBEBEB'
+
         if not gradientscolor:
             if norm_method == 'min-max':
                 gradientscolor = build_color_gradient(20, colormap_name="Reds")

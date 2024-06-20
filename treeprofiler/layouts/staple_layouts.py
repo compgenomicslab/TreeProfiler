@@ -262,7 +262,9 @@ class LayoutBarplot(LayoutPlot):
 class LayoutHeatmap(TreeLayout):
     def __init__(self, name=None, column=0, width=70, height=None, 
             padding_x=1, padding_y=0, heatmap_prop=None, internal_rep=None,
-            value_color=None, value_range=[], color_range=None, minval=0, maxval=None, legend=True):
+            value_color=None, value_range=[], color_range=None, minval=0, maxval=None, 
+            absence_color="#EBEBEB",
+            legend=True):
 
         super().__init__(name)
         self.aligned_faces = True
@@ -273,7 +275,7 @@ class LayoutHeatmap(TreeLayout):
         self.value_color = value_color
         self.value_range = value_range
         self.color_range = color_range
-        self.absence_color = "#EBEBEB"
+        self.absence_color = absence_color
         self.maxval = maxval
         self.minval = minval
 
@@ -356,7 +358,7 @@ class LayoutHeatmap(TreeLayout):
             if self.heatmap_prop:
                 tooltip += f'<br>{self.heatmap_prop}: {heatmap_num}<br>'
 
-            identF = RectFace(width=self.width, height=self.height, text="NA", color=self.absence_color, padding_x=self.padding_x, padding_y=self.padding_y, tooltip=None)
+            identF = RectFace(width=self.width, height=self.height, text=heatmap_num, color=self.absence_color, padding_x=self.padding_x, padding_y=self.padding_y, tooltip=None)
             node.add_face(identF, column = self.column,  position = 'aligned', collapsed_only=False)
 
 class LayoutHeatmapOld(TreeLayout):
