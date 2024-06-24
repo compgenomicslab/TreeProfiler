@@ -298,7 +298,6 @@ class LayoutPropsMatrixOld(TreeLayout):
             if self.is_list:
                 # first not None list to set the column
                 ncols = len(next((value for value in self.matrix.values() if value != [None]), None)) if any(value != [None] for value in self.matrix.values()) else 0
-                print(ncols)
                 if ncols > 1:
                     total_width = self.width * (ncols-1)
                 else:
