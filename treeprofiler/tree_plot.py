@@ -626,29 +626,34 @@ def run(args):
             #     poswidth=args.column_width)
             
             # if is list, it should provide more than one matrix
-            matrix, minval, maxval, value2color, results_list, list_props = numerical2matrix(tree, 
+            matrix, minval, maxval, value2color, results_list, list_props, single_props = numerical2matrix(tree, 
                 numerical_props, count_negative=True, internal_num_rep=internal_num_rep, 
                 color_config=color_config, norm_method='min-max')
             
-            if not list_props:
-                matrix_layout = profile_layouts.LayoutPropsMatrixOld(name=f"Numerical_matrix_{numerical_props}", 
-                    matrix=matrix, matrix_type='numerical', matrix_props=numerical_props, is_list=False, 
-                    value_color=value2color, value_range=[minval, maxval], column=level,
-                    poswidth=args.column_width)
-
-                level += 1
-                layouts.append(matrix_layout)
-            else:
-                list_props = list(list_props)
-                for list_prop in list_props:
+            if list_props:
+                index_map = {value: idx for idx, value in enumerate(numerical_props)}
+                sorted_list_props = sorted(list_props, key=lambda x: index_map[x])
+                for list_prop in sorted_list_props:
                     matrix, minval, maxval, value2color = results_list[list_prop]
                     matrix_layout = profile_layouts.LayoutPropsMatrixOld(name=f"Numerical_matrix_{list_prop}", 
-                        matrix=matrix, matrix_type='numerical', matrix_props=list_prop, is_list=True, 
+                        matrix=matrix, matrix_type='numerical', matrix_props=[list_prop], is_list=True, 
                         value_color=value2color, value_range=[minval, maxval], column=level,
                         poswidth=args.column_width)
 
                     level += 1
                     layouts.append(matrix_layout)
+
+            if single_props:
+                index_map = {value: idx for idx, value in enumerate(numerical_props)}
+                sorted_single_props = sorted(single_props, key=lambda x: index_map[x])
+                matrix_layout = profile_layouts.LayoutPropsMatrixOld(name=f"Numerical_matrix_{sorted_single_props}", 
+                    matrix=matrix, matrix_type='numerical', matrix_props=sorted_single_props, is_list=False, 
+                    value_color=value2color, value_range=[minval, maxval], column=level,
+                    poswidth=args.column_width)
+
+                level += 1
+                layouts.append(matrix_layout)
+
 
         if layout == 'binary-matrix-layout':
             binary_props = args.binary_matrix_layout
@@ -1865,7 +1870,7 @@ def numerical2matrix(tree, profiling_props, count_negative=True, internal_num_re
     else:
         results_list = None
 
-    return node2matrix_single, minval_single, maxval_single, value2color_single, results_list, list_props
+    return node2matrix_single, minval_single, maxval_single, value2color_single, results_list, list_props, single_props
 
 # def _numerical2matrix(tree, profiling_props, count_negative=True, internal_num_rep=None, color_config=None):
 #     """

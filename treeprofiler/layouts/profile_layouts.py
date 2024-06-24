@@ -201,7 +201,6 @@ class LayoutProfile(TreeLayout):
         if self.length:
             face = TextScaleFace(width=self.width, scale_range=self.scale_range, 
                                 headers=self.profiles, padding_y=0, rotation=270)
-            #face = MatrixScaleFace(width=self.width, scale_range=self.scale_range, padding_y=0)
             tree_style.aligned_panel_header.add_face(face, column=self.column)
 
         if self.legend:
@@ -299,7 +298,11 @@ class LayoutPropsMatrixOld(TreeLayout):
             if self.is_list:
                 # first not None list to set the column
                 ncols = len(next((value for value in self.matrix.values() if value != [None]), None)) if any(value != [None] for value in self.matrix.values()) else 0
-                face = MatrixScaleFace(width=self.width, scale_range=(0, ncols), padding_y=0)
+                if ncols > 1:
+                    total_width = self.width * (ncols-1)
+                else:
+                    total_width = self.width
+                face = MatrixScaleFace(width=total_width, scale_range=(0, ncols), padding_y=0)
                 header = self.matrix_props
                 title = TextFace(header, min_fsize=5, max_fsize=12, 
                     padding_x=0, padding_y=2, width=self.width)
@@ -353,20 +356,28 @@ class LayoutPropsMatrixOld(TreeLayout):
             return self._get_array(first_leaf)
 
     def set_node_style(self, node):
-        
         array = self.get_array(node)
         #array = self.get_array(node)
-        if len(self.matrix_props) > 1:
-            poswidth = self.width / (len(self.matrix_props)-1 )
-        else:
-            poswidth = self.width
-        
         if array:
-            profileFace = ProfileFace(array, self.value_color, gap_format=None, \
-            seq_format=self.matrix_type, width=self.width, height=self.height, \
-            poswidth=poswidth, tooltip=True)
-            node.add_face(profileFace, column=self.column, position='aligned', \
-                collapsed_only=(not node.is_leaf))
+            if not self.is_list:
+                if len(self.matrix_props) > 1:
+                    poswidth = self.width / (len(self.matrix_props) - 1)
+                else:
+                    poswidth = self.width
+                if array:
+                    profileFace = ProfileFace(array, self.value_color, gap_format=None, \
+                    seq_format=self.matrix_type, width=self.width, height=self.height, \
+                    poswidth=poswidth, tooltip=True)
+                    node.add_face(profileFace, column=self.column, position='aligned', \
+                        collapsed_only=(not node.is_leaf))
+            else:
+                poswidth = self.width * len(array)
+
+                profileFace = ProfileFace(array, self.value_color, gap_format=None, \
+                    seq_format=self.matrix_type, width=poswidth, height=self.height, \
+                    poswidth=poswidth, tooltip=True)
+                node.add_face(profileFace, column=self.column, position='aligned', \
+                    collapsed_only=(not node.is_leaf))
 
 class LayoutPropsMatrixBinary(TreeLayout):
     def __init__(self, name="Binary_profiling", matrix=None,  
@@ -1028,6 +1039,7 @@ class MatrixScaleFace(Face):
         self.width = width
         self.height = None
         self.range = scale_range
+        self.columns = scale_range[1]
 
         self.color = color
         self.min_fsize = min_fsize
@@ -1088,19 +1100,31 @@ class MatrixScaleFace(Face):
 
         p1 = (x0, y + dy - 5 / zy)
         p2 = (x0 + self.width, y + dy - self.vt_line_height / (2 * zy))
-        if drawer.TYPE == 'circ':
-            p1 = cartesian(p1)
-            p2 = cartesian(p2)
-        yield draw_line(p1, p2, style={'stroke-width': self.line_width,
-                                       'stroke': self.color})
+
+        # count the middle point of each column
+        if self.columns > 1:
+            half_width_col = self.width / (self.columns-1) / 2
+            p1 = (x0 + half_width_col, y + dy - 5 / zy)
+            p2 = (x0 + (self.width + half_width_col), y + dy - self.vt_line_height / (2 * zy))
+            
+            if drawer.TYPE == 'circ':
+                p1 = cartesian(p1)
+                p2 = cartesian(p2)
+            yield draw_line(p1, p2, style={'stroke-width': self.line_width,
+                                        'stroke': self.color})
+        else:
+            half_width_col = self.width / 2
+
+        
 
 
-        nticks = round((self.width * zx) / self.tick_width)
-
-        # avoid nticks = 0 
-        if not nticks:
-            nticks = 2
-
+        #nticks = round((self.width * zx) / self.tick_width)
+        if self.columns > 1:
+            nticks = self.columns - 1
+        else:
+            nticks = 1
+        
+        
         dx = self.width / nticks
         range_factor = (self.range[1] - self.range[0]) / self.width
 
@@ -1111,32 +1135,62 @@ class MatrixScaleFace(Face):
         else:
             sm_start, sm_end = 0, nticks
 
-        for i in range(sm_start, sm_end + 1):
-            x = x0 + i * dx
-            number = range_factor * i * dx
+        if self.columns > 1:
+            for i in range(sm_start, sm_end + 1):
 
-            if number == 0:
-                text = "0"
-            else:
-                text = self.formatter % number if self.formatter else str(number)
+                x = x0 + i * dx
+                
+                # number = range_factor * i * dx
 
-            text = text.rstrip('0').rstrip('.') if '.' in text else text
+                # if number == 0:
+                #     text = "0"
+                # else:
+                #     #actual_number = number + 1
+                #     text = self.formatter % number if self.formatter else str(number)
 
+                # text = text.rstrip('0').rstrip('.') if '.' in text else text
+
+                text = str(i+1)
+                self.compute_fsize(self.tick_width / len(text), dy, zx, zy)
+                text_style = {
+                    'max_fsize': self._fsize,
+                    'text_anchor': 'middle',
+                    'ftype': f'{self.ftype}, sans-serif', # default sans-serif
+                    }
+                text_box = Box(x+ half_width_col,
+                        y,
+                        # y + (dy - self._fsize / (zy * r)) / 2,
+                        dx, dy)
+
+                # column index starts from 1
+                yield draw_text(text_box, text, style=text_style)
+
+                # vertical line tick
+                p1 = (x + half_width_col, y + dy - self.vt_line_height / zy)
+                p2 = (x + half_width_col, y + dy)
+
+                yield draw_line(p1, p2, style={'stroke-width': self.line_width,
+                                            'stroke': self.color})
+        else:
+            x = x0
+            text = str(1)
             self.compute_fsize(self.tick_width / len(text), dy, zx, zy)
             text_style = {
                 'max_fsize': self._fsize,
                 'text_anchor': 'middle',
                 'ftype': f'{self.ftype}, sans-serif', # default sans-serif
                 }
-            text_box = Box(x,
+            text_box = Box(x+ half_width_col,
                     y,
                     # y + (dy - self._fsize / (zy * r)) / 2,
                     dx, dy)
 
+            # column index starts from 1
             yield draw_text(text_box, text, style=text_style)
 
-            p1 = (x, y + dy - self.vt_line_height / zy)
-            p2 = (x, y + dy)
+            # vertical line tick
+            p1 = (x + half_width_col, y + dy - self.vt_line_height / zy)
+            p2 = (x + half_width_col, y + dy)
 
             yield draw_line(p1, p2, style={'stroke-width': self.line_width,
-                                           'stroke': self.color})
+                                        'stroke': self.color})
