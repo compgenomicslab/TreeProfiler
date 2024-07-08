@@ -120,7 +120,7 @@ def poplulate_plot_args(plot_args_p):
         default=None,
         help="Path to the file to find the color for each variables. [default: None]"
     )
-    group.add_argument('-sep', '--config-sep', default='\t',
+    group.add_argument('-s', '--config-sep', default='\t',
         help="column separator of color table [default: \\t]")
     # group.add_argument('--profiling_width',
     #     type=int,
@@ -311,7 +311,7 @@ def run(args):
 
    # parsing tree
     try:
-        tree, eteformat_flag = validate_tree(args.tree, args.input_type, args.internal_parser)
+        tree, eteformat_flag = validate_tree(args.tree, args.input_type, args.internal)
     except TreeFormatError as e:
         print(e)
         sys.exit(1)
