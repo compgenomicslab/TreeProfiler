@@ -27,10 +27,9 @@ from treeprofiler.layouts import (
 from treeprofiler.src.utils import (
     validate_tree, TreeFormatError,
     taxatree_prune, conditional_prune,
-    tree_prop_array, children_prop_array, 
-    flatten, get_consensus_seq, random_color, assign_color_to_values, 
+    tree_prop_array, flatten, random_color, assign_color_to_values, 
     add_suffix, build_color_gradient, build_custom_gradient, 
-    str2bool, str2dict)
+    str2dict)
 import treeprofiler.src.utils as utils
 from treeprofiler.tree_annotate import can_convert_to_bool
 
