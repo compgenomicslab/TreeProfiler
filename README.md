@@ -1761,7 +1761,7 @@ max as itnernal plot measure
 ![heatmap_max_collapsed](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_heatmap_collapsed_max.jpeg?raw=true)
 
 ### Layouts for Taxonomic data
-If target tree was annotated with `--taxonomic-profiler` in previous `annotate` step successfully, now activate Taxonomic layout using `--taxonclade-layout` or `--taxonrectangle-layout` to visualize taxonomic classification. All rank levels will be generated separately and users can switch each of them on/off.
+If target tree was annotated with `--taxon-column namer` in previous `annotate` step successfully, now activate Taxonomic layout using `--taxonclade-layout` or `--taxonrectangle-layout` to visualize taxonomic classification. All rank levels will be generated separately and users can switch each of them on/off.
 
 ```
 ## Annotate
@@ -1770,7 +1770,7 @@ treeprofiler annotate \
 --tree examples/taxonomy_example/gtdb/gtdb_example1.nw \
 --metadata examples/taxonomy_example/gtdb/gtdb_example1.tsv \
 --taxon-column name \
---taxonomic-profile \
+--taxon-column name \
 --taxadb GTDB \
 --outdir ./examples/taxonomy_example/gtdb/
 
@@ -1778,7 +1778,7 @@ treeprofiler annotate \
 treeprofiler annotate \
 --tree examples/taxonomy_example/ncbi/spongilla_example.nw \
 --metadata examples/taxonomy_example/ncbi/spongilla_example.tsv \
---taxonomic-profile \
+--taxon-column name \
 --taxon-delimiter .  \
 --taxa-field 0 \
 --taxadb NCBI \
@@ -1989,7 +1989,7 @@ treeprofiler annotate \
 --input-type newick \
 --metadata \
 ar122_metadata_r202_lite.tsv bac120_metadata_r202_lite.tsv progenome3.tar.gz \
---taxonomic-profile \
+--taxon-column name \
 --taxadb GTDB \
 -o ./
 ```  
@@ -2003,7 +2003,7 @@ treeprofiler annotate \
 --input-type newick \
 --metadata \
 ar122_metadata_r202.tar.gz bac120_metadata_r202.tar.gz progenome3.tar.gz \
---taxonomic-profile \
+--taxon-column name \
 --taxadb GTDB \
 -o ./
 
@@ -2049,10 +2049,10 @@ Map emapper annotation, pfam annotation and taxonomic annotation to target tree
 ```
 treeprofiler annotate \
 --tree  examples/pratical_example/emapper/nifH.tree \
---emapper_annotation examples/pratical_example/emapper/nifH.out.emapper.annotations \
+--emapper-annotation examples/pratical_example/emapper/nifH.out.emapper.annotations \
 --emapper-pfam examples/pratical_example/emapper/nifH.out.emapper.pfam \
 --alignment examples/pratical_example/emapper/nifH.faa.aln \
---taxonomic-profile \
+--taxon-column name \
 --taxadb NCBI \
 --taxon-delimiter . \
 --taxa-field 0 \
@@ -2071,15 +2071,20 @@ treeprofiler plot \
 ```
 
 
-![emapper example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/emapper_nifh_v1.png?raw=true)
 visualization of categorical data `seed_orthologs`, `max_annot_lvl`, `COG_category`, `Description`, `Preferred_name`, and numerical data `score`
 
-![emapper example2](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/emapper_nifh_v2.png?raw=true)
+![emapper example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/emapper_nifh_v1.png?raw=true)
+
 visualization of `KEGG_Pathway` profiling
 
+![emapper example2](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/emapper_nifh_v2.png?raw=true)
 
-![emapper example3](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/emapper_nifh_v3.png?raw=true)
+
 visualization of `KEGG_ko` profiling
 
-![emapper example4](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/emapper_nifh_v4.png?raw=true)
+![emapper example3](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/emapper_nifh_v3.png?raw=true)
+
 visualization of `domain` annotation
+
+![emapper example4](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/emapper_nifh_v4.png?raw=true)
+
