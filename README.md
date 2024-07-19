@@ -1761,7 +1761,7 @@ max as itnernal plot measure
 ![heatmap_max_collapsed](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_heatmap_collapsed_max.jpeg?raw=true)
 
 ### Layouts for Taxonomic data
-If target tree was annotated with `--taxon-column namer` in previous `annotate` step successfully, now activate Taxonomic layout using `--taxonclade-layout` or `--taxonrectangle-layout` to visualize taxonomic classification. All rank levels will be generated separately and users can switch each of them on/off.
+If target tree was annotated with `--taxon-column` in previous `annotate` step successfully, now activate Taxonomic layout using `--taxonclade-layout` or `--taxonrectangle-layout` to visualize taxonomic classification. All rank levels will be generated separately and users can switch each of them on/off.
 
 ```
 ## Annotate
