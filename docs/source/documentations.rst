@@ -2963,7 +2963,10 @@ TreeProfiler allows users to perform conditional process based on different circ
    * - --highlighted-by
      - plot
      - Enables users to highlight tree nodes that meet specific conditions.
-
+   * - --internal-plot-measure {sum,avg,max,min,std,none}
+     - plot
+     - statistic measures to be shown in numerical layout for internal nodes. [default: avg]
+  
 
 Query Syntax
 ~~~~~~~~~~~~
@@ -3120,7 +3123,7 @@ OR condition will be used more than one arguments:
    :alt: highlighted_or
 
 Conditional limit based on taxonomic level
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Prune taxonomic annotated tree based on following taxonomic rank level,
 ``kingdom``, ``phylum``, ``class``, ``order``, ``family``, ``genus``, ``species``, ``subspecies`` 
 
@@ -3152,6 +3155,35 @@ After rank_limit
    :alt: prunt
 
 As you see, class branches of target gtdb tree are all pruned and only left the internal branches which rank as class.  
+
+Choose the metric for internal nodes in numerical layout
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Internal nodes of numerical data are process descriptive statistic analysis by default, hence when users collapse any branch, barplot_layout or heatmap_layout will demonstrate representative value, ``avg`` by default. Representative value can be changed by using ``--internal-plot-measure``.
+
+.. code-block::
+
+   # select max instead of avg as internal node plotting representative
+   treeprofiler plot \
+   --tree examples/basic_example1/basic_example1_annotated.ete \
+   --heatmap-layout sample1,sample2,sample3,sample4,sample5 \
+   --internal-plot-measure max 
+
+Before collapsed
+
+.. image:: https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_heatmap_uncollapsed.jpeg?raw=true
+   :alt: heatmap_uncollapsed
+
+After collapsed
+avg as internal plot measure
+
+.. image:: https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_heatmap_collapsed.jpeg?raw=true
+   :alt: heatmap_collapsed
+
+max as internal plot measure
+
+.. image:: https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_heatmap_collapsed_max.jpeg?raw=true
+   :alt: heatmap_max_collapsed
+
 
 Demo1 Explore GTDB taxonomic tree with metadata and habitat information of progenome3
 -------------------------------------------------------------------------------------
