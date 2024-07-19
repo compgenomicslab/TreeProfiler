@@ -49,16 +49,16 @@ def populate_annotate_args(parser):
         title='METADATA TABLE parameters',
         description="Input parameters of METADATA")
     add = gmeta.add_argument
-    add('-d', '--metadata', nargs='+',
+    add('-m', '--metadata', nargs='+',
         help="<metadata.csv> .csv, .tsv. mandatory input")
     # add('--data-matrix', nargs='+',
     #     help="<metadata.csv> .csv, .tsv. optional input")
     add('--data-matrix',  nargs='+',
         help="<datamatrix.csv> .csv, .tsv. matrix data metadata table as array to tree, please do not provide column headers in this file")
-    add('-sep', '--metadata-sep', default='\t',
+    add('-s', '--metadata-sep', default='\t',
         help="column separator of metadata table [default: \\t]")
     add('--no-headers', action='store_true',
-        help="metadata table doesn't contain columns name")
+        help="metadata table doesn't contain columns name, namespace col+index will be assigned as the key of property such as col1.")
     add('--duplicate', action='store_true',
         help="treeprofiler will aggregate duplicated metadata to a list as a property if metadata contains duplicated row")
     add('--text-prop', nargs='+',
@@ -121,7 +121,7 @@ def populate_annotate_args(parser):
     annotation_group.add_argument('--column-summary-method', 
         nargs='+',
         required=False,
-        help="Specify summary method for individual columns in the format ColumnName=Method")
+        help="Specify summary method for individual columns in the format COL=METHOD. Method option can be seen in --counter-stat and --num-stat.")
     annotation_group.add_argument('--num-stat',
         default='all',
         choices=['all', 'sum', 'avg', 'max', 'min', 'std', 'none'],
@@ -690,7 +690,7 @@ def run(args):
 
     # parsing tree
     try:
-        tree, eteformat_flag = validate_tree(args.tree, args.input_type, args.internal_parser)
+        tree, eteformat_flag = validate_tree(args.tree, args.input_type, args.internal)
     except TreeFormatError as e:
         print(e)
         sys.exit(1)
@@ -784,7 +784,7 @@ def run(args):
 
         ### out newick
         annotated_tree.write(outfile=os.path.join(args.outdir, out_newick), props=None, 
-                    parser=get_internal_parser(args.internal_parser), format_root_node=True)
+                    parser=get_internal_parser(args.internal), format_root_node=True)
         
         ### output prop2type
         with open(os.path.join(args.outdir, base+'_prop2type.txt'), "w") as f:

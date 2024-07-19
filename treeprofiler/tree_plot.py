@@ -27,10 +27,9 @@ from treeprofiler.layouts import (
 from treeprofiler.src.utils import (
     validate_tree, TreeFormatError,
     taxatree_prune, conditional_prune,
-    tree_prop_array, children_prop_array, 
-    flatten, get_consensus_seq, random_color, assign_color_to_values, 
+    tree_prop_array, flatten, random_color, assign_color_to_values, 
     add_suffix, build_color_gradient, build_custom_gradient, 
-    str2bool, str2dict)
+    str2dict)
 import treeprofiler.src.utils as utils
 from treeprofiler.tree_annotate import can_convert_to_bool
 
@@ -120,7 +119,7 @@ def poplulate_plot_args(plot_args_p):
         default=None,
         help="Path to the file to find the color for each variables. [default: None]"
     )
-    group.add_argument('-sep', '--config-sep', default='\t',
+    group.add_argument('-s', '--config-sep', default='\t',
         help="column separator of color table [default: \\t]")
     # group.add_argument('--profiling_width',
     #     type=int,
@@ -311,7 +310,7 @@ def run(args):
 
    # parsing tree
     try:
-        tree, eteformat_flag = validate_tree(args.tree, args.input_type, args.internal_parser)
+        tree, eteformat_flag = validate_tree(args.tree, args.input_type, args.internal)
     except TreeFormatError as e:
         print(e)
         sys.exit(1)

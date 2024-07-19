@@ -303,6 +303,7 @@ class LayoutHeatmap(TreeLayout):
     def set_node_style(self, node):
         heatmap_num = node.props.get(self.heatmap_prop)
         if heatmap_num is not None and heatmap_num != 'NaN':
+            heatmap_num = float(heatmap_num)
             if node.is_leaf:
                 # heatmap
                 tooltip = ""
@@ -320,6 +321,7 @@ class LayoutHeatmap(TreeLayout):
             
         elif node.is_leaf and node.props.get(self.internal_prop):
             heatmap_num = node.props.get(self.internal_prop)
+            heatmap_num = float(heatmap_num)
             # heatmap
             tooltip = ""
             if node.name:
@@ -336,6 +338,7 @@ class LayoutHeatmap(TreeLayout):
         
         elif node.props.get(self.internal_prop):
             heatmap_num = node.props.get(self.internal_prop)
+            heatmap_num = float(heatmap_num)
             # heatmap
             tooltip = ""
             if node.name:
