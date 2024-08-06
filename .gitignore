@@ -1,6 +1,11 @@
 *.pyc
 dist/
 dist/*
+# Ignore build artifacts
+/build/
+/build/*
+/docs/build/
+/docs/build/*
 *.egg-info/
 __pycache__/
 __pycache__/*
