@@ -29,8 +29,13 @@ jobs:
           make html
 
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs/build/html
-          publish_branch: gh-pages
+        env:
+          ACTIONS_DEPLOY_KEY: ${{ secrets.ACTIONS_DEPLOY_KEY }}
+        run: |
+          cd docs/build/html
+          git init
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add .
+          git commit -m "Deploy documentation"
+          git push --force --quiet "https://${{ secrets.ACTIONS_DEPLOY_KEY }}@github.com/${{ github.repository }}.git" master:gh-pages
