@@ -15,7 +15,7 @@ release = '[1.2.2-beta]'
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 # Enable markdown support
-from recommonmark.parser import CommonMarkParser
+
 source_suffix = {
     '.rst': 'restructuredtext',
     '.md': 'markdown',
