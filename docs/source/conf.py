@@ -14,10 +14,6 @@ release = '[1.2.2-beta]'
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = [
-    'recommonmark',
-]
-
 # Enable markdown support
 from recommonmark.parser import CommonMarkParser
 source_suffix = {
