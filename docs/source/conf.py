@@ -11,8 +11,6 @@ copyright = '2024, Ziqi Deng & Jaime Huerta-Cepas'
 author = 'Ziqi Deng & Jaime Huerta-Cepas'
 release = '[1.2.2-beta]'
 
-html_baseurl = 'https://dengzq1234.github.io/TreeProfiler'
-
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
