@@ -47,15 +47,6 @@ def str2bool(value, raise_exc=False):
         raise ValueError('Expected "%s"' % '", "'.join(_true_set | _false_set))
     return None
 
-def str2dict(value):
-    if isinstance(value, str):
-        try:
-            fields = value.split('|')
-            if fields:
-                return {f.split('-')[0]: f.split('-')[1] for f in fields}
-        except ValueError:
-            raise ValueError('Expected "key1-value1|key2-value2"')
-    
 def str2bool_exc(value):
     return str2bool(value, raise_exc=True)
 
@@ -224,6 +215,12 @@ def categorical2ratio(node, prop, all_values, minimum=0.05):
     
     return ratios
 
+def dict_to_string(d, pair_seperator="--", item_seperator="||"):
+    return item_seperator.join([f"{key}{pair_seperator}{value}" for key, value in d.items()])
+
+def string_to_dict(s, pair_seperator="--", item_seperator="||"):
+    return {item.split(pair_seperator)[0]: item.split(pair_seperator)[1] for item in s.split(item_seperator)}
+
 # validate tree format
 class TreeFormatError(Exception):
     pass
@@ -282,15 +279,17 @@ def taxatree_prune(tree, rank_limit='subspecies'):
             for ch in children:
                 print("prune", ch.name)
                 remove(ch)
-        lca_dict = node.props.get('lca')
-        if lca_dict:
-            lca = lca_dict.get(rank_limit, None)
-            if lca:
-                node.name = lca
-                children = node.children.copy()
-                for ch in children:
-                    print("prune", ch.name)
-                    remove(ch)
+        lca_string = node.props.get('lca')
+        if lca_string:
+            lca_dict = string_to_dict(lca_string)
+            if lca_dict:
+                lca = lca_dict.get(rank_limit, None)
+                if lca:
+                    node.name = lca
+                    children = node.children.copy()
+                    for ch in children:
+                        print("prune", ch.name)
+                        remove(ch)
     return tree
 
 def conditional_prune(tree, conditions_input, prop2type):
