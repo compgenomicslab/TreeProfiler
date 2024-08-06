@@ -103,7 +103,7 @@ class LayoutSciName(TreeLayout):
                 color = rank_colordict.get(sci_name, 'gray')
             else:
                 color = 'gray'
-            node.add_face(TextFace(sci_name, color = color, padding_x=2, max_fsize=30),
+            node.add_face(TextFace(sci_name, color = color, padding_x=2, min_fsize=4, max_fsize=25),
                 column=0, position="branch_right")
 
             if len(prot_id) > 40:
@@ -121,7 +121,7 @@ class LayoutSciName(TreeLayout):
                     color = rank_colordict.get(sci_name, 'gray')
                 else:
                     color = 'gray'
-                node.add_face(TextFace(text, padding_x=2, color = color),
+                node.add_face(TextFace(text, padding_x=2, color = color, min_fsize=4, max_fsize=25),
                         position="branch_right", column=1, collapsed_only=True)
                         
 class TaxaRectangular(TreeLayout):
