@@ -38,4 +38,3 @@ jobs:
           git add .
           git commit -m "Deploy documentation"
           git push --force --quiet "https://${{ secrets.ACTIONS_DEPLOY_KEY }}@github.com/${{ github.repository }}.git" master:gh-pages
-        publish_dir: ./docs/_build/html
