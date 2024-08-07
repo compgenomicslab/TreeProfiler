@@ -23,8 +23,9 @@ Full manuscript of TreeProfiler is in https://doi.org/10.1101/2023.09.21.558621
 If you use TreeProfiler, please cite:
 
 ```
-Ziqi Deng, Ana Hernández-Plaza, Jaime Huerta-Cepas. "TreeProfiler: A command-line tool for computing and visualizing phylogenetic profiles against large trees"  bioRxiv (2023) doi:
-10.1101/2023.09.21.558621
+Ziqi Deng, Ana Hernández-Plaza, Jaime Huerta-Cepas. 
+"TreeProfiler: A command-line tool for computing and visualizing phylogenetic profiles against large trees"  
+bioRxiv (2023) doi: 10.1101/2023.09.21.558621
 ```
 
 ## Table of Contents
