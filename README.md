@@ -1,4 +1,33 @@
-# TreeProfiler Tutorial
+# TreeProfiler Overview
+TreeProfiler is a command line tool designed to automate the annotation of large phylogenetic trees using a wide array of data sources. It also facilitates the visual exploration of these annotations as phylogenetic profiles, making it a powerful resource for researchers working with complex biological data.
+
+Key Features:
+- Automated Annotation that integrates diverse metadata into phylogenetic trees, and summarizes annotation in internal nodes, including:
+  - Categorical/Numerical metadata in TSV/CSV format
+  - Taxonomic Annotation of NCBI/GTDB taxonomy database
+  - Functional Annotation from eggnog-mapper output
+  - Domain annotation from pfam/smart
+  - Multiple Sequence Alignment annotation
+- Visual Exploration that allows for the detailed examination of annotated trees, aiding in the interpretation and presentation of data.
+- Analytic Methods for computing analysis from leaf nodes:
+  - Ancestral Character Reconstruction
+  - Phylogenetic Signal Delta Statistic]
+  - Lineage Specificity Analysis
+
+The official documentation of TreeProfiler is in https://dengzq1234.github.io/TreeProfiler/ where  provides detailed instructions with examples.
+
+If you have any doubts, please drop a line in issue or contact https://x.com/deng_ziqi
+
+Full manuscript of TreeProfiler is in https://doi.org/10.1101/2023.09.21.558621
+
+If you use TreeProfiler, please cite:
+
+```
+Ziqi Deng, Ana Hernández-Plaza, Jaime Huerta-Cepas. 
+"TreeProfiler: A command-line tool for computing and visualizing phylogenetic profiles against large trees"  
+bioRxiv (2023) doi: 10.1101/2023.09.21.558621
+```
+
 ## Table of Contents
 - [Introduction](#introduction)
 - [Installation](#installation)
