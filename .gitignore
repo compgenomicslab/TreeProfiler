@@ -6,6 +6,9 @@ dist/*
 /build/*
 /docs/build/
 /docs/build/*
+# Ignore Sphinx static files (if necessary)
+docs/source/_static/
+docs/source/_templates/
 *.egg-info/
 __pycache__/
 __pycache__/*
