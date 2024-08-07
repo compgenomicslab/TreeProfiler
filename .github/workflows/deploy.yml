@@ -23,10 +23,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install sphinx sphinx-rtd-theme
 
-      - name: Build the docs
-        run: |
-          cd docs
-          make html
+      - name: Build the documentation
+        run: make html
+        working-directory: ./docs
 
       - name: Deploy to GitHub Pages
         env:
@@ -39,3 +38,4 @@ jobs:
           git add .
           git commit -m "Deploy documentation"
           git push --force --quiet "https://${{ secrets.ACTIONS_DEPLOY_KEY }}@github.com/${{ github.repository }}.git" master:gh-pages
+        publish_dir: ./docs/_build/html
