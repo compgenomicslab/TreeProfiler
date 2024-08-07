@@ -711,10 +711,9 @@ def run(args):
         array_dict = parse_tsv_to_array(args.data_matrix, delimiter=args.metadata_sep)
     end = time.time()
     print('Time for parse_csv to run: ', end - start)
-
     if args.emapper_annotations:
         emapper_metadata_dict, emapper_node_props, emapper_columns = parse_emapper_annotations(args.emapper_annotations)
-        metadata_dict.update(emapper_metadata_dict)
+        metadata_dict = utils.merge_dictionaries(metadata_dict, emapper_metadata_dict)
         node_props.extend(emapper_node_props)
         columns.update(emapper_columns)
         prop2type.update({
@@ -742,7 +741,7 @@ def run(args):
             'BiGG_Reaction':list,
             'PFAMs':list
         })
-
+    
     # start annotation
     if args.column_summary_method:
         column2method = process_column_summary_methods(args.column_summary_method)

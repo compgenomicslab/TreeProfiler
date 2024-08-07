@@ -221,6 +221,14 @@ def dict_to_string(d, pair_seperator="--", item_seperator="||"):
 def string_to_dict(s, pair_seperator="--", item_seperator="||"):
     return {item.split(pair_seperator)[0]: item.split(pair_seperator)[1] for item in s.split(item_seperator)}
 
+def merge_dictionaries(dict1, dict2):
+    for key, value in dict2.items():
+        if key in dict1:
+            dict1[key].update(value)
+        else:
+            dict1[key] = value
+    return dict1
+    
 # validate tree format
 class TreeFormatError(Exception):
     pass
