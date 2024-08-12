@@ -43,3 +43,5 @@ def rename_static(app, exception):
         new_static_dir = os.path.join(app.outdir, 'static')
         if os.path.exists(static_dir):
             os.rename(static_dir, new_static_dir)
+            # Run the post-processing script to update paths in HTML files
+            os.system('python post_process_html.py')

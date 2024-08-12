@@ -39,6 +39,12 @@ TAXONOMICDICT = {# start with leaf name
                 'dup_percent': float,
                 }
 
+# Global Variable for emapper headers
+emapper_headers = ["#query", "seed_ortholog", "evalue", "score", "eggNOG_OGs",
+                   "max_annot_lvl", "COG_category", "Description", "Preferred_name", "GOs",
+                   "EC", "KEGG_ko", "KEGG_Pathway", "KEGG_Module", "KEGG_Reaction", "KEGG_rclass",
+                   "BRITE", "KEGG_TC", "CAZy", "BiGG_Reaction", "PFAMs"]
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def populate_annotate_args(parser):
@@ -231,11 +237,12 @@ def run_tree_annotate(tree, input_annotated_tree=False,
     level = 1 # level 1 is the leaf name
 
     if emapper_annotations:
+        print("check emapper_annotations")
         emapper_metadata_dict, emapper_node_props, emapper_columns = parse_emapper_annotations(emapper_annotations)
         metadata_dict.update(emapper_metadata_dict)
         node_props.extend(emapper_node_props)
         columns.update(emapper_columns)
-    
+
         prop2type.update({
             'name': str,
             'dist': float,
@@ -261,7 +268,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
             'BiGG_Reaction':list,
             'PFAMs':list
         })
-
+    
     if text_prop:
         text_prop = text_prop
     else:
@@ -711,6 +718,7 @@ def run(args):
         array_dict = parse_tsv_to_array(args.data_matrix, delimiter=args.metadata_sep)
     end = time.time()
     print('Time for parse_csv to run: ', end - start)
+    
     if args.emapper_annotations:
         emapper_metadata_dict, emapper_node_props, emapper_columns = parse_emapper_annotations(args.emapper_annotations)
         metadata_dict = utils.merge_dictionaries(metadata_dict, emapper_metadata_dict)
@@ -778,15 +786,13 @@ def run(args):
         out_ete = base+'_annotated.ete'
         out_tsv = base+'_annotated.tsv'
 
-        ### out newick
-        annotated_tree.write(outfile=os.path.join(args.outdir, out_newick), props=None, 
-                    parser=utils.get_internal_parser(args.internal), format_root_node=True)
         
         ### output prop2type
         with open(os.path.join(args.outdir, base+'_prop2type.txt'), "w") as f:
             #f.write(first_line + "\n")
             for key, value in prop2type.items():
                 f.write("{}\t{}\n".format(key, value.__name__))
+
         ### out ete
         with open(os.path.join(args.outdir, base+'_annotated.ete'), 'w') as f:
             f.write(b64pickle.dumps(annotated_tree, encoder='pickle', pack=False))
@@ -799,6 +805,20 @@ def run(args):
             tree2table(annotated_tree, internal_node=True, props=None, outfile=os.path.join(args.outdir, out_tsv))
         else:
             tree2table(annotated_tree, internal_node=True, props=prop_keys, outfile=os.path.join(args.outdir, out_tsv))
+
+        ### out newick
+        ## need to correct wrong symbols in the newick tree, such as ',' -> '||'
+        # Find all keys where the value is of type list
+        list_keys = [key for key, value in prop2type.items() if value == list]
+        # Replace all commas in the tree with '||'
+        for node in annotated_tree.leaves():
+            for key in list_keys:
+                if node.props.get(key):
+                    list2str = '||'.join(node.props.get(key))
+                    node.add_prop(key, list2str)
+        annotated_tree.write(outfile=os.path.join(args.outdir, out_newick), props=None, 
+                    parser=utils.get_internal_parser(args.internal), format_root_node=True)
+        
 
     # if args.outtsv:
     #     tree2table(annotated_tree, internal_node=True, outfile=args.outtsv)
@@ -1177,7 +1197,7 @@ def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, 
                     # str
                     else:
                         target_node.add_prop(key, value)
-
+        
         # hits = tree.get_leaves_by_name(node)
         # if hits:
         #     for target_node in hits:
@@ -1235,71 +1255,81 @@ def merge_text_annotations(nodes, target_props, column2method):
     pair_seperator = "--"
     item_seperator = "||"
     internal_props = {}
+    counters = {}
+
     for target_prop in target_props:
         counter_stat = column2method.get(target_prop, "raw")
+        prop_list = utils.children_prop_array_missing(nodes, target_prop)
+        counter = dict(Counter(prop_list))  # Store the counter
+        counters[target_prop] = counter  # Add the counter to the counters dictionary
+
         if counter_stat == 'raw':
-            prop_list = utils.children_prop_array_missing(nodes, target_prop)
-            internal_props[utils.add_suffix(target_prop, 'counter')] = item_seperator.join([utils.add_suffix(str(key), value, pair_seperator) for key, value in sorted(dict(Counter(prop_list)).items())])
+            # Find the key with the highest count
+            if emapper_headers and counter:
+                most_common_key = max(counter, key=counter.get)
+                internal_props[target_prop] = most_common_key
+
+            # Add the raw counts to internal_props
+            internal_props[utils.add_suffix(target_prop, 'counter')] = item_seperator.join(
+                [utils.add_suffix(str(key), value, pair_seperator) for key, value in sorted(counter.items())]
+            )
 
         elif counter_stat == 'relative':
-            prop_list = utils.children_prop_array_missing(nodes, target_prop)
-            counter_line = []
+            # Find the key with the highest count
+            if emapper_headers and counter:
+                most_common_key = max(counter, key=counter.get)
+                internal_props[target_prop] = most_common_key
 
-            total = sum(dict(Counter(prop_list)).values())
+            total = sum(counter.values())
 
-            for key, value in sorted(dict(Counter(prop_list)).items()):
-
-                rel_val = '{0:.2f}'.format(float(value)/total)
-                counter_line.append(utils.add_suffix(key, rel_val, pair_seperator))
-            internal_props[utils.add_suffix(target_prop, 'counter')] = item_seperator.join(counter_line)
-            #internal_props[utils.add_suffix(target_prop, 'counter')] = '||'.join([utils.add_suffix(key, value, '--') for key, value in dict(Counter(prop_list)).items()])
-
+            # Add the relative counts to internal_props
+            internal_props[utils.add_suffix(target_prop, 'counter')] = item_seperator.join(
+                [utils.add_suffix(str(key), '{0:.2f}'.format(float(value)/total), pair_seperator) for key, value in sorted(counter.items())]
+            )
         else:
-            #print('Invalid stat method')
+            # Handle invalid counter_stat, if necessary
             pass
 
     return internal_props
 
 def merge_multitext_annotations(nodes, target_props, column2method):
-    #seperator of multiple text 'GO:0000003,GO:0000902,GO:0000904'
+    # Seperator of multiple text 'GO:0000003,GO:0000902,GO:0000904'
     multi_text_seperator = ','
     pair_seperator = "--"
     item_seperator = "||"
 
     internal_props = {}
+    counters = {}
+
     for target_prop in target_props:
         counter_stat = column2method.get(target_prop, "raw")
-        if counter_stat == 'raw':
-            prop_list = utils.children_prop_array(nodes, target_prop)
-            multi_prop_list = []
+        prop_list = utils.children_prop_array(nodes, target_prop)
 
-            for elements in prop_list:
-                for j in elements:
-                    multi_prop_list.append(j)
-            internal_props[utils.add_suffix(target_prop, 'counter')] = item_seperator.join([utils.add_suffix(str(key), value, pair_seperator) for key, value in sorted(dict(Counter(multi_prop_list)).items())])
+        # Flatten the list of lists into a single list
+        multi_prop_list = [item for sublist in prop_list for item in sublist]
+        counter = dict(Counter(multi_prop_list))  # Store the counter
+        counters[target_prop] = counter  # Add the counter to the counters dictionary
+
+        if counter_stat == 'raw':
+            # Add the raw counts to internal_props
+            internal_props[utils.add_suffix(target_prop, 'counter')] = item_seperator.join(
+                [utils.add_suffix(str(key), value, pair_seperator) for key, value in sorted(counter.items())]
+            )
 
         elif counter_stat == 'relative':
-            prop_list = utils.children_prop_array(nodes, target_prop)
-            multi_prop_list = []
+            total = sum(counter.values())
 
-            for elements in prop_list:
-                for j in elements:
-                    multi_prop_list.append(j)
+            # Add the relative counts to internal_props
+            internal_props[utils.add_suffix(target_prop, 'counter')] = item_seperator.join(
+                [utils.add_suffix(str(key), '{0:.2f}'.format(float(value) / total), pair_seperator) for key, value in sorted(counter.items())]
+            )
 
-            counter_line = []
-
-            total = sum(dict(Counter(multi_prop_list)).values())
-
-            for key, value in sorted(dict(Counter(multi_prop_list)).items()):
-                rel_val = '{0:.2f}'.format(float(value)/total)
-                counter_line.append(utils.add_suffix(key, rel_val, pair_seperator))
-            internal_props[utils.add_suffix(target_prop, 'counter')] = item_seperator.join(counter_line)
-            #internal_props[utils.add_suffix(target_prop, 'counter')] = '||'.join([utils.add_suffix(key, value, '--') for key, value in dict(Counter(prop_list)).items()])
         else:
-            #print('Invalid stat method')
+            # Handle invalid counter_stat, if necessary
             pass
 
     return internal_props
+
 
 def merge_num_annotations(nodes, target_props, column2method):
     internal_props = {}
@@ -1551,10 +1581,10 @@ def parse_emapper_annotations(input_file, delimiter='\t', no_headers=False):
     metadata = {}
     columns = defaultdict(list)
     prop2type = {}
-    headers = ["#query", "seed_ortholog", "evalue", "score", "eggNOG_OGs",
-               "max_annot_lvl", "COG_category", "Description", "Preferred_name", "GOs",
-               "EC", "KEGG_ko", "KEGG_Pathway", "KEGG_Module", "KEGG_Reaction", "KEGG_rclass",
-               "BRITE", "KEGG_TC", "CAZy", "BiGG_Reaction", "PFAMs"]
+    # emapper_headers = ["#query", "seed_ortholog", "evalue", "score", "eggNOG_OGs",
+    #            "max_annot_lvl", "COG_category", "Description", "Preferred_name", "GOs",
+    #            "EC", "KEGG_ko", "KEGG_Pathway", "KEGG_Module", "KEGG_Reaction", "KEGG_rclass",
+    #            "BRITE", "KEGG_TC", "CAZy", "BiGG_Reaction", "PFAMs"]
 
     with open(input_file, 'r') as f:
         # Skip lines starting with '##'
@@ -1565,7 +1595,7 @@ def parse_emapper_annotations(input_file, delimiter='\t', no_headers=False):
         else:
             reader = csv.DictReader(filtered_lines, delimiter=delimiter)
 
-        node_header, node_props = headers[0], headers[1:]
+        node_header, node_props = emapper_headers[0], emapper_headers[1:]
         for row in reader:
             nodename = row[node_header]
             del row[node_header]
