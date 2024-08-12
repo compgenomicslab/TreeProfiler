@@ -778,15 +778,13 @@ def run(args):
         out_ete = base+'_annotated.ete'
         out_tsv = base+'_annotated.tsv'
 
-        ### out newick
-        annotated_tree.write(outfile=os.path.join(args.outdir, out_newick), props=None, 
-                    parser=utils.get_internal_parser(args.internal), format_root_node=True)
         
         ### output prop2type
         with open(os.path.join(args.outdir, base+'_prop2type.txt'), "w") as f:
             #f.write(first_line + "\n")
             for key, value in prop2type.items():
                 f.write("{}\t{}\n".format(key, value.__name__))
+
         ### out ete
         with open(os.path.join(args.outdir, base+'_annotated.ete'), 'w') as f:
             f.write(b64pickle.dumps(annotated_tree, encoder='pickle', pack=False))
@@ -799,6 +797,20 @@ def run(args):
             tree2table(annotated_tree, internal_node=True, props=None, outfile=os.path.join(args.outdir, out_tsv))
         else:
             tree2table(annotated_tree, internal_node=True, props=prop_keys, outfile=os.path.join(args.outdir, out_tsv))
+
+        ### out newick
+        ## need to correct wrong symbols in the newick tree, such as ',' -> '||'
+        # Find all keys where the value is of type list
+        list_keys = [key for key, value in prop2type.items() if value == list]
+        # Replace all commas in the tree with '||'
+        for node in annotated_tree.leaves():
+            for key in list_keys:
+                if node.props.get(key):
+                    list2str = '||'.join(node.props.get(key))
+                    node.add_prop(key, list2str)
+        annotated_tree.write(outfile=os.path.join(args.outdir, out_newick), props=None, 
+                    parser=utils.get_internal_parser(args.internal), format_root_node=True)
+        
 
     # if args.outtsv:
     #     tree2table(annotated_tree, internal_node=True, outfile=args.outtsv)
@@ -1177,7 +1189,7 @@ def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, 
                     # str
                     else:
                         target_node.add_prop(key, value)
-
+        
         # hits = tree.get_leaves_by_name(node)
         # if hits:
         #     for target_node in hits:

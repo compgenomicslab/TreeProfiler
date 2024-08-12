@@ -348,7 +348,7 @@ def run(args):
                 
         # elif args.input_type == 'newick':
         #     popup_prop_keys = list(prop2type.keys()) 
-
+    
     # collapse tree by condition 
     if args.collapsed_by: # need to be wrap with quotes
         condition_strings = args.collapsed_by
@@ -1738,7 +1738,6 @@ def numerical2matrix(tree, profiling_props, count_negative=True, internal_num_re
 
     def process_color_configuration(node2matrix, profiling_props=None):
         
-
         value2color = {}
         all_props_wildcard = '*'
 
