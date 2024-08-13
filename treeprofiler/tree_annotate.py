@@ -1274,22 +1274,12 @@ def merge_multitext_annotations(nodes, target_props, column2method):
         counters[target_prop] = counter  # Add the counter to the counters dictionary
 
         if counter_stat == 'raw':
-            # # Find the key with the highest count
-            # if emapper_headers and counter:
-            #     most_common_key = max(counter, key=counter.get)
-            #     internal_props[target_prop] = most_common_key
-
             # Add the raw counts to internal_props
             internal_props[utils.add_suffix(target_prop, 'counter')] = item_seperator.join(
                 [utils.add_suffix(str(key), value, pair_seperator) for key, value in sorted(counter.items())]
             )
 
         elif counter_stat == 'relative':
-            # # Find the key with the highest count
-            # if emapper_headers and counter:
-            #     most_common_key = max(counter, key=counter.get)
-            #     internal_props[target_prop] = most_common_key
-
             total = sum(counter.values())
 
             # Add the relative counts to internal_props
