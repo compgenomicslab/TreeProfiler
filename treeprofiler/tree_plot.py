@@ -2202,7 +2202,7 @@ def single2profile(tree, profiling_prop):
 def multiple2matrix(tree, profiling_prop):
     precence_color = '#E60A0A' # #E60A0A red
     absence_color = '#EBEBEB' # #EBEBEB lightgrey
-    all_categorical_values = sorted(list(set(utils.flatten(utils.tree_prop_array(tree, profiling_prop)))), key=lambda x: (x != 'NaN', x))
+    all_categorical_values = sorted(list(set(utils.flatten(utils.tree_prop_array(tree, profiling_prop, leaf_only=True)))), key=lambda x: (x != 'NaN', x))
     
     node2matrix = {}
     for node in tree.traverse():

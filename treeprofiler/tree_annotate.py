@@ -219,7 +219,6 @@ def populate_annotate_args(parser):
 
 def run_tree_annotate(tree, input_annotated_tree=False,
         metadata_dict={}, node_props=[], columns={}, prop2type={},
-        emapper_annotations=None,
         text_prop=[], text_prop_idx=[], multiple_text_prop=[], num_prop=[], num_prop_idx=[],
         bool_prop=[], bool_prop_idx=[], prop2type_file=None, alignment=None, emapper_pfam=None,
         emapper_smart=None, counter_stat='raw', num_stat='all', column2method={},
@@ -235,39 +234,6 @@ def run_tree_annotate(tree, input_annotated_tree=False,
     total_color_dict = []
     layouts = []
     level = 1 # level 1 is the leaf name
-
-    if emapper_annotations:
-        print("check emapper_annotations")
-        emapper_metadata_dict, emapper_node_props, emapper_columns = parse_emapper_annotations(emapper_annotations)
-        metadata_dict.update(emapper_metadata_dict)
-        node_props.extend(emapper_node_props)
-        columns.update(emapper_columns)
-
-        prop2type.update({
-            'name': str,
-            'dist': float,
-            'support': float,
-            'seed_ortholog': str,
-            'evalue': float,
-            'score': float,
-            'eggNOG_OGs': list,
-            'max_annot_lvl': str,
-            'COG_category': str,
-            'Description': str,
-            'Preferred_name': str,
-            'GOs': list,
-            'EC':str,
-            'KEGG_ko': list,
-            'KEGG_Pathway': list,
-            'KEGG_Module': list,
-            'KEGG_Reaction':list,
-            'KEGG_rclass':list,
-            'BRITE':list,
-            'KEGG_TC':list,
-            'CAZy':list,
-            'BiGG_Reaction':list,
-            'PFAMs':list
-        })
     
     if text_prop:
         text_prop = text_prop
@@ -360,23 +326,24 @@ def run_tree_annotate(tree, input_annotated_tree=False,
                         bool_prop.append(key)
 
         # paramemters can over write the default
-        if emapper_annotations:
-            text_prop.extend([
-                'seed_ortholog',
-                'max_annot_lvl',
-                'COG_category',
-                'EC'
-            ])
-            num_prop.extend([
-                'evalue',
-                'score'
-            ])
-            multiple_text_prop.extend([
-                'eggNOG_OGs', 'GOs', 'KEGG_ko', 'KEGG_Pathway',
-                'KEGG_Module', 'KEGG_Reaction', 'KEGG_rclass',
-                'BRITE', 'KEGG_TC', 'CAZy', 'BiGG_Reaction', 'PFAMs'])
+        # if emapper_annotations:
 
-        
+        #     text_prop.extend([
+        #         'seed_ortholog',
+        #         'max_annot_lvl',
+        #         'COG_category',
+        #         'EC'
+        #     ])
+
+        #     num_prop.extend([
+        #         'evalue',
+        #         'score'
+        #     ])
+        #     multiple_text_prop.extend([
+        #         'eggNOG_OGs', 'GOs', 'KEGG_ko', 'KEGG_Pathway',
+        #         'KEGG_Module', 'KEGG_Reaction', 'KEGG_rclass',
+        #         'BRITE', 'KEGG_TC', 'CAZy', 'BiGG_Reaction', 'PFAMs'])
+
         for prop in text_prop:
             prop2type[prop] = str
   
@@ -532,7 +499,6 @@ def run_tree_annotate(tree, input_annotated_tree=False,
 
     # merge annotations depends on the column datatype
     start = time.time()
-    
     # choose summary method based on datatype
     for prop in text_prop+multiple_text_prop+bool_prop:
         if not prop in column2method:
@@ -725,9 +691,6 @@ def run(args):
         node_props.extend(emapper_node_props)
         columns.update(emapper_columns)
         prop2type.update({
-            'name': str,
-            'dist': float,
-            'support': float,
             'seed_ortholog': str,
             'evalue': float,
             'score': float,
@@ -1256,7 +1219,7 @@ def merge_text_annotations(nodes, target_props, column2method):
     item_seperator = "||"
     internal_props = {}
     counters = {}
-
+    
     for target_prop in target_props:
         counter_stat = column2method.get(target_prop, "raw")
         prop_list = utils.children_prop_array_missing(nodes, target_prop)
@@ -1304,7 +1267,7 @@ def merge_multitext_annotations(nodes, target_props, column2method):
     for target_prop in target_props:
         counter_stat = column2method.get(target_prop, "raw")
         prop_list = utils.children_prop_array(nodes, target_prop)
-
+        
         # Flatten the list of lists into a single list
         multi_prop_list = [item for sublist in prop_list for item in sublist]
         counter = dict(Counter(multi_prop_list))  # Store the counter
