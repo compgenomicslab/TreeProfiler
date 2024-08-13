@@ -102,7 +102,7 @@ class LayoutDomain(TreeLayout):
         pair_delimiter = "@"
         item_seperator = "||"
         dom_list = []
-        if node.is_leaf:
+        if node:
             dom_prop = node.props.get(self.prop, [])
             if dom_prop:
                 
@@ -130,9 +130,12 @@ class LayoutDomain(TreeLayout):
         if dom_list:
             doms = self.parse_doms(dom_list)
             fake_seq = '-' * int(node.props.get("len_alg", 0))
+            
             if doms or fake_seq:
                 seqFace = SeqMotifFace(seq=fake_seq, motifs=doms, width=400,
                         height=30)
                 node.add_face(seqFace, column=self.column, 
                         position="aligned",
                         collapsed_only=(not node.is_leaf))
+        else:
+            print("no domain found for node %s" % node.name)
