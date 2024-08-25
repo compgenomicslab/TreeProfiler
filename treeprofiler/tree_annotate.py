@@ -1224,6 +1224,8 @@ def merge_text_annotations(nodes, target_props, column2method):
         counter_stat = column2method.get(target_prop, "raw")
         prop_list = utils.children_prop_array_missing(nodes, target_prop)
         counter = dict(Counter(prop_list))  # Store the counter
+        if 'NaN' in counter:
+            del counter['NaN']
         counters[target_prop] = counter  # Add the counter to the counters dictionary
 
         if counter_stat == 'raw':
