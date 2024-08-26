@@ -1224,6 +1224,8 @@ def merge_text_annotations(nodes, target_props, column2method):
         counter_stat = column2method.get(target_prop, "raw")
         prop_list = utils.children_prop_array_missing(nodes, target_prop)
         counter = dict(Counter(prop_list))  # Store the counter
+        if 'NaN' in counter:
+            del counter['NaN']
         counters[target_prop] = counter  # Add the counter to the counters dictionary
 
         if counter_stat == 'raw':
@@ -1653,9 +1655,12 @@ def annot_tree_smart_table(post_tree, smart_table, alg_fasta, domain_prop='dom_a
             l.add_prop(domain_prop, domains_string)
 
     for n in post_tree.traverse():
+        # get the most common domain
         if not n.is_leaf:
-            random_node_domains = n.get_closest_leaf()[0].props.get(domain_prop, 'none@none@none')
-            n.add_prop(domain_prop, random_node_domains)
+            prop_list = utils.children_prop_array(n, domain_prop)
+            counter = dict(Counter(prop_list))
+            most_common_key = max(counter, key=counter.get)
+            n.add_prop(domain_prop, most_common_key)
 
     # for n in post_tree.traverse():
     #     print(n.name, n.props.get('dom_arq'))
