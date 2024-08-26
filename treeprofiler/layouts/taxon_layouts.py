@@ -1,7 +1,7 @@
 from ete4.smartview import TreeStyle, NodeStyle, TreeLayout
 from ete4.smartview  import RectFace, CircleFace, SeqMotifFace, TextFace, OutlineFace, LegendFace
 from collections import  OrderedDict
-from treeprofiler.src.utils import str2dict
+from treeprofiler.src import utils 
 paried_color = ["red", "darkblue", "darkgreen", "darkyellow", "violet", "mediumturquoise", "sienna", "lightCoral", "lightSkyBlue", "indigo", "tan", "coral", "olivedrab", "teal"]
 
 #collapse in layout
@@ -103,7 +103,7 @@ class LayoutSciName(TreeLayout):
                 color = rank_colordict.get(sci_name, 'gray')
             else:
                 color = 'gray'
-            node.add_face(TextFace(sci_name, color = color, padding_x=2, max_fsize=30),
+            node.add_face(TextFace(sci_name, color = color, padding_x=2, min_fsize=4, max_fsize=25),
                 column=0, position="branch_right")
 
             if len(prot_id) > 40:
@@ -121,7 +121,7 @@ class LayoutSciName(TreeLayout):
                     color = rank_colordict.get(sci_name, 'gray')
                 else:
                     color = 'gray'
-                node.add_face(TextFace(text, padding_x=2, color = color),
+                node.add_face(TextFace(text, padding_x=2, color = color, min_fsize=4, max_fsize=25),
                         position="branch_right", column=1, collapsed_only=True)
                         
 class TaxaRectangular(TreeLayout):
@@ -152,7 +152,7 @@ class TaxaRectangular(TreeLayout):
             level = get_level(node, level=self.column)
             tooltip = ""
             if node.name:
-                tooltip += f'<b>{node.name}</b><br>'
+                tooltip += f'<b>{node_sciname}</b><br>'
             if lca:
                 tooltip += f'rank: {node_rank}<br>'
                 tooltip += f'sci_name: {lca}<br>'
@@ -213,10 +213,9 @@ class TaxaCollapse(TreeLayout):
         node_sciname = node.props.get('sci_name')
         named_lineage = node.props.get('named_lineage', None)
         #lca = next((elem for elem in named_lineage if elem in self.taxa_list), None)
-        lca_dict = node.props.get('lca')
-        if lca_dict:
-            if type(lca_dict) == str: # in case of string value from newick
-                lca_dict = str2dict(lca_dict)
+        lca_value = node.props.get('lca')
+        if lca_value:
+            lca_dict = utils.string_to_dict(lca_value)
             lca = lca_dict.get(self.rank, None)
             if lca:
                 color = self.color_dict.get(lca, 'lightgray')

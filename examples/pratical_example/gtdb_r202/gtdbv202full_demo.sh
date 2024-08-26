@@ -21,6 +21,7 @@ treeprofiler annotate \
 --metadata ar122_metadata_r202.tar.gz bac120_metadata_r202.tar.gz progenome3.tsv \
 --taxon-column name \
 --taxadb GTDB \
+--gtdb-version 202 \
 -o .
 
 # visualize annotated tree with selected properties

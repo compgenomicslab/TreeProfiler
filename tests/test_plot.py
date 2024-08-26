@@ -190,9 +190,8 @@ class TestTreePlots(unittest.TestCase):
         layouts.extend(heatmap_layouts)
         expected_config = "{'default': {'Branch length': True, 'Branch support': True, 'Leaf name': True, 'Number of leaves': False, 'Heatmap_col1': True}}"
         expected_draw = "[['line', [0, 2.0], [2.0, 2.0], '', [], {'stroke': '#000000', 'stroke-width': 0.5, 'fill': '#e5e5e5', 'fill-opacity': 0.3, 'type': 'solid'}], ['nodebox', [0, 0, 2.0, 4.0], '', {'name': '', 'dist': 0.0, 'support': 1.0}, [], [], {'fill': 'transparent'}]]"
-        expected_layout = "{'name': 'Heatmap_col1', 'active': True, 'aligned_faces': True, 'description': '', 'legend': True, 'always_render': False, 'ts': None, 'ns': None, 'num_prop': 'col1', 'column': 1, 'color_dict': {1: '#fff5f0', 2: '#ffece4', 3: '#fee4d8', 4: '#fdd7c6', 5: '#fdc7b2', 6: '#fcb79c', 7: '#fca689', 8: '#fc9474', 9: '#fc8464', 10: '#fb7252', 11: '#f96044', 12: '#f34c37', 13: '#ed392b', 14: '#dd2a25', 15: '#cf1c1f', 16: '#be151a', 17: '#af1117', 18: '#9a0c14', 19: '#800610', 20: '#67000d'}, 'maxval': 4.0, 'minval': 1.0, 'internal_prop': 'col1_avg', 'width': 70, 'height': None, 'padding_x': 1, 'padding_y': 0, 'min_fsize': 5, 'max_fsize': 15}"
+        expected_layout = "{'name': 'Heatmap_col1_min-max', 'active': True, 'aligned_faces': True, 'description': '', 'legend': True, 'always_render': False, 'ts': None, 'ns': None, 'heatmap_prop': 'col1', 'internal_prop': 'col1_avg', 'column': 1, 'value_color': {1.0: '#fff5f0', 2.0: '#fca689', 3.0: '#dd2a25', 4.0: '#67000d', 3.5: '#af1117'}, 'value_range': [1.0, 4.0], 'color_range': {1: '#fff5f0', 2: '#ffece4', 3: '#fee4d8', 4: '#fdd7c6', 5: '#fdc7b2', 6: '#fcb79c', 7: '#fca689', 8: '#fc9474', 9: '#fc8464', 10: '#fb7252', 11: '#f96044', 12: '#f34c37', 13: '#ed392b', 14: '#dd2a25', 15: '#cf1c1f', 16: '#be151a', 17: '#af1117', 18: '#9a0c14', 19: '#800610', 20: '#67000d'}, 'absence_color': '#EBEBEB', 'maxval': 4.0, 'minval': 1.0, 'width': 70, 'height': None, 'padding_x': 1, 'padding_y': 0}"
         get_parallel(test_tree, layouts, expected_draw, expected_config)
-
         self.assertEqual(str(layouts[0].__dict__), expected_layout)
 
     def test_plot_07(self):
@@ -217,7 +216,7 @@ class TestTreePlots(unittest.TestCase):
         layouts.extend(barplot_layouts)
         expected_config = "{'default': {'Branch length': True, 'Branch support': True, 'Leaf name': True, 'Number of leaves': False, 'Barplot_col1': True}}"
         expected_draw = "[['line', [0, 2.0], [2.0, 2.0], '', [], {'stroke': '#000000', 'stroke-width': 0.5, 'fill': '#e5e5e5', 'fill-opacity': 0.3, 'type': 'solid'}], ['nodebox', [0, 0, 2.0, 4.0], '', {'name': '', 'dist': 0.0, 'support': 1.0}, [], [], {'fill': 'transparent'}]]"
-        expected_layout = "{'name': 'Barplot_col1', 'active': True, 'aligned_faces': True, 'description': '', 'legend': True, 'always_render': False, 'ts': None, 'ns': None, 'width': 70, 'position': 'aligned', 'column': 1, 'scale': True, 'padding_x': 10, 'padding_y': 0, 'internal_rep': 'avg', 'prop': 'col1', 'size_prop': 'col1', 'color_prop': None, 'color': '#9b57d0', 'colors': None, 'color_gradient': None}"
+        expected_layout = "{'name': 'Barplot_col1', 'active': True, 'aligned_faces': True, 'description': '', 'legend': True, 'always_render': False, 'ts': None, 'ns': None, 'width': 70, 'position': 'aligned', 'column': 1, 'scale': True, 'padding_x': 10, 'padding_y': 0, 'internal_rep': 'avg', 'prop': 'col1', 'size_prop': 'col1', 'color_prop': None, 'size_range': [0, 4.0], 'color': '#9b57d0', 'colors': None, 'color_gradient': None}"
         get_parallel(test_tree, layouts, expected_draw, expected_config)
         self.assertEqual(str(layouts[0].__dict__), expected_layout)
 
@@ -282,18 +281,22 @@ class TestTreePlots(unittest.TestCase):
         level = 1
         layouts = []
         profiling_props = ['col1', 'col2'] 
-        matrix, value2color = tree_plot.props2matrix(test_tree, profiling_props, dtype=str)
-        profile_layout = profile_layouts.LayoutProfile(name='categorical_matrix_layout', 
-        mode='single', alignment=matrix, seq_format='categories', profiles=profiling_props, 
-        value_color=value2color, column=level)
+        matrix, value2color = tree_plot.categorical2matrix(test_tree, profiling_props)
+        # profile_layout = profile_layouts.LayoutProfile(name='categorical_matrix_layout', 
+        # mode='single', alignment=matrix, seq_format='categories', profiles=profiling_props, 
+        # value_color=value2color, column=level)
+        profile_layout = profile_layouts.LayoutPropsMatrixOld(name='categorical_matrix_layout',
+                matrix=matrix, matrix_type='categorical', matrix_props=profiling_props,
+                value_color=value2color, column=level)
+
         level += 1
         layouts.append(profile_layout)
         expected_config = "{'default': {'Branch length': True, 'Branch support': True, 'Leaf name': True, 'Number of leaves': False, 'categorical_matrix_layout': True}}"
         expected_draw = "[['line', [0, 2.0], [2.0, 2.0], '', [], {'stroke': '#000000', 'stroke-width': 0.5, 'fill': '#e5e5e5', 'fill-opacity': 0.3, 'type': 'solid'}], ['nodebox', [0, 0, 2.0, 4.0], '', {'name': '', 'dist': 0.0, 'support': 1.0}, [], [], {'fill': 'transparent'}]]"
-        expected_layout = "{'name': 'categorical_matrix_layout', 'active': True, 'aligned_faces': True, 'description': '', 'legend': True, 'always_render': False, 'ts': None, 'ns': None, 'mode': 'single', 'width': 40, 'height': 20, 'column': 1, 'seq_format': 'categories', 'profiles': ['col1', 'col2'], 'length': 2, 'scale_range': (0, 2), 'value_range': [], 'value_color': {'consonant': 'A', 'vowel': 'R'}, 'summarize_inner_nodes': False}"
+        expected_layout = "{'name': 'categorical_matrix_layout', 'active': True, 'aligned_faces': True, 'description': '', 'legend': True, 'always_render': False, 'ts': None, 'ns': None, 'matrix': {'A': ['vowel', 'vowel'], 'B': ['consonant', 'consonant'], 'E': ['vowel', 'vowel'], 'D': ['consonant', 'consonant']}, 'matrix_type': 'categorical', 'matrix_props': ['col1', 'col2'], 'is_list': False, 'width': 40, 'height': 20, 'column': 1, 'length': 2, 'scale_range': (0, 2), 'value_range': [], 'value_color': {'consonant': '#9a312f', 'vowel': '#9b57d0'}, 'summarize_inner_nodes': False}"
         get_parallel(test_tree, layouts, expected_draw, expected_config)
         layout_dict = layouts[0].__dict__
-        del layout_dict['alignment']
+
         self.assertEqual(str(layout_dict), expected_layout)
 
     def test_plot_12(self):
@@ -303,18 +306,20 @@ class TestTreePlots(unittest.TestCase):
         level = 1
         layouts = []
         profiling_props = ['col3', 'col4'] 
-        matrix, maxval, minval = tree_plot.props2matrix(test_tree, profiling_props)
-        profile_layout = profile_layouts.LayoutProfile(name='numerical_matrix_layout', mode='numerical', 
-        alignment=matrix, seq_format='gradients', profiles=profiling_props, 
-        value_range=[minval, maxval], column=level)   
+        matrix, minval, maxval, _, _, _, _ = tree_plot.numerical2matrix(test_tree, profiling_props)
+        # profile_layout = profile_layouts.LayoutProfile(name='numerical_matrix_layout', mode='numerical', 
+        # alignment=matrix, seq_format='gradients', profiles=profiling_props, 
+        # value_range=[minval, maxval], column=level)   
+        profile_layout = profile_layouts.LayoutPropsMatrixOld(name='numerical_matrix_layout',
+                matrix=matrix, matrix_type='categorical', matrix_props=profiling_props,
+                column=level)
         level += 1
         layouts.append(profile_layout)
         expected_config = "{'default': {'Branch length': True, 'Branch support': True, 'Leaf name': True, 'Number of leaves': False, 'numerical_matrix_layout': True}}"
         expected_draw = "[['line', [0, 2.0], [2.0, 2.0], '', [], {'stroke': '#000000', 'stroke-width': 0.5, 'fill': '#e5e5e5', 'fill-opacity': 0.3, 'type': 'solid'}], ['nodebox', [0, 0, 2.0, 4.0], '', {'name': '', 'dist': 0.0, 'support': 1.0}, [], [], {'fill': 'transparent'}]]"
-        expected_layout = "{'name': 'numerical_matrix_layout', 'active': True, 'aligned_faces': True, 'description': '', 'legend': True, 'always_render': False, 'ts': None, 'ns': None, 'mode': 'numerical', 'width': 40, 'height': 20, 'column': 1, 'seq_format': 'gradients', 'profiles': ['col3', 'col4'], 'length': 2, 'scale_range': (0, 2), 'value_range': [1.0, 4.0], 'value_color': {}, 'summarize_inner_nodes': False}"
+        expected_layout = "{'name': 'numerical_matrix_layout', 'active': True, 'aligned_faces': True, 'description': '', 'legend': True, 'always_render': False, 'ts': None, 'ns': None, 'matrix': {'Root': [None, None], 'A': [1.0, 1.0], 'Internal_2': [None, None], 'B': [2.0, 2.0], 'Internal_1': [None, None], 'E': [4.0, 4.0], 'D': [3.0, 3.0]}, 'matrix_type': 'categorical', 'matrix_props': ['col3', 'col4'], 'is_list': False, 'width': 40, 'height': 20, 'column': 1, 'length': 2, 'scale_range': (0, 2), 'value_range': [], 'value_color': {}, 'summarize_inner_nodes': False}"
         get_parallel(test_tree, layouts, expected_draw, expected_config)
         layout_dict = layouts[0].__dict__
-        del layout_dict['alignment']
         self.assertEqual(str(layout_dict), expected_layout)
 
     def test_plot_13(self):

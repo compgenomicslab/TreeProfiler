@@ -1,0 +1,8 @@
+{
+  "tests/test_alignment.py": true, 
+  "tests/test_annotate.py": true, 
+  "tests/test_emapper.py": true, 
+  "tests/test_plot.py": true, 
+  "tests/test_prune.py": true, 
+  "tests/test_taxonomic.py": true
+}
