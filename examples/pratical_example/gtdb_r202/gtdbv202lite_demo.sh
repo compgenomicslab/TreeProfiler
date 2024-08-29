@@ -7,6 +7,7 @@ treeprofiler annotate \
 --metadata ar122_metadata_r202_lite.tar.gz bac120_metadata_r202_lite.tar.gz progenome3.tar.gz \
 --taxon-column name \
 --taxadb GTDB \
+--gtdb-version 202 \
 -o .
 
 # visualize annotated tree with selected properties
