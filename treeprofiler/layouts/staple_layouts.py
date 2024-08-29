@@ -337,12 +337,8 @@ class LayoutHeatmap(TreeLayout):
                 node.add_face(identF, column = self.column,  position = 'aligned', collapsed_only=True)
         
         elif node.props.get(self.internal_prop):
-<<<<<<< HEAD
-            heatmap_num = float(node.props.get(self.internal_prop))
-=======
             heatmap_num = node.props.get(self.internal_prop)
             heatmap_num = float(heatmap_num)
->>>>>>> 3f3536686337b50ea7847ec6c92a47b48e04ba2f
             # heatmap
             tooltip = ""
             if node.name:
