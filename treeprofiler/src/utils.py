@@ -93,7 +93,7 @@ def counter_call(node, internal_prop, leaf_prop, datatype, operator_string, righ
 
 def call(node, prop, datatype, operator_string, right_value):
     num_operators = [ '<', '<=', '>', '>=' ] 
-    if datatype == str:
+    if datatype == str or datatype is None:
         if operator_string in num_operators:
             return False
         elif operator_string == 'contains':
@@ -107,7 +107,6 @@ def call(node, prop, datatype, operator_string, right_value):
                 return left_value in right_value 
         else:
             left_value = node.props.get(prop)
-            
             if left_value:
                 return operator_dict[operator_string](left_value, right_value)
     
