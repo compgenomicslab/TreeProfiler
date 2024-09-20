@@ -45,6 +45,9 @@ emapper_headers = ["#query", "seed_ortholog", "evalue", "score", "eggNOG_OGs",
                    "EC", "KEGG_ko", "KEGG_Pathway", "KEGG_Module", "KEGG_Reaction", "KEGG_rclass",
                    "BRITE", "KEGG_TC", "CAZy", "BiGG_Reaction", "PFAMs"]
 
+# Set up the logger with INFO level by default
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def populate_annotate_args(parser):
@@ -212,9 +215,17 @@ def populate_annotate_args(parser):
     
     group = parser.add_argument_group(title='OUTPUT options',
         description="")
+    group.add_argument('--quiet',
+        default=False,
+        action='store_true',
+        help="Suppress logging messages")
+    group.add_argument('--stdout',
+        default=False,
+        action='store_true',
+        help="Print the output to stdout")
     group.add_argument('-o', '--outdir',
         type=str,
-        required=True,
+        required=False,
         help="Directory for annotated outputs.")
 
 def run_tree_annotate(tree, input_annotated_tree=False,
@@ -410,13 +421,13 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         annotated_tree = tree
 
     end = time.time()
-    print('Time for load_metadata_to_tree to run: ', end - start)
+    logger.info(f'Time for load_metadata_to_tree to run: {end - start}')
 
     
     # Ancestor Character Reconstruction analysis
     # data preparation
     if acr_discrete_columns:
-        logging.info(f"Performing ACR analysis with Character {acr_discrete_columns} via {prediction_method} method with {model} model.......\n")
+        logger.info(f"Performing ACR analysis with Character {acr_discrete_columns} via {prediction_method} method with {model} model.......\n")
         # need to be discrete traits
         discrete_traits = text_prop + bool_prop
         for k in acr_discrete_columns:
@@ -436,17 +447,17 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         # only MPPA,MAP method has marginal probabilities to calculate delta
         if delta_stats:
             if prediction_method in ['MPPA', 'MAP']:
-                logging.info(f"Performing Delta Statistic analysis with Character {acr_discrete_columns}...\n")
+                logger.info(f"Performing Delta Statistic analysis with Character {acr_discrete_columns}...\n")
                 prop2delta = run_delta(acr_results, annotated_tree, ent_type=ent_type, 
                 lambda0=lambda0, se=se, sim=iteration, burn=burn, thin=thin, 
                 threads=threads)
 
                 for prop, delta_result in prop2delta.items():
-                    logging.info(f"Delta statistic of {prop} is: {delta_result}")
+                    logger.info(f"Delta statistic of {prop} is: {delta_result}")
                     tree.add_prop(utils.add_suffix(prop, "delta"), delta_result)
 
                 # start calculating p_value
-                logging.info(f"Calculating p_value for delta statistic...")
+                logger.info(f"Calculating p_value for delta statistic...")
                 # get a copy of the tree
                 dump_tree = annotated_tree.copy()
                 utils.clear_extra_features([dump_tree], ["name", "dist", "support"])
@@ -462,7 +473,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
 
                 for prop, delta_array in prop2delta_array.items():
                     p_value = np.sum(np.array(delta_array) > prop2delta[prop]) / len(delta_array)
-                    logging.info(f"p_value of {prop} is {p_value}")
+                    logger.info(f"p_value of {prop} is {p_value}")
                     tree.add_prop(utils.add_suffix(prop, "pval"), p_value)
                     prop2type.update({
                         utils.add_suffix(prop, "pval"): float
@@ -473,14 +484,14 @@ def run_tree_annotate(tree, input_annotated_tree=False,
                         utils.add_suffix(prop, "delta"): float
                     })
             else:
-                logging.warning(f"Delta statistic analysis only support MPPA and MAP prediction method, {prediction_method} is not supported.")
+                logger.warning(f"Delta statistic analysis only support MPPA and MAP prediction method, {prediction_method} is not supported.")
 
         end = time.time()
-        print('Time for acr to run: ', end - start)
+        logger.info(f'Time for acr to run: {end - start}')
 
     # lineage specificity analysis
     if ls_columns:
-        logging.info(f"Performing Lineage Specificity analysis with Character {ls_columns}...\n")
+        logger.info(f"Performing Lineage Specificity analysis with Character {ls_columns}...\n")
         if all(column in bool_prop for column in ls_columns):
             best_node, qualified_nodes = run_ls(annotated_tree, props=ls_columns, 
             precision_cutoff=prec_cutoff, sensitivity_cutoff=sens_cutoff)
@@ -491,7 +502,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
                     utils.add_suffix(prop, "f1"): float
                 })
         else:
-            logging.warning(f"Lineage specificity analysis only support boolean properties, {ls_columns} is not boolean property.")
+            logger.warning(f"Lineage specificity analysis only support boolean properties, {ls_columns} is not boolean property.")
 
     # statistic method
     counter_stat = counter_stat #'raw' or 'relative'
@@ -553,7 +564,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         pass
         
     end = time.time()
-    print('Time for merge annotations to run: ', end - start)
+    logger.info(f'Time for merge annotations to run: {end - start}')
 
     # taxa annotations
     start = time.time()
@@ -567,17 +578,17 @@ def run_tree_annotate(tree, input_annotated_tree=False,
                 if gtdb_version:
                     # get taxadump from ete-data
                     gtdbtaxadump = get_gtdbtaxadump(gtdb_version)
-                    logging.info(f"Loading GTDB database dump file {gtdbtaxadump}...")
+                    logger.info(f"Loading GTDB database dump file {gtdbtaxadump}...")
                     GTDBTaxa().update_taxonomy_database(gtdbtaxadump)
                 elif taxa_dump:
-                    logging.info(f"Loading GTDB database dump file {taxa_dump}...")
+                    logger.info(f"Loading GTDB database dump file {taxa_dump}...")
                     GTDBTaxa().update_taxonomy_database(taxa_dump)
                 else:
-                    logging.info("No specific version or dump file provided; using latest GTDB data...")
+                    logger.info("No specific version or dump file provided; using latest GTDB data...")
                     GTDBTaxa().update_taxonomy_database()
             elif taxadb == 'NCBI':
                 if taxa_dump:
-                    logging.info(f"Loading NCBI database dump file {taxa_dump}...")
+                    logger.info(f"Loading NCBI database dump file {taxa_dump}...")
                     NCBITaxa().update_taxonomy_database(taxa_dump)
                 # else:
                 #     NCBITaxa().update_taxonomy_database()
@@ -593,7 +604,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         rank2values = {}
 
     end = time.time()
-    print('Time for annotate_taxa to run: ', end - start)
+    logger.info(f'Time for annotate_taxa to run: {end - start}')
     
     # prune tree by rank
     if rank_limit:
@@ -645,33 +656,38 @@ def run(args):
     metadata_dict = {}
     column2method = {}
 
-    # checking file and output exists
-    if not os.path.exists(args.tree):
-        raise FileNotFoundError(f"Input tree {args.tree} does not exist.") 
-    
     if args.metadata:
         for metadata_file in args.metadata:
             if not os.path.exists(metadata_file):
                 raise FileNotFoundError(f"Metadata {metadata_file} does not exist.") 
 
-    if not os.path.exists(args.outdir):
-        raise FileNotFoundError(f"Output directory {args.outdir} does not exist.") 
+    # Validation: Ensure at least one of --outdir or --stdout is selected
+    if not args.outdir and not args.stdout:
+        parser.error("You must specify either --outdir or --stdout to output results.")
+    
+    if args.outdir:
+        if not os.path.exists(args.outdir):
+            raise FileNotFoundError(f"Output directory {args.outdir} does not exist.") 
         
 
     # parsing tree
     try:
         tree, eteformat_flag = utils.validate_tree(args.tree, args.input_type, args.internal)
     except utils.TreeFormatError as e:
-        print(e)
+        logger.error(e)
         sys.exit(1)
 
     # resolve polytomy
     if args.resolve_polytomy:
         tree.resolve_polytomy()
-        
+    
+    # set logger level
+    if args.quiet:
+        logger.setLevel(logging.CRITICAL)  # Mute all log levels below CRITICA
+
     # parse csv to metadata table
     start = time.time()
-    print("start parsing...")
+    logger.info(f'start parsing...')
     # parsing metadata
     if args.metadata: # make a series of metadatas
         metadata_dict, node_props, columns, prop2type = parse_csv(args.metadata, delimiter=args.metadata_sep, \
@@ -683,7 +699,7 @@ def run(args):
     if args.data_matrix:
         array_dict = parse_tsv_to_array(args.data_matrix, delimiter=args.metadata_sep)
     end = time.time()
-    print('Time for parse_csv to run: ', end - start)
+    logger.info(f'Time for parse_csv to run: {end - start}')
     
     if args.emapper_annotations:
         emapper_metadata_dict, emapper_node_props, emapper_columns = parse_emapper_annotations(args.emapper_annotations)
@@ -781,7 +797,9 @@ def run(args):
                     node.add_prop(key, list2str)
         annotated_tree.write(outfile=os.path.join(args.outdir, out_newick), props=None, 
                     parser=utils.get_internal_parser(args.internal), format_root_node=True)
-        
+    
+    if args.stdout:
+        print(annotated_tree.write(props=None, parser=utils.get_internal_parser(args.internal), format_root_node=True))
 
     # if args.outtsv:
     #     tree2table(annotated_tree, internal_node=True, outfile=args.outtsv)
@@ -968,7 +986,7 @@ def parse_tsv_to_array(input_files, delimiter='\t', no_headers=True):
                     leaf2array[node] = np_array.tolist()
                 except ValueError:
                     # Handle the case where conversion fails
-                    print(f"Warning: Non-numeric data found in {prefix} for node {node}. Skipping.")
+                    logger.warning(f"Warning: Non-numeric data found in {prefix} for node {node}. Skipping.")
                     leaf2array[node] = None
                     is_float = False
 
@@ -1411,14 +1429,14 @@ def get_gtdbtaxadump(version):
     """
     url = f"https://github.com/etetoolkit/ete-data/raw/main/gtdb_taxonomy/gtdb{version}/gtdb{version}dump.tar.gz"
     fname = f"gtdb{version}dump.tar.gz"
-    logging.info(f'Downloading GTDB taxa dump fname from {url} ...')
+    logger.info(f'Downloading GTDB taxa dump fname from {url} ...')
     with open(fname, 'wb') as f:
         f.write(requests.get(url).content)
     return fname
 
 def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field=0, ignore_unclassified=False):
     global rank2values
-    logging.info(f"\n==============Annotating tree with {db} taxonomic database============")
+    logger.info(f"\n==============Annotating tree with {db} taxonomic database============")
     
     def return_spcode_ncbi(leaf):
         try:
