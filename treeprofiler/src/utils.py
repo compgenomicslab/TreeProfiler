@@ -19,7 +19,7 @@ import operator
 import math
 import Bio
 import re
-import sys
+import sys, os
 from io import StringIO
 
 # conditional syntax calling
@@ -247,7 +247,14 @@ def validate_tree(tree_path, input_type, internal_parser=None):
 
     if input_type in ['newick', 'auto'] and tree is None:
         #try:
-        tree = ete4_parse(open(tree_path), internal_parser=internal_parser)
+        if tree_path == '-':
+            tree = ete4_parse(sys.stdin, internal_parser=internal_parser)
+        else:
+            # checking file and output exists
+            if not os.path.exists(tree_path):
+                raise FileNotFoundError(f"Input tree {tree_path} does not exist.")
+            
+            tree = ete4_parse(open(tree_path), internal_parser=internal_parser)
         #except Exception as e:
         #    raise TreeFormatError(f"Error loading tree in 'newick' format: {e}\n"
         #                          "Please try using the correct parser with --internal-parser option, or check the newick format.")

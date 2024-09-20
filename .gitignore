@@ -13,3 +13,5 @@ docs/source/_templates/
 __pycache__/
 __pycache__/*
 .covarage
+.cache/
+.cache/*
