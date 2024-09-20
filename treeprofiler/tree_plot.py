@@ -298,11 +298,7 @@ def run(args):
     layouts = []
     level = 1 # level 1 is the leaf name
 
-    # checking file and output exists
-    if not os.path.exists(args.tree):
-       raise FileNotFoundError(f"Input tree {args.tree} does not exist.")
-
-   # parsing tree
+    # parsing tree
     try:
         tree, eteformat_flag = utils.validate_tree(args.tree, args.input_type, args.internal)
     except utils.TreeFormatError as e:

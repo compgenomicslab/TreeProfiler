@@ -311,7 +311,7 @@ class LayoutHeatmap(TreeLayout):
                     tooltip += f'<b>{node.name}</b><br>'
                 if self.heatmap_prop:
                     tooltip += f'<br>{self.heatmap_prop}: {heatmap_num}<br>'
-
+                
                 gradient_color = self.value_color.get(heatmap_num)
                 
                 if gradient_color:
