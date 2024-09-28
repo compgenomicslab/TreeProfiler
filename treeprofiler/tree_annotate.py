@@ -47,8 +47,13 @@ emapper_headers = ["#query", "seed_ortholog", "evalue", "score", "eggNOG_OGs",
 
 # Set up the logger with INFO level by default
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+def setup_logger(level=logging.INFO):
+    """Sets up logging configuration."""
+    logger.setLevel(level)
+    handler = logging.StreamHandler(sys.stdout)
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
 
 def populate_annotate_args(parser):
     gmeta = parser.add_argument_group(
@@ -656,6 +661,8 @@ def run(args):
     metadata_dict = {}
     column2method = {}
 
+    setup_logger()
+
     if args.metadata:
         for metadata_file in args.metadata:
             if not os.path.exists(metadata_file):
@@ -733,26 +740,78 @@ def run(args):
     if args.column_summary_method:
         column2method = process_column_summary_methods(args.column_summary_method)
     
-    annotated_tree, prop2type = run_tree_annotate(tree, input_annotated_tree=args.annotated_tree,
-            metadata_dict=metadata_dict, node_props=node_props, columns=columns,
-            prop2type=prop2type,
-            text_prop=args.text_prop, text_prop_idx=args.text_prop_idx,
-            multiple_text_prop=args.multiple_text_prop, num_prop=args.num_prop, num_prop_idx=args.num_prop_idx,
-            bool_prop=args.bool_prop, bool_prop_idx=args.bool_prop_idx,
-            prop2type_file=args.prop2type, alignment=args.alignment,
-            emapper_pfam=args.emapper_pfam, emapper_smart=args.emapper_smart, 
-            counter_stat=args.counter_stat, num_stat=args.num_stat, column2method=column2method, 
-            taxadb=args.taxadb, gtdb_version=args.gtdb_version, 
-            taxa_dump=args.taxa_dump, taxon_column=args.taxon_column,
-            taxon_delimiter=args.taxon_delimiter, taxa_field=args.taxa_field, ignore_unclassified=args.ignore_unclassified,
-            rank_limit=args.rank_limit, pruned_by=args.pruned_by, 
-            acr_discrete_columns=args.acr_discrete_columns, 
-            prediction_method=args.prediction_method, model=args.model, 
-            delta_stats=args.delta_stats, ent_type=args.ent_type, 
-            iteration=args.iteration, lambda0=args.lambda0, se=args.se,
-            thin=args.thin, burn=args.burn,
-            ls_columns=args.ls_columns, prec_cutoff=args.prec_cutoff, sens_cutoff=args.sens_cutoff, 
-            threads=args.threads, outdir=args.outdir)
+    # Group metadata-related arguments
+    metadata_options = {
+        "metadata_dict": metadata_dict,
+        "node_props": node_props,
+        "columns": columns,
+        "prop2type": prop2type,
+        "text_prop": args.text_prop,
+        "text_prop_idx": args.text_prop_idx,
+        "multiple_text_prop": args.multiple_text_prop,
+        "num_prop": args.num_prop,
+        "num_prop_idx": args.num_prop_idx,
+        "bool_prop": args.bool_prop,
+        "bool_prop_idx": args.bool_prop_idx,
+        "prop2type_file": args.prop2type,
+    }
+
+    # Group analysis-related arguments (ACR and Lineage Specificity options)
+    analytic_options = {
+        "acr_discrete_columns": args.acr_discrete_columns,
+        "prediction_method": args.prediction_method,
+        "model": args.model,
+        "delta_stats": args.delta_stats,
+        "ent_type": args.ent_type,
+        "iteration": args.iteration,
+        "lambda0": args.lambda0,
+        "se": args.se,
+        "thin": args.thin,
+        "burn": args.burn,
+        "ls_columns": args.ls_columns,
+        "prec_cutoff": args.prec_cutoff,
+        "sens_cutoff": args.sens_cutoff,
+    }
+
+    # Group taxonomic-related arguments
+    taxonomic_options = {
+        "taxadb": args.taxadb,
+        "gtdb_version": args.gtdb_version,
+        "taxa_dump": args.taxa_dump,
+        "taxon_column": args.taxon_column,
+        "taxon_delimiter": args.taxon_delimiter,
+        "taxa_field": args.taxa_field,
+        "ignore_unclassified": args.ignore_unclassified,
+    }
+
+    # Group emapper-related arguments
+    emapper_options = {
+        "emapper_pfam": args.emapper_pfam,
+        "emapper_smart": args.emapper_smart,
+    }
+
+    # Group output and miscellaneous options
+    output_options = {
+        "rank_limit": args.rank_limit,
+        "pruned_by": args.pruned_by,
+        "threads": args.threads,
+        "outdir": args.outdir,
+    }
+
+    # Simplified function call with grouped arguments
+    annotated_tree, prop2type = run_tree_annotate(
+        tree,
+        input_annotated_tree=args.annotated_tree,
+        **metadata_options,
+        alignment=args.alignment,
+        counter_stat=args.counter_stat,
+        num_stat=args.num_stat,
+        column2method=column2method,
+        **taxonomic_options,
+        **analytic_options,
+        **emapper_options,
+        **output_options
+    )
 
     if args.data_matrix:
         annotated_tree = run_array_annotate(annotated_tree, array_dict, num_stat=args.num_stat, column2method=column2method)
@@ -1701,41 +1760,6 @@ def parse_fasta(fastafile):
                 seq += line
     fasta_dict[head] = seq
     return fasta_dict
-
-# def get_pval(prop2array, dump_tree, acr_discrete_columns_dict, iteration=100, 
-#             prediction_method="MPPA", model="F81", ent_type='SE', 
-#             lambda0=0.1, se=0.5, sim=10000, burn=100, thin=10, threads=1):
-#     prop2delta_array = {}
-#     for _ in range(iteration):
-#         shuffled_dict = {}
-#         for column, trait in acr_discrete_columns_dict.items():
-#             trait = acr_discrete_columns_dict[column]
-#             #shuffle traits
-#             shuffled_trait = np.random.choice(trait, len(trait), replace=False)
-#             prop2array[column][1] = list(shuffled_trait)
-#             shuffled_dict[column] = list(shuffled_trait)
-
-#         # Converting back to the original dictionary format
-#         # # annotate new metadata to leaf
-#         new_metadata_dict = convert_back_to_original(prop2array)
-#         dump_tree = load_metadata_to_tree(dump_tree, new_metadata_dict)
-        
-#         # # run acr
-#         random_acr_results, dump_tree = run_acr_discrete(dump_tree, shuffled_dict, \
-#         prediction_method="MPPA", model="F81", threads=threads, outdir=None)
-#         random_delta = run_delta(random_acr_results, dump_tree, ent_type=ent_type, 
-#                 lambda0=lambda0, se=se, sim=sim, burn=burn, thin=thin, 
-#                 threads=threads)
-
-#         for prop, delta_result in random_delta.items():
-            
-#             if prop in prop2delta_array:
-#                 prop2delta_array[prop].append(delta_result)
-#             else:
-#                 prop2delta_array[prop] = [delta_result]
-#         utils.clear_extra_features([dump_tree], ["name", "dist", "support"])
-
-#     return prop2delta_array
 
 def _worker_function(iteration_data):
     # Unpack the necessary data for one iteration
