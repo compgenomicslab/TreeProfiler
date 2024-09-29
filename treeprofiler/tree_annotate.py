@@ -20,7 +20,7 @@ from ete4 import GTDBTaxa
 from ete4 import NCBITaxa
 
 from treeprofiler.src import utils
-from treeprofiler.src.phylosignal import run_acr_discrete, run_delta
+from treeprofiler.src.phylosignal import run_acr_discrete, run_acr_continuous, run_delta
 from treeprofiler.src.ls import run_ls
 from treeprofiler.src import b64pickle
 
@@ -40,15 +40,29 @@ TAXONOMICDICT = {# start with leaf name
                 }
 
 # Global Variable for emapper headers
-emapper_headers = ["#query", "seed_ortholog", "evalue", "score", "eggNOG_OGs",
+EMAPPER_HEADERS = ["#query", "seed_ortholog", "evalue", "score", "eggNOG_OGs",
                    "max_annot_lvl", "COG_category", "Description", "Preferred_name", "GOs",
                    "EC", "KEGG_ko", "KEGG_Pathway", "KEGG_Module", "KEGG_Reaction", "KEGG_rclass",
                    "BRITE", "KEGG_TC", "CAZy", "BiGG_Reaction", "PFAMs"]
 
+# Available methods and models for ACR
+# Discrete traits
+DISCRETE_METHODS = ['MPPA', 'MAP', 'JOINT', 'DOWNPASS', 'ACCTRAN', 'DELTRAN', 'COPY', 'ALL', 'ML', 'MP']
+DISCRETE_MODELS = ['JC', 'F81', 'EFT', 'HKY', 'JTT', 'CUSTOM_RATES']
+
+# Continuous traits
+CONTINUOUS_METHODS = ['ML', 'BAYESIAN']
+CONTINUOUS_MODELS = ['BM', 'OU']
+
 # Set up the logger with INFO level by default
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+def setup_logger(level=logging.INFO):
+    """Sets up logging configuration."""
+    logger.setLevel(level)
+    handler = logging.StreamHandler(sys.stdout)
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
 
 def populate_annotate_args(parser):
     gmeta = parser.add_argument_group(
@@ -87,10 +101,6 @@ def populate_annotate_args(parser):
         help="1 2 3 or [1-5] index columns which need to be read as numerical data")
     add('--bool-prop-idx', nargs='+',
         help="1 2 3 or [1-5] index columns which need to be read as boolean data")
-    add('--acr-discrete-columns', nargs='+',
-        help=("<col1> <col2> names to perform acr analysis for discrete traits"))
-    # add('--acr-continuous-columns', nargs='+',
-    #     help=("<col1> <col2> names to perform acr analysis for continuous traits"))
     add('--ls-columns', nargs='+',
         help=("<col1> <col2> names to perform lineage specificity analysis"))
     # add('--taxatree',
@@ -143,20 +153,28 @@ def populate_annotate_args(parser):
     
     acr_group = parser.add_argument_group(title='Ancestral Character Reconstruction arguments',
         description="ACR parameters")
+    # ACR for discrete traits columns
+    acr_group.add_argument('--acr-discrete-columns', nargs='+',
+        help=("List of column names (e.g., <col1> <col2>) to perform ACR analysis for discrete traits."))
+    # ACR for continuous traits columns
+    acr_group.add_argument('--acr-continuous-columns', nargs='+',
+        help=("List of column names (e.g., <col1> <col2>) to perform ACR analysis for continuous traits."))
     acr_group.add_argument('--prediction-method',
         default='MPPA',
-        choices=['MPPA','MAP','JOINT','DOWNPASS','ACCTRAN','DELTRAN','COPY','ALL','ML','MP'],
+        choices=DISCRETE_METHODS + CONTINUOUS_METHODS,
         type=str,
         required=False,
-        help="prediction method for ACR discrete analysis [default: MPPA]"
-        )
+        help=("Prediction method for ACR analysis. "
+              f"For discrete traits: {', '.join(DISCRETE_METHODS)}. "
+              f"For continuous traits: {', '.join(CONTINUOUS_METHODS)}. [default: MPPA]"))
     acr_group.add_argument('--model',
         default='F81',
-        choices=['JC','F81','EFT','HKY','JTT','CUSTOM_RATES'],
+        choices=DISCRETE_MODELS + CONTINUOUS_MODELS,
         type=str,
         required=False,
-        help="Evolutionary model for ML methods in ACR discrete analysis [default: F81]"
-        )
+        help=("Evolutionary model for ML methods in ACR analysis. "
+              f"For discrete traits: {', '.join(DISCRETE_MODELS)}. "
+              f"For continuous traits: {', '.join(CONTINUOUS_MODELS)}. [default: F81]"))
     acr_group.add_argument('--threads',
         default=4,
         type=int,
@@ -236,7 +254,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         taxadb='GTDB', gtdb_version=None, taxa_dump=None, taxon_column=None,
         taxon_delimiter='', taxa_field=0, ignore_unclassified=False,
         rank_limit=None, pruned_by=None, 
-        acr_discrete_columns=None, prediction_method="MPPA", model="F81", 
+        acr_discrete_columns=None, acr_continuous_columns=None, prediction_method="MPPA", model="F81", 
         delta_stats=False, ent_type="SE", 
         iteration=100, lambda0=0.1, se=0.5, thin=10, burn=100, 
         ls_columns=None, prec_cutoff=0.95, sens_cutoff=0.95, 
@@ -425,15 +443,23 @@ def run_tree_annotate(tree, input_annotated_tree=False,
 
     
     # Ancestor Character Reconstruction analysis
-    # data preparation
+    # discrete data preparation
     if acr_discrete_columns:
-        logger.info(f"Performing ACR analysis with Character {acr_discrete_columns} via {prediction_method} method with {model} model.......\n")
+        logger.info(f"Performing ACR analysis with discrete traits {acr_discrete_columns} via {prediction_method} method with {model} model.......\n")
         # need to be discrete traits
         discrete_traits = text_prop + bool_prop
         for k in acr_discrete_columns:
             if k:
                 if k not in discrete_traits:
                     raise ValueError(f"Character {k} is not discrete trait, please check your input.")
+        
+        if prediction_method in DISCRETE_METHODS:
+            if model in DISCRETE_MODELS:
+                pass
+            else:
+                raise ValueError(f"Model {model} is not supported for discrete traits, please check your input.")
+        else:
+            raise ValueError(f"Prediction method {prediction_method} is not supported for discrete traits, please check your input.")
         #############################
         start = time.time()
         acr_discrete_columns_dict = {k: v for k, v in columns.items() if k in acr_discrete_columns}
@@ -486,6 +512,35 @@ def run_tree_annotate(tree, input_annotated_tree=False,
             else:
                 logger.warning(f"Delta statistic analysis only support MPPA and MAP prediction method, {prediction_method} is not supported.")
 
+        end = time.time()
+        logger.info(f'Time for acr to run: {end - start}')
+
+    # continuous data preparation
+    if acr_continuous_columns:
+        logger.info(f"Performing ACR analysis with continuous traits {acr_continuous_columns} via {prediction_method} method with {model} model.......\n")
+        # need to be discrete traits
+        continuous_traits = num_prop
+        for k in acr_continuous_columns:
+            if k:
+                if k not in continuous_traits:
+                    raise ValueError(f"Character {k} is not continuous trait, please check your input.")
+        
+        if prediction_method in CONTINUOUS_METHODS:
+            if model in CONTINUOUS_MODELS:
+                pass
+            else:
+                raise ValueError(f"Model {model} is not supported for continuous traits, please check your input.")
+        else:
+            raise ValueError(f"Prediction method {prediction_method} is not supported for continuous traits, please check your input.")
+        
+        # convert metadata to observed traits
+        transformed_dict = {key: {} for key in acr_continuous_columns}
+        for leaf, props in metadata_dict.items():
+            for prop in acr_continuous_columns:
+                transformed_dict[prop][leaf] = float(props[prop])
+
+        start = time.time()
+        acr_results, tree = run_acr_continuous(annotated_tree, transformed_dict, model=model, prediction_method=prediction_method, threads=threads, outdir=outdir)
         end = time.time()
         logger.info(f'Time for acr to run: {end - start}')
 
@@ -656,6 +711,8 @@ def run(args):
     metadata_dict = {}
     column2method = {}
 
+    setup_logger()
+
     if args.metadata:
         for metadata_file in args.metadata:
             if not os.path.exists(metadata_file):
@@ -733,26 +790,79 @@ def run(args):
     if args.column_summary_method:
         column2method = process_column_summary_methods(args.column_summary_method)
     
-    annotated_tree, prop2type = run_tree_annotate(tree, input_annotated_tree=args.annotated_tree,
-            metadata_dict=metadata_dict, node_props=node_props, columns=columns,
-            prop2type=prop2type,
-            text_prop=args.text_prop, text_prop_idx=args.text_prop_idx,
-            multiple_text_prop=args.multiple_text_prop, num_prop=args.num_prop, num_prop_idx=args.num_prop_idx,
-            bool_prop=args.bool_prop, bool_prop_idx=args.bool_prop_idx,
-            prop2type_file=args.prop2type, alignment=args.alignment,
-            emapper_pfam=args.emapper_pfam, emapper_smart=args.emapper_smart, 
-            counter_stat=args.counter_stat, num_stat=args.num_stat, column2method=column2method, 
-            taxadb=args.taxadb, gtdb_version=args.gtdb_version, 
-            taxa_dump=args.taxa_dump, taxon_column=args.taxon_column,
-            taxon_delimiter=args.taxon_delimiter, taxa_field=args.taxa_field, ignore_unclassified=args.ignore_unclassified,
-            rank_limit=args.rank_limit, pruned_by=args.pruned_by, 
-            acr_discrete_columns=args.acr_discrete_columns, 
-            prediction_method=args.prediction_method, model=args.model, 
-            delta_stats=args.delta_stats, ent_type=args.ent_type, 
-            iteration=args.iteration, lambda0=args.lambda0, se=args.se,
-            thin=args.thin, burn=args.burn,
-            ls_columns=args.ls_columns, prec_cutoff=args.prec_cutoff, sens_cutoff=args.sens_cutoff, 
-            threads=args.threads, outdir=args.outdir)
+    # Group metadata-related arguments
+    metadata_options = {
+        "metadata_dict": metadata_dict,
+        "node_props": node_props,
+        "columns": columns,
+        "prop2type": prop2type,
+        "text_prop": args.text_prop,
+        "text_prop_idx": args.text_prop_idx,
+        "multiple_text_prop": args.multiple_text_prop,
+        "num_prop": args.num_prop,
+        "num_prop_idx": args.num_prop_idx,
+        "bool_prop": args.bool_prop,
+        "bool_prop_idx": args.bool_prop_idx,
+        "prop2type_file": args.prop2type,
+    }
+
+    # Group analysis-related arguments (ACR and Lineage Specificity options)
+    analytic_options = {
+        "acr_discrete_columns": args.acr_discrete_columns,
+        "acr_continuous_columns": args.acr_continuous_columns,
+        "prediction_method": args.prediction_method,
+        "model": args.model,
+        "delta_stats": args.delta_stats,
+        "ent_type": args.ent_type,
+        "iteration": args.iteration,
+        "lambda0": args.lambda0,
+        "se": args.se,
+        "thin": args.thin,
+        "burn": args.burn,
+        "ls_columns": args.ls_columns,
+        "prec_cutoff": args.prec_cutoff,
+        "sens_cutoff": args.sens_cutoff,
+    }
+
+    # Group taxonomic-related arguments
+    taxonomic_options = {
+        "taxadb": args.taxadb,
+        "gtdb_version": args.gtdb_version,
+        "taxa_dump": args.taxa_dump,
+        "taxon_column": args.taxon_column,
+        "taxon_delimiter": args.taxon_delimiter,
+        "taxa_field": args.taxa_field,
+        "ignore_unclassified": args.ignore_unclassified,
+    }
+
+    # Group emapper-related arguments
+    emapper_options = {
+        "emapper_pfam": args.emapper_pfam,
+        "emapper_smart": args.emapper_smart,
+    }
+
+    # Group output and miscellaneous options
+    output_options = {
+        "rank_limit": args.rank_limit,
+        "pruned_by": args.pruned_by,
+        "threads": args.threads,
+        "outdir": args.outdir,
+    }
+
+    # Simplified function call with grouped arguments
+    annotated_tree, prop2type = run_tree_annotate(
+        tree,
+        input_annotated_tree=args.annotated_tree,
+        **metadata_options,
+        alignment=args.alignment,
+        counter_stat=args.counter_stat,
+        num_stat=args.num_stat,
+        column2method=column2method,
+        **taxonomic_options,
+        **analytic_options,
+        **emapper_options,
+        **output_options
+    )
 
     if args.data_matrix:
         annotated_tree = run_array_annotate(annotated_tree, array_dict, num_stat=args.num_stat, column2method=column2method)
@@ -1248,7 +1358,7 @@ def merge_text_annotations(nodes, target_props, column2method):
 
         if counter_stat == 'raw':
             # Find the key with the highest count
-            if emapper_headers and counter:
+            if EMAPPER_HEADERS and counter:
                 most_common_key = max(counter, key=counter.get)
                 internal_props[target_prop] = most_common_key
 
@@ -1259,7 +1369,7 @@ def merge_text_annotations(nodes, target_props, column2method):
 
         elif counter_stat == 'relative':
             # Find the key with the highest count
-            if emapper_headers and counter:
+            if EMAPPER_HEADERS and counter:
                 most_common_key = max(counter, key=counter.get)
                 internal_props[target_prop] = most_common_key
 
@@ -1416,7 +1526,7 @@ def gtdb_accession_to_taxid(accession):
         """Given a GTDB accession number, returns its complete accession"""
         if accession.startswith('GCA'):
             prefix = 'GB_'
-            return prefix+accession
+            return prefix+accessionac
         elif accession.startswith('GCF'):
             prefix = 'RS_'
             return prefix+accession
@@ -1564,7 +1674,7 @@ def parse_emapper_annotations(input_file, delimiter='\t', no_headers=False):
     metadata = {}
     columns = defaultdict(list)
     prop2type = {}
-    # emapper_headers = ["#query", "seed_ortholog", "evalue", "score", "eggNOG_OGs",
+    # EMAPPER_HEADERS = ["#query", "seed_ortholog", "evalue", "score", "eggNOG_OGs",
     #            "max_annot_lvl", "COG_category", "Description", "Preferred_name", "GOs",
     #            "EC", "KEGG_ko", "KEGG_Pathway", "KEGG_Module", "KEGG_Reaction", "KEGG_rclass",
     #            "BRITE", "KEGG_TC", "CAZy", "BiGG_Reaction", "PFAMs"]
@@ -1578,7 +1688,7 @@ def parse_emapper_annotations(input_file, delimiter='\t', no_headers=False):
         else:
             reader = csv.DictReader(filtered_lines, delimiter=delimiter)
 
-        node_header, node_props = emapper_headers[0], emapper_headers[1:]
+        node_header, node_props = EMAPPER_HEADERS[0], EMAPPER_HEADERS[1:]
         for row in reader:
             nodename = row[node_header]
             del row[node_header]
@@ -1701,41 +1811,6 @@ def parse_fasta(fastafile):
                 seq += line
     fasta_dict[head] = seq
     return fasta_dict
-
-# def get_pval(prop2array, dump_tree, acr_discrete_columns_dict, iteration=100, 
-#             prediction_method="MPPA", model="F81", ent_type='SE', 
-#             lambda0=0.1, se=0.5, sim=10000, burn=100, thin=10, threads=1):
-#     prop2delta_array = {}
-#     for _ in range(iteration):
-#         shuffled_dict = {}
-#         for column, trait in acr_discrete_columns_dict.items():
-#             trait = acr_discrete_columns_dict[column]
-#             #shuffle traits
-#             shuffled_trait = np.random.choice(trait, len(trait), replace=False)
-#             prop2array[column][1] = list(shuffled_trait)
-#             shuffled_dict[column] = list(shuffled_trait)
-
-#         # Converting back to the original dictionary format
-#         # # annotate new metadata to leaf
-#         new_metadata_dict = convert_back_to_original(prop2array)
-#         dump_tree = load_metadata_to_tree(dump_tree, new_metadata_dict)
-        
-#         # # run acr
-#         random_acr_results, dump_tree = run_acr_discrete(dump_tree, shuffled_dict, \
-#         prediction_method="MPPA", model="F81", threads=threads, outdir=None)
-#         random_delta = run_delta(random_acr_results, dump_tree, ent_type=ent_type, 
-#                 lambda0=lambda0, se=se, sim=sim, burn=burn, thin=thin, 
-#                 threads=threads)
-
-#         for prop, delta_result in random_delta.items():
-            
-#             if prop in prop2delta_array:
-#                 prop2delta_array[prop].append(delta_result)
-#             else:
-#                 prop2delta_array[prop] = [delta_result]
-#         utils.clear_extra_features([dump_tree], ["name", "dist", "support"])
-
-#     return prop2delta_array
 
 def _worker_function(iteration_data):
     # Unpack the necessary data for one iteration

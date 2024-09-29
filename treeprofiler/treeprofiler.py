@@ -26,7 +26,7 @@ def populate_main_args(main_args_p):
     group.add_argument('-t', '--tree',
         type=str,
         required=True,
-        help="Input tree, .nw file, customized tree input")
+        help="Input tree file in .nw (Newick) format. Use '-' to read from standard input.")
     group.add_argument('--annotated-tree',
         default=False,
         action='store_true',
