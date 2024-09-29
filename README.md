@@ -99,7 +99,8 @@ TreeProfiler requires
   - selenium
   - scipy
   - matplotlib
-  - numba
+  - pymc >= 4
+  - aesara
   - pastml (custom)
 
 ### Quick install via pip
@@ -109,7 +110,7 @@ pip install --force-reinstall https://github.com/etetoolkit/ete/archive/ete4.zip
 
 
 # Install TreeProfiler dependencies
-pip install biopython selenium scipy matplotlib numba
+pip install biopython selenium scipy matplotlib pymc aesara
 
 # Install custom pastml package for ete4
 pip install "git+https://github.com/dengzq1234/pastml.git@pastml2ete4" 
