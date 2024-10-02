@@ -1263,7 +1263,11 @@ def get_barplot_layouts(tree, props, level, prop2type, column_width=70, padding_
     def process_prop_values(tree, prop):
         """Extracts and processes property values, excluding NaNs."""
         prop_values = np.array(list(set(utils.tree_prop_array(tree, prop)))).astype('float64')
-        return prop_values[~np.isnan(prop_values)]
+        prop_values = prop_values[~np.isnan(prop_values)]
+        if prop_values.size != 0:
+            return prop_values
+        else:
+            raise ValueError(f"Tree doesn't have '{prop}' property")
 
     def calculate_column_width(prop_values, anchormax=None):
         """Calculates new column width based on property values and optional anchormax."""
@@ -1305,7 +1309,7 @@ def get_barplot_layouts(tree, props, level, prop2type, column_width=70, padding_
         anchormax = anchor_column_values.max()
 
     for prop in props:
-        prop_values = process_prop_values(tree, prop)
+        prop_values = process_prop_values(tree, prop)    
         maxval = prop_values.max()
         size_prop = prop if prop_values.any() else f"{prop}_{internal_rep}"
         new_column_width = calculate_column_width(prop_values, anchormax)
