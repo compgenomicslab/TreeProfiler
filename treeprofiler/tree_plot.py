@@ -341,10 +341,6 @@ def run(args):
             for path, node in tree.iter_prepostorder():
                 prop2type.update(get_prop2type(node))
                 
-                
-        # elif args.input_type == 'newick':
-        #     popup_prop_keys = list(prop2type.keys()) 
-    
     # collapse tree by condition 
     if args.collapsed_by: # need to be wrap with quotes
         condition_strings = args.collapsed_by
@@ -357,8 +353,7 @@ def run(args):
     if args.highlighted_by: # need to be wrap with quotes
         condition_strings = args.highlighted_by
         for condition in condition_strings:
-            s_layout = TreeLayout(name='Highlighted_by_'+condition, \
-                                    ns=conditional_layouts.highlight_layout(condition, prop2type = prop2type, level=level))
+            s_layout = conditional_layouts.LayoutHighlight(name='Highlighted_by_'+condition, conditions=condition, column=level, prop2type = prop2type)
             layouts.append(s_layout)
     
     #### Layouts settings ####
