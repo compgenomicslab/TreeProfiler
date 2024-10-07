@@ -348,50 +348,30 @@ def run(args):
             for path, node in tree.iter_prepostorder():
                 prop2type.update(get_prop2type(node))
                 
-    # collapse tree by condition 
     if args.collapsed_by: # need to be wrap with quotes
         condition_strings = args.collapsed_by
-        for condition in condition_strings:
-            c_layout = TreeLayout(name='Collapsed_by_'+condition, \
-                                    ns=conditional_layouts.collapsed_by_layout(condition, prop2type = prop2type, level=level))
+        for idx, condition in enumerate(condition_strings):
+            if os.path.isfile(condition):
+                color2conditions = build_color2conditions(condition, args.config_sep)
+            else:
+                syntax_sep = ','
+                condition_list = condition.split(syntax_sep)
+                color2conditions  = {}
+                color2conditions[paired_color[idx]] = condition_list
+            c_layout = conditional_layouts.LayoutCollapse(name='Collapsed_by_'+condition, color2conditions=color2conditions, column=level, prop2type = prop2type)
             layouts.append(c_layout)
-
-    # label node by condition
-    # if args.highlighted_by: # need to be wrap with quotes
-    #     condition_strings = args.highlighted_by
-    #     for condition in condition_strings:
-    #         s_layout = conditional_layouts.LayoutHighlight(name='Highlighted_by_'+condition, conditions=condition, column=level, prop2type = prop2type)
-    #         layouts.append(s_layout)
 
     # label node by condition
     if args.highlighted_by: # need to be wrap with quotes
         condition_strings = args.highlighted_by
         for idx, condition in enumerate(condition_strings):
             if os.path.isfile(condition):
-                color2conditions = {}
-                with open(condition, 'r') as f:
-                    for line in f:
-                        line = line.rstrip()
-                        if line and not line.startswith('#'):
-                            if not line.startswith('PROP'):
-                                sep = args.config_sep
-                                left = line.split(sep)[0]
-                                right = line.split(sep)[1]
-                                color = line.split(sep)[2]
-                                operator = line.split(sep)[3]
-                                string = ''.join([left, operator, right])
-                                if color not in color2conditions:
-                                    color2conditions[color] = []
-                                    color2conditions[color].append(string)
-                                else:
-                                    
-                                    color2conditions[color].append(string)
+                color2conditions = build_color2conditions(condition, args.config_sep)
             else:
-                sep = ','
-                condition_list = condition.split(sep)
+                syntax_sep = ','
+                condition_list = condition.split(syntax_sep)
                 color2conditions  = {}
                 color2conditions[paired_color[idx]] = condition_list
-            
             s_layout = conditional_layouts.LayoutHighlight(name='Highlighted_by_'+condition, color2conditions=color2conditions, column=level, prop2type = prop2type)
             layouts.append(s_layout)
     
@@ -903,6 +883,35 @@ def read_config_to_dict(file_obj, delimiter):
             config_dict[prop]["value2color"][value] = color
 
     return config_dict
+
+def build_color2conditions(condition_file, config_sep):
+    color2conditions = {}
+    
+    with open(condition_file, 'r') as f:
+        for line in f:
+            line = line.rstrip()  # Remove trailing whitespace
+            if line and not line.startswith('#'):  # Ignore empty lines and comments
+                if not line.startswith('PROP'):  # Ignore lines starting with 'PROP'
+                    sep = config_sep
+                    parts = line.split(sep)
+                    
+                    # Ensure there are at least 4 parts after splitting
+                    if len(parts) >= 4:
+                        left = parts[0]
+                        right = parts[1]
+                        color = parts[2]
+                        operator = parts[3]
+                        
+                        # Construct the condition string
+                        condition_string = ''.join([left, operator, right])
+                        
+                        # Add the condition string to the dictionary under the corresponding color
+                        if color not in color2conditions:
+                            color2conditions[color] = []
+                        color2conditions[color].append(condition_string)
+                    else:
+                        raise ValueError(f"Invalid line: {line}")
+    return color2conditions
 
 def get_acr_discrete_layouts(tree, props, level, prop2type, column_width=70, padding_x=1, padding_y=0, color_config=None):
     prop_color_dict = {}

@@ -308,10 +308,8 @@ def taxatree_prune(tree, rank_limit='subspecies'):
 
 def conditional_prune(tree, conditions_input, prop2type):
     conditional_output = []
-    for line in conditions_input:
-        single_one = to_code(line)
-        
-        conditional_output.append(single_one)
+    single_one = to_code(conditions_input)
+    conditional_output.append(single_one)
 
     ex = False
     while not ex:
@@ -333,8 +331,6 @@ def conditional_prune(tree, conditions_input, prop2type):
                             datatype = prop2type[internal_prop]
                             final_call = counter_call(n, internal_prop, leaf_prop, datatype, op, value)
                         else:
-                            prop = condition[0]
-                            value = condition[2]
                             prop = condition[0]
                             value = condition[2]
                             datatype = prop2type.get(prop)

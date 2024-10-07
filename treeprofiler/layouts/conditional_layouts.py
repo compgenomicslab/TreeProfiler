@@ -26,9 +26,76 @@ class LayoutHighlight(TreeLayout):
 
     def set_tree_style(self, tree, tree_style):
         super().set_tree_style(tree, tree_style)
-        text = TextFace(self.name, min_fsize=self.min_fsize, max_fsize=self.max_fsize, 
-        padding_x=self.padding_x, width=self.width, rotation=315)
-        tree_style.aligned_panel_header.add_face(text)
+        if self.legend:
+            colormap = {','.join(v) if isinstance(v, list) else v: k for k, v in self.color2conditions.items()}
+            tree_style.add_legend(title=self.name,
+                                    variable='discrete',
+                                    colormap=colormap
+                                    )
+
+        for color, conditions in self.color2conditions.items():
+            conditional_output = to_code(conditions)
+            for node in tree.traverse():
+                final_call = False
+                for condition in conditional_output:
+                    op = condition[1]
+                    if op == 'in':
+                        value = condition[0]
+                        prop = condition[2]
+                        datatype = self.prop2type.get(prop)
+                        final_call = call(node, prop, datatype, op, value)
+
+                    elif ':' in condition[0] :
+                        internal_prop, leaf_prop = condition[0].split(':')
+                        value = condition[2]
+                        datatype = self.prop2type[internal_prop]
+                        final_call = counter_call(node, internal_prop, leaf_prop, datatype, op, value)
+                    else:
+                        prop = condition[0]
+                        value = condition[2]
+                        datatype = self.prop2type.get(prop)
+                        final_call = call(node, prop, datatype, op, value)
+                    if final_call == False:
+                        break
+                    else:
+                        continue
+                
+                if final_call:
+                    #prop_face = SelectedRectFace(name='prop')
+                    node.add_prop(f'hl_{conditions}', color)  # highligh clade
+                    node.add_prop(f'hl_{conditions}_endnode', True)
+                    while (node):
+                        node = node.up
+                        if node:
+                            node.add_prop(f'hl_{conditions}', True)
+                            #node.sm_style["hz_line_width"] = 5
+        return
+
+    def set_node_style(self, node):
+        for color, conditions in self.color2conditions.items():
+            if node.props.get(f'hl_{conditions}'):
+                node.sm_style["hz_line_width"] = 5
+                node.sm_style["hz_line_color"] = color
+                node.sm_style["outline_color"] = color
+                if node.props.get(f'hl_{conditions}_endnode'):
+                    node.sm_style["bgcolor"] = color
+
+class LayoutCollapse(TreeLayout):
+    def __init__(self, name, color2conditions, column, prop2type=None, legend=True, width=70, padding_x=1, padding_y=0):
+        super().__init__(name)
+        self.name = name
+        self.aligned_faces = True
+        self.prop2type = prop2type
+        self.color2conditions = color2conditions
+
+        self.min_fsize = 5 
+        self.max_fsize = 15
+        self.width = 70
+        self.padding_x = padding_x
+        self.padding_y = padding_y
+
+    def set_tree_style(self, tree, tree_style):
+        super().set_tree_style(tree, tree_style)
         if self.legend:
             colormap = {','.join(v) if isinstance(v, list) else v: k for k, v in self.color2conditions.items()}
             tree_style.add_legend(title=self.name,
@@ -66,8 +133,8 @@ class LayoutHighlight(TreeLayout):
                 
                 if final_call:
                     #prop_face = SelectedRectFace(name='prop')
-                    node.add_prop(f'hl_{conditions}', color)  # highligh clade
-                    node.add_prop(f'hl_{conditions}_endnode', True)
+                    node.add_prop(f'cl_{conditions}', color)  # highligh clade
+                    node.add_prop(f'cl_{conditions}_endnode', True)
                     while (node):
                         node = node.up
                         if node:
@@ -77,13 +144,13 @@ class LayoutHighlight(TreeLayout):
 
     def set_node_style(self, node):
         for color, conditions in self.color2conditions.items():
-            if node.props.get(f'hl_{conditions}'):
-                node.sm_style["hz_line_width"] = 5
-                node.sm_style["hz_line_color"] = color
-                node.sm_style["outline_color"] = color
-                if node.props.get(f'hl_{conditions}_endnode'):
-                    node.sm_style["bgcolor"] = color
-
+            if not node.is_root:
+                if node.props.get(f'cl_{conditions}'):
+                    node.sm_style["draw_descendants"] = False
+                    node.sm_style["outline_color"] = color
+                    if node.props.get(f'cl_{conditions}_endnode'):
+                        node.sm_style["draw_descendants"] = False
+                        node.sm_style["outline_color"] = color
 
 # conditional collapse layouts
 def collapsed_by_layout(conditions, level, prop2type={}, color='red'):
