@@ -126,7 +126,7 @@ def call(node, prop, datatype, operator_string, right_value):
                 return right_value in left_value 
         
 
-def to_code(string):
+def to_code(condition_strings):
     conditional_output = []
     operators = [ '<', '<=', '>', '>=', '=', '!=', 'in', 'contains'] 
     
@@ -139,7 +139,7 @@ def to_code(string):
     # code = code.replace('>', " > ")
     # code = code.replace('>=', ' >= ')
 
-    condition_strings = string.split(',')
+    #condition_strings = strings.split(',')
     for condition_string in condition_strings:
         ops = r.findall(condition_string)
         for op in ops:

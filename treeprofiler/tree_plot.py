@@ -367,10 +367,34 @@ def run(args):
     if args.highlighted_by: # need to be wrap with quotes
         condition_strings = args.highlighted_by
         for idx, condition in enumerate(condition_strings):
-            color2conditions  = {}
-            color2conditions[paired_color[idx]] = condition
+            if os.path.isfile(condition):
+                color2conditions = {}
+                with open(condition, 'r') as f:
+                    for line in f:
+                        line = line.rstrip()
+                        if line and not line.startswith('#'):
+                            if not line.startswith('PROP'):
+                                sep = args.config_sep
+                                left = line.split(sep)[0]
+                                right = line.split(sep)[1]
+                                color = line.split(sep)[2]
+                                operator = line.split(sep)[3]
+                                string = ''.join([left, operator, right])
+                                if color not in color2conditions:
+                                    color2conditions[color] = []
+                                    color2conditions[color].append(string)
+                                else:
+                                    
+                                    color2conditions[color].append(string)
+            else:
+                sep = ','
+                condition_list = condition.split(sep)
+                color2conditions  = {}
+                color2conditions[paired_color[idx]] = condition_list
+            
             s_layout = conditional_layouts.LayoutHighlight(name='Highlighted_by_'+condition, color2conditions=color2conditions, column=level, prop2type = prop2type)
             layouts.append(s_layout)
+    
     #### Layouts settings ####
     # numerical representative mearsure 
     internal_num_rep = args.internal_plot_measure
