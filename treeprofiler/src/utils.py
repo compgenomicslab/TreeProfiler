@@ -578,6 +578,24 @@ def clear_extra_features(forest, features):
                     # You can customize the string conversion as needed
                     n.props[key] = ','.join(map(str, value))
 
+def clear_specific_features(tree, features, leaf_only=False, internal_only=False):
+    if leaf_only and not internal_only:
+        for n in tree.leaves():
+            for f in features:
+                if f in n.props:
+                    n.del_prop(f)
+    elif internal_only and not leaf_only:
+        for n in tree.traverse():
+            if not n.is_leaf:
+                for f in features:
+                    if f in n.props:
+                        n.del_prop(f)
+    if leaf_only and internal_only:
+        for n in tree.traverse():
+            for f in features:
+                if f in n.props:
+                    n.del_prop(f)
+
 def add_suffix(name, suffix, delimiter='_'):
     return str(name) + delimiter + str(suffix)
 

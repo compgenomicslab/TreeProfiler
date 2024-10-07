@@ -657,7 +657,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         prop2type.update(TAXONOMICDICT)
     else:
         rank2values = {}
-
+    utils.clear_specific_features(annotated_tree, ['species'], leaf_only=False, internal_only=True)
     end = time.time()
     logger.info(f'Time for annotate_taxa to run: {end - start}')
     
