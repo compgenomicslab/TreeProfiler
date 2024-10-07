@@ -49,6 +49,13 @@ paired_color = [
 
 DESC = "plot tree"
 
+def string_or_file(value):
+    if os.path.isfile(value):
+        if os.path.exists(value):
+            return value
+    else:
+        return value  
+
 def poplulate_plot_args(plot_args_p):
     """
     Parse the input parameters
@@ -64,12 +71,12 @@ def poplulate_plot_args(plot_args_p):
         help="statistic measures to be shown in numerical layout for internal nodes, [default: avg]")  
 
     group.add_argument('--collapsed-by', 
-        type=str,
+        type=string_or_file,
         required=False,
         action='append',
         help='target tree nodes collapsed by customized conditions')  
     group.add_argument('--highlighted-by', 
-        type=str,
+        type=string_or_file,
         required=False,
         action='append',
         help='target tree nodes highlighted by customized conditions')
@@ -350,12 +357,20 @@ def run(args):
             layouts.append(c_layout)
 
     # label node by condition
+    # if args.highlighted_by: # need to be wrap with quotes
+    #     condition_strings = args.highlighted_by
+    #     for condition in condition_strings:
+    #         s_layout = conditional_layouts.LayoutHighlight(name='Highlighted_by_'+condition, conditions=condition, column=level, prop2type = prop2type)
+    #         layouts.append(s_layout)
+
+    # label node by condition
     if args.highlighted_by: # need to be wrap with quotes
         condition_strings = args.highlighted_by
-        for condition in condition_strings:
-            s_layout = conditional_layouts.LayoutHighlight(name='Highlighted_by_'+condition, conditions=condition, column=level, prop2type = prop2type)
+        for idx, condition in enumerate(condition_strings):
+            color2conditions  = {}
+            color2conditions[paired_color[idx]] = condition
+            s_layout = conditional_layouts.LayoutHighlight(name='Highlighted_by_'+condition, color2conditions=color2conditions, column=level, prop2type = prop2type)
             layouts.append(s_layout)
-    
     #### Layouts settings ####
     # numerical representative mearsure 
     internal_num_rep = args.internal_plot_measure

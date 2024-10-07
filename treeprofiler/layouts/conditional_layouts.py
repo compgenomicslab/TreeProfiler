@@ -11,21 +11,19 @@ except ImportError:
 
 # branch thicken, background highlighted to purple
 class LayoutHighlight(TreeLayout):
-    def __init__(self, name, conditions, column, prop2type=None, color='purple', legend=True):
+    def __init__(self, name, color2conditions, column, prop2type=None, legend=True):
         super().__init__(name)
         self.aligned_faces = True
         self.prop2type = prop2type
-        self.conditions = conditions
-        self.color = color
+        self.color2conditions = color2conditions
     
     def set_tree_style(self, tree, tree_style):
-        for node in tree.traverse():
-            conditional_output = to_code(self.conditions)
-            final_call = False
-            for condition in conditional_output:
+        for color, conditions in self.color2conditions.items():
+            conditional_output = to_code(conditions)
+            for node in tree.traverse():
+                final_call = False
                 for condition in conditional_output:
                 #normal
-                
                     op = condition[1]
                     if op == 'in':
                         value = condition[0]
@@ -51,21 +49,22 @@ class LayoutHighlight(TreeLayout):
                 
                 if final_call:
                     #prop_face = SelectedRectFace(name='prop')
-                    node.add_prop('hightlight', True)  # highligh clade
-                    node.add_prop('hightlight_endnode', True)
+                    node.add_prop('hl', color)  # highligh clade
+                    node.add_prop('hl_endnode', True)
                     while (node):
                         node = node.up
                         if node:
-                            node.add_prop('hightlight', True)
+                            node.add_prop('hl', True)
                             #node.sm_style["hz_line_width"] = 5
         return
 
     def set_node_style(self, node):
-        if node.props.get('hightlight'):
+        if node.props.get('hl'):
+            color = node.props.get('hl')
             node.sm_style["hz_line_width"] = 5
-            node.sm_style["outline_color"] = self.color
-            if node.props.get('hightlight_endnode'):
-                node.sm_style["bgcolor"] = self.color
+            node.sm_style["outline_color"] = color
+            if node.props.get('hl_endnode'):
+                node.sm_style["bgcolor"] = color
 
 # conditional collapse layouts
 def collapsed_by_layout(conditions, level, prop2type={}, color='red'):
