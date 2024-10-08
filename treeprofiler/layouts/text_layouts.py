@@ -459,18 +459,16 @@ class LayoutBackground(TreeLayout):
             
             if self.color_dict:
                 color = self.color_dict.get(str(prop_text), self.absence_color)
-                if not node.is_leaf:
-                    print("yesh")
-                    print(node.name, prop_text, color)
                 align_link_face = AlignLinkFace(width=self.width*2, height=None,
-                    stroke_color=color, stroke_width=2, line_type=0, opacity=0.8)
+                    stroke_color=color, stroke_width=2, line_type=0, opacity=0.7)
                 node.sm_style["bgcolor"] = color
-                node.sm_style["fgopacity"] = 0.5
+                node.sm_style["fgopacity"] = 0.7
                 node.sm_style['outline_color'] = color
-                node.add_face(align_link_face,
-                    position='branch_right',
-                    #column=self.column,
-                    )
+                if node.is_leaf:
+                    node.add_face(align_link_face,
+                        position='branch_right',
+                        column=0,
+                        )
         elif node.is_leaf and node.props.get(self.internal_prop):
             stackedbar_face = get_stackedbarface(node, self.internal_prop, self.color_dict, width=self.width, padding_x=self.padding_x, padding_y=self.padding_y)
             node.add_face(stackedbar_face, column = self.column, position = "aligned", collapsed_only=False)
