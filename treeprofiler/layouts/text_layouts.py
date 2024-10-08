@@ -446,6 +446,7 @@ class LayoutBackground(TreeLayout):
     def set_node_style(self, node):
         prop_text = node.props.get(self.text_prop)
         if prop_text:
+            
             if type(prop_text) == list:
                 prop_text = ",".join(prop_text)
             else:
@@ -458,6 +459,9 @@ class LayoutBackground(TreeLayout):
             
             if self.color_dict:
                 color = self.color_dict.get(str(prop_text), self.absence_color)
+                if not node.is_leaf:
+                    print("yesh")
+                    print(node.name, prop_text, color)
                 align_link_face = AlignLinkFace(width=self.width*2, height=None,
                     stroke_color=color, stroke_width=2, line_type=0, opacity=0.8)
                 node.sm_style["bgcolor"] = color

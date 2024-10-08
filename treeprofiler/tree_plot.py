@@ -5,6 +5,7 @@ import sys
 import os
 import argparse
 import csv
+import logging
 
 from collections import defaultdict
 from collections import OrderedDict
@@ -48,6 +49,22 @@ paired_color = [
 ]
 
 DESC = "plot tree"
+
+# Set up the logger with INFO level by default
+logger = logging.getLogger(__name__)
+
+def setup_logger(level=logging.ERROR):
+    """Sets up logging configuration."""
+    logger.setLevel(level)
+    
+    # Create a StreamHandler to output to sys.stdout
+    handler = logging.StreamHandler(sys.stdout)
+    
+    # Define the formatter with a custom format for errors
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s - [in %(filename)s:%(lineno)d]')
+    
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
 
 def string_or_file(value):
     if os.path.isfile(value):
@@ -304,6 +321,9 @@ def run(args):
     total_color_dict = []
     layouts = []
     level = 1 # level 1 is the leaf name
+
+    # Setup logger with error level
+    setup_logger()
 
     # parsing tree
     try:
@@ -910,7 +930,8 @@ def build_color2conditions(condition_file, config_sep):
                             color2conditions[color] = []
                         color2conditions[color].append(condition_string)
                     else:
-                        raise ValueError(f"Invalid line: {line}")
+                        logger.error(f"Invalid line: {line}")
+                        sys.exit(1)
     return color2conditions
 
 def get_acr_discrete_layouts(tree, props, level, prop2type, column_width=70, padding_x=1, padding_y=0, color_config=None):
@@ -950,7 +971,11 @@ def get_acr_continuous_layouts(tree, props, level, prop2type, padding_x=1, paddi
     gradientscolor = utils.build_color_gradient(20, colormap_name='jet')
     layouts = []
     for prop in props:
-        all_values = np.array(sorted(list(set(utils.tree_prop_array(tree, prop, numeric=True))))).astype('float64')
+        try:
+            all_values = np.array(sorted(list(set(utils.tree_prop_array(tree, prop, numeric=True))))).astype('float64')
+        except ValueError:
+            logger.error(f"Property {prop} is not numeric. Please check the property type.")
+            sys.exit(1)
         all_values = all_values[~np.isnan(all_values)]
         minval, maxval = all_values.min(), all_values.max()
         num = len(gradientscolor)
@@ -1004,11 +1029,14 @@ def get_ls_layouts(tree, props, level, prop2type, padding_x=1, padding_y=0, colo
             all_values = internalnode_all_values[~np.isnan(internalnode_all_values)]
             num = len(gradientscolor)
             index_values = np.linspace(minval, maxval, num)
-            for search_value in all_values:
-                if search_value not in value2color:
-                    index = np.abs(index_values - search_value).argmin()+1
-                    value2color[search_value] = gradientscolor[index]
-                    
+            if all_values:
+                for search_value in all_values:
+                    if search_value not in value2color:
+                        index = np.abs(index_values - search_value).argmin()+1
+                        value2color[search_value] = gradientscolor[index]
+            else:
+                logger.error(f"Property {ls_prop} is empty. Please check annotation.")
+                sys.exit(1)
             # layout = staple_layouts.LayoutBranchScore(name='BranchScore_'+prop, \
             # color_dict=gradientscolor, score_prop=prop, internal_rep=internal_rep, \
             # value_range=[minval, maxval], \
@@ -1049,7 +1077,10 @@ def get_piechart_layouts(tree, props, prop2type, padding_x=1, padding_y=0, radiu
                 prop_values = [val for sublist in leaf_values for val in sublist]
             else:
                 prop_values = sorted(list(set(utils.tree_prop_array(tree, prop))))
-            
+
+            if not prop_values:
+                logger.error(f"Property {prop} is empty. Please check annotation.")
+                sys.exit(1)
             color_dict = utils.assign_color_to_values(prop_values, paired_color)
         layout = text_layouts.LayoutPiechart(name='Piechart_'+prop, color_dict=color_dict, text_prop=prop, radius=radius)
         layouts.append(layout)
@@ -1069,6 +1100,10 @@ def get_label_layouts(tree, props, level, prop2type, column_width=70, padding_x=
                 prop_values = [val for sublist in leaf_values for val in sublist]
             else:
                 prop_values = sorted(list(set(utils.tree_prop_array(tree, prop))))
+
+            if not prop_values:
+                logger.error(f"Property {prop} is empty. Please check annotation.")
+                sys.exit(1)
 
             color_dict = utils.assign_color_to_values(prop_values, paired_color)
 
@@ -1128,6 +1163,10 @@ def get_rectangle_layouts(tree, props, level, prop2type, column_width=70, paddin
             else:
                 prop_values = sorted(list(set(utils.tree_prop_array(tree, prop))))
             
+            if not prop_values:
+                logger.error(f"Property {prop} is empty. Please check annotation.")
+                sys.exit(1)
+
             # normal text prop
             color_dict = utils.assign_color_to_values(prop_values, paired_color)
 
@@ -1153,9 +1192,13 @@ def get_background_layouts(tree, props, level, prop2type, column_width, padding_
             else:
                 prop_values = sorted(list(set(utils.tree_prop_array(tree, prop))))
             
+            if not prop_values:
+                logger.error(f"Property {prop} is empty. Please check annotation.")
+                sys.exit(1)
+                
             # normal text prop
             color_dict = utils.assign_color_to_values(prop_values, paired_color)
-
+            
         layout = text_layouts.LayoutBackground(name='Background_'+prop, 
                     column=level, width=column_width,
                     color_dict=color_dict, text_prop=prop,
@@ -1211,7 +1254,8 @@ def get_binary_layouts(tree, props, level, prop2type, column_width=70, reverse=F
             layouts.append(layout)
             level += 1
         else:
-            raise ValueError(f"Property {prop} is not binary trait.")
+            logger.error(f"Property {prop} is not binary trait.")
+            sys.exit(1)
     return layouts, level, prop_color_dict
 
 def get_branchscore_layouts(tree, props, prop2type, padding_x=1, padding_y=0, internal_rep='avg', color_config=None):
@@ -1310,7 +1354,8 @@ def get_barplot_layouts(tree, props, level, prop2type, column_width=70, padding_
         if prop_values.size != 0:
             return prop_values
         else:
-            raise ValueError(f"Tree doesn't have '{prop}' property")
+            logger.error(f"Tree doesn't have '{prop}' property")
+            sys.exit(1)
 
     def calculate_column_width(prop_values, anchormax=None):
         """Calculates new column width based on property values and optional anchormax."""
@@ -1516,7 +1561,8 @@ def get_heatmap_layouts(tree, props, level, column_width=70, padding_x=1, paddin
                         normalized_value = z_score_normalize(search_value, mean_val, std_val)
                         index_values = np.linspace(-3, 3, num)
                     else:
-                        raise ValueError("Unsupported normalization method.")
+                        logger.error("Unsupported normalization method.")
+                        sys.exit(1)
                     index = np.abs(index_values - normalized_value).argmin() + 1
                     value2color[search_value] = gradientscolor.get(index, "")
 
@@ -1712,7 +1758,8 @@ def numerical2matrix(tree, profiling_props, count_negative=True, internal_num_re
             normalized_value = z_score_normalize(search_value)
             index_values = np.linspace(-3, 3, num)
         else:
-            raise ValueError("Unsupported normalization method.")
+            logger.error("Unsupported normalization method.")
+            sys.exit(1)
         index = np.abs(index_values - normalized_value).argmin() + 1
         #index = np.abs(index_values - search_value).argmin() + 1
         return color_dict.get(index, "")
@@ -1833,7 +1880,8 @@ def numerical2matrix(tree, profiling_props, count_negative=True, internal_num_re
                             normalized_value = z_score_normalize(search_value, mean_val, std_val)
                             index_values = np.linspace(-3, 3, num)
                         else:
-                            raise ValueError("Unsupported normalization method.")
+                            logger.error("Unsupported normalization method.")
+                            sys.exit(1)
                         index = np.abs(index_values - normalized_value).argmin() + 1
                         value2color[search_value] = gradientscolor.get(index, "")
         return minval, maxval, value2color
