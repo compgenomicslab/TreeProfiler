@@ -616,30 +616,40 @@ class LayoutBubble(TreeLayout):
     def set_node_style(self, node):
         number = node.props.get(self.num_prop)
         if number is not None:
+            # Ensure number is converted to float
+            number = float(number)
+            
+            # Set bubble size and color based on the number's value
             bubble_size = self._get_bubble_size(number)
-            #bubble_size = self.max_radius
-            if number > 0:
-                bubble_color = self.positive_color
-            else:
-                bubble_color = self.negative_color
+            bubble_color = self.positive_color if number > 0 else self.negative_color
+            
+            # Apply styles to the node
             node.sm_style["size"] = bubble_size
             node.sm_style["fgcolor"] = bubble_color
-        
+            node.sm_style["fgopacity"] = 0.7
+
         elif node.is_leaf and node.props.get(self.internal_prop):
-            if number > 0:
-                bubble_color = self.positive_color
-            else:
-                bubble_color = self.negative_color
+            # Since it's a leaf node with internal properties, use internal_prop as number
+            number = float(node.props.get(self.internal_prop))
+            
+            # Set bubble size and color based on the number's value
             bubble_size = self._get_bubble_size(number)
+            bubble_color = self.positive_color if number > 0 else self.negative_color
+
+            # Apply styles to the node
             node.sm_style["size"] = bubble_size
             node.sm_style["fgcolor"] = bubble_color
-        
+            node.sm_style["fgopacity"] = 0.7
+
         elif node.props.get(self.internal_prop):
-            number = node.props.get(self.internal_prop)
-            if number > 0:
-                bubble_color = self.positive_color
-            else:
-                bubble_color = self.negative_color
+            # Handle non-leaf nodes with internal properties
+            number = float(node.props.get(self.internal_prop))
+            
+            # Set bubble size and color based on the number's value
             bubble_size = self._get_bubble_size(number)
+            bubble_color = self.positive_color if number > 0 else self.negative_color
+
+            # Apply styles to the node
             node.sm_style["size"] = bubble_size
             node.sm_style["fgcolor"] = bubble_color
+            node.sm_style["fgopacity"] = 0.7
