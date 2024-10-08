@@ -877,6 +877,21 @@ def read_config_to_dict(file_obj, delimiter):
 
     return config_dict
 
+def process_common_ancestors(color_dict, tree, common_ancestor_separator='||'):
+    for key in list(color_dict.keys()):
+        if common_ancestor_separator in key:
+            children = key.split(common_ancestor_separator)
+            ancestor = tree.common_ancestor(children)
+            if ancestor:
+                if ancestor.name:
+                    # If the ancestor has a name, update its color in the dictionary
+                    color_dict[ancestor.name] = color_dict[key]
+                    del color_dict[key]
+                else:
+                    # If the ancestor has no name, assign the key as its name
+                    ancestor.name = key
+    return color_dict
+
 def build_color2conditions(condition_file, config_sep):
     color2conditions = {}
     
@@ -1095,6 +1110,9 @@ def get_colorbranch_layouts(tree, props, level, prop2type, column_width=70, padd
             if color_config.get(prop).get('value2color'):
                 color_dict = color_config.get(prop).get('value2color')
             
+            if prop == 'name':
+                color_dict = process_common_ancestors(color_dict, tree, common_ancestor_separator='||')
+
             # Check if all property values have an assigned color
             # prop_values = sorted(list(set(utils.tree_prop_array(tree, prop))))
             # existing_values = set(color_dict.keys())
@@ -1158,6 +1176,9 @@ def get_background_layouts(tree, props, level, prop2type, column_width, padding_
         if color_config and color_config.get(prop):
             if color_config.get(prop).get('value2color'):
                 color_dict = color_config.get(prop).get('value2color')
+
+            if prop == 'name':
+                color_dict = process_common_ancestors(color_dict, tree, common_ancestor_separator='||')
         else:
             if prop2type and prop2type.get(prop) == list:
                 leaf_values = list(map(list,set(map(tuple,utils.tree_prop_array(tree, prop)))))    

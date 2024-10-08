@@ -897,10 +897,11 @@ def run(args):
         # Find all keys where the value is of type list
         list_keys = [key for key, value in prop2type.items() if value == list]
         # Replace all commas in the tree with '||'
+        list_sep = '||'
         for node in annotated_tree.leaves():
             for key in list_keys:
                 if node.props.get(key):
-                    list2str = '||'.join(node.props.get(key))
+                    list2str = list_sep.join(node.props.get(key))
                     node.add_prop(key, list2str)
         annotated_tree.write(outfile=os.path.join(args.outdir, out_newick), props=None, 
                     parser=utils.get_internal_parser(args.internal), format_root_node=True)
