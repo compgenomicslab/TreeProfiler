@@ -19,7 +19,6 @@ class AlignLinkFace(Face):
         """Line types: 0 solid, 1 dotted, 2 dashed"""
 
         Face.__init__(self, padding_x=0, padding_y=0)
-
         self.line = None
         self.width = width
         self.height = height
@@ -293,9 +292,9 @@ class LayoutColorbranch(TreeLayout):
                 padding_x=self.padding_x),column=self.column, position="branch_right", collapsed_only=True)
 
                 node.sm_style["hz_line_color"] = self.color_dict.get(prop_text,"")
-                node.sm_style["hz_line_width"] = 2
+                node.sm_style["hz_line_width"] = 3
                 node.sm_style["vt_line_color"] = self.color_dict.get(prop_text,"")
-                node.sm_style["vt_line_width"] = 2
+                node.sm_style["vt_line_width"] = 3
                 node.sm_style['outline_color'] = self.color_dict.get(prop_text,"")
                 node.add_face(RectFace(width=self.width, height=None, color=self.absence_color, \
                     padding_x=self.padding_x , padding_y=self.padding_y, tooltip=None),column=self.column, position="aligned")
