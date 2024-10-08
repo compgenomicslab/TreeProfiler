@@ -2144,9 +2144,8 @@ def single2profile(tree, profiling_prop):
     return matrix, all_values
 
 def multiple2matrix(tree, profiling_prop, prop2type=None, color_config=None, eteformat_flag=False):
-    # Define colors for presence and absence
-    precence_color = '#E60A0A'  # Red
-    absence_color = '#EBEBEB'   # Light grey
+    precence_color = '#E60A0A'  # red
+    absence_color = '#EBEBEB'   # grey
 
     # Determine the data type of the profiling property
     data_type = prop2type.get(profiling_prop)
@@ -2206,11 +2205,3 @@ def multiple2profile(tree, profiling_prop):
         else:
             matrix += absence * len(all_values) +'\n'
     return matrix, all_values
-      
-def barplot_width_type(value):
-    if value.lower() == 'none':
-        return None
-    try:
-        return float(value)
-    except ValueError:
-        raise argparse.ArgumentTypeError("Value must be an float or 'None'.")
