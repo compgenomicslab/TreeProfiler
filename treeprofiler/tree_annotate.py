@@ -1378,6 +1378,8 @@ def merge_text_annotations(nodes, target_props, column2method, emapper_mode=Fals
             internal_props[utils.add_suffix(target_prop, 'counter')] = item_seperator.join(
                 [utils.add_suffix(str(key), '{0:.2f}'.format(float(value)/total), pair_seperator) for key, value in sorted(counter.items())]
             )
+        elif counter_stat == 'none':
+            pass
         else:
             logger.error("invalid counter_stat")
             sys.exit(1)
