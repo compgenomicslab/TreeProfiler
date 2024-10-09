@@ -1,8 +1,8 @@
 # TreeProfiler Overview
-TreeProfiler is a command line tool designed to automate the annotation of large phylogenetic trees using a wide array of data sources. It also facilitates the visual exploration of these annotations as phylogenetic profiles, making it a powerful resource for researchers working with complex biological data.
+TreeProfiler is a command line tool designed to automate the annotation of large phylogenetic trees with corresponding metadata. It also facilitates the visual exploration of these annotations as phylogenetic profiles, making it a powerful resource for researchers working with complex biological data.
 
 Key Features:
-- Automated Annotation that integrates diverse metadata into phylogenetic trees, and summarizes annotation in internal nodes, including:
+- Automated Annotation that integrates metadata into phylogenetic tree, and summarizes annotation in internal nodes, including:
   - Categorical/Numerical metadata in TSV/CSV format
   - Taxonomic Annotation of NCBI/GTDB taxonomy database
   - Functional Annotation from eggnog-mapper output
@@ -93,7 +93,7 @@ TreeProfiler is command-line tool for profiling metadata table into phylogenetic
 ## Installation
 ### Dependencies
 TreeProfiler requires 
-  - Python version >= 3.9
+  - Python version >= 3.10
   - ETE Toolkit v4
   - biopython
   - selenium
