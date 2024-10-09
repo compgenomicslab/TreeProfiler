@@ -496,32 +496,57 @@ def run(args):
                 visualized_props.extend(numerical_props)
         
         if layout == 'bubble-layout':
-            bubble_layouts, level = get_bubble_layouts(tree, args.bubble_layout, level=level, prop2type=prop2type, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep, color_config=color_config)
-            layouts.extend(bubble_layouts)
-            visualized_props.extend(args.bubble_layout)
+            categorical_props = [prop for prop in args.bubble_layout if prop2type[prop] in [str, list, bool]]
+            if categorical_props:
+                bubble_layouts, level, color_dict = get_categorical_bubble_layouts(tree, categorical_props, 
+                level=level, prop2type=prop2type, 
+                padding_x=args.padding_x, padding_y=args.padding_y, 
+                color_config=color_config)
+                layouts.extend(bubble_layouts)
+                total_color_dict.append(color_dict)
+                visualized_props.extend(categorical_props)
+                #visualized_props.extend([utils.add_suffix(prop, 'counter') for prop in args.piechart_layout
+
+            numerical_props = [prop for prop in args.bubble_layout if prop2type[prop] in [float, int]]
+            if numerical_props:
+                bubble_layouts, level, color_dict = get_numerical_bubble_layouts(tree, numerical_props, 
+                level=level, prop2type=prop2type, 
+                padding_x=args.padding_x, padding_y=args.padding_y, 
+                internal_rep=internal_num_rep, color_config=color_config)
+                layouts.extend(bubble_layouts)
+                visualized_props.extend(numerical_props)
 
         if layout == "piechart-layout":
-            piechart_layouts = get_piechart_layouts(tree, args.piechart_layout, prop2type=prop2type, padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config)
+            piechart_layouts = get_piechart_layouts(tree, args.piechart_layout, 
+            prop2type=prop2type, 
+            padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config)
             layouts.extend(piechart_layouts)
             visualized_props.extend(args.piechart_layout)
             visualized_props.extend([utils.add_suffix(prop, 'counter') for prop in args.piechart_layout])
 
         if layout == 'rectangle-layout':
-            rectangle_layouts, level, color_dict = get_rectangle_layouts(tree, args.rectangle_layout, level, prop2type=prop2type, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config)
+            rectangle_layouts, level, color_dict = get_rectangle_layouts(tree, args.rectangle_layout, 
+            level, prop2type=prop2type, column_width=args.column_width, 
+            padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config)
             layouts.extend(rectangle_layouts)
             total_color_dict.append(color_dict)
             visualized_props.extend(args.rectangle_layout)
             visualized_props.extend([utils.add_suffix(prop, 'counter') for prop in args.rectangle_layout])
 
         if layout == 'background-layout':
-            background_layouts, level, color_dict = get_background_layouts(tree, args.background_layout, level, prop2type=prop2type, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config)
+            background_layouts, level, color_dict = get_background_layouts(tree, args.background_layout, 
+            level, prop2type=prop2type, column_width=args.column_width, 
+            padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config)
             layouts.extend(background_layouts)
             total_color_dict.append(color_dict)
             visualized_props.extend(args.background_layout)
             visualized_props.extend([utils.add_suffix(prop, 'counter') for prop in args.background_layout])
 
         if layout == 'binary-layout':
-            binary_layouts, level, color_dict = get_binary_layouts(tree, args.binary_layout, level, prop2type=prop2type, column_width=args.column_width, reverse=False, padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config, same_color=False, aggregate=False)
+            binary_layouts, level, color_dict = get_binary_layouts(tree, args.binary_layout, level, 
+            prop2type=prop2type, column_width=args.column_width, reverse=False, 
+            padding_x=args.padding_x, padding_y=args.padding_y, 
+            color_config=color_config, same_color=False, aggregate=False)
             layouts.extend(binary_layouts)
             total_color_dict.append(color_dict)
             visualized_props.extend(args.binary_layout)
@@ -1427,7 +1452,42 @@ def get_barplot_layouts(tree, props, level, prop2type, column_width=70, padding_
     
     return layouts, level, prop_color_dict
 
-def get_bubble_layouts(tree, props, level, prop2type, padding_x=0, padding_y=0, internal_rep='avg', color_config=None, paired_color=[]):
+def get_categorical_bubble_layouts(tree, props, level, prop2type, column_width=70, padding_x=0, padding_y=0, color_config=None):
+    prop_color_dict = {}
+    layouts = []
+    max_radius = 15
+    for prop in props:
+        color_dict = {} # key = value, value = color id
+        if color_config and color_config.get(prop):
+            if color_config.get(prop).get('value2color'):
+                color_dict = color_config.get(prop).get('value2color')
+        else:
+            if prop2type and prop2type.get(prop) == list:
+                leaf_values = list(map(list,set(map(tuple,utils.tree_prop_array(tree, prop)))))    
+                prop_values = [val for sublist in leaf_values for val in sublist]
+            else:
+                prop_values = sorted(list(set(utils.tree_prop_array(tree, prop))))
+            
+            if not prop_values:
+                logger.error(f"Property {prop} is empty. Please check annotation.")
+                sys.exit(1)
+
+            # normal text prop
+            color_dict = utils.assign_color_to_values(prop_values, paired_color)
+
+        # layout = text_layouts.LayoutRect(name='Rectangular_'+prop, column=level,
+        #             color_dict=color_dict, text_prop=prop,
+        #             width=column_width, padding_x=padding_x, padding_y=padding_y)
+        # Configure and add layout
+        layout = text_layouts.LayoutBubbleCategorical(name=f'Bubble_{prop}', column=level, 
+        prop=prop, color_dict=color_dict, 
+        max_radius=max_radius, padding_x=padding_x, padding_y=padding_y)
+
+        layouts.append(layout)
+        level += 1
+    return layouts, level, prop_color_dict
+
+def get_numerical_bubble_layouts(tree, props, level, prop2type, padding_x=0, padding_y=0, internal_rep='avg', color_config=None):
     def process_prop_values(tree, prop):
         """Extracts and processes property values, excluding NaNs."""
         prop_values = np.array(list(set(utils.tree_prop_array(tree, prop)))).astype('float64')
@@ -1445,13 +1505,13 @@ def get_bubble_layouts(tree, props, level, prop2type, padding_x=0, padding_y=0, 
         size_prop = prop if prop_values.any() else f"{prop}_{internal_rep}"
 
         # Configure and add layout
-        layout = staple_layouts.LayoutBubble(name=f'Bubble_{prop}', column=level, 
+        layout = staple_layouts.LayoutBubbleNumerical(name=f'Bubble_{prop}', column=level, 
         prop=prop, max_radius=max_radius, abs_maxval=abs_maxval, 
         padding_x=padding_x, padding_y=padding_y)
         layouts.append(layout)
         level += 1
 
-    return layouts, level
+    return layouts, level, prop_color_dict
 
 def get_heatmap_layouts(tree, props, level, column_width=70, padding_x=1, padding_y=0, internal_rep='avg', color_config=None, norm_method='min-max'):
     def min_max_normalize(value, minval, maxval):

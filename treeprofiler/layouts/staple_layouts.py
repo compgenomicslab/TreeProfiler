@@ -564,7 +564,7 @@ class LayoutBranchScore(TreeLayout):
                     TextFace("%.2f" % (float(prop_score)), color=self.color_dict.get(prop_score)),
                     position="branch_bottom")
 
-class LayoutBubble(TreeLayout):
+class LayoutBubbleNumerical(TreeLayout):
     def __init__(self, name=None, prop=None, position="aligned", 
             column=0, color=None, max_radius=10, abs_maxval=None,
             padding_x=2, padding_y=0, 
@@ -586,7 +586,7 @@ class LayoutBubble(TreeLayout):
         self.internal_rep = internal_rep
         self.max_radius = float(max_radius)
         self.abs_maxval = float(abs_maxval)
-
+        self.fgopacity = 0.7
         self.padding_x = padding_x
         self.padding_y = padding_y
         
@@ -626,7 +626,7 @@ class LayoutBubble(TreeLayout):
             # Apply styles to the node
             node.sm_style["size"] = bubble_size
             node.sm_style["fgcolor"] = bubble_color
-            node.sm_style["fgopacity"] = 0.7
+            node.sm_style["fgopacity"] = self.fgopacity
 
         elif node.is_leaf and node.props.get(self.internal_prop):
             # Since it's a leaf node with internal properties, use internal_prop as number
@@ -639,7 +639,7 @@ class LayoutBubble(TreeLayout):
             # Apply styles to the node
             node.sm_style["size"] = bubble_size
             node.sm_style["fgcolor"] = bubble_color
-            node.sm_style["fgopacity"] = 0.7
+            node.sm_style["fgopacity"] = self.fgopacity
 
         elif node.props.get(self.internal_prop):
             # Handle non-leaf nodes with internal properties
@@ -652,4 +652,4 @@ class LayoutBubble(TreeLayout):
             # Apply styles to the node
             node.sm_style["size"] = bubble_size
             node.sm_style["fgcolor"] = bubble_color
-            node.sm_style["fgopacity"] = 0.7
+            node.sm_style["fgopacity"] = self.fgopacity

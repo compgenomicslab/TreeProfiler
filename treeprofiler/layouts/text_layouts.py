@@ -6,7 +6,7 @@ from ete4.smartview import TreeStyle, NodeStyle, TreeLayout, PieChartFace
 from ete4.smartview  import Face, RectFace, CircleFace, SeqMotifFace, TextFace, OutlineFace
 from ete4.smartview.renderer.draw_helpers import draw_text, draw_line, draw_array, draw_rect
 from treeprofiler.layouts.general_layouts import get_piechartface, get_stackedbarface
-
+from treeprofiler.src.utils import random_color, add_suffix
 """
 label_layout, colorbranch_layout, rectangular_layout   
 """
@@ -322,7 +322,7 @@ class LayoutRect(TreeLayout):
         self.column = column
         self.color_dict = color_dict
         self.absence_color = "#EBEBEB"
-        self.internal_prop = text_prop+'_counter'
+        self.internal_prop = add_suffix(text_prop, 'counter')
         self.legend = legend
         self.width = width
         self.height = height
@@ -480,3 +480,61 @@ class LayoutBackground(TreeLayout):
         #     prop_face = RectFace(width=self.width, height=None, color=self.absence_color, \
         #             padding_x=self.padding_x , padding_y=self.padding_y, tooltip=None)
         #     node.add_face(prop_face, column=self.column, position="aligned", collapsed_only=True)
+
+class LayoutBubbleCategorical(TreeLayout):
+    def __init__(self, name=None, prop=None, position="branch_right", 
+            column=0, color_dict=None, 
+            max_radius=10, padding_x=2, padding_y=0, 
+            scale=True, legend=True, active=True):
+
+        name = name or f'Barplot_{size_prop}_{color_prop}'
+        super().__init__(name)
+
+        self.aligned_faces = True
+        self.prop = prop
+        self.internal_prop = add_suffix(prop, 'counter')
+        
+        self.column = column
+        self.position = position
+        self.color_dict = color_dict
+        self.absence_color = "#EBEBEB"
+        self.max_radius = float(max_radius)
+        self.fgopacity = 0.8
+
+        self.padding_x = padding_x
+        self.padding_y = padding_y
+   
+
+        self.legend = legend
+        self.active = active
+
+    def set_tree_style(self, tree, tree_style):
+        super().set_tree_style(tree, tree_style)
+        if self.legend:
+            if self.color_dict:
+                self.color_dict['NA'] = self.absence_color
+                tree_style.add_legend(title=self.prop,
+                                    variable='discrete',
+                                    colormap=self.color_dict
+                                    )
+            else:
+                tree_style.add_legend(title=self.prop,
+                                    variable='discrete',
+                                    colormap={'NA':self.absence_color}
+                                    )
+
+    def set_node_style(self, node):
+        prop_text = node.props.get(self.prop)
+        if prop_text is not None:
+            if type(prop_text) == list:
+                prop_text = ",".join(prop_text)
+            else:
+                pass
+            if self.color_dict:
+                bubble_color = self.color_dict.get(prop_text, self.absence_color)
+                bubble_size = self.max_radius
+                node.sm_style["fgcolor"] = bubble_color
+                node.sm_style["size"] = bubble_size
+                node.sm_style["fgopacity"] = self.fgopacity
+
+        
