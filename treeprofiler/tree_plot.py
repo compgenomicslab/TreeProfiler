@@ -588,7 +588,6 @@ def run(args):
             visualized_props.extend(args.branchscore_layout)
 
         if layout == 'alignment-layout':
-            #fasta_file = args.alignment_layout
             lengh = len(max(utils.tree_prop_array(tree, 'alignment'),key=len))
             aln_layout = seq_layouts.LayoutAlignment(name='Alignment_layout', 
                         alignment_prop='alignment', column=level, scale_range=lengh,
