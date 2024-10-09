@@ -16,14 +16,6 @@ from collections import defaultdict, Counter
 from treeprofiler.src.utils import add_suffix
 from treeprofiler.src.acr_continuous import ml_acr, by_acr
 
-# lambda0  = 0.1                       # rate parameter of the proposal
-# se       = 0.5                       # standard deviation of the proposal
-# sim      = 10000                     # number of iterations
-# thin     = 10                        # Keep only each xth iterate
-# burn     = 100                       # Burned-in iterates
-
-# ent_type = 'SE'                      # Linear Shannon Entropy LSE or Shannon Entropy [SE] or Gini impurity [GI]
-
 ''' ADDITIONAL INFORMATION
 
 [1] Borges, R. et al. (2019). Measuring phylogenetic signal between categorical traits and phylogenies. Bioinformatics, 35, 1862-1869.
