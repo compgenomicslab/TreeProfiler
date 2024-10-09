@@ -132,6 +132,11 @@ def poplulate_plot_args(plot_args_p):
         default=None,
         help="find the barplot column as scale anchor.[default: None]"
     )
+    group.add_argument('--barplot-colorby',
+        type=str,
+        default=None,
+        help="Set the color of barplot by the a categorical property.[default: None]"
+    )
     group.add_argument('--color-config',
         type=argparse.FileType('r'),
         default=None,
@@ -479,7 +484,7 @@ def run(args):
             visualized_props.extend(args.label_layout)
 
         if layout == 'colorbranch-layout':
-            categorical_props = [prop for prop in args.colorbranch_layout if prop2type[prop] in [str, list, bool]]
+            categorical_props = [prop for prop in args.colorbranch_layout if prop2type.get(prop) in [str, list, bool, None]]
             if categorical_props:
                 colorbranch_layouts, level, color_dict = get_colorbranch_layouts(tree, categorical_props, level, prop2type=prop2type, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config)
                 layouts.extend(colorbranch_layouts)
@@ -487,7 +492,7 @@ def run(args):
                 visualized_props.extend(categorical_props)
                 #visualized_props.extend([utils.add_suffix(prop, 'counter') for prop in args.piechart_layout])
 
-            numerical_props = [prop for prop in args.colorbranch_layout if prop2type[prop] in [float, int]]
+            numerical_props = [prop for prop in args.colorbranch_layout if prop2type.get(prop) in [float, int]]
             if numerical_props:
                 branchscore_layouts = get_branchscore_layouts(tree, numerical_props, 
                 prop2type, padding_x=args.padding_x, padding_y=args.padding_y, 
@@ -496,7 +501,7 @@ def run(args):
                 visualized_props.extend(numerical_props)
         
         if layout == 'bubble-layout':
-            categorical_props = [prop for prop in args.bubble_layout if prop2type[prop] in [str, list, bool]]
+            categorical_props = [prop for prop in args.bubble_layout if prop2type.get(prop) in [str, list, bool, None]]
             if categorical_props:
                 bubble_layouts, level, color_dict = get_categorical_bubble_layouts(tree, categorical_props, 
                 level=level, prop2type=prop2type, 
@@ -507,7 +512,7 @@ def run(args):
                 visualized_props.extend(categorical_props)
                 #visualized_props.extend([utils.add_suffix(prop, 'counter') for prop in args.piechart_layout
 
-            numerical_props = [prop for prop in args.bubble_layout if prop2type[prop] in [float, int]]
+            numerical_props = [prop for prop in args.bubble_layout if prop2type.get(prop) in [float, int]]
             if numerical_props:
                 bubble_layouts, level, color_dict = get_numerical_bubble_layouts(tree, numerical_props, 
                 level=level, prop2type=prop2type, 
@@ -569,26 +574,10 @@ def run(args):
             total_color_dict.append(color_dict)
             visualized_props.extend(args.binary_unicolor_aggregate_layout)
 
-        # if layout == 'revbinary-layout':
-        #     revbinary_layouts, level, color_dict = get_binary_layouts(tree, args.revbinary_layout, level, 
-        #     prop2type=prop2type, column_width=args.column_width, reverse=True,  
-        #     padding_x=args.padding_x, padding_y=args.padding_y)
-        #     layouts.extend(revbinary_layouts)
-        #     total_color_dict.append(color_dict)
-        #     visualized_props.extend(args.revbinary_layout)
-
-        # if layout == 'revbinary-unicolor-layout':
-        #     revbinary2_layouts, level, color_dict = get_binary_layouts(tree, args.revbinary_unicolor_layout, level, 
-        #     prop2type=prop2type, column_width=args.column_width, reverse=True,  
-        #     padding_x=args.padding_x, padding_y=args.padding_y)
-        #     layouts.extend(revbinary2_layouts)
-        #     total_color_dict.append(color_dict)
-        #     visualized_props.extend(args.revbinary_unicolor_layout)
-
         if layout == 'barplot-layout':
             barplot_layouts, level, color_dict = get_barplot_layouts(tree, args.barplot_layout, level, 
             prop2type, column_width=args.barplot_width, padding_x=args.padding_x, padding_y=args.padding_y, 
-            internal_rep=internal_num_rep, anchor_column=args.barplot_scale, color_config=color_config)
+            internal_rep=internal_num_rep, anchor_column=args.barplot_scale, color_config=color_config, barplot_colorby=args.barplot_colorby)
             layouts.extend(barplot_layouts)
             total_color_dict.append(color_dict)
             visualized_props.extend(args.barplot_layout)
@@ -896,7 +885,11 @@ def read_config_to_dict(file_obj, delimiter):
 
         # Assign colors based on presence of detail or value
         if detail:
-            config_dict[prop]["detail2color"][detail.lower()] = (color, value)
+            if detail.lower() not in config_dict[prop]["detail2color"]:
+                config_dict[prop]["detail2color"][detail.lower()] = (color, value)
+            else:
+                config_dict[prop]["detail2color"][detail.lower()] = []
+                config_dict[prop]["detail2color"][detail.lower()].append((color, value))
         if value:
             config_dict[prop]["value2color"][value] = color
 
@@ -1227,7 +1220,6 @@ def get_background_layouts(tree, props, level, prop2type, column_width, padding_
         level += 1
     return layouts, level, prop_color_dict
 
-
 def get_binary_layouts(tree, props, level, prop2type, column_width=70, reverse=False, padding_x=1, padding_y=0, color_config=None, same_color=False, aggregate=False):
     prop_color_dict = {}
     layouts = []
@@ -1357,7 +1349,7 @@ def get_branchscore_layouts(tree, props, prop2type, padding_x=1, padding_y=0, in
 
     return layouts
 
-def get_barplot_layouts(tree, props, level, prop2type, column_width=70, padding_x=1, padding_y=0, internal_rep='avg', anchor_column=None, color_config=None, paired_color=[]):
+def get_barplot_layouts(tree, props, level, prop2type, column_width=70, padding_x=1, padding_y=0, internal_rep='avg', anchor_column=None, color_config=None, barplot_colorby=None):
     def get_barplot_color(level):
         global paired_color
         """Determines the color for the barplot based on the level and available paired colors."""
@@ -1420,26 +1412,31 @@ def get_barplot_layouts(tree, props, level, prop2type, column_width=70, padding_
         maxval = prop_values.max()
         size_prop = prop if prop_values.any() else f"{prop}_{internal_rep}"
         new_column_width = calculate_column_width(prop_values, anchormax)
-        barplot_color = get_barplot_color(level)
+        
 
         # Determine color configuration if available
-        if color_config and (color_config.get(prop) or color_config.get("name")):
-            color_dict = color_config.get(prop, color_config.get("name")).get('value2color')
-            color_prop = prop if color_config.get(prop) else "name"
-            if color_prop != "name":
-                # Convert all keys in color_dict to float
-                try:
-                    color_dict = {float(key): value for key, value in color_dict.items()}
-                except ValueError:
-                    print(f"Warning: Unable to convert all keys to float for property '{prop}'.")
-                    # Optionally, you could handle this situation differently, e.g., skipping the conversion,
-                    # using the original keys, or halting execution with an error message.
+        if color_config:
+            for key, value in color_config.items():
+                if 'barplot_colorby' in list(color_config.get(key).get('detail2color').keys()):
+                    color_dict = color_config.get(key).get('value2color')
+                    color_prop = key
+                    barplot_color = None
+                else:        
+                    color_dict = color_config.get(prop, {}).get('value2color', None)
+                    color_prop = None
+                    barplot_color = None
         else:
             # Apply default color logic
             color_dict = None
             color_prop = None
-            #barplot_color = get_barplot_color(level)
-            prop_color_dict[prop] = barplot_color
+            barplot_color = None
+            if barplot_colorby:
+                prop_values = sorted(list(set(utils.tree_prop_array(tree, barplot_colorby))))
+                color_dict = utils.assign_color_to_values(prop_values, paired_color)
+                color_prop = barplot_colorby
+            else:
+                barplot_color = get_barplot_color(level)
+                prop_color_dict[prop] = barplot_color
 
         # Configure and add layout
         if maxval and maxval > barplot_minval:

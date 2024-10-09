@@ -315,7 +315,7 @@ class LayoutHeatmap(TreeLayout):
                 gradient_color = self.value_color.get(heatmap_num)
                 
                 if gradient_color:
-                    identF = RectFace(width=self.width, height=self.height, text="%.2f" % (float(heatmap_num)), \
+                    identF = RectFace(width=self.width, height=self.height, 
                     color=gradient_color, padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
                     node.add_face(identF, column = self.column,  position = 'aligned')
             
@@ -332,7 +332,7 @@ class LayoutHeatmap(TreeLayout):
             gradient_color = self.value_color.get(heatmap_num)
 
             if gradient_color:
-                identF = RectFace(width=self.width, height=self.height, text="%.2f" % (float(heatmap_num)), \
+                identF = RectFace(width=self.width, height=self.height, 
                 color=gradient_color, padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
                 node.add_face(identF, column = self.column,  position = 'aligned', collapsed_only=True)
         
@@ -349,7 +349,7 @@ class LayoutHeatmap(TreeLayout):
             gradient_color = self.value_color.get(heatmap_num)
 
             if gradient_color:
-                identF = RectFace(width=self.width, height=self.height, text="%.2f" % (float(heatmap_num)), \
+                identF = RectFace(width=self.width, height=self.height,
                 color=gradient_color, padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
                 node.add_face(identF, column = self.column,  position = 'aligned', collapsed_only=True)
 

@@ -484,7 +484,7 @@ class LayoutBackground(TreeLayout):
 class LayoutBubbleCategorical(TreeLayout):
     def __init__(self, name=None, prop=None, position="branch_right", 
             column=0, color_dict=None, 
-            max_radius=10, padding_x=2, padding_y=0, 
+            max_radius=1, padding_x=2, padding_y=0, 
             scale=True, legend=True, active=True):
 
         name = name or f'Barplot_{size_prop}_{color_prop}'
@@ -504,7 +504,6 @@ class LayoutBubbleCategorical(TreeLayout):
         self.padding_x = padding_x
         self.padding_y = padding_y
    
-
         self.legend = legend
         self.active = active
 
@@ -533,8 +532,12 @@ class LayoutBubbleCategorical(TreeLayout):
             if self.color_dict:
                 bubble_color = self.color_dict.get(prop_text, self.absence_color)
                 bubble_size = self.max_radius
-                node.sm_style["fgcolor"] = bubble_color
-                node.sm_style["size"] = bubble_size
-                node.sm_style["fgopacity"] = self.fgopacity
+                # node.sm_style["fgcolor"] = bubble_color
+                # node.sm_style["size"] = bubble_size
+                # node.sm_style["fgopacity"] = self.fgopacity
+                prop_face = CircleFace(radius=bubble_size, color=bubble_color, 
+                padding_x=self.padding_x, padding_y=self.padding_y)
+                node.add_face(prop_face, column=0, 
+                position="branch_right", collapsed_only=False)
 
         
