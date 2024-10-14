@@ -48,7 +48,7 @@ EMAPPER_HEADERS = ["#query", "seed_ortholog", "evalue", "score", "eggNOG_OGs",
 # Available methods and models for ACR
 # Discrete traits
 DISCRETE_METHODS = ['MPPA', 'MAP', 'JOINT', 'DOWNPASS', 'ACCTRAN', 'DELTRAN', 'COPY', 'ALL', 'ML', 'MP']
-DISCRETE_MODELS = ['JC', 'F81', 'EFT', 'HKY', 'JTT', 'CUSTOM_RATES']
+DISCRETE_MODELS = ['JC', 'F81', 'EFT', 'HKY', 'JTT']
 
 # Continuous traits
 CONTINUOUS_METHODS = ['ML', 'BAYESIAN']
