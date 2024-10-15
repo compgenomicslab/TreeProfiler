@@ -1999,6 +1999,8 @@ treeprofiler plot \
 
 - `--barplot-scale` is the parameter to set the scale of barplot, if not given, the scale will be the maximum value of the property.
 
+- `--barplot-colorby` set the color of barplot by the a categorical property from metadata.[default: None]
+
 ```
 treeprofiler plot \
 -t basic_example1_annotated.ete \
@@ -2028,6 +2030,16 @@ treeprofiler plot \
 
 ![barplot example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_barplot_layout3.png?raw=true)
 
+Noticed barplot in general is filled with one color for each column, using `--barplot-colorby` allows users to fill barplot based on other categorical data.
+
+here we color barplot `abs_data` by the categorical data `random_type`
+```
+treeprofiler plot \
+-t basic_example1_annotated.ete \
+--barplot-layout abs_data \
+--barplot-colorby random_type
+```
+![barplot example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_barplot_layout4.png?raw=true)
 #### Numerical Matrix Layout¶
 `--numerical-matrix-layout` is similar to `--heatmap-layout`but using draw_array from ete4 therefore it is suitable for large scale, and also visualize data matrix which was stored as a file in previous annotation step.. But the limit is only work on rectangular tree.
 
@@ -2226,77 +2238,449 @@ If target tree was annotated with `--taxon-column` in previous annotate step suc
 
 Only tree which was conducted with taxonomic annotation from treeprofiler in previous annotate step can use the taxonomic visualization.
 
+#### TaxonClade Layout
+`--taxonclade-layout` will assign different color to each taxa from each rank. Each rank will be a individual layout.
+
+we use example in `examples/taxonomy_example`:
+```
+# Visualize the pre-annotated example archaea tree with taxonomic classification
+treeprofiler plot \
+--tree archaea_annotated.nw \
+--taxonclade-layout
+```
+![taxonclade example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_taxa_layout1.png?raw=true)
+
+#### TaxonRectangle Layout
+`--taxonrectangle-layout` shows taxonomic classification as rectangular block from root to leaf.
+
+we use example in `examples/taxonomy_example`:
+```
+# Visualize the pre-annotated example archaea tree with taxonomic classification
+treeprofiler plot \
+--tree archaea_annotated.nw \
+--taxonrectangle-layout
+```
+![taxonrectangle example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_taxa_layout2.png?raw=true)
+
+#### TaxonCollapse Layout
+`--taxoncollapse-layout` is similar to `--taxonrectangle-layout`, but it only show commen ancestor on one column in aligned panel which is shown as corresponding taxa from the rank. Users can switch which layout of rank to be visualized in control panel, once layout of rank is activated, tree will be collapsed based on the according rank. It is more accurate than `--taxonrectangle-layout` because it also shown the representative taxa in corresponding rank.
+
+we use example in `examples/taxonomy_example`:
+```
+# Visualize the pre-annotated example archaea tree with taxonomic classification
+treeprofiler plot \
+--tree archaea_annotated.nw \
+--taxoncollapse-layout
+```
+Collapse at phylumn level:
+![taxonrectangle example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_taxa_layout3.png?raw=true)
+
+Collapse at order level:
+![taxonrectangle example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_taxa_layout4.png?raw=true)
+
+### Customize color in layout with color config
+treeprofiler provides the option to cusomize the color on layouts:
+| Argument                                     | Description                                                                                       |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `--color-config COLOR_CONFIG`                | Path to the file to find the color for each variable. `[default: None]`.                           |
+| `-s CONFIG_SEP, --config-sep CONFIG_SEP`     | Column separator of color table. `[default: \t]`.                                                  |
+
+A basic template of `color.config` that you can find in `examples/custom_color/color.config.template`
+```
+# TreeProfiler Color Configuration
+# This file defines custom colors for properties of annotated tree nodes.
+# Columns: PROP, VALUE, COLOR, CONDITION
+# tab-limited or comman-limited
+
+# PROP: Property of the annotated tree node
+# VALUE: Value of the property to be colored
+# COLOR: Color to apply. Using hex code or word
+# CONDITION: Special case for numerical values (optional, e.g., COLOR_MIN, COLOR_MAX, COLOR_MID)
+
+PROP,VALUE,COLOR,CONDITION
+```
+
+| Description | Details                                                                              |
+| ----------- | ------------------------------------------------------------------------------------ |
+| PROP        | Property of the annotated tree node                                                  |
+| VALUE       | Value of the property to be colored                                                  |
+| COLOR       | Color to apply                                                                       |
+| CONDITION   | Special case for numerical values (optional, e.g., `COLOR_MIN`, `COLOR_MAX`, `COLOR_MID`, `BARPLOT_COLORBY`) |
+
+### Basic setting
+
+Here we will use the example from `examples/custom_color `, where the tree `basic_example1.nw` is annotated with `basic_example1_metadata1.tsv` and `basic_example1_metadata2.tsv`. Therefore the output tree is `basic_example1_annotated.ete` and `basic_example1_annotated.nw`.
+
+Check metadata
+```
+head -5 basic_example1_metadata1.tsv basic_example1_metadata2.tsv
+==> basic_example1_metadata1.tsv <==
+#name       sample1 sample2 sample3 sample4 sample5 random_type     bool_type       bool_type2
+Phy003I7ZJ_CHICK    0.05    0.12    0.86    0.01    0.69    medium  1       TRUE
+Phy0054BO3_MELGA    0.64    0.67    0.51    0.29    0.14    medium  1       TRUE
+Phy00508FR_NIPNI    0.89    0.38    0.97    0.49    0.26    low     1       FALSE
+Phy004O1E0_APTFO    0.1     0.09    0.38    0.31    0.41    medium  0       TRUE
+
+
+==> basic_example1_metadata2.tsv <==
+#name       abs_data        list_data       abs_data2
+Phy003I7ZJ_CHICK    97      w,t,t   50
+Phy0054BO3_MELGA    16      r,q,s   245
+Phy00508FR_NIPNI    87      z,f,p   122
+Phy004O1E0_APTFO    6       z,t,b   138
+```
+
+### Customize color for categorical data
+Column `random_type` from the metadata is annotated as categorical data property called `random_type` in result tree basic_example1_annotated.nw. By default, all variables in col6 are: `high`, `medium` and `low`, so let’s customize the in `color.categorical.config` file:
+```
+# TreeProfiler Color Configuration
+# This file defines custom colors for properties of annotated tree nodes.
+# Columns: PROP, VALUE, COLOR, CONDITION
+# tab-limited or comman-limited
+
+# PROP: Property of the annotated tree node
+# VALUE: Value of the property to be colored
+# COLOR: Color to apply
+# CONDITION: Special case for numerical values (optional, e.g., COLOR_MIN, COLOR_MAX, COLOR_MID)
+
+PROP,VALUE,COLOR,CONDITION
+random_type,high,red,
+random_type,medium,blue,
+random_type,low,#008000,
+```
+here we can apply this color config to all the layouts for categorical data, for example:
+```
+treeprofiler plot \
+-t basic_example1_annotated.ete \
+--rectangle-layout random_type \
+--label-layout random_type \
+--background-layout random_type \
+--colorbranch-layout random_type \
+--piechart-layout random_type \
+--color-config color.categorical.config \
+-s ,
+```
+Now all the layout will be colored based on the color config file.
+![colorconfig1 example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_color_config1.png?raw=true)
+
+**Noted that if the value is not in the color config file, the default color black will be used.**
+
+Missing `low` value in the color config file:
+```
+# TreeProfiler Color Configuration
+# This file defines custom colors for properties of annotated tree nodes.
+# Columns: PROP, VALUE, COLOR, CONDITION
+# tab-limited or comman-limited
+
+# PROP: Property of the annotated tree node
+# VALUE: Value of the property to be colored
+# COLOR: Color to apply
+# CONDITION: Special case for numerical values (optional, e.g., COLOR_MIN, COLOR_MAX, COLOR_MID)
+
+PROP,VALUE,COLOR,CONDITION
+random_type,high,red,
+random_type,medium,blue,
+```
+
+rerun the command:
+```
+treeprofiler plot \
+-t basic_example1_annotated.ete \
+--rectangle-layout random_type \
+--label-layout random_type \
+--background-layout random_type \
+--colorbranch-layout random_type \
+--piechart-layout random_type \
+--color-config color.categorical.config \
+-s ,
+```
+
+![colorconfig1 example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_color_config2.png?raw=true)
+
+#### Customize color for boolean data
+Column `bool_type` and `bool_type2` are boolean data, therefore users can only decide the color representing True value. We stored the following config in `color.boolean.config`
+
+```
+# TreeProfiler Color Configuration
+# This file defines custom colors for properties of annotated tree nodes.
+# Columns: PROP, VALUE, COLOR, CONDITION
+# tab-limited or comman-limited
+
+# PROP: Property of the annotated tree node
+# VALUE: Value of the property to be colored
+# COLOR: Color to apply
+# CONDITION: Special case for numerical values (optional, e.g., COLOR_MIN, COLOR_MAX, COLOR_MID)
+
+PROP,VALUE,COLOR,CONDITION
+bool_type,1,blue,
+bool_type2,TRUE,yellow,
+```
+
+Now we appiled them to the layouts for boolean data:
+```
+treeprofiler plot \
+-t basic_example1_annotated.ete \
+--binary-layout bool_type bool_type2 \
+--color-config color.boolean.config \
+-s ,
+```
+![colorconfig1 example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_color_config3.png?raw=true)
+
+#### Customize color for numerical data
+We applied the color config to layouts for numerical data in `color.numerical.config`.
+
+We can still customize certain color for specific value.
+
+For example, we want to make make the heatmap layout with yellow color when value is `0`:
+```
+# TreeProfiler Color Configuration
+# This file defines custom colors for properties of annotated tree nodes.
+# Columns: PROP, VALUE, COLOR, CONDITION
+
+# PROP: Property of the annotated tree node
+# VALUE: Value of the property to be colored
+# COLOR: Color to apply
+# CONDITION: Special case for numerical values (optional, e.g., COLOR_MIN, COLOR_MAX, COLOR_MID, COLOR_NAN)
+
+PROP,VALUE,COLOR,CONDITION
+sample1,0,yellow,
+sample2,0,yellow,
+sample3,0,yellow,
+sample4,0,yellow,
+sample5,0,yellow,
+```
+Then we run it on heatmap layout:
+```
+treeprofiler plot \
+--tree basic_example1_annotated.ete \
+--heatmap-layout sample1 sample2 sample3 sample4 sample5 \
+--color-config color.numerical.config \
+-s ,
+```
+![colorconfig1 example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_color_config4.png?raw=true)
+
+Similar on numerical matrix:
+```
+treeprofiler plot \
+--tree basic_example1_annotated.ete \
+--numerical-matrix-layout sample1 sample2 sample3 sample4 sample5 \
+--color-config color.numerical.config \
+-s ,
+```
+![colorconfig1 example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_color_config5.png?raw=true)
+
+### Advanced Setting
+In the Basic setting, we only set the color for specific value, but in the Advanced setting, we can set the color for the range of value.
+
+#### Setting color range for numerical data
+We can set the color range using `COLOR_MIN`, `COLOR_MAX`, `COLOR_MID` or `COLOR_NAN` under the column `CONDITION`.
+
+Here we set the color for the range of value in `color.numerical2.config`, noted that now the VALUE column is empty therefore the maximum value will be assigned to `COLOR_MAX`, the minimum value will be assigned to `COLOR_MIN`, and the middle value will be assigned to `COLOR_MID`:
+
+```
+# TreeProfiler Color Configuration
+# This file defines custom colors for properties of annotated tree nodes.
+# Columns: PROP, VALUE, COLOR, CONDITION
+
+# PROP: Property of the annotated tree node
+# VALUE: Value of the property to be colored
+# COLOR: Color to apply
+# CONDITION: Special case for numerical values (optional, e.g., COLOR_MIN, COLOR_MAX, COLOR_MID)
+
+PROP,VALUE,COLOR,CONDITION
+sample1,,red,COLOR_MAX
+sample1,,green,COLOR_MID
+sample1,,blue,COLOR_MIN
+```
+
+we run it on heatmap layout:
+```
+treeprofiler plot \
+--tree basic_example1_annotated.ete \
+--heatmap-layout sample1 sample2 sample3 sample4 sample5 \
+--color-config color.numerical2.config \
+-s ,
+```
+As you see, the color is assigned based on the range of value of property `sample1`:
+![colorconfig1 example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_color_config6.png?raw=true)
+
+#### Combining settings of value and color range for numerical data
+In the previous example, we set the color range for the values, the value range is the range of minimum and maximum value by default, but we can also cusomize the value together with the color conditions
+
+Here we set the color for the range of value in `color.numerical3.config`, noted that now the `VALUE` column is not empty as we set the range from -5 to 5, therefore the value will be assigned to the corresponding color:
+```
+# TreeProfiler Color Configuration
+# This file defines custom colors for properties of annotated tree nodes.
+# Columns: PROP, VALUE, COLOR, CONDITION
+
+# PROP: Property of the annotated tree node
+# VALUE: Value of the property to be colored
+# COLOR: Color to apply
+# CONDITION: Special case for numerical values (optional, e.g., COLOR_MIN, COLOR_MAX, COLOR_MID)
+
+PROP,VALUE,COLOR,CONDITION
+sample1,5,red,COLOR_MAX
+sample1,0,green,COLOR_MID
+sample1,-5,blue,COLOR_MIN
+```
+Then we run it on heatmap-layout:
+```
+treeprofiler plot \
+--tree basic_example1_annotated.ete \
+--heatmap-layout sample1 sample2 sample3 sample4 sample5 \
+--color-config color.numerical3.config \
+-s ,
+```
+![colorconfig1 example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_color_config7.png?raw=true)
+
+If we only want to set the range of value without customize the color, is also possible:
+
+Here we want to set up the range from -5 to 5, but we only set them as `CONDITION` without setting specific color in `COLOR` column:
+```
+# TreeProfiler Color Configuration
+# This file defines custom colors for properties of annotated tree nodes.
+# Columns: PROP, VALUE, COLOR, CONDITION
+
+# PROP: Property of the annotated tree node
+# VALUE: Value of the property to be colored
+# COLOR: Color to apply
+# CONDITION: Special case for numerical values (optional, e.g., COLOR_MIN, COLOR_MAX, COLOR_MID)
+
+PROP,VALUE,COLOR,CONDITION
+sample1,5,,COLOR_MAX
+sample1,0,,COLOR_MID
+sample1,-5,,COLOR_MIN
+```
+Rerun:
+```
+treeprofiler plot \
+--tree basic_example1_annotated.ete \
+--heatmap-layout sample1 sample2 sample3 sample4 sample5 \
+--color-config color.numerical3.config \
+-s ,
+```
+![colorconfig1 example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_color_config8.png?raw=true)
+
+#### Wildcard settings of color range for numerical matrix
+In the session of Layouts for numerical data, we describe the difference between `--heatmap-layout` and `--numerical-matrix-layout`. In short, `--heatmap-layout` treat each property individually therefore the range each column of heatmap is different, but `--numerical-matrix-layout` treat the whole matrix as a single property, therefore the range of value is the same for all columns.
+
+Therefore, when we set the color config for the numerical matrix layout, we can use the wildcard * to represent all the columns in the matrix.
+
+Here we set the color for the range of value in `color.datamatrix.config`, noted that now the PROP column is * which means all the columns in the matrix, therefore the value will be assigned to the corresponding color:
+```
+# TreeProfiler Color Configuration
+# This file defines custom colors for properties of annotated tree nodes.
+# Columns: PROP, VALUE, COLOR, CONDITION
+
+# PROP: Property of the annotated tree node
+# VALUE: Value of the property to be colored
+# COLOR: Color to apply
+# CONDITION: Special case for numerical values (optional, e.g., COLOR_MIN, COLOR_MAX, COLOR_MID)
+
+PROP,VALUE,COLOR,CONDITION
+*,5,red,COLOR_MAX
+*,0,white,COLOR_MID
+*,-5,blue,COLOR_MIN
+```
+
+now we run it on numerical-matrix-layout:
+```
+treeprofiler plot \
+--tree basic_example1_annotated.ete \
+--numerical-matrix-layout sample1 sample2 sample3 sample4 sample5 \
+--color-config color.datamatrix.config \
+-s ,
+```
+![colorconfig1 example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_color_config9.png?raw=true)
+
+It applied in also for data matrix properties:
+
+Here we annotate and plot the `data_2col.array`(a data matrix file) to demo tree `demo1.tree`:
+```
+treeprofiler annotate \
+-t demo1.tree \
+--data-matrix data_2col.array \
+-s , \
+-o ./
+
+treeprofiler plot \
+-t demo1_annotated.ete \
+--numerical-matrix-layout data_2col.array \
+--color-config color.datamatrix.config \
+-s ,
+```
+
+![colorconfig1 example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_color_config10.png?raw=true)
+
+
 ## Conditional query in annotated tree
 TreeProfiler allows users to perform conditional process based on different circumstances
 
-- Conditional pruning, conditional pruning works both `annotate` and `plot` subcommand
-    - `--pruned-by`, prune the annotated tree by conditions, and remove the branches or clades which don't fit the condition.
-    - `--rank-limit`, prune the taxonomic annotated tree based on rank of classification.
+| Command Option                                  | Subcommand Availability | Description                                                                                                                 |
+| ----------------------------------------------- | ----------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `--pruned-by`                                   | annotate, plot           | Prunes the annotated tree based on specific conditions, removing branches or clades that do not meet the criteria.           |
+| `--rank-limit`                                  | annotate, plot           | Enables pruning of a taxonomically annotated tree based on the rank of classification.                                       |
+| `--collapsed-by`                                | plot                     | Allows users to collapse tree branches based on custom conditions, mainly focusing on internal nodes.                       |
+| `--highlighted-by`                              | plot                     | Enables users to highlight tree nodes that meet specific conditions.                                                        |
+| `--internal-plot-measure {sum,avg,max,min,std,none}` | plot                     | Statistic measures to be shown in numerical layout for internal nodes. `[default: avg]`.                                     |
 
-- Conditional collapsing, conditional collapsing works in `plot` subcommand, allow users to collapsed tree internal nodes to clade under customized conditions
-    - `--collapsed-by`, collapse tree branches whose nodes if the conditions, mainly on internal nodes
-- Conditional highlight, conditional highlight works in `plot` subcommand, allow users to highlight tree nodes under customized conditions
-    - `--highlighted-by`, select tree nodes which fit the conditions
- 
+
 ### Query Syntax
+In this session we will use examples in `examples/automatic_query`
 #### Basic Query
-All the conditional query shared the same syntax, a standard query consists the following 
+|                | Left Value                                                                                                                                  | Operator                                                                                                        | Right Value                                                                                                                   |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Description    | This is the property of either a leaf node or an internal node within the tree. It could be any metadata feature linked to the node, such as its taxonomic classification, gene expression levels, or other biological markers. For example, `name`, `sci_name`, `support`. | This part of the query specifies the relationship between the left and right values. Operators include: `=`, `!=`, `>`, `>=`, `<`, `<=`, and `contains`. | This is the custom criterion against which the left value is compared. Depending on the nature of the left value, this could be a numerical figure, a string, or even a list of values. |
 
+##### Conditional pruning
+Conditional pruning, prune leaf node whose name contain “FALPE”:
 ```
---pruned-by|collapsed-by|highlighted-by "<left_value> <operator> <right_value>"
-```
-* left value, the property of leaf node or internal node
-* operators
-    *  `=`
-    * `!=`
-    * `>` 
-    * `>=`
-    * `<`
-    * `<=`
-    * `contains`
-* right value, custom value for the condition
-
-Example 
-```
-## annotate tree 
+## annotate tree
 treeprofiler annotate \
---tree examples/basic_example1/basic_example1.nw \
---input-type newick \
---metadata examples/basic_example1/basic_example1_metadata1.tsv \
---bool-prop bool_type bool_type2 \
+--tree basic_example1.nw \
+--metadata ./basic_example1_metadata1.tsv \
 --counter-stat relative \
--o examples/basic_example1/ 
+-o ./
 
 # Conditional pruning, prune leaf node whose name contain "FALPE"
 treeprofiler plot \
---tree examples/basic_example1/basic_example1_annotated.nw \
---input-type newick \
+--tree basic_example1_annotated.nw \
 --pruned-by "name contains FALPE"
 ```
 Left panel is tree before prune, right panel is result after prune
 ![pruned](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/prune.png?raw=true)
+
+##### Conditional highlight
 ```
-# Conditional highlight
+## annotate tree
+treeprofiler annotate \
+--tree basic_example1.nw \
+--metadata ./basic_example1_metadata1.tsv \
+--counter-stat relative \
+-o ./
+
 # select tree node whose name contains `FALPE` character
 treeprofiler plot \
---tree examples/basic_example1/basic_example1_annotated.nw \
+--tree basic_example1_annotated.nw \
 --input-type newick \
 --highlighted-by "name contains FALPE"
 ```
 ![highlighted](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/highlighted.jpeg?raw=true)
+
+The same annotated tree, but select tree node whose sample1 feature > 0.50, here we using ete format which can resume the datatype:
 ```
-# select tree node whose sample1 feature > 0.50, here we using ete format which can resume the datatype 
 treeprofiler plot \
---tree examples/basic_example1/basic_example1_annotated.ete \
---input-type ete \
+--tree basic_example1_annotated.ete \
 --highlighted-by "sample1 > 0.50" \
 --heatmap-layout sample1
+```
 
-# if use tree in newick format, we need to attach the prop2type file which can resume the datatype
+if use tree in newick format, we need to attach the prop2type file which can resume the datatype:
+```
 treeprofiler plot \
---tree examples/basic_example1/basic_example1_annotated.nw \
+--tree basic_example1_annotated.nw \
 --input-type newick \
---prop2type examples/basic_example1/basic_example1_prop2type.txt \
+--prop2type basic_example1_prop2type.txt \
 --highlighted-by "sample1 > 0.50" \
 --heatmap-layout sample1
 ```
@@ -2309,17 +2693,16 @@ Example
 ```
 # select tree internal node where sample1_avg feature < 0.50
 treeprofiler plot \
---tree examples/basic_example1/basic_example1_annotated.ete \
---input-type ete \
---heatmap-layout sample1 \
---collapsed-by "sample1_avg < 0.50" 
+--tree basic_example1_annotated.ete \
+--collapsed-by "sample1_avg < 0.50" \
+--heatmap-layout sample1
 ```
 ![collapsed_numeric](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/collapsed_numeric.png?raw=true)
 Syntax for internal node counter data
 ```
 # collapse tree internal nodes, where `high` relative counter > 0.35 in random_type_counter property
 treeprofiler plot \
---tree examples/basic_example1/basic_example1_annotated.ete \
+--tree basic_example1_annotated.ete \
 --input-type ete \
 --rectangle-layout random_type \
 --collapsed-by "random_type_counter:high > 0.35" \
@@ -2333,48 +2716,141 @@ AND condition will be under one argument, syntax seperated by `,`, such as
 ```
 # select tree  node where sample1 feature > 0.50 AND sample2 < 0.2
 treeprofiler plot \
---tree examples/basic_example1/basic_example1_annotated.ete \
+--tree basic_example1_annotated.ete \
 --input-type ete \
 --heatmap-layout sample1 sample2 sample3 sample4 sample5 \
---highlighted-by "sample1>0.50,sample2<0.2" 
+--highlighted-by "sample1>0.50,sample2<0.2"
 ```
 ![highlighted_and](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/highlighted_and.png?raw=true)
 OR condition will be used more than one arguments
 ```
 # select tree node where sample1 feature > 0.50 OR sample2 < 0.2
 treeprofiler plot \
---tree examples/basic_example1/basic_example1_annotated.ete \
+--tree basic_example1_annotated.ete \
 --input-type ete \
 --heatmap-layout sample1 sample2 sample3 sample4 sample5 \
 --highlighted-by "sample1>0.50" \
---highlighted-by "sample2<0.2" 
+--highlighted-by "sample2<0.2"
 ```
 ![highlighted_or](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/highlighted_or.png?raw=true)
-### conditional limit based on taxonomic level
+
+### conditional query with config file
+In conditinary query, it also accept to use config to customize the highlighted and collapsed visualization. Example config file in `color.config.template`. It has the same structure as color config but the CONDITION column here is for operators as we mentioned in previous session.
+```
+cat color.config.template`
+# TreeProfiler Conditional query Configuration
+# This file defines custom colors for properties of annotated tree nodes.
+# Columns: PROP, VALUE, COLOR, CONDITION
+
+# PROP: Property of the annotated tree node
+# VALUE: Value of the property to be colored
+# COLOR: Color to apply
+# CONDITION: operator
+
+PROP,VALUE,COLOR,CONDITION
+```  
+
+#### Highlight with custom config
+we use example of `basic_example1.nw` and `basic_example1_metadata1.tsv`, we hope to highlight nodes whose `random_type` is `low` AND `sample1` greater than `0.50`, and we want to highlight those nodes in red. 
+
+First we customize the config `color.config.query`:
+```
+# TreeProfiler Conditional query Configuration
+# This file defines custom colors for properties of annotated tree nodes.
+# Columns: PROP, VALUE, COLOR, CONDITION
+
+# PROP: Property of the annotated tree node
+# VALUE: Value of the property to be colored
+# COLOR: Color to apply
+# CONDITION: operator
+
+PROP,VALUE,COLOR,CONDITION
+random_type,low,red,=
+sample1,0.50,red,>
+```
+
+we attach the config using the same `--highlighted-by`, dont forget about the `-s` to indicate the seperator
+```
+treeprofiler plot \
+-t basic_example1_annotated.ete \
+--highlighted-by color.config.query \
+-s ,
+```
+![highlighted_or](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_query_config1.png?raw=true)
+
+#### Collapse with custom config
+Similar to `--highlighted-by`, in this case we try to collapse the internal nodes whose average of leaf properties `sample1` greater than `0.50`, with color of green. 
+
+The config is in `color.config.collapsed`
+```
+# TreeProfiler Conditional query Configuration
+# This file defines custom colors for properties of annotated tree nodes.
+# Columns: PROP, VALUE, COLOR, CONDITION
+
+# PROP: Property of the annotated tree node
+# VALUE: Value of the property to be colored
+# COLOR: Color to apply
+# CONDITION: operator
+
+PROP,VALUE,COLOR,CONDITION
+#random_type_counter:high,0.35,red,>
+sample1_avg,0.50,green,>
+```
+
+example run
+```
+treeprofiler plot \
+-t basic_example1_annotated.ete \
+--collapsed-by color.config.collapsed \
+-s ,
+```
+![highlighted_or](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_query_config2.png?raw=true)
+
+### Conditional limit based on taxonomic level¶
 Prune taxonomic annotated tree based on following taxonomic rank level,
 `kingdom`, `phylum`, `class`, `order`, `family`, `genus`, `species`, `subspecies` 
+
+case in GTDB in `examples/taxonomy_example/`:
 ```
 # Case in GTDB
 # before pruning
 treeprofiler plot \
---tree examples/taxonomy_example/gtdb/gtdb_example1_annotated.ete \
+--tree archaea_annotated.ete \
 --input-type ete \
---taxonclade-layout 
+--taxonclade-layout
 ```
 before rank limit
-![gtdb_before_rank](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/gtdb_taxa.png?raw=true)
+![gtdb_before_rank](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_taxaprune1.png?raw=true)
 
 ```
 # prune tree in visualization, rank limit to family level
+# after pruning
 treeprofiler plot \
---tree examples/taxonomy_example/gtdb/gtdb_example1_annotated.ete \
+--tree archaea_annotated.ete \
 --input-type ete \
---rank-limit class \
---taxonclade-layout  
+--taxonclade-layout 
 ```
 After rank_limit
-![gtdb_class](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/gtdb_taxa_rank_class.png?raw=true)
+![gtdb_class](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_taxaprune2.png?raw=true)
 As you see, class branches of target gtdb tree are all pruned and only left the internal branches which rank as class.  
+
+#### Choose the metric for internal nodes in numerical layout
+Internal nodes of numerical data are process descriptive statistic analysis by default, hence when users collapse any branch, `--barplot_layout` or `--heatmap_layout` will demonstrate representative value, avg by default. Representative value can be changed by using `--internal-plot-measure`.
+
+```
+cd examples/basic_example1/
+# select max instead of avg as internal node plotting representative
+treeprofiler plot \
+--tree basic_example1_annotated.ete \
+--heatmap-layout sample1 sample2 sample3 sample4 sample5 \
+--internal-plot-measure max
+```
+Before collapsed
+![gtdb_class](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_heatmap_uncollapsed.jpeg?raw=true)
+After collapsed avg as internal plot measure
+![gtdb_class](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_heatmap_collapsed.jpeg?raw=true)
+max as internal plot measure
+![gtdb_class](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_heatmap_collapsed_max.jpeg?raw=true)
 
 ## Demo1 Explore GTDB taxonomic tree with metadata and habitat information of progenome3
 To illustrate the easiness and flexibility of TreeProfiler, we use it to annotate and visualize the version 202 of the GTDB prokaryotic phylogeny, which represents a species tree with 60,000 representative bacterial and archaeal species in [here](https://data.gtdb.ecogenomic.org/releases/release202/). GTDB provides the tree in plain newick format and massive datatable with various associated to such species. Apart from the metadata provided by the GTDB, here we also include annotations of genomes and species clusters to habitats from proGenomes3([Fullam et al. 2023](https://progenomes.embl.de/)). 
