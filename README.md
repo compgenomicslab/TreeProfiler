@@ -27,7 +27,6 @@ Ziqi Deng, Ana Hernández-Plaza, Jaime Huerta-Cepas.
 "TreeProfiler: A command-line tool for computing and visualizing phylogenetic profiles against large trees"  
 bioRxiv (2023) doi: 10.1101/2023.09.21.558621
 ```
-
 ## Table of Contents
 - [Introduction](#introduction)
 - [Installation](#installation)
@@ -39,7 +38,7 @@ bioRxiv (2023) doi: 10.1101/2023.09.21.558621
     - [Install TreeProfiler](#install-treeprofiler)
   - [Input files](#input-files)
   - [Basic Usage](#basic-usage)
-- [Using TreeProfiler](#using-treeprofiler) 
+- [Using TreeProfiler](#using-treeprofiler)
   - [Parsing Input tree](#parsing-input-tree)
     - [Tree format](#tree-format)
     - [Tree parser](#tree-parser)
@@ -65,28 +64,28 @@ bioRxiv (2023) doi: 10.1101/2023.09.21.558621
       - [Phylogenetic Signal Delta Statistic](#phylogenetic-signal-delta-statistic)
       - [Lineage Specificity Analysis](#lineage-specificity-analysis)
     - [Output Formats for Annotated Trees](#output-formats-for-annotated-trees)
+      - [Use standard input and output formats](#use-standard-input-and-output-formats)
   - [treeprofiler-plot visualizing phylogenetic profiles and annotation](#treeprofiler-plot-visualizing-phylogenetic-profiles-and-annotation)
     - [Interactive visualization interface](#interactive-visualization-interface)
     - [Basic options of visualizing layouts](#basic-options-of-visualizing-layouts)
     - [Layouts for categorical data](#layouts-for-categorical-data)
     - [Layouts for boolean data](#layouts-for-boolean-data)
     - [Layouts for numerical data](#layouts-for-numerical-data)
-    - [Layouts for list data](#layouts-for-list-data)
+    - [Layouts for Analytical Data](#layouts-for-analytical-data)
     - [Layouts for multiple sequence alignment](#layouts-for-multiple-sequence-alignment)
     - [Layouts for eggnog-mapper pfam annotations](#layouts-for-eggnog-mapper-pfam-annotations)
     - [Layouts for eggnog-mapper smart annotations](#layouts-for-eggnog-mapper-smart-annotations)
     - [Layouts for eggnog-mapper annotations](#layouts-for-eggnog-mapper-annotations)
-    - [Visualizing annotated internal nodes](#visualizing-annotated-internal-nodes)
-      - [Internal nodes of categorical and boolean data](#internal-nodes-of-categorical-and-boolean-data)
-      - [Internal nodes of numerical data](#internal-nodes-of-numerical-data)
     - [Layouts for Taxonomic data](#layouts-for-taxonomic-data)
+    - [Customize color in layout with color config](#customize-color-in-layout-with-color-config)
   - [Conditional query in annotated tree](#conditional-query-in-annotated-tree)
     - [Basic Query](#basic-query)
     - [Query in internal nodes](#query-in-internal-nodes)
     - [AND and OR conditions](#and-and-or-conditions)
+    - [Conditional query with config file](#conditional-query-with-config-file)
     - [Conditional limit based on taxonomic level](#conditional-limit-based-on-taxonomic-level)
+    
 - [Demo1 Explore GTDB taxonomic tree with metadata and habitat information of progenome3](#demo1-explore-gtdb-taxonomic-tree-with-metadata-and-habitat-information-of-progenome3)
-- [Demo2 Explore large NifH gene tree with functional and taxonomic information](#demo2-explore-large-nifh-gene-tree-with-functional-and-taxonomic-information)
 
 ## Introduction
 TreeProfiler is command-line tool for profiling metadata table into phylogenetic tree with descriptive analysis and output visualization
@@ -119,12 +118,12 @@ pip install "git+https://github.com/dengzq1234/pastml.git@pastml2ete4"
 # Install TreeProfiler tool via pip
 pip install TreeProfiler
 
-# or installing main repo
+# Or install directly from github
 pip install https://github.com/compgenomicslab/TreeProfiler/archive/main.zip
 # or development mode for latestest update
 pip install git+https://github.com/compgenomicslab/TreeProfiler@dev-repo
-
 ```
+
 
 ### Quick Start with examples dataset
 TreeProfiler provide various example dataset for testing in `examples/` or https://github.com/compgenomicslab/TreeProfiler/tree/main/examples,
@@ -249,62 +248,6 @@ treeprofiler plot --tree tree_annotated.ete --input-type ete
 # Using TreeProfiler
 In this Tutorial we will use TreeProfiler and demostrate basic usage with data in `examples/`
 
-```
-tree examples/
-examples/
-├── automatic_query
-│   ├── basic_example1_metadata1.tsv
-│   ├── basic_example1.nw
-│   ├── collapse_demo.sh
-│   ├── highlight_demo.sh
-│   └── prune_demo.sh
-├── basic_example1
-│   ├── basic_example1_metadata1.tsv
-│   ├── basic_example1_metadata2.tsv
-│   ├── basic_example1.nw
-│   └── example1_demo.sh
-├── basic_example2
-│   ├── diauxic.array
-│   ├── diauxic.nw
-│   ├── example2_demo.sh
-│   ├── FluA_H3_AA.fas
-│   ├── MCC_FluA_H3_Genotype.txt
-│   └── MCC_FluA_H3.nw
-├── pratical_example
-│   ├── emapper
-│   │   ├── 7955.ENSDARP00000116736.aln.faa
-│   │   ├── 7955.ENSDARP00000116736.nw
-│   │   ├── 7955.out.emapper.annotations
-│   │   ├── 7955.out.emapper.pfam
-│   │   ├── 7955.out.emapper.smart.out
-│   │   ├── emapper_demo.sh
-│   │   ├── nifH.faa.aln
-│   │   ├── nifH.nw
-│   │   ├── nifH.out.emapper.annotations
-│   │   └── nifH.out.emapper.pfam
-│   ├── gtdb_r202
-│   │   ├── ar122_metadata_r202_lite.tar.gz
-│   │   ├── bac120_metadata_r202_lite.tar.gz
-│   │   ├── gtdbv202full_demo.sh
-│   │   ├── gtdbv202lite_demo.sh
-│   │   ├── gtdbv202.nw
-│   │   ├── merge_gtdbtree.py
-│   │   └── progenome3.tar.gz
-│   └── progenome3
-│       ├── progenome3.nw
-│       ├── progenome3.tsv
-│       └── progenome_demo.sh
-└── taxonomy_example
-    ├── gtdb
-    │   ├── gtdb_demo.sh
-    │   ├── gtdb_example1.nw
-    │   └── gtdb_example1.tsv
-    └── ncbi
-        ├── ncbi_demo.sh
-        ├── ncbi_example.nw
-        └── ncbi_example.tsv
-
-```
 ## Parsing Input tree
 ### Tree format
 
@@ -1650,7 +1593,7 @@ In the following `plot` step, users can use either `.nw` or `.ete` by putting `-
  - ete format is a novel format developed to solve the situation we encounter in the previous step, annotated tree can be **recover easily with all the annotated data without changing the data type**. Besides, the ete format optimized the tree file size after mapped with its associated data. Hence it's very handy for programers in their own script. At this moment we can only view the ete format in treeprofiler, but we will make the ete format more universal to other phylogenetic software. **Hence using .ete format in `plot` subcommand is highly reccomended**
 
 
-## `plot`, Plot annotated tree with layouts
+## treeprofiler-plot visualizing phylogenetic profiles and annotation
 TreeProfiler provides a several of layout options for visualize features in metadata along with tree, depends on their datatype
 
 
@@ -1944,7 +1887,6 @@ treeprofiler plot \
 
 ### Layouts for Numerical data
 Users can add the following flag to activate layouts for Numerical data
-## Users can add the following arguments to use layouts for Numerical data
 
 | Argument                                              | Description                                                                                                                  | Applied on data-matrix (file)? | Applied on negative data? |
 | ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------ | ------------------------- |
@@ -2307,7 +2249,7 @@ PROP,VALUE,COLOR,CONDITION
 | COLOR       | Color to apply                                                                       |
 | CONDITION   | Special case for numerical values (optional, e.g., `COLOR_MIN`, `COLOR_MAX`, `COLOR_MID`, `BARPLOT_COLORBY`) |
 
-### Basic setting
+#### Basic setting
 
 Here we will use the example from `examples/custom_color `, where the tree `basic_example1.nw` is annotated with `basic_example1_metadata1.tsv` and `basic_example1_metadata2.tsv`. Therefore the output tree is `basic_example1_annotated.ete` and `basic_example1_annotated.nw`.
 
@@ -2330,7 +2272,7 @@ Phy00508FR_NIPNI    87      z,f,p   122
 Phy004O1E0_APTFO    6       z,t,b   138
 ```
 
-### Customize color for categorical data
+#### Customize color for categorical data
 Column `random_type` from the metadata is annotated as categorical data property called `random_type` in result tree basic_example1_annotated.nw. By default, all variables in col6 are: `high`, `medium` and `low`, so let’s customize the in `color.categorical.config` file:
 ```
 # TreeProfiler Color Configuration
@@ -2469,7 +2411,7 @@ treeprofiler plot \
 ```
 ![colorconfig1 example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_color_config5.png?raw=true)
 
-### Advanced Setting
+#### Advanced Setting
 In the Basic setting, we only set the color for specific value, but in the Advanced setting, we can set the color for the range of value.
 
 #### Setting color range for numerical data
@@ -2624,9 +2566,8 @@ TreeProfiler allows users to perform conditional process based on different circ
 | `--highlighted-by`                              | plot                     | Enables users to highlight tree nodes that meet specific conditions.                                                        |
 | `--internal-plot-measure {sum,avg,max,min,std,none}` | plot                     | Statistic measures to be shown in numerical layout for internal nodes. `[default: avg]`.                                     |
 
-
-### Query Syntax
 In this session we will use examples in `examples/automatic_query`
+
 #### Basic Query
 |                | Left Value                                                                                                                                  | Operator                                                                                                        | Right Value                                                                                                                   |
 | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
@@ -2734,7 +2675,7 @@ treeprofiler plot \
 ```
 ![highlighted_or](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/highlighted_or.png?raw=true)
 
-### conditional query with config file
+#### Conditional query with config file
 In conditinary query, it also accept to use config to customize the highlighted and collapsed visualization. Example config file in `color.config.template`. It has the same structure as color config but the CONDITION column here is for operators as we mentioned in previous session.
 ```
 cat color.config.template`
@@ -2750,7 +2691,7 @@ cat color.config.template`
 PROP,VALUE,COLOR,CONDITION
 ```  
 
-#### Highlight with custom config
+##### Highlight with custom config
 we use example of `basic_example1.nw` and `basic_example1_metadata1.tsv`, we hope to highlight nodes whose `random_type` is `low` AND `sample1` greater than `0.50`, and we want to highlight those nodes in red. 
 
 First we customize the config `color.config.query`:
@@ -2778,7 +2719,7 @@ treeprofiler plot \
 ```
 ![highlighted_or](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_query_config1.png?raw=true)
 
-#### Collapse with custom config
+##### Collapse with custom config
 Similar to `--highlighted-by`, in this case we try to collapse the internal nodes whose average of leaf properties `sample1` greater than `0.50`, with color of green. 
 
 The config is in `color.config.collapsed`
