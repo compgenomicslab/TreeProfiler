@@ -48,7 +48,7 @@ EMAPPER_HEADERS = ["#query", "seed_ortholog", "evalue", "score", "eggNOG_OGs",
 # Available methods and models for ACR
 # Discrete traits
 DISCRETE_METHODS = ['MPPA', 'MAP', 'JOINT', 'DOWNPASS', 'ACCTRAN', 'DELTRAN', 'COPY', 'ALL', 'ML', 'MP']
-DISCRETE_MODELS = ['JC', 'F81', 'EFT', 'HKY', 'JTT', 'CUSTOM_RATES']
+DISCRETE_MODELS = ['JC', 'F81', 'EFT', 'HKY', 'JTT']
 
 # Continuous traits
 CONTINUOUS_METHODS = ['ML', 'BAYESIAN']
@@ -56,9 +56,9 @@ CONTINUOUS_MODELS = ['BM', 'OU']
 
 # Set up the logger with INFO level by default
 logger = logging.getLogger(__name__)
-def setup_logger(level=logging.INFO):
+def setup_logger():
     """Sets up logging configuration."""
-    logger.setLevel(level)
+    logger.setLevel(logging.INFO)
     handler = logging.StreamHandler(sys.stdout)
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
     handler.setFormatter(formatter)
@@ -249,7 +249,7 @@ def populate_annotate_args(parser):
 def run_tree_annotate(tree, input_annotated_tree=False,
         metadata_dict={}, node_props=[], columns={}, prop2type={},
         text_prop=[], text_prop_idx=[], multiple_text_prop=[], num_prop=[], num_prop_idx=[],
-        bool_prop=[], bool_prop_idx=[], prop2type_file=None, alignment=None, emapper_pfam=None,
+        bool_prop=[], bool_prop_idx=[], prop2type_file=None, alignment=None, emapper_mode=False, emapper_pfam=None,
         emapper_smart=None, counter_stat='raw', num_stat='all', column2method={},
         taxadb='GTDB', gtdb_version=None, taxa_dump=None, taxon_column=None,
         taxon_delimiter='', taxa_field=0, ignore_unclassified=False,
@@ -354,25 +354,6 @@ def run_tree_annotate(tree, input_annotated_tree=False,
                     if dtype == bool:
                         bool_prop.append(key)
 
-        # paramemters can over write the default
-        # if emapper_annotations:
-
-        #     text_prop.extend([
-        #         'seed_ortholog',
-        #         'max_annot_lvl',
-        #         'COG_category',
-        #         'EC'
-        #     ])
-
-        #     num_prop.extend([
-        #         'evalue',
-        #         'score'
-        #     ])
-        #     multiple_text_prop.extend([
-        #         'eggNOG_OGs', 'GOs', 'KEGG_ko', 'KEGG_Pathway',
-        #         'KEGG_Module', 'KEGG_Reaction', 'KEGG_rclass',
-        #         'BRITE', 'KEGG_TC', 'CAZy', 'BiGG_Reaction', 'PFAMs'])
-
         for prop in text_prop:
             prop2type[prop] = str
   
@@ -412,7 +393,8 @@ def run_tree_annotate(tree, input_annotated_tree=False,
     if emapper_pfam:
         domain_prop = 'dom_arq'
         if not alignment:
-            raise ValueError("Please provide alignment file using '--alignment' for pfam annotation.")
+            logger.error("Please provide alignment file using '--alignment' for pfam annotation.")
+            sys.exit(1)
         annot_tree_pfam_table(tree, emapper_pfam, alignment, domain_prop=domain_prop)
         prop2type.update({
             domain_prop:str
@@ -420,7 +402,8 @@ def run_tree_annotate(tree, input_annotated_tree=False,
     if emapper_smart:
         domain_prop = 'dom_arq'
         if not alignment:
-            raise ValueError("Please provide alignment file using '--alignment' for smart annotation.")
+            logger.error("Please provide alignment file using '--alignment' for smart annotation.")
+            sys.exit(1)
         annot_tree_smart_table(tree, emapper_smart, alignment, domain_prop=domain_prop)
         prop2type.update({
             domain_prop:str
@@ -451,15 +434,18 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         for k in acr_discrete_columns:
             if k:
                 if k not in discrete_traits:
-                    raise ValueError(f"Character {k} is not discrete trait, please check your input.")
-        
+                    logger.error(f"Character {k} is not discrete trait, please check your input.")
+                    sys.exit(1)
+
         if prediction_method in DISCRETE_METHODS:
             if model in DISCRETE_MODELS:
                 pass
             else:
-                raise ValueError(f"Model {model} is not supported for discrete traits, please check your input.")
+                logger.error(f"Model {model} is not supported for discrete traits, please check your input.")
+                sys.exit(1)
         else:
-            raise ValueError(f"Prediction method {prediction_method} is not supported for discrete traits, please check your input.")
+            logger.error(f"Prediction method {prediction_method} is not supported for discrete traits, please check your input.")
+            sys.exit(1)
         #############################
         start = time.time()
         acr_discrete_columns_dict = {k: v for k, v in columns.items() if k in acr_discrete_columns}
@@ -523,16 +509,17 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         for k in acr_continuous_columns:
             if k:
                 if k not in continuous_traits:
-                    raise ValueError(f"Character {k} is not continuous trait, please check your input.")
-        
+                    logger.error(f"Character {k} is not continuous trait, please check your input.")
+                    sys.exit(1)
         if prediction_method in CONTINUOUS_METHODS:
             if model in CONTINUOUS_MODELS:
                 pass
             else:
-                raise ValueError(f"Model {model} is not supported for continuous traits, please check your input.")
+                logger.error(f"Model {model} is not supported for continuous traits, please check your input.")
+                sys.exit(1)
         else:
-            raise ValueError(f"Prediction method {prediction_method} is not supported for continuous traits, please check your input.")
-        
+            logger.error(f"Prediction method {prediction_method} is not supported for continuous traits, please check your input.")
+            sys.exit(1)
         # convert metadata to observed traits
         transformed_dict = {key: {} for key in acr_continuous_columns}
         for leaf, props in metadata_dict.items():
@@ -592,10 +579,11 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         # Prepare data for all nodes
         nodes_data = []
         nodes = []
+
         for node in annotated_tree.traverse("postorder"):
             if not node.is_leaf:
                 nodes.append(node)
-                node_data = (node, node2leaves[node], text_prop, multiple_text_prop, bool_prop, num_prop, column2method, alignment if 'alignment' in locals() else None, name2seq if 'name2seq' in locals() else None)
+                node_data = (node, node2leaves[node], text_prop, multiple_text_prop, bool_prop, num_prop, column2method, alignment if 'alignment' in locals() else None, name2seq if 'name2seq' in locals() else None, emapper_mode)
                 nodes_data.append(node_data)
         
         # Process nodes in parallel if more than one thread is specified
@@ -609,7 +597,6 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         # Integrate the results back into tree
         for node, result in zip(nodes, results):
             internal_props, consensus_seq = result
-
             for key, value in internal_props.items():
                 node.add_prop(key, value)
             if consensus_seq:
@@ -625,11 +612,13 @@ def run_tree_annotate(tree, input_annotated_tree=False,
     start = time.time()
     if taxon_column:
         if not taxadb:
-            raise Exception('Please specify which taxa db using --taxadb <GTDB|NCBI>')
+            logger.error('Please specify which taxa db using --taxadb <GTDB|NCBI>')
+            sys.exit(1)
         else:
             if taxadb == 'GTDB':
                 if gtdb_version and taxa_dump:
-                    raise Exception('Please specify either GTDB version or taxa dump file, not both.')
+                    logger.error('Please specify either GTDB version or taxa dump file, not both.')
+                    sys.exit(1)
                 if gtdb_version:
                     # get taxadump from ete-data
                     gtdbtaxadump = get_gtdbtaxadump(gtdb_version)
@@ -657,7 +646,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         prop2type.update(TAXONOMICDICT)
     else:
         rank2values = {}
-
+    utils.clear_specific_features(annotated_tree, ['species'], leaf_only=False, internal_only=True)
     end = time.time()
     logger.info(f'Time for annotate_taxa to run: {end - start}')
     
@@ -716,7 +705,8 @@ def run(args):
     if args.metadata:
         for metadata_file in args.metadata:
             if not os.path.exists(metadata_file):
-                raise FileNotFoundError(f"Metadata {metadata_file} does not exist.") 
+                logger.error(f"Metadata {metadata_file} does not exist.") 
+                sys.exit(1)
 
     # Validation: Ensure at least one of --outdir or --stdout is selected
     if not args.outdir and not args.stdout:
@@ -724,7 +714,8 @@ def run(args):
     
     if args.outdir:
         if not os.path.exists(args.outdir):
-            raise FileNotFoundError(f"Output directory {args.outdir} does not exist.") 
+            logger.error(f"Output directory {args.outdir} does not exist.") 
+            sys.exit(1)
         
 
     # parsing tree
@@ -741,6 +732,8 @@ def run(args):
     # set logger level
     if args.quiet:
         logger.setLevel(logging.CRITICAL)  # Mute all log levels below CRITICA
+
+    logger.info(f'Loaded tree: {args.tree} \n{tree.describe()}')
 
     # parse csv to metadata table
     start = time.time()
@@ -759,6 +752,7 @@ def run(args):
     logger.info(f'Time for parse_csv to run: {end - start}')
     
     if args.emapper_annotations:
+        emapper_mode = True
         emapper_metadata_dict, emapper_node_props, emapper_columns = parse_emapper_annotations(args.emapper_annotations)
         metadata_dict = utils.merge_dictionaries(metadata_dict, emapper_metadata_dict)
         node_props.extend(emapper_node_props)
@@ -785,7 +779,9 @@ def run(args):
             'BiGG_Reaction':list,
             'PFAMs':list
         })
-    
+    else:
+        emapper_mode = False
+
     # start annotation
     if args.column_summary_method:
         column2method = process_column_summary_methods(args.column_summary_method)
@@ -837,6 +833,7 @@ def run(args):
 
     # Group emapper-related arguments
     emapper_options = {
+        "emapper_mode": emapper_mode,
         "emapper_pfam": args.emapper_pfam,
         "emapper_smart": args.emapper_smart,
     }
@@ -900,10 +897,11 @@ def run(args):
         # Find all keys where the value is of type list
         list_keys = [key for key, value in prop2type.items() if value == list]
         # Replace all commas in the tree with '||'
+        list_sep = '||'
         for node in annotated_tree.leaves():
             for key in list_keys:
                 if node.props.get(key):
-                    list2str = '||'.join(node.props.get(key))
+                    list2str = list_sep.join(node.props.get(key))
                     node.add_prop(key, list2str)
         annotated_tree.write(outfile=os.path.join(args.outdir, out_newick), props=None, 
                     parser=utils.get_internal_parser(args.internal), format_root_node=True)
@@ -1111,7 +1109,8 @@ def process_column_summary_methods(column_summary_methods):
                 column, method = entry.split('=')
                 column_methods[column] = method
             except ValueError:
-                raise ValueError(f"Invalid format for --column-summary-method: '{entry}'. Expected format: ColumnName=Method")
+                logger.error(f"Invalid format for --column-summary-method: '{entry}'. Expected format: ColumnName=Method")
+                sys.exit(1)
     return column_methods
 
 def get_comma_separated_values(lst):
@@ -1310,12 +1309,12 @@ def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, 
     return tree
 
 def process_node(node_data):
-    node, node_leaves, text_prop, multiple_text_prop, bool_prop, num_prop, column2method, alignment, name2seq = node_data
+    node, node_leaves, text_prop, multiple_text_prop, bool_prop, num_prop, column2method, alignment, name2seq, emapper_mode = node_data
     internal_props = {}
 
     # Process text, multitext, bool, and num properties
     if text_prop:
-        internal_props_text = merge_text_annotations(node_leaves, text_prop, column2method)
+        internal_props_text = merge_text_annotations(node_leaves, text_prop, column2method, emapper_mode)
         internal_props.update(internal_props_text)
 
     if multiple_text_prop:
@@ -1342,7 +1341,7 @@ def process_node(node_data):
         
     return internal_props, consensus_seq
 
-def merge_text_annotations(nodes, target_props, column2method):
+def merge_text_annotations(nodes, target_props, column2method, emapper_mode=False):
     pair_seperator = "--"
     item_seperator = "||"
     internal_props = {}
@@ -1358,7 +1357,7 @@ def merge_text_annotations(nodes, target_props, column2method):
 
         if counter_stat == 'raw':
             # Find the key with the highest count
-            if EMAPPER_HEADERS and counter:
+            if emapper_mode and counter:
                 most_common_key = max(counter, key=counter.get)
                 internal_props[target_prop] = most_common_key
 
@@ -1369,7 +1368,7 @@ def merge_text_annotations(nodes, target_props, column2method):
 
         elif counter_stat == 'relative':
             # Find the key with the highest count
-            if EMAPPER_HEADERS and counter:
+            if emapper_mode and counter:
                 most_common_key = max(counter, key=counter.get)
                 internal_props[target_prop] = most_common_key
 
@@ -1379,10 +1378,11 @@ def merge_text_annotations(nodes, target_props, column2method):
             internal_props[utils.add_suffix(target_prop, 'counter')] = item_seperator.join(
                 [utils.add_suffix(str(key), '{0:.2f}'.format(float(value)/total), pair_seperator) for key, value in sorted(counter.items())]
             )
-        else:
-            # Handle invalid counter_stat, if necessary
+        elif counter_stat == 'none':
             pass
-
+        else:
+            logger.error("invalid counter_stat")
+            sys.exit(1)
     return internal_props
 
 def merge_multitext_annotations(nodes, target_props, column2method):
@@ -1510,7 +1510,8 @@ def compute_matrix_statistics(matrix, num_stat=None):
         elif num_stat in available_stats:
             stats[num_stat] = available_stats[num_stat]
         else:
-            raise ValueError(f"Unsupported stat '{num_stat}'. Supported stats are 'avg', 'max', 'min', 'sum', 'std', or 'all'.")
+            logger.error(f"Unsupported stat '{num_stat}'. Supported stats are 'avg', 'max', 'min', 'sum', 'std', or 'all'.")
+            sys.exit(1)
     return stats
 
 def name_nodes(tree):
@@ -1730,7 +1731,9 @@ def annot_tree_pfam_table(post_tree, pfam_table, alg_fasta, domain_prop='dom_arq
                         dom_info_string = pair_delimiter.join([dom_name, str(trans_dom_start), str(trans_dom_end)])
                         seq2doms[seq_name].append(dom_info_string)
                     except KeyError:
-                        raise KeyError(f"Cannot find {dom_start} or {dom_end} in {seq_name}")
+                        logger.error(f"Cannot find {dom_start} or {dom_end} in {seq_name}")
+                        sys.exit(1)
+
     for l in post_tree:
         if l.name in seq2doms.keys():
             domains = seq2doms[l.name]

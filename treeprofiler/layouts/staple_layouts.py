@@ -315,7 +315,7 @@ class LayoutHeatmap(TreeLayout):
                 gradient_color = self.value_color.get(heatmap_num)
                 
                 if gradient_color:
-                    identF = RectFace(width=self.width, height=self.height, text="%.2f" % (float(heatmap_num)), \
+                    identF = RectFace(width=self.width, height=self.height, 
                     color=gradient_color, padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
                     node.add_face(identF, column = self.column,  position = 'aligned')
             
@@ -332,7 +332,7 @@ class LayoutHeatmap(TreeLayout):
             gradient_color = self.value_color.get(heatmap_num)
 
             if gradient_color:
-                identF = RectFace(width=self.width, height=self.height, text="%.2f" % (float(heatmap_num)), \
+                identF = RectFace(width=self.width, height=self.height, 
                 color=gradient_color, padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
                 node.add_face(identF, column = self.column,  position = 'aligned', collapsed_only=True)
         
@@ -349,7 +349,7 @@ class LayoutHeatmap(TreeLayout):
             gradient_color = self.value_color.get(heatmap_num)
 
             if gradient_color:
-                identF = RectFace(width=self.width, height=self.height, text="%.2f" % (float(heatmap_num)), \
+                identF = RectFace(width=self.width, height=self.height,
                 color=gradient_color, padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
                 node.add_face(identF, column = self.column,  position = 'aligned', collapsed_only=True)
 
@@ -564,7 +564,7 @@ class LayoutBranchScore(TreeLayout):
                     TextFace("%.2f" % (float(prop_score)), color=self.color_dict.get(prop_score)),
                     position="branch_bottom")
 
-class LayoutBubble(TreeLayout):
+class LayoutBubbleNumerical(TreeLayout):
     def __init__(self, name=None, prop=None, position="aligned", 
             column=0, color=None, max_radius=10, abs_maxval=None,
             padding_x=2, padding_y=0, 
@@ -586,7 +586,7 @@ class LayoutBubble(TreeLayout):
         self.internal_rep = internal_rep
         self.max_radius = float(max_radius)
         self.abs_maxval = float(abs_maxval)
-
+        self.fgopacity = 0.7
         self.padding_x = padding_x
         self.padding_y = padding_y
         
@@ -616,30 +616,40 @@ class LayoutBubble(TreeLayout):
     def set_node_style(self, node):
         number = node.props.get(self.num_prop)
         if number is not None:
+            # Ensure number is converted to float
+            number = float(number)
+            
+            # Set bubble size and color based on the number's value
             bubble_size = self._get_bubble_size(number)
-            #bubble_size = self.max_radius
-            if number > 0:
-                bubble_color = self.positive_color
-            else:
-                bubble_color = self.negative_color
+            bubble_color = self.positive_color if number > 0 else self.negative_color
+            
+            # Apply styles to the node
             node.sm_style["size"] = bubble_size
             node.sm_style["fgcolor"] = bubble_color
-        
+            node.sm_style["fgopacity"] = self.fgopacity
+
         elif node.is_leaf and node.props.get(self.internal_prop):
-            if number > 0:
-                bubble_color = self.positive_color
-            else:
-                bubble_color = self.negative_color
+            # Since it's a leaf node with internal properties, use internal_prop as number
+            number = float(node.props.get(self.internal_prop))
+            
+            # Set bubble size and color based on the number's value
             bubble_size = self._get_bubble_size(number)
+            bubble_color = self.positive_color if number > 0 else self.negative_color
+
+            # Apply styles to the node
             node.sm_style["size"] = bubble_size
             node.sm_style["fgcolor"] = bubble_color
-        
+            node.sm_style["fgopacity"] = self.fgopacity
+
         elif node.props.get(self.internal_prop):
-            number = node.props.get(self.internal_prop)
-            if number > 0:
-                bubble_color = self.positive_color
-            else:
-                bubble_color = self.negative_color
+            # Handle non-leaf nodes with internal properties
+            number = float(node.props.get(self.internal_prop))
+            
+            # Set bubble size and color based on the number's value
             bubble_size = self._get_bubble_size(number)
+            bubble_color = self.positive_color if number > 0 else self.negative_color
+
+            # Apply styles to the node
             node.sm_style["size"] = bubble_size
             node.sm_style["fgcolor"] = bubble_color
+            node.sm_style["fgopacity"] = self.fgopacity

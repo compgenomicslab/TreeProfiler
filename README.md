@@ -1,8 +1,8 @@
 # TreeProfiler Overview
-TreeProfiler is a command line tool designed to automate the annotation of large phylogenetic trees using a wide array of data sources. It also facilitates the visual exploration of these annotations as phylogenetic profiles, making it a powerful resource for researchers working with complex biological data.
+TreeProfiler is a command line tool designed to automate the annotation of large phylogenetic trees with corresponding metadata. It also facilitates the visual exploration of these annotations as phylogenetic profiles, making it a powerful resource for researchers working with complex biological data.
 
 Key Features:
-- Automated Annotation that integrates diverse metadata into phylogenetic trees, and summarizes annotation in internal nodes, including:
+- Automated Annotation that integrates metadata into phylogenetic tree, and summarizes annotation in internal nodes, including:
   - Categorical/Numerical metadata in TSV/CSV format
   - Taxonomic Annotation of NCBI/GTDB taxonomy database
   - Functional Annotation from eggnog-mapper output
@@ -10,7 +10,7 @@ Key Features:
   - Multiple Sequence Alignment annotation
 - Visual Exploration that allows for the detailed examination of annotated trees, aiding in the interpretation and presentation of data.
 - Analytic Methods for computing analysis from leaf nodes:
-  - Ancestral Character Reconstruction
+  - Ancestral Character Reconstruction for both discrete and continuous traits.
   - Phylogenetic Signal Delta Statistic]
   - Lineage Specificity Analysis
 
@@ -43,15 +43,16 @@ bioRxiv (2023) doi: 10.1101/2023.09.21.558621
   - [Parsing Input tree](#parsing-input-tree)
     - [Tree format](#tree-format)
     - [Tree parser](#tree-parser)
-  - [annotate, Annotate metadata into tree](#annotate-annotate-metadata-into-tree)
-    - [Basic Metadata in TSV/CSV Format](#basic-metadata-in-tsvcsv-format)
-    - [Metadata TSV/CSV as a Numerical Data Matrix](#metadata-tsvcsv-as-a-numerical-data-matrix)
-    - [Metadata Without Column Names](#metadata-without-column-names)
-    - [Missing Value Detection](#missing-value-detection)
-    - [Unmapped Tree leaf property detection](#unmapped-tree-leaf-property-detection)
-    - [Handling Duplicated Leaf Names in Metadata](#handling-duplicated-leaf-names-in-metadata)
-    - [Specifying Data Types for Metadata Columns](#specifying-data-types-for-metadata-columns)
-    - [Annotate Metadata to Internal Nodes](#annotate-metadata-to-internal-nodes)
+  - [treeprofiler-annotate, computing phylogenetic profiles and annotation](#treeprofiler-annotate-computing-phylogenetic-profiles-and-annotation)
+    - [annotate, Annotate metadata into tree](#annotate-annotate-metadata-into-tree)
+      - [Basic Metadata in TSV/CSV Format](#basic-metadata-in-tsvcsv-format)
+      - [Metadata TSV/CSV as a Numerical Data Matrix](#metadata-tsvcsv-as-a-numerical-data-matrix)
+      - [Metadata Without Column Names](#metadata-without-column-names)
+      - [Missing Value Detection](#missing-value-detection)
+      - [Unmapped Tree leaf property detection](#unmapped-tree-leaf-property-detection)
+      - [Handling Duplicated Leaf Names in Metadata](#handling-duplicated-leaf-names-in-metadata)
+      - [Specifying Data Types for Metadata Columns](#specifying-data-types-for-metadata-columns)
+      - [Annotate Metadata to Internal Nodes](#annotate-metadata-to-internal-nodes)
     - [Taxonomic annotation](#taxonomic-annotation)
       - [Using Different Taxonomic Databases from GTDB/NCBI](#using-different-taxonomic-databases-from-gtdbncbi)
       - [Identifying Taxon Names in Different Metadata Fields/Columns](#identifying-taxon-names-in-different-metadata-fieldscolumns)
@@ -64,7 +65,7 @@ bioRxiv (2023) doi: 10.1101/2023.09.21.558621
       - [Phylogenetic Signal Delta Statistic](#phylogenetic-signal-delta-statistic)
       - [Lineage Specificity Analysis](#lineage-specificity-analysis)
     - [Output Formats for Annotated Trees](#output-formats-for-annotated-trees)
-  - [Plot annotated tree with layouts](#plot-annotated-tree-with-layouts)
+  - [treeprofiler-plot visualizing phylogenetic profiles and annotation](#treeprofiler-plot-visualizing-phylogenetic-profiles-and-annotation)
     - [Interactive visualization interface](#interactive-visualization-interface)
     - [Basic options of visualizing layouts](#basic-options-of-visualizing-layouts)
     - [Layouts for categorical data](#layouts-for-categorical-data)
@@ -93,7 +94,7 @@ TreeProfiler is command-line tool for profiling metadata table into phylogenetic
 ## Installation
 ### Dependencies
 TreeProfiler requires 
-  - Python version >= 3.9
+  - Python version >= 3.10
   - ETE Toolkit v4
   - biopython
   - selenium
@@ -321,8 +322,9 @@ TreeProfiler provides argument `--internal {name,support}` to specify `newick` t
 | (A:0.5, B:0.5)Internal_C:0.5;  |  A, B| Internal_C| `name`| 
 | (A:0.5, B:0.5)0.99:0.5;  |   A, B| 0.99| `support`| 
 
+## `treeprofiler-annotate` computing phylogenetic profiles and annotation
 
-## `annotate`, Annotate metadata into tree 
+### `annotate`, Annotate metadata into tree 
 TreeProfiler `annotate` subcommand is the step that annotate input metadata to target tree. As a result, itwill generate the following output file:
 
 1) `<input_tree>` + *_annotated.nw*, newick format with annotated tree
@@ -334,12 +336,12 @@ In the following sub session we will describe the usage of following arguments i
 | Argument                                         | Description                                                                                                  |
 |--------------------------------------------------|--------------------------------------------------------------------------------------------------------------|
 | `-d, --metadata METADATA [METADATA ...]` | <metadata.csv> .csv, .tsv filename                                                                          |
-| `-sep, --metadata-sep METADATA_SEP`   | Column separator of metadata table `[default: \t]  `                                                           |
+| `-s, --metadata-sep METADATA_SEP`   | Column separator of metadata table `[default: \t]  `                                                           |
 | `--data-matrix DATA_MATRIX [DATA_MATRIX ...]`      | <datamatrix.csv> .csv, .tsv. Numerical matrix data metadata table as array to tree, please do not provide column headers in this file, filename will become the property name in the tree. |
 | `--no-headers`                                    | Metadata table doesn't contain columns name, namespace `col`+`index` will be assigned as the key of property such as `col1`. |
 | `--duplicate`                                      | Treeprofiler will aggregate duplicated metadata to a list as a property if metadata contains duplicated row. |
 
-### Basic Metadata in TSV/CSV Format
+#### Basic Metadata in TSV/CSV Format
 TreeProfiler allows users to input metadata in tsv/csv file by setting `--metadata <filename.tsv|.csv>`  and `-s <seperator>`. By default, the first column of metadata should be names of target tree leaves and metadata should contain column names for each column of metadata.
 
 TreeProfiler allows user to annotate more than one metadata inputs to tree such as `--metadata table1.tsv table2.tsv`.  
@@ -395,7 +397,7 @@ Target tree leaf node Taxa_0 contains the following propertiies:
 {'name': 'Taxa_0', 'dist': 0.190563, 'categorical1': 'A'}
 ```
 
-### Metadata TSV/CSV as a Numerical Data Matrix
+#### Metadata TSV/CSV as a Numerical Data Matrix
 treeprofiler can handle the whole tsv/csv file as one property and annotate it to related leaves, by using `--data-matrix <filename.tsv|.csv>` It must be numerical data matrix and without headers. Once annotated the property of data-matrix will be named by the filename (see example below) 
 
 The difference between `--data-matrix` and `--metadata` is that the former sees the whole metadata file as a node property and stores the rows as an array in leaf nodes, and the latter sees each column from metadata as each single property of leaf nodes.
@@ -428,7 +430,7 @@ target tree leaf node Taxa_0 contains the following propertiies:
 }
 ```
 
-### Metadata Without Column Names
+#### Metadata Without Column Names
 If metadata doesn’t have headers, by setting `--no-headers` to set the metadata properly, therefore treeprofiler will name each column by `col`+`<column number>` as the property key in each leaf node, such as `col1`, `col2`, etc.
 
 example
@@ -469,7 +471,7 @@ target tree leaf node Taxa_0 contains the following propertiies:
 'col5': '-1.349'}
 ```
 
-### Missing Value Detection
+#### Missing Value Detection
 Metadata column which fullfills one of the following criterias will be consider as missing value:
 
 - Entirely symbolic characters. Such as `+`, `-`, `~`, `.`, etc.
@@ -478,10 +480,10 @@ Metadata column which fullfills one of the following criterias will be consider 
 
 Missing value will replaced by string 'NaN' in the corresponding property.
 
-### Unmapped Tree Leaf Property Detection
+#### Unmapped Tree Leaf Property Detection
 If Metadata doesn't cover input tree leaf, tree leaf will be unannotated.  
 
-### Handling Duplicated Leaf Names in Metadata
+#### Handling Duplicated Leaf Names in Metadata
 In general, treeprofiler expects each row of metadata corresponding to one leaf, such as
 ```
 head categorical.tsv
@@ -522,7 +524,7 @@ target tree leaf node Taxa_0 contains the following propertiies:
 {'name': 'Taxa_0', 'dist': 0.190563, 'categorical1': 'A|B'}
 ```
 
-### Specifying Data Types for Metadata Columns
+#### Specifying Data Types for Metadata Columns
 Although TreeProfiler can automatically detect datatype of each column, users still can determine the datatype using the following arguments using:
 
 | Argument                                         | Description                                                                                                  |
@@ -536,7 +538,7 @@ Although TreeProfiler can automatically detect datatype of each column, users st
 | `--bool-prop-idx BOOL_PROP_IDX [BOOL_PROP_IDX ...]`| 1 2 3 or [1-5] index columns which need to be read as boolean data                                            |
 
 
-### Annotate Metadata to Internal Nodes
+#### Annotate Metadata to Internal Nodes
 At the above example, we only mapped metadata to leaf nodes, in this example, we will also profile **internal nodes** annotation and analysis of their children nodes. Argument that in related to summary methods are:
 
 | Argument                                                       | Applied datatype                | Description                                                                                                          | Summarized properties Internal node                                                                                              |
@@ -600,7 +602,7 @@ Example
 treeprofiler annotate \
 -t demo1.tree \
 --metadata categorical.tsv \
--sep , \
+-s , \
 --counter-stat raw \
 -o ./ 
 
@@ -621,7 +623,7 @@ target tree leaf node Taxa_0 contains the following propertiies:
 treeprofiler annotate \
 -t demo1.tree \
 --metadata categorical.tsv \
--sep , \
+-s , \
 --counter-stat relative \
 -o ./
 
@@ -642,7 +644,7 @@ target tree leaf node Taxa_0 contains the following propertiies:
 treeprofiler annotate \
 -t demo1.tree \
 --metadata categorical.tsv \
--sep , \
+-s , \
 --counter-stat none \
 -o ./
 
@@ -680,7 +682,7 @@ Example:
 treeprofiler annotate \
 -t demo1.tree \
 --metadata numerical.tsv \
--sep , \
+-s , \
 --num-stat all \
 -o ./
 
@@ -707,7 +709,7 @@ target tree leaf node Taxa_0 contains the following propertiies:
 treeprofiler annotate \
 -t demo1.tree \
 --metadata numerical.tsv \
--sep , \
+-s , \
 --num-stat avg \
 -o ./
 
@@ -733,7 +735,7 @@ target tree leaf node Taxa_0 contains the following propertiies:
 treeprofiler annotate \
 -t demo1.tree \
 --metadata numerical.tsv \
--sep , \
+-s , \
 --num-stat none \
 -o ./
 
@@ -755,7 +757,7 @@ target tree leaf node Taxa_0 contains the following propertiies:
 treeprofiler annotate \
 -t demo1.tree \
 --data-matrix data.array \
--sep , \
+-s , \
 --num-stat avg \
 -o ./
 
@@ -772,7 +774,8 @@ target tree leaf node Taxa_0 contains the following propertiies:
 'data.array': '-2.591|1.937|-3.898|0.447|-1.349'
 }
 ```
-#### Customizing Summary Methods for Different Columns
+
+##### Customizing Summary Methods for Different Columns
 Using `--column-summary-method`  can specify the summary method of each properties, simply add `<property name>=<summary method>` . For categorical data, options are `raw,relative,none`; for numerical data, options are  `all, sum, avg, max, min, std, none` . 
 
 such as `--column-summary-method sample1=none sample2=avg random_type=relative alignment=none`
@@ -787,7 +790,7 @@ treeprofiler annotate \
 -t demo1.tree \
 --metadata categorical.tsv numerical.tsv \
 --data-matrix data.array \
--sep , \
+-s , \
 --column-summary-method \
 categorical1=relative \
 random_column1=all \
@@ -820,6 +823,68 @@ target tree leaf node Taxa_0 contains the following propertiies:
 'data.array': '-2.591|1.937|-3.898|0.447|-1.349'
 }
 ```
+
+##### Annotate internal nodes with **Last Common Ancestor**
+Most of time metadata mostly are related to the leaf annotation of tree, treeprofiler summarizes annotation from leaves and passes to internal nodes. If the internal nodes don't have name, treeprofiler will assign one based on `N` + `<int>`, for example from the previous session:
+
+
+```
+# treeprofiler assigns name to unname internal nodes
+python show_tree_props_ancestor.py demo1_annotated.nw
+Target tree internal node if Taxa_0 and Taxa_1 contains the following properties:  
+{
+  'name': 'N7', 
+  'dist': 0.97338, 
+  'categorical1_counter': 'A--0.50||B--0.50', 
+  'data.array_avg': '0.38749999999999996|0.03300000000000003|0.23199999999999998|1.016|-1.9140000000000001', 
+  ....
+}
+```
+
+Although sometimes we hope to assign data to internal tree nodes. Therefore users can:
+
+1) If tree has names for internal nodes, users can directly use those names in the metadata for annotations, such as
+```
+name,categorical1
+Taxa_0,A
+Taxa_1,B
+Internal1,A
+```
+
+2) If tree does not have names for internal nodes, users can conduct a secondary annotation after treeprofiler assign names for internal nodes automatically, such as 
+```
+name,categorical1
+N1,A
+```
+
+3) If tree does not have names for internal nodes, another methods is to refer the nodes using last common ancestor. Choose two leaves whose most last common ancestor is the node of interest, and provide their IDs, separated by a double vertical bar ('||'). For example in `categorical_ancestor.tsv`
+```
+name,categorical1
+Taxa_0,A
+Taxa_1,B
+...
+Taxa_0||Taxa_1,A
+Taxa_2||Taxa_4,C
+```
+In this example, it refers to add annotation value `A` as proptery `categorical1` to the common ancestor of leaf nodes `Taxa_0` and `Taxa_1`. Here is the result:
+
+```
+treeprofiler annotate \
+-t demo1.tree \
+--metadata categorical_ancestor.tsv \
+-s , \
+-o ./
+
+python show_tree_props_ancestor.py demo1_annotated.nw
+Target tree internal node if Taxa_0 and Taxa_1 contains the following properties:  
+{
+  'name': 'N7', 
+  'dist': 0.97338, 
+  'categorical1': 'A', 
+  'categorical1_counter': 'A--1||B--1'
+}
+```
+As result, internal node `N7` as the common ancestor of `Taxa_0` and `Taxa_1`, is annotated.
 
 ### Taxonomic annotation
 If input metadada containcs taxon data, TreeProfiler allows users to process taxonomic annotation with either GTDB or NCBI database.
@@ -871,7 +936,6 @@ Target tree internal node Root contains the following properties:
 'name': 'Root', 
 'named_lineage': 'root|Eukaryota|Eumetazoa|Chordata|Vertebrata|Gnathostomata|Sarcopterygii|Eutheria|Tetrapoda|Amniota|Theria|Opisthokonta|Metazoa|Bilateria|Deuterostomia|Mammalia|Craniata|Teleostomi|Euteleostomi|cellular organisms|Euarchontoglires|Dipnotetrapodomorpha|Boreoeutheria', 'rank': 'superorder', 
 'sci_name': 'Euarchontoglires', 
-'species': '10090|9606|9598', 
 'taxid': '314146'
 }
 Target tree leaf node Taxa_0 contains the following propertiies:  
@@ -885,7 +949,6 @@ Target tree leaf node Taxa_0 contains the following propertiies:
 'named_lineage': 'root|Eukaryota|Eumetazoa|Chordata|Vertebrata|Gnathostomata|Sarcopterygii|Eutheria|Primates|Catarrhini|Hominidae|Homo|Homo sapiens|Tetrapoda|Amniota|Theria|Opisthokonta|Metazoa|Bilateria|Deuterostomia|Mammalia|Craniata|Teleostomi|Euteleostomi|cellular organisms|Homininae|Euarchontoglires|Simiiformes|Hominoidea|Haplorrhini|Dipnotetrapodomorpha|Boreoeutheria', 
 'rank': 'species', 
 'sci_name': 'Homo sapiens', 
-'species': '9606', 
 'taxid': '9606'
 }
 ```
@@ -916,7 +979,6 @@ Target tree internal node Root contains the following properties:
 'named_lineage': '', 
 'rank': 'Unknown', 
 'sci_name': 'None', 
-'species': 'RS_GCF_000019605.1|RS_GCF_003948265.1|GB_GCA_011358815.1|GB_GCA_003344655.1', 
 'taxid': 'None'
 }
 Target tree leaf node Taxa_0 contains the following propertiies:  
@@ -927,7 +989,6 @@ Target tree leaf node Taxa_0 contains the following propertiies:
 'named_lineage': '', 
 'rank': 'Unknown', 
 'sci_name': '', 
-'species': 'GB_GCA_011358815.1', 
 'taxid': 'GB_GCA_011358815.1'
 }
 
@@ -949,7 +1010,6 @@ Target tree internal node Root contains the following properties:
 'lineage': '1|2|79|2172|2173|2174|2175', 'name': 'Root', 
 'named_lineage': 'root|d__Archaea|p__Thermoproteota|c__Korarchaeia|o__Korarchaeales|f__Korarchaeaceae|g__Korarchaeum', 
 'rank': 'genus', 'sci_name': 'g__Korarchaeum', 
-'species': 'RS_GCF_003948265.1|GB_GCA_011358815.1|RS_GCF_000019605.1|GB_GCA_003344655.1', 
 'taxid': 'g__Korarchaeum'
 }
 Target tree leaf node Taxa_0 contains the following propertiies:  
@@ -960,8 +1020,7 @@ Target tree leaf node Taxa_0 contains the following propertiies:
 'lca': 'superkingdom-d__Archaea|phylum-p__Thermoproteota|class-c__Korarchaeia|order-o__Korarchaeales|family-f__Korarchaeaceae|genus-g__Korarchaeum|species-s__Korarchaeum cryptofilum|subspecies-s__Korarchaeum cryptofilum', 
 'named_lineage': 'root|d__Archaea|p__Thermoproteota|c__Korarchaeia|o__Korarchaeales|f__Korarchaeaceae|g__Korarchaeum|s__Korarchaeum cryptofilum|GB_GCA_011358815.1', 
 'rank': 'subspecies', 
-'sci_name': 's__Korarchaeum cryptofilum', 
-'species': 'GB_GCA_011358815.1', 
+'sci_name': 's__Korarchaeum cryptofilum',
 'taxid': 'GB_GCA_011358815.1'
 }
 ```
@@ -969,14 +1028,14 @@ Target tree leaf node Taxa_0 contains the following propertiies:
 #### Identifying Taxon Names in Different Metadata Fields/Columns
 When Taxon properties are embeded in different column or field in metadata, treeprofiler provides `--taxon-column`, `--taxon-delimiter` and `--taxa-field` to identify taxon term in order to process taxonomic annotation sucessfully. Here is summary of different cases with corresponding setting.
 
-| metadata |taxon to be identified |       command line setting  | 
+| metadata (`,` as column seperator) |taxon to be identified |       command line setting  | 
 |----------|-------------   | ----|
-| `#leafname col1`<br>`9598 wt`     | 9598|     `default` | 
-| `#leafname col1`<br>`7739.XP_002609184.1 wt`     |   7739|   `--taxon-column <default> --taxon-delimiter . --taxa-field 0`   | 
-| `#leafname ncbi_id`<br>`leaf_A 7739`    | 7739|     `--taxon-column ncbi_id --taxon-delimiter <default> --taxa-field <default> `    | 
-| `#leafname ncbi_id`<br>`leaf_A 7739.XP_002609184.1`     |   7739|      `--taxon-column ncbi_id --taxon-delimiter . --taxa-field 0`    | 
-|`#leafname col1`<br> `RS_GCF_001560035.1 wt`   | RS_GCF_001560035.1|     `default`   |
-| `#leafname gtdb_id`<br>`leaf_A d__Archaea;p__Asgardarchaeota;c__Heimdallarchaeia;o__UBA460;f__Kariarchaeaceae;g__LC-2;s__LC-2 sp001940725`      | s__LC-2 sp001940725|     `--taxon-column gtdb_id --taxon-delimiter ; --taxa-field -1`   |
+| `#id,col1`<br>`9598,wt`     | 9598|     `--taxon-column name` | 
+| `#id,col1`<br>`7739.XP_002609184.1,wt`     |   7739|   `--taxon-column name --taxon-delimiter . --taxa-field 0`   | 
+| `#id,ncbi_id`<br>`leaf_A,7739`    | 7739|     `--taxon-column ncbi_id`    | 
+| `#id,ncbi_id`<br>`leaf_A,7739.XP_002609184.1`     |   7739|      `--taxon-column ncbi_id --taxon-delimiter . --taxa-field 0`    | 
+|`#id,col1`<br> `RS_GCF_001560035.1,wt`   | RS_GCF_001560035.1|     `--taxon-column name`   |
+| `#id,gtdb_id`<br>`leaf_A,d__Archaea;p__Asgardarchaeota;c__Heimdallarchaeia;o__UBA460;f__Kariarchaeaceae;g__LC-2;s__LC-2 sp001940725`      | s__LC-2 sp001940725|     `--taxon-column gtdb_id --taxon-delimiter ; --taxa-field -1`   |
 
 examples:
 ```
@@ -994,7 +1053,7 @@ Taxa_3	GB_GCA_003344655.1@sample4
 # therefore, locate taxa id correctly
 treeprofiler annotate \
 -t demo3.tree \
--d demo3.tsv \
+--metadata demo3.tsv \
 --taxon-column gtdb_taxid \
 --taxadb gtdb \
 --gtdb-version 202 \
@@ -1011,8 +1070,7 @@ Target tree internal node Root contains the following properties:
 'name': 'Root', 
 'named_lineage': 'root|d__Archaea|p__Thermoproteota|c__Korarchaeia|o__Korarchaeales|f__Korarchaeaceae|g__Korarchaeum', 
 'rank': 'genus', 
-'sci_name': 'g__Korarchaeum', 
-'species': 'Taxa_3|Taxa_0|Taxa_1|Taxa_2', 
+'sci_name': 'g__Korarchaeum',
 'taxid': 'g__Korarchaeum'
 }
 Target tree leaf node contains the following propertiies:  
@@ -1025,7 +1083,6 @@ Target tree leaf node contains the following propertiies:
 'named_lineage': 'root|d__Archaea|p__Thermoproteota|c__Korarchaeia|o__Korarchaeales|f__Korarchaeaceae|g__Korarchaeum|s__Korarchaeum cryptofilum|RS_GCF_003948265.1', 
 'rank': 'subspecies', 
 'sci_name': 's__Korarchaeum cryptofilum', 
-'species': 'Taxa_2', 
 'taxid': 'RS_GCF_003948265.1'
 }
 ```
@@ -1035,6 +1092,7 @@ Taxonomic annotation will annotate the internal nodes based on the taxa of leaf 
 
 ```
 # check tree with unknown taxa
+cat missing_gtdb_v202.tree
 (Taxa_1:1,(RS_GCF_000019605.1:1,(Taxa_2:1,GB_GCA_003344655.1:1):0.5):0.5);
 
 # normal way to annotate tree will cause unknown annotation
@@ -1055,9 +1113,8 @@ Target tree internal node Root contains the following properties:
 'named_lineage': '', 
 'rank': 'Unknown', 
 'sci_name': 'None', 
-'species': 'Taxa_2|GB_GCA_003344655.1|RS_GCF_000019605.1|Taxa_1',
- 'taxid': 'None'
- }
+'taxid': 'None'
+}
 Target tree leaf node contains the following propertiies:  
 {
 'name': 'Taxa_1', 
@@ -1066,7 +1123,6 @@ Target tree leaf node contains the following propertiies:
 'named_lineage': '', 
 'rank': 'Unknown', 
 'sci_name': '', 
-'species': 'Taxa_1', 
 'taxid': 'Taxa_1'
 }
 
@@ -1089,7 +1145,6 @@ Target tree internal node Root contains the following properties:
 'named_lineage': 'root|d__Archaea|p__Thermoproteota|c__Korarchaeia|o__Korarchaeales|f__Korarchaeaceae|g__Korarchaeum', 
 'rank': 'genus', 
 'sci_name': 'g__Korarchaeum', 
-'species': 'Taxa_1|RS_GCF_000019605.1|GB_GCA_003344655.1|Taxa_2', 
 'taxid': 'g__Korarchaeum'
 }
 Target tree leaf node contains the following propertiies:  
@@ -1100,7 +1155,6 @@ Target tree leaf node contains the following propertiies:
 'named_lineage': '', 
 'rank': 'Unknown', 
 'sci_name': '', 
-'species': 'Taxa_1', 
 'taxid': 'Taxa_1'
 }
 ```
@@ -1175,27 +1229,29 @@ TreeProfiler allows users annotate EggNOG-mapper  standard output to target tree
  - `--emapper-smart`, attach eggNOG-mapper smart output `out.emapper.smart`.
 
 emapper annotation output and the summary method
-Field	datatype	summary method
-seed_ortholog	str	counter
-evalue	float	descriptive stat
-score	float	descriptive stat
-eggNOG_OGs	list	counter
-max_annot_lvl	str	counter
-COG_category	str	counter
-Description	str	counter
-Preferred_name	str	counter
-GOs	list	counter
-EC	str	counter
-KEGG_ko	list	counter
-KEGG_Pathway	list	counter
-KEGG_Module	list	counter
-KEGG_Reaction	list	counter
-KEGG_rclass	list	counter
-BRITE	list	counter
-KEGG_TC	list	counter
-CAZy	list	counter
-BiGG_Reaction	list	counter
-PFAMs	list	counter
+| Field            | Datatype | Summary Method      |
+| ---------------- | -------- | ------------------- |
+| seed_ortholog     | str      | counter             |
+| evalue            | float    | descriptive stat    |
+| score             | float    | descriptive stat    |
+| eggNOG_OGs        | list     | counter             |
+| max_annot_lvl     | str      | counter             |
+| COG_category      | str      | counter             |
+| Description       | str      | counter             |
+| Preferred_name    | str      | counter             |
+| GOs               | list     | counter             |
+| EC                | str      | counter             |
+| KEGG_ko           | list     | counter             |
+| KEGG_Pathway      | list     | counter             |
+| KEGG_Module       | list     | counter             |
+| KEGG_Reaction     | list     | counter             |
+| KEGG_rclass       | list     | counter             |
+| BRITE             | list     | counter             |
+| KEGG_TC           | list     | counter             |
+| CAZy              | list     | counter             |
+| BiGG_Reaction     | list     | counter             |
+| PFAMs             | list     | counter             |
+
 
 
  [check EggNOG-mapper annotation example](#demo2-explore-eggnog-mapper-annotations-data-with-taxonomic-annotation)
@@ -1204,14 +1260,27 @@ PFAMs	list	counter
 we use examples in `examples/analytic_example`
 
 #### Ancestral Character Reconstruction
+TreeProfiler provides analytic methods for ancestral character reconstruction based on metadata to estimate the ancestral condition of phenotypic traits – usually at internal nodes. Based on different data type of metadata, discrete and contiunous. Here is all the arguments and options:
+
 | Argument                                         | Description                                                                                                           |
 |--------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------|
 | `--acr-discrete-columns ACR_DISCRETE_COLUMNS [ACR_DISCRETE_COLUMNS ...]` | names of columns to perform acr analysis for discrete traits                                                       |
-| `--prediction-method {MPPA,MAP,JOINT,DOWNPASS,ACCTRAN,DELTRAN,COPY,ALL,ML,MP}      `                    | Prediction method for ACR discrete analysis. Options: MPPA, MAP, JOINT, DOWNPASS, ACCTRAN, DELTRAN, COPY, ALL, ML, MP. `[Default: MPPA]` |
-| `--model {JC, F81, EFT, HKY, JTT} `                                        | Evolutionary model for ML methods in ACR discrete analysis. Options: JC, F81, EFT, HKY, JTT. `[Default: F81]`           |
-| `--threads THREADS `                                     | Number of threads to use for annotation. `[Default: 4]`  `                                                                |
+| `--acr-continuous-columns ACR_CONTINUOUS_COLUMNS [ACR_CONTINUOUS_COLUMNS ...]` | names of columns to perform acr analysis for continuous traits                                                       |
+| `--prediction-method {MPPA,MAP,JOINT,DOWNPASS,ACCTRAN,DELTRAN,COPY,ALL,MP,ML,BAYESIAN}   `                    | Prediction method for ACR analysis.<br>For **Discrete** traits: `MPPA`, `MAP`, `JOINT`, `DOWNPASS`, `ACCTRAN`, `DELTRAN`, `COPY`, `ALL`, `ML`, `MP`.<br>For **Continuous** traits: `ML`, `BAYESIAN`. `[Default: MPPA]` |
+| `--model {JC,F81,EFT,HKY,JTT,BM,OU}`                                        | Evolutionary model for ML methods in ACR analysis.For **discrete traits**: `JC`, `F81`, `EFT`, `HKY`, `JTT` For **continuous traits**: `BM`, `OU`. `[Default: F81]`           |
+| `--threads THREADS `                                     | Number of threads to use for annotation. `[Default: 4]`  `  
 
-example
+##### ACR for discrete data
+TreeProfiler has integrated [pastml](https://github.com/evolbioinfo/pastml) (https://github.com/evolbioinfo/pastml), a flexible platform for ancestral reconstruction with tree.
+
+- `--acr-discrete-columns <PROP>`  allow users to calculate the ancestral character state construction via pastml package. Hence the internal node will be infered the state based on the children leaf node metadata.
+- `--prediction-method <MPPA,MAP,JOINT,DOWNPASS,ACCTRAN,DELTRAN,COPY,ALL,MP,ML>` for user to choose prediction method. 
+- `--model <JC,F81,EFT,HKY,JTT>`, for user to choose the evolutionary model for calculating the marginal propabilities using the prediction method except fo `MP`. 
+
+It will generate the output config file from PASTML package as 
+`params.character_{prop}.method_{method}.model_{model}.tab` which contains information of likelihood from different model/method.
+
+Here is tree with example metadata which is categorical dataset:
 ```
 ls 
 Albanian.tree.152tax.nwk metadata_tab.csv
@@ -1226,27 +1295,30 @@ id	Country
 97CDAF6240	Africa
 97CDAF6238	Africa
 
-# quick running using all default setting
+# quick running using all default setting, using MPPA method with F81 model
 treeprofiler annotate \
--t Albanian.tree.152tax_annotated.nw \
---internal-parser name \
---acr-discrete-columns Country  \
+-t Albanian.tree.152tax.nwk \
+--metadata metadata_tab.csv \
+--internal name \
+--acr-discrete-columns Country \
+-s $'\t' \
 -o ./
 
 # check properties
 python show_tree_props.py Albanian.tree.152tax_annotated.nw
 Target tree internal node Root contains the following properties:  
 {
-'name': 'ROOT', 
-'dist': 0.0, 
-'Country': 'Africa', 
-'Country_counter': 'Africa--50||Albania--31||EastEurope--10||Greece--39||WestEurope--22'
+  'name': 'ROOT', 
+  'dist': 0.0, 
+  'Country': 'Africa', 
+  'Country_counter': 'Africa--50||Albania--31||EastEurope--10||Greece--39||WestEurope--22'
 }
-Target tree leaf node 97CDAF6238 contains the following propertiies:  
+
+Target tree leaf node Taxa_0 contains the following propertiies:  
 {
-'name': '97CDAF6238', 
-'dist': 0.08034, 
-'Country': 'Africa'
+  'name': '97CDAF6238', 
+  'dist': 0.08034, 
+  'Country': 'Africa'
 }
 
 # check output files
@@ -1275,9 +1347,6 @@ num_scenarios	96
 num_states_per_node_avg	1.023102310231023
 num_unresolved_nodes	6
 ```
-`--acr-discrete-columns <PROP>`  allow users to calculate the ancestral character state construction via pastml package. Hence the internal node will be infered the state based on the children leaf node metadata. Users can choose the prediction method using `--prediction-method <METHOD>`. It will generate the output config file from PASTML package as 
-
-`params.character_{prop}.method_{method}.model_{model}.tab` which contains information of likelihood from different model/method.
 
 **MAXIMUM LIKELIHOOD (ML) METHODS**
 
@@ -1331,7 +1400,7 @@ examples:
 # using different model
 treeprofiler annotate \
 -t Albanian.tree.152tax.nwk \
---internal-parser name \
+--internal name \
 --metadata metadata_tab.csv \
 --acr-discrete-columns Country \
 --prediction-method MPPA \
@@ -1357,7 +1426,7 @@ Target tree leaf node Taxa_0 contains the following propertiies:
 # using MP methods (no calculation of ancestral propababilities)
 treeprofiler annotate \
 -t Albanian.tree.152tax.nwk \
---internal-parser name \
+--internal name \
 --metadata metadata_tab.csv \
 --acr-discrete-columns Country \
 --prediction-method DOWNPASS \
@@ -1380,8 +1449,78 @@ Target tree leaf node Taxa_0 contains the following propertiies:
 'Country': 'Africa'
 }
 ```
+
+##### ACR for contiunous data
+TreeProfiler supports ancestral character reconstruction for continuous traits using two main approches: **Maximum Likelihood (ML)** and **Bayesian** infeference. Both methods rely on evolutionary models for continuous data, specifically the **Brownian Motion (BM)** and **Ornstein-Uhlenbeck (OU)** models.
+
+TreeProfiler allows users to select the desired method and model using the following arguments:
+
+- `--acr-continuous-columns <PROP>`: Specify the column names for the continuous traits.
+- `--prediction-method <ML/BAYESIAN>`: Choose between the ML or Bayesian approach.
+- `--model <BM/OU>`: Choose the evolutionary model for continuous trait analysis.
+
+Here is tree with example metadata which is continuous dataset `Anolis.tre` and `svl.csv`:
+```
+head svl.csv
+species,svl
+ahli,4.039125443
+alayoni,3.815704818
+alfaroi,3.526654599
+aliniger,4.036556538
+allisoni,4.375390078
+
+# now we run the acr for the continuous trait svl, here we turn off the descriptive statistic
+treeprofiler annotate \
+-t Anolis.tre \
+--metadata svl.csv \
+-s , \
+--acr-continuous-columns svl \
+--prediction-method ML \
+--model BM \
+--num-stat none \
+-o ./
+
+# now we check the 
+python show_tree_props.py Anolis_annotated.nw
+Target tree internal node Root contains the following properties:  
+{
+  'name': 'Root', 
+  'svl': '4.065917563705425', 
+}
+Target tree leaf node ahlicontains the following propertiies:  
+{
+  'name': 'ahli', 
+  'dist': 0.130889, 
+  'svl': '4.039125443'
+}
+
+# use Bayesian method with OU model
+treeprofiler annotate \
+-t Anolis.tre \
+--metadata svl.csv \
+-s , \
+--acr-continuous-columns svl \
+--prediction-method BAYESIAN \
+--model OU \
+--num-stat none \
+-o ./
+
+python show_tree_props.py Anolis_annotated.nw
+Target tree internal node Root contains the following properties:  
+{
+  'name': 'Root', 
+  'svl': '4.443782202699844'
+}
+Target tree leaf node ahlicontains the following propertiies:  
+{
+  'name': 'ahli', 
+  'dist': 0.130889, 
+  'svl': '4.039125443'
+}
+``` 
+
 #### Phylogenetic Signal Delta Statistic
-Running signal delta statistic required running Ancestral Character Reconstruction using MPPA or MP methods in order to have the ancestral character propabilities. Calculated delta statistic metric and p_value of given trait will be stored in root node as properties. 
+Running signal delta statistic required running Ancestral Character Reconstruction using MPPA or MP methods in order to have the ancestral character propabilities. Calculated delta statistic metric and p_value of given trait will be stored in root node as properties with `<prop>` + suffix `_pval` and `_delta`. 
 
 | Argument               | Description                                                                                                                   |
 |------------------------|-------------------------------------------------------------------------------------------------------------------------------|
@@ -1393,18 +1532,15 @@ Running signal delta statistic required running Ancestral Character Reconstructi
 | `--thin  THIN  `             | Keep only each xth iterate. `[Default: 10]      `                                                                                |
 |` --burn   BURN  `            | Burned-in iterates. `[Default: 100]   `                                                                                          |
 
-
 Delta statistic Examples
 ```
 treeprofiler annotate \
 -t Albanian.tree.152tax.nwk \
---internal-parser name \
+--internal name \
 --metadata metadata_tab.csv \
-# acr to obtain propabilities
 --acr-discrete-columns Country \
 --prediction-method MPPA \
 --model F81 \
-# delta statistic
 --delta-stats \
 --ent-type SE \
 --iteration 10000 \
@@ -1473,18 +1609,45 @@ Target tree leaf node Taxa_0 contains the following propertiies:
 ```
 
 ### Output Formats for Annotated Trees
-TreeProfiler `annotate` subcommand will generate the following output file
+TreeProfiler `annotate` subcommand will generate the following output file to target directory when user use `--ourdir` or `-o`
 
 1) `<input_tree>` + *_annotated.nw*, newick format with annotated tree
 2) `<input_tree>` + *_annotated.ete*, ete format with annotated tree
 3) `<input_tree>` + *_annotated_prop2type.txt*, config file where store the datatype of each annotated properties
 4) `<input_tree>` + *_annotated.tsv*,  metadata in tab-separated values format with annotated and summarized internal nodes information. 
 
+#### Use standard input and output formats
+TreeProfiler is able receive and produce tree in standard format in order to integrate with command program.
+
+- Standard output, use `--quiet` and `--stdout` at the same time can mute the log and output annotated tree in newick format.
+```
+cd
+
+treeprofiler annotate \
+-t demo1.tree \
+--metadata categorical.tsv \
+-s , \
+--quiet \
+--stdout
+
+((Taxa_3:0.219065[&&NHX:categorical1=C],(Taxa_4:0.188681[&&NHX:categorical1=C],Taxa_2:0.5196[&&NHX:categorical1=B])0.166914:0.90365[&&NHX:categorical1_counter=B--1||C--1:name=N3])0.138062:0.0632016[&&NHX:categorical1_counter=B--1||C--2:name=N4],(Taxa_0:0.190563[&&NHX:categorical1=A],Taxa_1:0.458423[&&NHX:categorical1=B])0.138062:0.97338[&&NHX:categorical1_counter=A--1||B--1:name=N7])[&&NHX:categorical1_counter=A--1||B--2||C--2:name=Root];
+```
+
+- Standard input, use `-` as input in `--tree` argument to take standard input into account.
+
+```
+cd basic_example0/
+
+cat demo1.tree|treeprofiler annotate -t - --metadata categorical.tsv -s , --quiet --stdout
+
+((Taxa_3:0.219065[&&NHX:categorical1=C],(Taxa_4:0.188681[&&NHX:categorical1=C],Taxa_2:0.5196[&&NHX:categorical1=B])0.166914:0.90365[&&NHX:categorical1_counter=B--1||C--1:name=N3])0.138062:0.0632016[&&NHX:categorical1_counter=B--1||C--2:name=N4],(Taxa_0:0.190563[&&NHX:categorical1=A],Taxa_1:0.458423[&&NHX:categorical1=B])0.138062:0.97338[&&NHX:categorical1_counter=A--1||B--1:name=N7])[&&NHX:categorical1_counter=A--1||B--2||C--2:name=Root];
+```
+
 In the following `plot` step, users can use either `.nw` or `.ete` by putting `--input-type [newick, ete]` flag to identify. The difference between `.nw` and `.ete` format is 
 
  - newick file is more universal and be able to used in different other phylogenetic software although associated data of tree nodes will be considered as plain text, so if you use newick format, alongside with the prop2type config file which was generated before by adding `--prop2type <prop2type_file>`
 
- - ete format is a novel format developed to solve the situation we encounter in the previous step, annotated tree can be **recover easily with all the annotated data without changing the data type**. Besides, the ete format optimized the tree file size after mapped with its associated data. Hence it's very handy for programers in their own script. At this moment we can only view the ete format in treeprofiler, but we will make the ete format more universal to other phylogenetic software. **Hence using ete format in `plot` subcommand is highly reccomended**
+ - ete format is a novel format developed to solve the situation we encounter in the previous step, annotated tree can be **recover easily with all the annotated data without changing the data type**. Besides, the ete format optimized the tree file size after mapped with its associated data. Hence it's very handy for programers in their own script. At this moment we can only view the ete format in treeprofiler, but we will make the ete format more universal to other phylogenetic software. **Hence using .ete format in `plot` subcommand is highly reccomended**
 
 
 ## `plot`, Plot annotated tree with layouts
@@ -1494,236 +1657,551 @@ TreeProfiler provides a several of layout options for visualize features in meta
 ### Interactive visualization interface
 TreeProfiler uses the new visualization framework implemented in [ETE 4.0](https://github.com/etetoolkit/ete/tree/ete4), which allows for the interactive exploration of huge phylogenies based on a context-based adaptive zooming strategy.
 
-![treeprofiler interface](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/control_panel_page-0001.jpg?raw=true)
+we use example from `examples/basic_example1` , which contain all kind of datatype
+
+```
+head -3 basic_example1_metadata1.tsv basic_example1_metadata2.tsv
+==> basic_example1_metadata1.tsv <==
+#name       sample1 sample2 sample3 sample4 sample5 random_type     bool_type       bool_type2
+Phy003I7ZJ_CHICK    0.05    0.12    0.86    0.01    0.69    medium  1       TRUE
+Phy0054BO3_MELGA    0.64    0.67    0.51    0.29    0.14    medium  1       TRUE
+
+==> basic_example1_metadata2.tsv <==
+#name       abs_data        list_data       abs_data2
+Phy003I7ZJ_CHICK    97      w,t,t   50
+Phy0054BO3_MELGA    16      r,q,s   245
+
+# annotation
+treeprofiler annotate \
+--tree basic_example1.nw \
+--metadata basic_example1_metadata1.tsv basic_example1_metadata2.tsv \
+-o ./
+
+treeprofiler plot \
+--tree basic_example1_annotated.ete \
+--input-type ete \
+--rectangle-layout random_type \
+--binary-layout bool_type \
+--heatmap-layout sample1 sample2 sample3 \
+--barplot-layout sample4 sample5 \
+--profiling-layout list_data
+```
+
+![treeprofiler interface](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/control_panel-0002.png?raw=true)
 
 Overview of the TreeProfiler visualization interface. (A) The control panel allows users to customize visualization layout and features, and to perform text-based searches. (B) An annotated example tree, from `examples/basic_example1/` after `annotate`, is launched with a command `plot`. Support values (red) and branch distance (grey) are displayed on top of branches. The properties of one of the nodes are shown on the top. The minimap (bottom right) facilitates navigation. (C) The node editor panel provides access to node-specific actions, such as creating subtrees, collapsing, pruning, rooting and more. (D) Visualized properties by order are, categorical data `random_type` in `rectangle-layout`, numerical data `sample1`, `sample2`, `sample3` in `heatmap-layout` and `sample4`, `sample5` in `barplot-layout`, categorical data `random-type` in `profiling-layout` shown as presence-absence matrix. Layouts are shown with the order as input argument order from the command line. Names of properties are shown as titles on the top of each layout. (E) Legends each layout is shown on the top right corner with the same order as the layouts.
   
 
 ### Basic options of visualizing layouts
 Selected properties of tree will be visualized at the aligned panel alongside with the tree, here is some basic parameters for layouts.
-- `--column-width` column width of each property in layout. [default: 20]. 
-- `--barplot-width` width of total scale of barplot layout.[default: 200]
-- `--padding-x` customize horizontal column padding distance of each
-layout.[default: 1]
-- `--padding-y` customize vertical padding distance of each layout.[default: 0]
+| Argument            | Description                                                                                   |
+| ------------------- | --------------------------------------------------------------------------------------------- |
+| `--column-width`     | Column width of each property in the layout as shown in the aligned panel. `[default: 20]`.   |
+| `--padding-x`        | Customize the horizontal column padding distance of each layout in the aligned panel. `[default: 1]`. |
+| `--padding-y`        | Customize the vertical padding distance of each layout in the aligned panel. `[default: 0]`.  |
 
+```
+# change column width from default 20 px to 50px
+# padding x from default 1 to 5
+treeprofiler plot \
+  --tree basic_example1_annotated.ete \
+  --input-type ete \
+  --rectangle-layout random_type \
+  --binary-layout bool_type \
+  --heatmap-layout sample1 sample2 sample3 \
+  --profiling-layout list_data
+  --column-width 50 \
+  --padding-x 5
+```
+
+![treeprofiler interface](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/control_panel-0003.png?raw=true)
 
 ### Layouts for categorical data
 Users can add the following flag to activate layouts for categorical data
+| Argument                                             | Description                                                                  | Leaf node                                     | Internal node                              |
+| ---------------------------------------------------- | ---------------------------------------------------------------------------- | -------------------------------------------- | ------------------------------------------ |
+| `--label-layout LABEL_LAYOUT [LABEL_LAYOUT ...]`      | `<prop1> <prop2>` names of properties where values will be displayed on the aligned panel. | TextFace                                     | Stacked Horizontal RecFace (only collapsed) |
+| `--rectangle-layout RECTANGLE_LAYOUT [RECTANGLE_LAYOUT ...]` | `<prop1> <prop2>` names of properties where values will be labeled as rectangular color blocks on the aligned panel. | RecFace                                      | Stacked Horizontal RecFace (only collapsed) |
+| `--colorbranch-layout COLORBRANCH_LAYOUT [COLORBRANCH_LAYOUT ...]` | `<prop1> <prop2>` names of properties where branches will be colored based on different values. | Branch with color                            | Stacked Horizontal RecFace (only collapsed) |
+| `--bubble-layout BUBBLE_LAYOUT [BUBBLE_LAYOUT ...]` | `<prop1> <prop2>` names of properties where nodes will be colored based on different bubble. | Circles with color                            | None |
+| `--background-layout BACKGROUND_LAYOUT [BACKGROUND_LAYOUT ...]` | `<prop1> <prop2>` names of properties where values will be labeled as rectangular color blocks on the aligned panel. | Background with color                        | Stacked Horizontal RecFace (only collapsed) |
+| `--piechart-layout PIECHART_LAYOUT [PIECHART_LAYOUT ...]` | `<prop1> <prop2>` names of properties whose internal nodes need to be plotted as piechart-layout. | None                                         | PiechartFace                               |
+| `--profiling-layout PROFILING_LAYOUT [PROFILING_LAYOUT ...]` | `<prop1> <prop2>` names of properties which need to be converted to a presence-absence profiling matrix of each value. | presence/absence matrix; Array from ete4     | gradient of presence/total heatmap (only collapsed) |
+| `--categorical-matrix-layout CATEGORICAL_MATRIX_LAYOUT [CATEGORICAL_MATRIX_LAYOUT ...]` | `<prop1> <prop2>` names which need to be plotted as categorical_matrix_layout for categorical values. | array from ete4                              | None                                       |
+
+
+#### Label Layout
+`--label-layout` will display the values of the given properties on the aligned panel. It will be shown as `TextFace` on leaf nodes and `Stacked Horizontal RecFace` on internal nodes.
+
+```bash
+treeprofiler plot \
+--tree basic_example1_annotated.ete \
+--input-type ete \
+--label-layout random_type
 ```
---colorbranch-layout COLORBRANCH_LAYOUT
-                        <prop1,prop2> names of properties where branches will be colored based on
-                        different values.
---label-layout LABEL_LAYOUT
-                      <prop1,prop2> names of properties where values will be displayed on the
-                      aligned panel.
---rectangle-layout rectangle_layout
-                      <prop1,prop2> names of properties where values will be label as rectangular
-                      color block on the aligned panel.
---profiling-layout PROFILING_LAYOUT
-                        <prop1,prop2> names of properties which need to be convert to presence-
-                        absence profiling matrix of each value.
---categorical-matrix-layout CATEGORICAL_MATRIX_LAYOUT
-                        <col1,col2> names, column index which need to be plot as categorical_matrix_layout for categorical columns.
-```
 
-example
-```
-
-## target column "random_type" in examples/basic_example1/basic_example1_metadata1.tsv
-# List random_type feature as text in aligned panel using label_layout
-treeprofiler plot --tree examples/basic_example1/basic_example1_annotated.ete --label-layout random_type 
-
-# Label random_type feature on branch with different colors in aligned panel  using --colorbranch-layout
-treeprofiler plot --tree examples/basic_example1/basic_example1_annotated.ete  --colorbranch-layout random_type 
-
-# Label random_type feature with retangular block in aligned panel using --rectangle-layout
-treeprofiler plot --tree examples/basic_example1/basic_example1_annotated.ete  --rectangle-layout random_type 
-
-# Convert random_type feature into presence-absence profiling matrix using --profiling-layout
-treeprofiler plot --tree examples/basic_example1/basic_example1_annotated.ete --profiling-layout random_type
-
-# Label all feature with retangular block in aligned panel using --categorical-matrix-layout
-treeprofiler plot --tree examples/basic_example2/MCC_FluA_H3_annotated.ete --categorical-matrix-layout PB2 PB1 PA HA NP NA M NS
-```
 ![label_layout example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_label_layout.jpeg?raw=true)
-`label-layout` displays the corresponding value of selected property
+
+`--label-layout` displays the corresponding value of selected property
 of each leaf and categorized with colors. 
 
-![colorbranch_layout example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_colorbranch_layout.jpeg?raw=true)
+#### Rectangle Layout
+`--rectangle-layout` will assign a color to each variable under the property, displaying as colored rectangle in aligned panel, when internal branches collapsed,  aligned panel shows the horizontal stacked bar to demostrate the composition of each variable.
+
+```
+treeprofiler plot \
+--tree basic_example1_annotated.ete \
+--input-type ete \
+--rectangle-layout random_type
+```
+![rectangle_layout example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_rectangular_layout.jpeg?raw=true)
+
+`--rectangle-layout` categorizes values of selected property by displaying rectangular color block alongside the corresponing leaf node.
+
+#### ColorBranch Layout
+`--colorbranch-layout`  will assign a color to each variable under the property, displaying as colored branch of corresponding node.
+
+Noted that in this case from leaf to root, if node contains the given property, it will still have the colored branch.
+
+```
+# every node share the property "name"
+treeprofiler plot \
+-t basic_example1_annotated.ete \
+--colorbranch-layout name
+```
+
+![colorbranch_layout example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_colorbranch_layout_name.png?raw=true)
+
+If internal node doesn’t have the given property, once it collapsed, aligned panel shows the horizontal stacked bar to demostrate the composition of each variable.
+```
+# show normal counter
+treeprofiler plot \
+-t basic_example1_annotated.ete \
+--colorbranch-layout random_type
+```
+![colorbranch_layout example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_colorbranch_layout_random.png?raw=true)
 `colorbranch-layout` categorize values of selected property by coloring the leaf nodes.
 
-![rectangle_layout example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_rectangular_layout.jpeg?raw=true)
-`rectangle-layout` categorizes values of selected property by displaying rectangular color block alongside the corresponing leaf node.
+#### Bubble Layout
+`--bubble-layout` categorizes values of selected property by displaying color bubble on the corresponing leaf node.
 
-![profiling_layout example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_profiling_layout.png?raw=true)
-`profiling-layout` convert categorical data of the selected property to presence-absence matrix.
+```
+# show normal counter
+treeprofiler plot \
+-t basic_example1_annotated.ete \
+--bubble-layout random_type
+```
+![bubble_layout example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_bubble_layout_randomtype.png?raw=true)
+
+#### Background Layout
+`--background-layout` works just like `--colorbranch-layout`, the only difference is `--background-layout` visualize the background of the corresponding node instead of the branch color. It is useful and more visual when the tree is large.
+```
+treeprofiler plot \
+--tree basic_example1_annotated.ete \
+--input-type ete \
+--background-layout random_type
+```
+![background_layout example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_background_layout.png?raw=true)
+
+#### Piechart Layout
+`--piechart-layout` is unique layout designed for visualize internal nodes which contain counter of the given property from children nodes.
+
+```
+treeprofiler plot \
+--tree basic_example1_annotated.ete \
+--input-type ete \
+--piechart-layout random_type
+```
+
+![piechart_layout example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_piechart_layout.png?raw=true)
+
+#### Profiling Layout
+`--profiling-layout` will convert categorical trait regardless `str` or `list` into presence-absence matrix. Importantly, once it collapsed, aligned matrix will show the gradient of presence/total of corresponding trait. This layout using draw_array algorithm from ete4 therefore it is s suitable for large scale.
+
+single value example:
+```
+# check metadata
+awk '{print $1,$7}' basic_example1_metadata1.tsv|head
+#name random_type
+Phy003I7ZJ_CHICK medium
+Phy0054BO3_MELGA medium
+Phy00508FR_NIPNI low
+Phy004O1E0_APTFO medium
+Phy004PA1B_ANAPL medium
+
+
+treeprofiler plot \
+--tree basic_example1_annotated.ete \
+--input-type ete \
+--profiling-layout random_type
+```
+![profiling_layout example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_profiling_layout_single.png?raw=true)
+
+List value example:
+```
+# check metadata
+awk '{print $1,$3}' basic_example1_metadata2.tsv|head
+#name list_data
+Phy003I7ZJ_CHICK w,t,t
+Phy0054BO3_MELGA r,q,s
+Phy00508FR_NIPNI z,f,p
+Phy004O1E0_APTFO z,t,b
+Phy004PA1B_ANAPL z,r,p
+Phy004TLNA_APAVI u,e,i
+
+# convert each letter into presence/absence matrix
+treeprofiler plot \
+-t basic_example1_annotated.ete \
+--profiling-layout list_data
+```
+![profiling_layout example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_profiling_layout_list.png?raw=true)
+
+#### Categorical Matrix Layout¶
+`--categorical-matrix-layout` is similar to `--rectangle-layout`, which shows color block to represent the variable. But `--rectangle-layout` take EACH given column as one individual case as one layout, --categorical-matrix-layout take ALL given columns as one case to one layout.
+
+In this example we use `MCC_FluA_H3.tree`, time-scaled phylogenetic tree of H3 influenza viruses inferred by BEAST using molecular clock model and `MCC_FluA_H3_Genotype.txt`, Genotype table of the H3 influenza viruses([Yu, Guangchuang et al. (2017)](https://doi.org/10.5061/dryad.v15v0)). 8 gene segments `PB2`,`PB1`,`PA`,`HA`,`NP`,`NA`,`M`,`NS` as properties, and virus strain `trig`, `pdm` and `HuH3N2` are categorized with different colors in the matrix.
+```
+# Label all feature with retangular block in aligned panel using --categorical-matrix-layout
+cd examples/basic_example2/
+treeprofiler annotate --tree MCC_FluA_H3.nw --metadata MCC_FluA_H3_Genotype.txt -o ./
+
+treeprofiler plot \
+--tree MCC_FluA_H3_annotated.ete \
+--categorical-matrix-layout PB2 PB1 PA HA NP NA M NS
+```
 
 ![categorical_matrix_layout example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/cateforical_matrix_layout.png?raw=true)
-`categorical-matrix-layout` convert multiple categorical properties into categorical matrix, each value will be represent in different color. In this example we use `MCC_FluA_H3.tree`, time-scaled phylogenetic tree of H3 influenza viruses inferred by BEAST using molecular clock model and `MCC_FluA_H3_Genotype.txt`, Genotype table of the H3 influenza viruses([Yu, Guangchuang et al. (2017)](https://doi.org/10.5061/dryad.v15v0)). 8 gene segments `PB2`,`PB1`,`PA`,`HA`,`NP`,`NA`,`M`,`NS` as properties, and virus strain `trig`, `pdm` and `HuH3N2` are categorized with different colors in the matrix.
 
 ### Layouts for boolean data
 Users can add the following flag to activate layouts for Boolean data
-```
----binary-layout BINARYLAYOUT
-                        <col1,col2> names, column index or index range of columns which need to be plot as binary_layout, label shown only positive value
---revbinary-layout REVBINARYLAYOUT
-                        <col1,col2> names, column index or index range of columns which need to be plot as revbinary_layout, label shown only negative value
-```                      
 
+| Argument                                               | Description                                                                                                                                                        | Leaf node                        | Internal node                         |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------- | ------------------------------------- |
+| `--binary-layout BINARY_LAYOUT [BINARY_LAYOUT ...]`     | `<prop1> <prop2>` names of properties that need to be plotted as binary-layout, highlighting the positives. Each column has different colors. Internal nodes represent ratio of true/total gradient. | positive/negative RectFace        | Gradient RectFace                    |
+| `--binary-aggregate-layout BINARY_AGGREGATE_LAYOUT [BINARY_AGGREGATE_LAYOUT ...]` | `<prop1> <prop2>` names of properties that need to be plotted as binary-aggregate-layout, highlighting the positives. Each column has different colors. Internal nodes present the accumulated counts of true and are represented by color. | positive/negative RectFace        | Accumulated RectFace                 |
+| `--binary-unicolor-layout BINARY_UNICOLOR_LAYOUT [BINARY_UNICOLOR_LAYOUT ...]`   | `<prop1> <prop2>` names of properties that need to be plotted as binary-layout, highlighting the positives. Each column has the same colors. Internal nodes represent ratio of true/total gradient. | positive/negative RectFace        | Gradient RectFace                    |
+| `--binary-unicolor-aggregate-layout BINARY_UNICOLOR_AGGREGATE_LAYOUT [BINARY_UNICOLOR_AGGREGATE_LAYOUT ...]` | `<prop1> <prop2>` names of properties that need to be plotted as binary-aggregate-layout, highlighting the positives. Each column has the same colors. Internal nodes present the accumulated counts of true and are represented by color. | positive/negative RectFace        | Accumulated RectFace                 |
+| `--binary-matrix-layout BINARY_MATRIX_LAYOUT [BINARY_MATRIX_LAYOUT ...]`         | `<prop1> <prop2>` names of properties that need to be plotted as binary-matrix, highlighting the positives. Each column has the same colors. Internal nodes represent ratio of true/total gradient. Suitable for large scale (>100 columns). | Array from ete4                   | Gradient RectFace                    |
+
+#### Binary Layout
+`--binary-layout` highlights the positives. Each column has different colors. Internal node represent ratio of true/total gradient.
+
+Examples:
 ```
-## target column "bool_type", "bool_type2" in examples/basic_example1/basic_example1_metadata1.tsv
-# List postive bool_type feature in aligned panel using binary_layout
 treeprofiler plot \
---tree examples/basic_example1/basic_example1_annotated.ete \
----binary-layout bool_type
+--tree basic_example1_annotated.ete \
+--input-type ete \
+--binary-layout bool_type bool_type2
+```
+![binary_layout example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_binary_layout.png?raw=true)
 
-# List negative bool_type feature in aligned panel using binary_layout
+#### Binary Aggregate Layout
+`--binary-aggregate-layout` highlights the positives. Each column has different colors. Internal node present the **accumulated counts of true** and represent on color.
+
+Examples:
+```
 treeprofiler plot \
---tree examples/basic_example1/basic_example1_annotated.ete \
---revbinary-layout bool_type2
-
+--tree basic_example1_annotated.ete \
+--input-type ete \
+--binary-aggregate-layout bool_type bool_type2
 ```
-![binary example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_binary_layout.jpeg?raw=true)
-`binary_layout` displays postive value as colored block and negative value as grey block
 
-![revbinary example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_revbinary_layout.jpeg?raw=true)
-`binary_layout` displays negative value as colored block and postive value as grey block
+![binary_layout example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_binary_layout2.png?raw=true)
 
-*Boolean data can be also visualized by categorical layouts, such as 
+#### Binary Unicolor Layout
+`--binary-unicolor-layout` Each column has same colors. Internal node represent ratio of true/total gradient.
+
+Examples:
 ```
-# multiple columns seperated by ','
 treeprofiler plot \
---tree examples/basic_example1/basic_example1_annotated.ete \
---rectangle-layout bool_type
+--tree basic_example1_annotated.ete \
+--input-type ete \
+--binary-unicolor-layout bool_type bool_type2
 ```
+![binary_layout example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_binary_layout3.png?raw=true)
+
+#### Binary Unicolor Aggregate Layout
+`--binary-unicolor-aggregate-layout` Each column has same colors. Internal node present the accumulated counts of true and represent on color.
+```
+treeprofiler plot \
+--tree basic_example1_annotated.ete \
+--input-type ete \
+--binary-unicolor-aggregate-layout bool_type bool_type2
+```
+![binary_layout example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_binary_layout4.png?raw=true)
+
+#### Binary Matrix Layout
+`--binary-matrix-layout` is similar to `--binary-layout` but using draw_array from ete4 therefore it ss suitable for large scale. But the limit is only work on rectangular tree
+
+```
+treeprofiler plot \
+--tree basic_example1_annotated.ete \
+--input-type ete \
+--binary-matrix-layout bool_type bool_type2
+```
+
+![binary_layout example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_binary_layout5.png?raw=true)
 
 ### Layouts for Numerical data
 Users can add the following flag to activate layouts for Numerical data
+## Users can add the following arguments to use layouts for Numerical data
+
+| Argument                                              | Description                                                                                                                  | Applied on data-matrix (file)? | Applied on negative data? |
+| ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------ | ------------------------- |
+| `--colorbranch-layout COLORBRANCH_LAYOUT [COLORBRANCH_LAYOUT ...]` | `<prop1> <prop2>` names of properties where branches will be colored based on different values.                               | no                             | yes                       |
+| `--bubble-layout BUBBLE_LAYOUT [BUBBLE_LAYOUT ...]`   | (experimental) `<prop1> <prop2>` names of properties that need to be plotted as bubble-layout.                                | no                             | yes                       |
+| `--heatmap-layout HEATMAP_LAYOUT [HEATMAP_LAYOUT ...]` | `<prop1> <prop2>` names of numerical properties that need to be read as heatmap-layout.                                       | no                             | yes                       |
+| `--heatmap-mean-layout HEATMAP_MEAN_LAYOUT [HEATMAP_MEAN_LAYOUT ...]` | `<prop1> <prop2>` names of numerical properties that need to be read as heatmap-layout.                                       | no                             | yes                       |
+| `--heatmap-zscore-layout HEATMAP_ZSCORE_LAYOUT [HEATMAP_ZSCORE_LAYOUT ...]` | `<prop1> <prop2>` names of numerical properties that need to be read as heatmap-layout.                                       | no                             | yes                       |
+| `--barplot-layout BARPLOT_LAYOUT [BARPLOT_LAYOUT ...]` | `<prop1> <prop2>` names of numerical properties that need to be read as barplot_layouts.                                      | no                             | no                        |
+| `--barplot-width`                                     | Setting barplot length `[default: 200]`.                                                                                      |                                |                           |
+| `--barplot-scale <prop1>`                             | Using certain prop as the barplot scale for all of the barplot. `[default: None]`.                                            |                                |                           |
+| `--numerical-matrix-layout NUMERICAL_MATRIX_LAYOUT [NUMERICAL_MATRIX_LAYOUT ...]` | Numerical matrix that takes into account ALL values into gradient from white to red. `<prop1> <prop2>` names which need to be plotted as numerical_matrix_layout for numerical values. | yes                            | yes                       |
+
+#### Heatmap Layout
+A series of heatmap layout is only the matter how to normalize the value to show the gradient of color.
+
+- `--heatmap-layout` values will be normalized between 0 and 1 (minimum, maximum).
+
+- `--heatmap-mean-layout` values will be normalized between -1 and 1 by using the formula (val-mean)/(max-min)
+
+- `--heatmap-zscore-layout` values will be Z-score normalized by using the formula (val-mean)/std.
+
+`--heatmap-layout` Examples:
 ```
---heatmap-layout HEATMAP_LAYOUT
-                        <prop1,prop2> names of numerical properties which need to be read as heatmap_layout.
---barplot-layout BARPLOT_LAYOUT
-                        <prop1,prop2> names of numericalproperties which need to be read as barplot_layouts.
---numerical-matrix-layout NUMERICAL_MATRIX_LAYOUT
-                        <prop1,prop2> names which need to be plot as numerical_matrix_layout for numerical values.
-```
-```
-## target column 'sample[1-5]' feature in examples/basic_example1/basic_example1_metadata1.tsv
-# visualize sample1 feature in Barplot
 treeprofiler plot \
---tree examples/basic_example1/basic_example1_annotated.ete \
---barplot-layout sample1,sample2,sample3,sample4,sample5
-
-# visualize sample1-sample5 in Heatmap
-treeprofiler plot \
---tree examples/basic_example1/basic_example1_annotated.ete \
---heatmap-layout sample1,sample2,sample3,sample4,sample5
-
-# visualize col1-col7 in diauxic_annotated.nw with numerical profiling
-
-treeprofiler plot \
---tree examples/basic_example2/diauxic_annotated.ete \
---numerical-matrix-layout col1,col2,col3,col4,col5,col6,col7
+-t basic_example1_annotated.ete \
+--heatmap-layout sample1 sample2 sample3 sample4 sample5
 ```
-![barplot example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_barplot_layout.jpeg?raw=true)
-`barplot-layout` display numerical data to barplot with scale, users can change the length of scale by using argument `--barplot-width [default: 200]`
-![heatmap example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_heatmap_layout.png?raw=true)
-`heatmap-layout` display numerical data to heatmap, which will automatically scale the minimum and maximum value from white to red.
+![heatmap example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_heatmap_layout1.png?raw=true)
 
-![numerical profiling example](https://raw.githubusercontent.com/dengzq1234/treeprofiler_gallery/main/plot_numerical_profiling_layout.jpeg)
-
-`numerical-profiling-layout` display multiple numerical data column to numerical data trix, which will automatically scale the minimum and maximum value from blue to red. Comparing to `heatmap-layout`, `numerical-profiling-layout` can afford more data columns with faster memory.  
-
-
-### Layouts for list data
-here we use example in `examples/basic_example1/basic_example1_metadata2.tsv`
+`--heatmap-mean-layout` Examples:
 ```
-# column `list_data` contain multiple elements value which can be process as list data in treeprofiler
-head examples/basic_example1/basic_example1_metadata2.tsv
-#name	abs_data	list_data
-Phy003I7ZJ_CHICK	97	w,t,t
-Phy0054BO3_MELGA	16	r,q,s
-Phy00508FR_NIPNI	87	z,f,p
-Phy004O1E0_APTFO	6	z,t,b
-Phy004PA1B_ANAPL	72	z,r,p
+treeprofiler plot \
+-t basic_example1_annotated.ete \
+--heatmap-mean-layout sample1 sample2 sample3 sample4 sample5
+```
+![heatmap example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_heatmap_layout2.png?raw=true)
 
-## annotate tree first
+`--heatmap-zscore-layout` Examples:
+```
+treeprofiler plot \
+-t basic_example1_annotated.ete \
+--heatmap-zscore-layout sample1 sample2 sample3 sample4 sample5
+```
+![heatmap example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_heatmap_layout3.png?raw=true)
+
+
+#### Barplot Layout
+- `--barplot-layout` will show the value as barplot, the length of barplot is the value of the property. will show barplot of numerical color. Noted that negative value won’t show in barplot
+
+- `--barplot-width` is the parameter to set the length of barplot, default is `200px`.
+
+- `--barplot-scale` is the parameter to set the scale of barplot, if not given, the scale will be the maximum value of the property.
+
+- `--barplot-colorby` set the color of barplot by the a categorical property from metadata.[default: None]
+
+```
+treeprofiler plot \
+-t basic_example1_annotated.ete \
+--barplot-layout sample1 sample2 sample3 sample4 sample5
+```
+![barplot example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_barplot_layout1.png?raw=true)
+
+Using `--barplot-width` and `--barplot-scale` can help with different setting of barplot.
+
+`--barplot-scale` can use one certain prop to set the scale of all barplot in order to facilitate the cross column comparison.
+
+```
+# two different columns with differen value in same scale, but change the width of barplot
+treeprofiler plot \
+-t basic_example1_annotated.ete \
+--barplot-width 100 \
+--barplot-layout abs_data abs_data2
+
+# two different columns using column "abs_data" as scale to cross compare with "abs_data2"
+treeprofiler plot \
+-t basic_example1_annotated.ete \
+--barplot-layout abs_data abs_data2 \
+--barplot-scale abs_data
+```
+
+![barplot example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_barplot_layout2.png?raw=true)
+
+![barplot example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_barplot_layout3.png?raw=true)
+
+Noticed barplot in general is filled with one color for each column, using `--barplot-colorby` allows users to fill barplot based on other categorical data.
+
+here we color barplot `abs_data` by the categorical data `random_type`
+```
+treeprofiler plot \
+-t basic_example1_annotated.ete \
+--barplot-layout abs_data \
+--barplot-colorby random_type
+```
+![barplot example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_barplot_layout4.png?raw=true)
+#### Numerical Matrix Layout¶
+`--numerical-matrix-layout` is similar to `--heatmap-layout`but using draw_array from ete4 therefore it is suitable for large scale, and also visualize data matrix which was stored as a file in previous annotation step.. But the limit is only work on rectangular tree.
+
+Here we example from `examples/basic_example0`:
+```
+head data.array
+Taxa_0,-2.591,1.937,-3.898,0.447,-1.349
+Taxa_1,3.366,-1.871,4.362,1.585,-2.479
+Taxa_2,0,-0.098,0,-3.326,2.746
+Taxa_3,3.671,-0.947,-4.509,-3.131,-2.194
+Taxa_4,0.676,-2.356,-4.825,0.115,0
+
+#Annotate data.array column by column
 treeprofiler annotate \
---tree examples/basic_example1/basic_example1.nw \
---input-type newick \
---metadata examples/basic_example1/basic_example1_metadata2.tsv \
--o examples/basic_example1/
-```
+-t demo1.tree \
+--metadata data.array \
+--no-headers \
+-s , \
+-o ./
 
-Column `list_data` contain multiple elements value which can be process as list data in treeprofiler. Users can visualize list information using `--multi-profiling-layout`, which will . In this case, we highly reccomend users using `ete` using `--input-type` in order to resume datatype list in annotated tree.
-
-```
-# visualize using multi_profiling_layout
+# visualize each column using numerical matrix
 treeprofiler plot \
---tree examples/basic_example1/basic_example1_annotated.ete \
---input-type ete \
---multi-profiling-layout list_data
+-t demo1_annotated.ete \
+--numerical-matrix-layout col1 col2 col3 col4 col5
+
+# Or annotate data.array as a data matrix file
+treeprofiler annotate \
+-t demo1.tree \
+--data-matrix data.array \
+-s , \
+-o ./
+
+# now data.array is a property
+treeprofiler plot \
+-t demo1_annotated.ete \
+--numerical-matrix-layout data.array
 ```
+
+![numerical profiling example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_numerical_matrix_layout1.png?raw=true)
+
+![numerical profiling example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_numerical_matrix_layout2.png?raw=true)
+
+
+### Layouts for Analytical Data
+Users can add the following arguments to use layouts for Analytical data
+
+
+| Argument                                           | Description                                                                  |
+| ------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `--acr-discrete-layout ACR_DISCRETE_LAYOUT [ACR_DISCRETE_LAYOUT ...]` | `<prop1> <prop2>` names of properties that need to be plotted as acr-discrete-layout. |
+| `--acr-continuous-layout ACR_CONTINUOUS_LAYOUT [ACR_CONTINUOUS_LAYOUT ...]` | `<prop1> <prop2>` names of properties that need to be plotted as acr-continuous-layout. |
+| `--ls-layout LS_LAYOUT [LS_LAYOUT ...]`            | `<prop1> <prop2>` names of properties that need to be plotted as ls-layout.   |
+
+We use example from `examples/analytic_example`:
+
+ACR for discrete traits:
+```
+# start ACR computing for Country trait and Lineage-Specificity analysis for is_Albania and is_Greece traits
+treeprofiler annotate \
+--tree Albanian.tree.152tax.nwk \
+--internal name \
+--metadata metadata_tab_ls.csv \
+--acr-discrete-columns Country \
+--delta-stats \
+--ls-columns is_Albania is_Greece \
+--prec-cutoff 0.7 \
+--sens-cutoff 0.7 \
+--threads 4 \
+-o ./
+```
+
+#### Ancestral Character Reconstruction and Phylogenetic Signal Layout
+`--acr-discrete-layout` is the layout designed for visualizing annotated tree of acr from previous annotate step or manual annotation. Noted that if phylogenetic signal test `--delta-stats` was executed, delta stat metric and p_value will be showed next to the root node.
+
+The infered character of each internal node will be shown as colorbranch, including the uncertain character
+
+We use example from `examples/analytic_example`:
+```
+# Visualize ACR annotation
+treeprofiler plot \
+-t Albanian.tree.152tax_annotated.ete \
+--acr-discrete-layout Country
+```
+
+![acr_discrete example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_acr_layout.png?raw=true)
+
+#### Ancestral Character Reconstruction for continuous traits
+
+Computing ACR for continuous traits:
+```
+treeprofiler annotate \
+-t Anolis.tre \
+--metadata svl.csv \
+-s , \
+--acr-continuous-columns svl \
+--prediction-method BAYESIAN \
+--model OU \
+--num-stat none \
+-o ./
+
+
+treeprofiler plot \
+-t Anolis_annotated.ete \
+--acr-continuous-layout svl
+```
+![acr_continuous example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_acr_continuous_layout.png?raw=true)
+
+leaf nodes are color based on metadata `svl` with gradient, and internal branches are colored based on estimated internal trait `svl` with gradient.
+
+#### Lineage Specificity Layout
+`--ls-layout` is used to visualized the output tree which was executed with --ls-columns in previous annotate step. Noted that Lineage Specificity Calculation computes three metric, which is:
+
+- `_f1`: f1 score
+
+- `_prec`: trait percision
+
+- `_sens`: trati sensitivity
+
+Therefore the visulization will generate three layouts for each metrix shown in colorbranch with the score, plus highlighting the clade as lineage specific clade of given trait which passed the `--prec-cutoff` and `--sens-cutoff` in previous step.
+
+```
+treeprofiler plot \
+-t Albanian.tree.152tax_annotated.ete \
+--ls-layout is_Albania is_Greece
+```
+![ls_example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_ls_layout1.png?raw=true)
+
+![ls_example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_ls_layout2.png?raw=true)
 
 
 ### Layouts for multiple sequence alignment
 In order to visualize multiple sequence alignment alongside with the tree, first we need to annotate alignment using `--alignment` in `annotate`. Then activate alignment layout by adding `--alignment-layout` 
 
+In the previous Functional annotation session we already annotated the tree with multiple sequence alignment, here we will show how to visualize the annotated tree with multiple sequence alignment in `examples/pratical_example/emapper`.
 ```
-# annotate
-treeprofiler annotate \
---tree examples/basic_example2/MCC_FluA_H3.nw \
---input-type newick \
---alignment  ./examples/basic_example2/FluA_H3_AA.fas \
---outdir examples/basic_example2/
-
-# visualize
+# Visualize the tree with multiple sequence alignment
 treeprofiler plot \
---tree examples/basic_example2/MCC_FluA_H3_annotated.ete \
+--tree nifH_annotated.ete \
 --alignment-layout
 ```
-![alignment example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_alignment_layout.jpeg?raw=true)
-`alignment-layout` displays multiple sequence alignments with a tree. Whole MSA sequences were visualized with a tree in rectangular layout. Sacle of sequence with position roadmark located at the top.
+
+![alignment example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_msa_layout.png?raw=true)
+`--alignment-layout` displays multiple sequence alignments with a tree. Whole MSA sequences were visualized with a tree in rectangular layout. Sacle of sequence with position roadmark located at the top.
 
 ### Layouts for eggnog-mapper pfam annotations
 if metadata is pfam annotations from eggnog-mapper, using `--emapper-pfam` to annotate domain information in target tree and **MUST** be with the alignment using `--alignment` to attach corresponding file.
 
+In order to visualize eggnog-mapper pfam/smart annotations alongside with the tree, first we need to annotate alignment using `--emapper-annotations <annotations>` in annotate. Then activate alignment layout by adding `--emapper-layout`.
+
 Once tree is annotated, using `--domain-layout` to visualize it.
 
-```
-treeprofiler annotate \
---tree examples/pratical_example/emapper/7955.ENSDARP00000116736.nw \
---input-type newick \
---emapper-pfam examples/pratical_example/emapper/7955.out.emapper.pfam \
---alignment examples/pratical_example/emapper/7955.ENSDARP00000116736.aln.faa \
--o examples/pratical_example/emapper/
+We use example in `examples/pratical_example/emapper`:
 
+```
+# Visualize the tree with eggnog-mapper pfam/smart annotations
 treeprofiler plot \
---tree examples/pratical_example/emapper/7955.ENSDARP00000116736_annotated.ete \
+--tree nifH_annotated.ete \
 --domain-layout
 ```
+
 ![pfam example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_domain_layout.jpeg?raw=true)
 `domain-layout` displays domain annotation with a tree. It requires sequence infomration `--alignment` in `annotate` step from MSA sequences to locate domain start and end position. 
-
-### Layouts for eggnog-mapper smart annotations
-if metadata is smart annotations from eggnog-mapper, using `--emapper-smart` to annotate domain information in target tree and must be with the alignment using `--alignment` to attach corresponding file.
-
-Once tree is annotated, using `--domain-layout` to visualize it.
-
-```
-treeprofiler annotate \
---tree examples/pratical_example/emapper/7955.ENSDARP00000116736.nw \
---input-type newick \
---emapper-smart examples/pratical_example/emapper/7955.out.emapper.smart.out \
---alignment examples/pratical_example/emapper/7955.ENSDARP00000116736.aln.faa \
--o examples/pratical_example/emapper/
-
-treeprofiler plot \
---tree examples/pratical_example/emapper/7955.ENSDARP00000116736_annotated.ete \
---domain-layout
-```
-
 
 ### Layouts for eggnog-mapper annotations
 If metadata is output from eggnog-mapper, using `--emapper-annotations` automatically parse all information as metadata. Program will parse data of all the columns from emapper output. Once tree is annotated, using `--emapper-layout` to visualize tree with all the metadata
@@ -1732,174 +2210,477 @@ If metadata is output from eggnog-mapper, using `--emapper-annotations` automati
 seed_ortholog	evalue	score	eggNOG_OGs	max_annot_lvl	COG_category	Description	Preferred_name	GOs	EC	KEGG_ko	KEGG_Pathway	KEGG_Module	KEGG_Reaction	KEGG_rclass	BRITE	KEGG_TC	CAZy	BiGG_Reaction	PFAMs
 ```
 
+We use example in `examples/pratical_example/emapper`:
+```
+# Visualize the tree with eggnog-mapper functional annotations
+treeprofiler plot \
+--tree nifH_annotated.ete \
+--emapper-layout \
+--column-width 70
+```
+General metadata from emapper annotation
+![eggnogmapper example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_emapper_layout1.png?raw=true)
+
+Functional profiling (kegg, ko, gos, etc), collapsed internal nodes shown gradient of presence/total percentage.
+
+![eggnogmapper example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_emapper_layout2.png?raw=true)
+
+![eggnogmapper example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_emapper_layout3.png?raw=true)
+
+### Layouts for Taxonomic annotation
+If target tree was annotated with `--taxon-column` in previous annotate step successfully, now activate Taxonomic layout using the following arguments to visualize taxonomic classification. All rank levels will be generated separately and users can switch each of them on/off.
+
+| Argument                     | Description                                                                                                                |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `--taxonclade-layout`         | Activate taxonclade-layout where clades will be colored based on the taxonomy of each node.                                 |
+| `--taxonrectangle-layout`     | Activate taxonrectangle-layout where the taxonomy of each node will be displayed as rectangular blocks in the aligned panel. |
+| `--taxoncollapse-layout`      | Activate taxoncollapse-layout where the taxonomy of each node will be displayed as rectangular blocks in the aligned panel, and nodes will be automatically collapsed. |
+
+Only tree which was conducted with taxonomic annotation from treeprofiler in previous annotate step can use the taxonomic visualization.
+
+#### TaxonClade Layout
+`--taxonclade-layout` will assign different color to each taxa from each rank. Each rank will be a individual layout.
+
+we use example in `examples/taxonomy_example`:
+```
+# Visualize the pre-annotated example archaea tree with taxonomic classification
+treeprofiler plot \
+--tree archaea_annotated.nw \
+--taxonclade-layout
+```
+![taxonclade example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_taxa_layout1.png?raw=true)
+
+#### TaxonRectangle Layout
+`--taxonrectangle-layout` shows taxonomic classification as rectangular block from root to leaf.
+
+we use example in `examples/taxonomy_example`:
+```
+# Visualize the pre-annotated example archaea tree with taxonomic classification
+treeprofiler plot \
+--tree archaea_annotated.nw \
+--taxonrectangle-layout
+```
+![taxonrectangle example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_taxa_layout2.png?raw=true)
+
+#### TaxonCollapse Layout
+`--taxoncollapse-layout` is similar to `--taxonrectangle-layout`, but it only show commen ancestor on one column in aligned panel which is shown as corresponding taxa from the rank. Users can switch which layout of rank to be visualized in control panel, once layout of rank is activated, tree will be collapsed based on the according rank. It is more accurate than `--taxonrectangle-layout` because it also shown the representative taxa in corresponding rank.
+
+we use example in `examples/taxonomy_example`:
+```
+# Visualize the pre-annotated example archaea tree with taxonomic classification
+treeprofiler plot \
+--tree archaea_annotated.nw \
+--taxoncollapse-layout
+```
+Collapse at phylumn level:
+![taxonrectangle example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_taxa_layout3.png?raw=true)
+
+Collapse at order level:
+![taxonrectangle example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_taxa_layout4.png?raw=true)
+
+### Customize color in layout with color config
+treeprofiler provides the option to cusomize the color on layouts:
+| Argument                                     | Description                                                                                       |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `--color-config COLOR_CONFIG`                | Path to the file to find the color for each variable. `[default: None]`.                           |
+| `-s CONFIG_SEP, --config-sep CONFIG_SEP`     | Column separator of color table. `[default: \t]`.                                                  |
+
+A basic template of `color.config` that you can find in `examples/custom_color/color.config.template`
+```
+# TreeProfiler Color Configuration
+# This file defines custom colors for properties of annotated tree nodes.
+# Columns: PROP, VALUE, COLOR, CONDITION
+# tab-limited or comman-limited
+
+# PROP: Property of the annotated tree node
+# VALUE: Value of the property to be colored
+# COLOR: Color to apply. Using hex code or word
+# CONDITION: Special case for numerical values (optional, e.g., COLOR_MIN, COLOR_MAX, COLOR_MID)
+
+PROP,VALUE,COLOR,CONDITION
+```
+
+| Description | Details                                                                              |
+| ----------- | ------------------------------------------------------------------------------------ |
+| PROP        | Property of the annotated tree node                                                  |
+| VALUE       | Value of the property to be colored                                                  |
+| COLOR       | Color to apply                                                                       |
+| CONDITION   | Special case for numerical values (optional, e.g., `COLOR_MIN`, `COLOR_MAX`, `COLOR_MID`, `BARPLOT_COLORBY`) |
+
+### Basic setting
+
+Here we will use the example from `examples/custom_color `, where the tree `basic_example1.nw` is annotated with `basic_example1_metadata1.tsv` and `basic_example1_metadata2.tsv`. Therefore the output tree is `basic_example1_annotated.ete` and `basic_example1_annotated.nw`.
+
+Check metadata
+```
+head -5 basic_example1_metadata1.tsv basic_example1_metadata2.tsv
+==> basic_example1_metadata1.tsv <==
+#name       sample1 sample2 sample3 sample4 sample5 random_type     bool_type       bool_type2
+Phy003I7ZJ_CHICK    0.05    0.12    0.86    0.01    0.69    medium  1       TRUE
+Phy0054BO3_MELGA    0.64    0.67    0.51    0.29    0.14    medium  1       TRUE
+Phy00508FR_NIPNI    0.89    0.38    0.97    0.49    0.26    low     1       FALSE
+Phy004O1E0_APTFO    0.1     0.09    0.38    0.31    0.41    medium  0       TRUE
+
+
+==> basic_example1_metadata2.tsv <==
+#name       abs_data        list_data       abs_data2
+Phy003I7ZJ_CHICK    97      w,t,t   50
+Phy0054BO3_MELGA    16      r,q,s   245
+Phy00508FR_NIPNI    87      z,f,p   122
+Phy004O1E0_APTFO    6       z,t,b   138
+```
+
+### Customize color for categorical data
+Column `random_type` from the metadata is annotated as categorical data property called `random_type` in result tree basic_example1_annotated.nw. By default, all variables in col6 are: `high`, `medium` and `low`, so let’s customize the in `color.categorical.config` file:
+```
+# TreeProfiler Color Configuration
+# This file defines custom colors for properties of annotated tree nodes.
+# Columns: PROP, VALUE, COLOR, CONDITION
+# tab-limited or comman-limited
+
+# PROP: Property of the annotated tree node
+# VALUE: Value of the property to be colored
+# COLOR: Color to apply
+# CONDITION: Special case for numerical values (optional, e.g., COLOR_MIN, COLOR_MAX, COLOR_MID)
+
+PROP,VALUE,COLOR,CONDITION
+random_type,high,red,
+random_type,medium,blue,
+random_type,low,#008000,
+```
+here we can apply this color config to all the layouts for categorical data, for example:
+```
+treeprofiler plot \
+-t basic_example1_annotated.ete \
+--rectangle-layout random_type \
+--label-layout random_type \
+--background-layout random_type \
+--colorbranch-layout random_type \
+--piechart-layout random_type \
+--color-config color.categorical.config \
+-s ,
+```
+Now all the layout will be colored based on the color config file.
+![colorconfig1 example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_color_config1.png?raw=true)
+
+**Noted that if the value is not in the color config file, the default color black will be used.**
+
+Missing `low` value in the color config file:
+```
+# TreeProfiler Color Configuration
+# This file defines custom colors for properties of annotated tree nodes.
+# Columns: PROP, VALUE, COLOR, CONDITION
+# tab-limited or comman-limited
+
+# PROP: Property of the annotated tree node
+# VALUE: Value of the property to be colored
+# COLOR: Color to apply
+# CONDITION: Special case for numerical values (optional, e.g., COLOR_MIN, COLOR_MAX, COLOR_MID)
+
+PROP,VALUE,COLOR,CONDITION
+random_type,high,red,
+random_type,medium,blue,
+```
+
+rerun the command:
+```
+treeprofiler plot \
+-t basic_example1_annotated.ete \
+--rectangle-layout random_type \
+--label-layout random_type \
+--background-layout random_type \
+--colorbranch-layout random_type \
+--piechart-layout random_type \
+--color-config color.categorical.config \
+-s ,
+```
+
+![colorconfig1 example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_color_config2.png?raw=true)
+
+#### Customize color for boolean data
+Column `bool_type` and `bool_type2` are boolean data, therefore users can only decide the color representing True value. We stored the following config in `color.boolean.config`
+
+```
+# TreeProfiler Color Configuration
+# This file defines custom colors for properties of annotated tree nodes.
+# Columns: PROP, VALUE, COLOR, CONDITION
+# tab-limited or comman-limited
+
+# PROP: Property of the annotated tree node
+# VALUE: Value of the property to be colored
+# COLOR: Color to apply
+# CONDITION: Special case for numerical values (optional, e.g., COLOR_MIN, COLOR_MAX, COLOR_MID)
+
+PROP,VALUE,COLOR,CONDITION
+bool_type,1,blue,
+bool_type2,TRUE,yellow,
+```
+
+Now we appiled them to the layouts for boolean data:
+```
+treeprofiler plot \
+-t basic_example1_annotated.ete \
+--binary-layout bool_type bool_type2 \
+--color-config color.boolean.config \
+-s ,
+```
+![colorconfig1 example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_color_config3.png?raw=true)
+
+#### Customize color for numerical data
+We applied the color config to layouts for numerical data in `color.numerical.config`.
+
+We can still customize certain color for specific value.
+
+For example, we want to make make the heatmap layout with yellow color when value is `0`:
+```
+# TreeProfiler Color Configuration
+# This file defines custom colors for properties of annotated tree nodes.
+# Columns: PROP, VALUE, COLOR, CONDITION
+
+# PROP: Property of the annotated tree node
+# VALUE: Value of the property to be colored
+# COLOR: Color to apply
+# CONDITION: Special case for numerical values (optional, e.g., COLOR_MIN, COLOR_MAX, COLOR_MID, COLOR_NAN)
+
+PROP,VALUE,COLOR,CONDITION
+sample1,0,yellow,
+sample2,0,yellow,
+sample3,0,yellow,
+sample4,0,yellow,
+sample5,0,yellow,
+```
+Then we run it on heatmap layout:
+```
+treeprofiler plot \
+--tree basic_example1_annotated.ete \
+--heatmap-layout sample1 sample2 sample3 sample4 sample5 \
+--color-config color.numerical.config \
+-s ,
+```
+![colorconfig1 example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_color_config4.png?raw=true)
+
+Similar on numerical matrix:
+```
+treeprofiler plot \
+--tree basic_example1_annotated.ete \
+--numerical-matrix-layout sample1 sample2 sample3 sample4 sample5 \
+--color-config color.numerical.config \
+-s ,
+```
+![colorconfig1 example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_color_config5.png?raw=true)
+
+### Advanced Setting
+In the Basic setting, we only set the color for specific value, but in the Advanced setting, we can set the color for the range of value.
+
+#### Setting color range for numerical data
+We can set the color range using `COLOR_MIN`, `COLOR_MAX`, `COLOR_MID` or `COLOR_NAN` under the column `CONDITION`.
+
+Here we set the color for the range of value in `color.numerical2.config`, noted that now the VALUE column is empty therefore the maximum value will be assigned to `COLOR_MAX`, the minimum value will be assigned to `COLOR_MIN`, and the middle value will be assigned to `COLOR_MID`:
+
+```
+# TreeProfiler Color Configuration
+# This file defines custom colors for properties of annotated tree nodes.
+# Columns: PROP, VALUE, COLOR, CONDITION
+
+# PROP: Property of the annotated tree node
+# VALUE: Value of the property to be colored
+# COLOR: Color to apply
+# CONDITION: Special case for numerical values (optional, e.g., COLOR_MIN, COLOR_MAX, COLOR_MID)
+
+PROP,VALUE,COLOR,CONDITION
+sample1,,red,COLOR_MAX
+sample1,,green,COLOR_MID
+sample1,,blue,COLOR_MIN
+```
+
+we run it on heatmap layout:
+```
+treeprofiler plot \
+--tree basic_example1_annotated.ete \
+--heatmap-layout sample1 sample2 sample3 sample4 sample5 \
+--color-config color.numerical2.config \
+-s ,
+```
+As you see, the color is assigned based on the range of value of property `sample1`:
+![colorconfig1 example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_color_config6.png?raw=true)
+
+#### Combining settings of value and color range for numerical data
+In the previous example, we set the color range for the values, the value range is the range of minimum and maximum value by default, but we can also cusomize the value together with the color conditions
+
+Here we set the color for the range of value in `color.numerical3.config`, noted that now the `VALUE` column is not empty as we set the range from -5 to 5, therefore the value will be assigned to the corresponding color:
+```
+# TreeProfiler Color Configuration
+# This file defines custom colors for properties of annotated tree nodes.
+# Columns: PROP, VALUE, COLOR, CONDITION
+
+# PROP: Property of the annotated tree node
+# VALUE: Value of the property to be colored
+# COLOR: Color to apply
+# CONDITION: Special case for numerical values (optional, e.g., COLOR_MIN, COLOR_MAX, COLOR_MID)
+
+PROP,VALUE,COLOR,CONDITION
+sample1,5,red,COLOR_MAX
+sample1,0,green,COLOR_MID
+sample1,-5,blue,COLOR_MIN
+```
+Then we run it on heatmap-layout:
+```
+treeprofiler plot \
+--tree basic_example1_annotated.ete \
+--heatmap-layout sample1 sample2 sample3 sample4 sample5 \
+--color-config color.numerical3.config \
+-s ,
+```
+![colorconfig1 example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_color_config7.png?raw=true)
+
+If we only want to set the range of value without customize the color, is also possible:
+
+Here we want to set up the range from -5 to 5, but we only set them as `CONDITION` without setting specific color in `COLOR` column:
+```
+# TreeProfiler Color Configuration
+# This file defines custom colors for properties of annotated tree nodes.
+# Columns: PROP, VALUE, COLOR, CONDITION
+
+# PROP: Property of the annotated tree node
+# VALUE: Value of the property to be colored
+# COLOR: Color to apply
+# CONDITION: Special case for numerical values (optional, e.g., COLOR_MIN, COLOR_MAX, COLOR_MID)
+
+PROP,VALUE,COLOR,CONDITION
+sample1,5,,COLOR_MAX
+sample1,0,,COLOR_MID
+sample1,-5,,COLOR_MIN
+```
+Rerun:
+```
+treeprofiler plot \
+--tree basic_example1_annotated.ete \
+--heatmap-layout sample1 sample2 sample3 sample4 sample5 \
+--color-config color.numerical3.config \
+-s ,
+```
+![colorconfig1 example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_color_config8.png?raw=true)
+
+#### Wildcard settings of color range for numerical matrix
+In the session of Layouts for numerical data, we describe the difference between `--heatmap-layout` and `--numerical-matrix-layout`. In short, `--heatmap-layout` treat each property individually therefore the range each column of heatmap is different, but `--numerical-matrix-layout` treat the whole matrix as a single property, therefore the range of value is the same for all columns.
+
+Therefore, when we set the color config for the numerical matrix layout, we can use the wildcard * to represent all the columns in the matrix.
+
+Here we set the color for the range of value in `color.datamatrix.config`, noted that now the PROP column is * which means all the columns in the matrix, therefore the value will be assigned to the corresponding color:
+```
+# TreeProfiler Color Configuration
+# This file defines custom colors for properties of annotated tree nodes.
+# Columns: PROP, VALUE, COLOR, CONDITION
+
+# PROP: Property of the annotated tree node
+# VALUE: Value of the property to be colored
+# COLOR: Color to apply
+# CONDITION: Special case for numerical values (optional, e.g., COLOR_MIN, COLOR_MAX, COLOR_MID)
+
+PROP,VALUE,COLOR,CONDITION
+*,5,red,COLOR_MAX
+*,0,white,COLOR_MID
+*,-5,blue,COLOR_MIN
+```
+
+now we run it on numerical-matrix-layout:
+```
+treeprofiler plot \
+--tree basic_example1_annotated.ete \
+--numerical-matrix-layout sample1 sample2 sample3 sample4 sample5 \
+--color-config color.datamatrix.config \
+-s ,
+```
+![colorconfig1 example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_color_config9.png?raw=true)
+
+It applied in also for data matrix properties:
+
+Here we annotate and plot the `data_2col.array`(a data matrix file) to demo tree `demo1.tree`:
 ```
 treeprofiler annotate \
---tree examples/pratical_example/emapper/7955.ENSDARP00000116736.nw \
---input-type newick \
---emapper-annotations examples/pratical_example/emapper/7955.out.emapper.annotations \
--o examples/pratical_example/emapper/
+-t demo1.tree \
+--data-matrix data_2col.array \
+-s , \
+-o ./
 
 treeprofiler plot \
---tree examples/pratical_example/emapper/7955.ENSDARP00000116736_annotated.ete \
---input-type ete \
---emapper-layout
+-t demo1_annotated.ete \
+--numerical-matrix-layout data_2col.array \
+--color-config color.datamatrix.config \
+-s ,
 ```
 
-[Check eggnogmapper example](#demo2-explore-eggnog-mapper-annotations-data-with-taxonomic-annotation)
+![colorconfig1 example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_color_config10.png?raw=true)
 
-### Visualizing annotated internal nodes
-If internal nodes are annotated, TreeProfiler is also able to visualize annotated features automatically when layouts are activated
-
-#### Internal nodes of categorical and boolean data
-As internal nodes of categorical and boolean data are annotated as counter, for categorical data it generates a stacked bar of counter summary at the top of each internal node. And for boolean data, it generates a heatmap where represent positive(or negative) percentage of total data of each internal node.
-
-**Categorical data**
-
-Before collapsed
-![text_uncollapsed](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_text_uncollapsed.jpeg?raw=true)
-After collapsed
-![text_collapsed](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_text_collapsed.jpeg?raw=true)
-In this example, collapsed internal node shows a stacked bar which summarize categorical counter data of children nodes. 1/6 is red, 2/6 is blue and 3/6 is green.
-
-
-**Boolean data**
-
-Before collapsed
-![bool_uncollapsed](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_bool_uncollapsed.jpeg?raw=true)
-After collapsed
-![bool_collapsed](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_bool_collapsed.jpeg?raw=true)
-In this example, collapsed internal node shows a heatmap which represent the gradient level of positive/total ratio.
-
-#### Internal nodes of numerical data
-Internal nodes of numerical data are process descriptive statistic analysis by default, hence when users collapse any branch, barplot_layout or heatmap_layout will demonstrate representative value, `avg` by default. representative value can be changed by using `--internal-plot-measure`
-
-**Numerical data**
-```
-# select max instead of avg as internal node ploting representative
-treeprofiler plot \
---tree examples/basic_example1/basic_example1_annotated.ete \
---heatmap-layout sample1,sample2,sample3,sample4,sample5 \
---internal-plot-measure max 
-```
-Before collapsed
-![heatmap_uncollapsed](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_heatmap_uncollapsed.jpeg?raw=true)
-
-After collapsed
-avg as itnernal plot measure
-![heatmap_collapsed](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_heatmap_collapsed.jpeg?raw=true)
-max as itnernal plot measure
-![heatmap_max_collapsed](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_heatmap_collapsed_max.jpeg?raw=true)
-
-### Layouts for Taxonomic data
-If target tree was annotated with `--taxon-column` in previous `annotate` step successfully, now activate Taxonomic layout using `--taxonclade-layout` or `--taxonrectangle-layout` to visualize taxonomic classification. All rank levels will be generated separately and users can switch each of them on/off.
-
-```
-## Annotate
-# GTDB
-treeprofiler annotate \
---tree examples/taxonomy_example/gtdb/gtdb_example1.nw \
---metadata examples/taxonomy_example/gtdb/gtdb_example1.tsv \
---taxon-column name \
---taxon-column name \
---taxadb GTDB \
---outdir ./examples/taxonomy_example/gtdb/
-
-# NCBI
-treeprofiler annotate \
---tree examples/taxonomy_example/ncbi/spongilla_example.nw \
---metadata examples/taxonomy_example/ncbi/spongilla_example.tsv \
---taxon-column name \
---taxon-delimiter .  \
---taxa-field 0 \
---taxadb NCBI \
---outdir ./examples/taxonomy_example/ncbi/
-
-
-## Visualize 
-treeprofiler plot \
---tree ./examples/taxonomy_example/gtdb/gtdb_example1_annotated.nw \ --taxonrectangle-layout
-
-treeprofiler plot \
---tree examples/taxonomy_example/ncbi/spongilla_example_annotated.nw \ --taxonclade-layout
-```
-
-![taxarect_collapsed](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_taxarect.jpeg?raw=true)
-`taxonrectangle-layout` shows taxonomic classification as rectangular block from root to leaf.
-
-![taxaclade_collapsed](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_taxaclade.jpeg?raw=true)
-`taxonclade-layout` color associated clade of each category of each rank. 
 
 ## Conditional query in annotated tree
 TreeProfiler allows users to perform conditional process based on different circumstances
 
-- Conditional pruning, conditional pruning works both `annotate` and `plot` subcommand
-    - `--pruned-by`, prune the annotated tree by conditions, and remove the branches or clades which don't fit the condition.
-    - `--rank-limit`, prune the taxonomic annotated tree based on rank of classification.
+| Command Option                                  | Subcommand Availability | Description                                                                                                                 |
+| ----------------------------------------------- | ----------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `--pruned-by`                                   | annotate, plot           | Prunes the annotated tree based on specific conditions, removing branches or clades that do not meet the criteria.           |
+| `--rank-limit`                                  | annotate, plot           | Enables pruning of a taxonomically annotated tree based on the rank of classification.                                       |
+| `--collapsed-by`                                | plot                     | Allows users to collapse tree branches based on custom conditions, mainly focusing on internal nodes.                       |
+| `--highlighted-by`                              | plot                     | Enables users to highlight tree nodes that meet specific conditions.                                                        |
+| `--internal-plot-measure {sum,avg,max,min,std,none}` | plot                     | Statistic measures to be shown in numerical layout for internal nodes. `[default: avg]`.                                     |
 
-- Conditional collapsing, conditional collapsing works in `plot` subcommand, allow users to collapsed tree internal nodes to clade under customized conditions
-    - `--collapsed-by`, collapse tree branches whose nodes if the conditions, mainly on internal nodes
-- Conditional highlight, conditional highlight works in `plot` subcommand, allow users to highlight tree nodes under customized conditions
-    - `--highlighted-by`, select tree nodes which fit the conditions
- 
+
 ### Query Syntax
+In this session we will use examples in `examples/automatic_query`
 #### Basic Query
-All the conditional query shared the same syntax, a standard query consists the following 
+|                | Left Value                                                                                                                                  | Operator                                                                                                        | Right Value                                                                                                                   |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Description    | This is the property of either a leaf node or an internal node within the tree. It could be any metadata feature linked to the node, such as its taxonomic classification, gene expression levels, or other biological markers. For example, `name`, `sci_name`, `support`. | This part of the query specifies the relationship between the left and right values. Operators include: `=`, `!=`, `>`, `>=`, `<`, `<=`, and `contains`. | This is the custom criterion against which the left value is compared. Depending on the nature of the left value, this could be a numerical figure, a string, or even a list of values. |
 
+##### Conditional pruning
+Conditional pruning, prune leaf node whose name contain “FALPE”:
 ```
---pruned-by|collapsed-by|highlighted-by "<left_value> <operator> <right_value>"
-```
-* left value, the property of leaf node or internal node
-* operators
-    *  `=`
-    * `!=`
-    * `>` 
-    * `>=`
-    * `<`
-    * `<=`
-    * `contains`
-* right value, custom value for the condition
-
-Example 
-```
-## annotate tree 
+## annotate tree
 treeprofiler annotate \
---tree examples/basic_example1/basic_example1.nw \
---input-type newick \
---metadata examples/basic_example1/basic_example1_metadata1.tsv \
---bool-prop bool_type bool_type2 \
+--tree basic_example1.nw \
+--metadata ./basic_example1_metadata1.tsv \
 --counter-stat relative \
--o examples/basic_example1/ 
+-o ./
 
 # Conditional pruning, prune leaf node whose name contain "FALPE"
 treeprofiler plot \
---tree examples/basic_example1/basic_example1_annotated.nw \
---input-type newick \
+--tree basic_example1_annotated.nw \
 --pruned-by "name contains FALPE"
 ```
 Left panel is tree before prune, right panel is result after prune
 ![pruned](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/prune.png?raw=true)
+
+##### Conditional highlight
 ```
-# Conditional highlight
+## annotate tree
+treeprofiler annotate \
+--tree basic_example1.nw \
+--metadata ./basic_example1_metadata1.tsv \
+--counter-stat relative \
+-o ./
+
 # select tree node whose name contains `FALPE` character
 treeprofiler plot \
---tree examples/basic_example1/basic_example1_annotated.nw \
+--tree basic_example1_annotated.nw \
 --input-type newick \
 --highlighted-by "name contains FALPE"
 ```
 ![highlighted](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/highlighted.jpeg?raw=true)
+
+The same annotated tree, but select tree node whose sample1 feature > 0.50, here we using ete format which can resume the datatype:
 ```
-# select tree node whose sample1 feature > 0.50, here we using ete format which can resume the datatype 
 treeprofiler plot \
---tree examples/basic_example1/basic_example1_annotated.ete \
---input-type ete \
+--tree basic_example1_annotated.ete \
 --highlighted-by "sample1 > 0.50" \
 --heatmap-layout sample1
+```
 
-# if use tree in newick format, we need to attach the prop2type file which can resume the datatype
+if use tree in newick format, we need to attach the prop2type file which can resume the datatype:
+```
 treeprofiler plot \
---tree examples/basic_example1/basic_example1_annotated.nw \
+--tree basic_example1_annotated.nw \
 --input-type newick \
---prop2type examples/basic_example1/basic_example1_prop2type.txt \
+--prop2type basic_example1_prop2type.txt \
 --highlighted-by "sample1 > 0.50" \
 --heatmap-layout sample1
 ```
@@ -1912,17 +2693,16 @@ Example
 ```
 # select tree internal node where sample1_avg feature < 0.50
 treeprofiler plot \
---tree examples/basic_example1/basic_example1_annotated.ete \
---input-type ete \
---heatmap-layout sample1 \
---collapsed-by "sample1_avg < 0.50" 
+--tree basic_example1_annotated.ete \
+--collapsed-by "sample1_avg < 0.50" \
+--heatmap-layout sample1
 ```
 ![collapsed_numeric](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/collapsed_numeric.png?raw=true)
 Syntax for internal node counter data
 ```
 # collapse tree internal nodes, where `high` relative counter > 0.35 in random_type_counter property
 treeprofiler plot \
---tree examples/basic_example1/basic_example1_annotated.ete \
+--tree basic_example1_annotated.ete \
 --input-type ete \
 --rectangle-layout random_type \
 --collapsed-by "random_type_counter:high > 0.35" \
@@ -1936,48 +2716,141 @@ AND condition will be under one argument, syntax seperated by `,`, such as
 ```
 # select tree  node where sample1 feature > 0.50 AND sample2 < 0.2
 treeprofiler plot \
---tree examples/basic_example1/basic_example1_annotated.ete \
+--tree basic_example1_annotated.ete \
 --input-type ete \
 --heatmap-layout sample1 sample2 sample3 sample4 sample5 \
---highlighted-by "sample1>0.50,sample2<0.2" 
+--highlighted-by "sample1>0.50,sample2<0.2"
 ```
 ![highlighted_and](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/highlighted_and.png?raw=true)
 OR condition will be used more than one arguments
 ```
 # select tree node where sample1 feature > 0.50 OR sample2 < 0.2
 treeprofiler plot \
---tree examples/basic_example1/basic_example1_annotated.ete \
+--tree basic_example1_annotated.ete \
 --input-type ete \
 --heatmap-layout sample1 sample2 sample3 sample4 sample5 \
 --highlighted-by "sample1>0.50" \
---highlighted-by "sample2<0.2" 
+--highlighted-by "sample2<0.2"
 ```
 ![highlighted_or](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/highlighted_or.png?raw=true)
-### conditional limit based on taxonomic level
+
+### conditional query with config file
+In conditinary query, it also accept to use config to customize the highlighted and collapsed visualization. Example config file in `color.config.template`. It has the same structure as color config but the CONDITION column here is for operators as we mentioned in previous session.
+```
+cat color.config.template`
+# TreeProfiler Conditional query Configuration
+# This file defines custom colors for properties of annotated tree nodes.
+# Columns: PROP, VALUE, COLOR, CONDITION
+
+# PROP: Property of the annotated tree node
+# VALUE: Value of the property to be colored
+# COLOR: Color to apply
+# CONDITION: operator
+
+PROP,VALUE,COLOR,CONDITION
+```  
+
+#### Highlight with custom config
+we use example of `basic_example1.nw` and `basic_example1_metadata1.tsv`, we hope to highlight nodes whose `random_type` is `low` AND `sample1` greater than `0.50`, and we want to highlight those nodes in red. 
+
+First we customize the config `color.config.query`:
+```
+# TreeProfiler Conditional query Configuration
+# This file defines custom colors for properties of annotated tree nodes.
+# Columns: PROP, VALUE, COLOR, CONDITION
+
+# PROP: Property of the annotated tree node
+# VALUE: Value of the property to be colored
+# COLOR: Color to apply
+# CONDITION: operator
+
+PROP,VALUE,COLOR,CONDITION
+random_type,low,red,=
+sample1,0.50,red,>
+```
+
+we attach the config using the same `--highlighted-by`, dont forget about the `-s` to indicate the seperator
+```
+treeprofiler plot \
+-t basic_example1_annotated.ete \
+--highlighted-by color.config.query \
+-s ,
+```
+![highlighted_or](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_query_config1.png?raw=true)
+
+#### Collapse with custom config
+Similar to `--highlighted-by`, in this case we try to collapse the internal nodes whose average of leaf properties `sample1` greater than `0.50`, with color of green. 
+
+The config is in `color.config.collapsed`
+```
+# TreeProfiler Conditional query Configuration
+# This file defines custom colors for properties of annotated tree nodes.
+# Columns: PROP, VALUE, COLOR, CONDITION
+
+# PROP: Property of the annotated tree node
+# VALUE: Value of the property to be colored
+# COLOR: Color to apply
+# CONDITION: operator
+
+PROP,VALUE,COLOR,CONDITION
+#random_type_counter:high,0.35,red,>
+sample1_avg,0.50,green,>
+```
+
+example run
+```
+treeprofiler plot \
+-t basic_example1_annotated.ete \
+--collapsed-by color.config.collapsed \
+-s ,
+```
+![highlighted_or](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_query_config2.png?raw=true)
+
+### Conditional limit based on taxonomic level¶
 Prune taxonomic annotated tree based on following taxonomic rank level,
 `kingdom`, `phylum`, `class`, `order`, `family`, `genus`, `species`, `subspecies` 
+
+case in GTDB in `examples/taxonomy_example/`:
 ```
 # Case in GTDB
 # before pruning
 treeprofiler plot \
---tree examples/taxonomy_example/gtdb/gtdb_example1_annotated.ete \
+--tree archaea_annotated.ete \
 --input-type ete \
---taxonclade-layout 
+--taxonclade-layout
 ```
 before rank limit
-![gtdb_before_rank](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/gtdb_taxa.png?raw=true)
+![gtdb_before_rank](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_taxaprune1.png?raw=true)
 
 ```
 # prune tree in visualization, rank limit to family level
+# after pruning
 treeprofiler plot \
---tree examples/taxonomy_example/gtdb/gtdb_example1_annotated.ete \
+--tree archaea_annotated.ete \
 --input-type ete \
---rank-limit class \
---taxonclade-layout  
+--taxonclade-layout 
 ```
 After rank_limit
-![gtdb_class](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/gtdb_taxa_rank_class.png?raw=true)
+![gtdb_class](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_taxaprune2.png?raw=true)
 As you see, class branches of target gtdb tree are all pruned and only left the internal branches which rank as class.  
+
+#### Choose the metric for internal nodes in numerical layout
+Internal nodes of numerical data are process descriptive statistic analysis by default, hence when users collapse any branch, `--barplot_layout` or `--heatmap_layout` will demonstrate representative value, avg by default. Representative value can be changed by using `--internal-plot-measure`.
+
+```
+cd examples/basic_example1/
+# select max instead of avg as internal node plotting representative
+treeprofiler plot \
+--tree basic_example1_annotated.ete \
+--heatmap-layout sample1 sample2 sample3 sample4 sample5 \
+--internal-plot-measure max
+```
+Before collapsed
+![gtdb_class](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_heatmap_uncollapsed.jpeg?raw=true)
+After collapsed avg as internal plot measure
+![gtdb_class](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_heatmap_collapsed.jpeg?raw=true)
+max as internal plot measure
+![gtdb_class](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_heatmap_collapsed_max.jpeg?raw=true)
 
 ## Demo1 Explore GTDB taxonomic tree with metadata and habitat information of progenome3
 To illustrate the easiness and flexibility of TreeProfiler, we use it to annotate and visualize the version 202 of the GTDB prokaryotic phylogeny, which represents a species tree with 60,000 representative bacterial and archaeal species in [here](https://data.gtdb.ecogenomic.org/releases/release202/). GTDB provides the tree in plain newick format and massive datatable with various associated to such species. Apart from the metadata provided by the GTDB, here we also include annotations of genomes and species clusters to habitats from proGenomes3([Fullam et al. 2023](https://progenomes.embl.de/)). 
@@ -2071,50 +2944,3 @@ Once zoom into smaller view in tree, collapse level reduces automatically (or ma
 
 ![progenome3 example](https://raw.githubusercontent.com/dengzq1234/treeprofiler_gallery/main/progenome_example.jpeg)
 Annotated tree and layouts can be shown as circular tree layout.
-
-## Demo2 Explore large NifH gene tree with functional and taxonomic information
-Here we analyzed the nitrogenase iron protein NifH gene family across bacteria from EggNOG6 with EggNOG-mapper, a tool for functional annotation based on precomputed orthology assignments. TreeProfiler provides options which allows users to directly map EggNOG-mapper outputs including functional annotations and pfam/smart domain predictions. Hence are then able to map these functional annotations to their respective phylogenetic gene trees and them with the evolutionary history, tracing from leaf to root level.
-
-Map emapper annotation, pfam annotation and taxonomic annotation to target tree 
-```
-treeprofiler annotate \
---tree  examples/pratical_example/emapper/nifH.tree \
---emapper-annotation examples/pratical_example/emapper/nifH.out.emapper.annotations \
---emapper-pfam examples/pratical_example/emapper/nifH.out.emapper.pfam \
---alignment examples/pratical_example/emapper/nifH.faa.aln \
---taxon-column name \
---taxadb NCBI \
---taxon-delimiter . \
---taxa-field 0 \
--o examples/pratical_example/emapper/
-```
-
-Visualize annotations of emapper, pfam domain and ncbi taxonomy
-```
-treeprofiler plot \
---tree examples/pratical_example/emapper/nifH_annotated.ete \
---input-type ete \
---emapper-layout \
---domain-layout \
---taxonclade-layout \
---column-width 70
-```
-
-
-visualization of categorical data `seed_orthologs`, `max_annot_lvl`, `COG_category`, `Description`, `Preferred_name`, and numerical data `score`
-
-![emapper example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/emapper_nifh_v1.png?raw=true)
-
-visualization of `KEGG_Pathway` profiling
-
-![emapper example2](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/emapper_nifh_v2.png?raw=true)
-
-
-visualization of `KEGG_ko` profiling
-
-![emapper example3](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/emapper_nifh_v3.png?raw=true)
-
-visualization of `domain` annotation
-
-![emapper example4](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/emapper_nifh_v4.png?raw=true)
-

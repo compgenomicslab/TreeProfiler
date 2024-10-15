@@ -126,7 +126,7 @@ def call(node, prop, datatype, operator_string, right_value):
                 return right_value in left_value 
         
 
-def to_code(string):
+def to_code(condition_strings):
     conditional_output = []
     operators = [ '<', '<=', '>', '>=', '=', '!=', 'in', 'contains'] 
     
@@ -139,7 +139,7 @@ def to_code(string):
     # code = code.replace('>', " > ")
     # code = code.replace('>=', ' >= ')
 
-    condition_strings = string.split(',')
+    #condition_strings = strings.split(',')
     for condition_string in condition_strings:
         ops = r.findall(condition_string)
         for op in ops:
@@ -308,10 +308,8 @@ def taxatree_prune(tree, rank_limit='subspecies'):
 
 def conditional_prune(tree, conditions_input, prop2type):
     conditional_output = []
-    for line in conditions_input:
-        single_one = to_code(line)
-        
-        conditional_output.append(single_one)
+    single_one = to_code(conditions_input)
+    conditional_output.append(single_one)
 
     ex = False
     while not ex:
@@ -335,8 +333,6 @@ def conditional_prune(tree, conditions_input, prop2type):
                         else:
                             prop = condition[0]
                             value = condition[2]
-                            prop = condition[0]
-                            value = condition[2]
                             datatype = prop2type.get(prop)
                             final_call = call(n, prop, datatype, op, value)
                         if final_call == False:
@@ -358,37 +354,111 @@ def conditional_prune(tree, conditions_input, prop2type):
     array = [n.props.get(prop) for n in nodes if n.props.get(prop) ] 
     return array
 
-def tree_prop_array(node, prop, leaf_only=False, numeric=False):
+# def _tree_prop_array(node, prop, leaf_only=False, numeric=False, list_type=False):
+#     array = []
+#     sep = '||'
+#     if leaf_only:
+#         for n in node.leaves():
+#             prop_value = n.props.get(prop)
+#             if prop_value is not None:
+#                 if list_type:
+#                     prop_value = prop_value.split(sep)
+#                     if numeric:
+#                         try:
+#                             prop_value = [float(p) if p else np.nan for p in prop_value]
+#                         except TypeError:
+#                             raise TypeError(f"Cannot treat value '{prop_value}' as a number. Please check data type.")
+#                     array.append(prop_value)
+#                 else:
+#                     # Check if the property value is a set
+#                     if isinstance(prop_value, set):
+#                         # Extract elements from the set
+#                         array.extend(prop_value)
+#                     else:
+#                         if numeric:
+#                             if prop_value == 'NaN':
+#                                 array.append(np.nan)
+#                             else:
+#                                 try:
+#                                     array.append(float(prop_value))
+#                                 except TypeError:
+#                                     raise TypeError(f"Cannot treat value '{prop_value}' as a number. Please check data type or use --numerical-matrix-layout")
+#                         else:
+#                             array.append(prop_value)
+#     else:
+#         for n in node.traverse():
+#             prop_value = n.props.get(prop)
+#             if prop_value is not None:
+#                 if list_type:
+#                     prop_value = prop_value.split(sep)
+#                     if numeric:
+#                         try:
+#                             prop_value = [float(p) if p else np.nan for p in prop_value]
+#                         except TypeError:
+#                             raise TypeError(f"Cannot treat value '{prop_value}' as a number. Please check data type.")
+#                     array.append(prop_value)
+#                 else:
+#                     # Check if the property value is a set
+#                     if isinstance(prop_value, set):
+#                         # Extract elements from the set
+#                         array.extend(prop_value)
+#                     else:
+#                         if numeric:
+#                             if prop_value == 'NaN':
+#                                 array.append(np.nan)
+#                             else:
+#                                 try:
+#                                     array.append(float(prop_value))
+#                                 except TypeError:
+#                                     raise TypeError(f"Cannot treat value '{prop_value}' as a number. Please check data type or use --numerical-matrix-layout")
+#                         else:
+#                             # Directly append the property value
+#                             array.append(prop_value)
+#     return array
+
+def tree_prop_array(node, prop, leaf_only=False, numeric=False, list_type=False):
     array = []
-    if leaf_only:
-        for n in node.leaves():
-            prop_value = n.props.get(prop)
-            if prop_value is not None:
-                # Check if the property value is a set
+    sep = '||'
+    
+    # Decide whether to traverse all nodes or only leaves
+    nodes = node.leaves() if leaf_only else node.traverse()
+    
+    # Iterate over the selected nodes
+    for n in nodes:
+        prop_value = n.props.get(prop)
+        if prop_value is not None:
+            
+            # Handle list-type property values
+            if list_type:
+                prop_value = prop_value.split(sep)
+                if numeric:
+                    try:
+                        # Convert elements to floats, replace empty with NaN
+                        prop_value = [float(p) if p else np.nan for p in prop_value]
+                    except ValueError:
+                        raise TypeError(f"Cannot treat value '{prop_value}' as a number. Please check data type.")
+                array.append(prop_value)
+            
+            # Handle non-list property values
+            else:
+                # Handle sets (extend array with set elements)
                 if isinstance(prop_value, set):
-                    # Extract elements from the set
                     array.extend(prop_value)
-                else:
-                    # Directly append the property value
-                    array.append(prop_value)
-    else:
-        for n in node.traverse():
-            prop_value = n.props.get(prop)
-            if prop_value is not None:
                 
-                # Check if the property value is a set
-                if isinstance(prop_value, set):
-                    # Extract elements from the set
-                    array.extend(prop_value)
-                else:
-                    if numeric:
-                        if prop_value == 'NaN':
-                            array.append(np.nan)
-                        else:
-                            array.append(prop_value)
+                # Handle numeric values
+                elif numeric:
+                    if prop_value == 'NaN':
+                        array.append(np.nan)
                     else:
-                        # Directly append the property value
-                        array.append(prop_value)
+                        try:
+                            array.append(float(prop_value))
+                        except ValueError:
+                            raise TypeError(f"Cannot treat value '{prop_value}' as a number. Please check data type or use --numerical-matrix-layout")
+                
+                # Handle non-numeric, non-list values
+                else:
+                    array.append(prop_value)
+
     return array
 
 def children_prop_array(nodes, prop):
@@ -581,6 +651,24 @@ def clear_extra_features(forest, features):
                     # Convert the set to a string representation
                     # You can customize the string conversion as needed
                     n.props[key] = ','.join(map(str, value))
+
+def clear_specific_features(tree, features, leaf_only=False, internal_only=False):
+    if leaf_only and not internal_only:
+        for n in tree.leaves():
+            for f in features:
+                if f in n.props:
+                    n.del_prop(f)
+    elif internal_only and not leaf_only:
+        for n in tree.traverse():
+            if not n.is_leaf:
+                for f in features:
+                    if f in n.props:
+                        n.del_prop(f)
+    if leaf_only and internal_only:
+        for n in tree.traverse():
+            for f in features:
+                if f in n.props:
+                    n.del_prop(f)
 
 def add_suffix(name, suffix, delimiter='_'):
     return str(name) + delimiter + str(suffix)
