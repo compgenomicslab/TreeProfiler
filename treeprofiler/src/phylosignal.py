@@ -3,7 +3,8 @@ import os, math, re
 from multiprocessing.pool import ThreadPool
 import numpy as np
 from scipy.stats import entropy
-from numba import njit, float64, int64
+import math
+#from numba import njit, float64, int64
 
 from pastml.tree import read_tree, name_tree, annotate_dates, DATE, read_forest, DATE_CI, resolve_trees, IS_POLYTOMY, \
     unresolve_trees
@@ -13,14 +14,7 @@ from pastml import col_name2cat
 from collections import defaultdict, Counter
 
 from treeprofiler.src.utils import add_suffix
-
-# lambda0  = 0.1                       # rate parameter of the proposal
-# se       = 0.5                       # standard deviation of the proposal
-# sim      = 10000                     # number of iterations
-# thin     = 10                        # Keep only each xth iterate
-# burn     = 100                       # Burned-in iterates
-
-# ent_type = 'SE'                      # Linear Shannon Entropy LSE or Shannon Entropy [SE] or Gini impurity [GI]
+from treeprofiler.src.acr_continuous import ml_acr, by_acr
 
 ''' ADDITIONAL INFORMATION
 
@@ -32,86 +26,100 @@ from treeprofiler.src.utils import add_suffix
 '''
 
 # Source Script of delta method from https://github.com/diogo-s-ribeiro/delta-statistic/blob/master/Delta-Python/delta_functs.py
-# Metropolis-Hastings step for alpha parameter
-@njit(float64(float64, float64, float64[::1], float64, float64))
-def mhalpha(a,b,x,l0,se):
-    '''a = The current value of the alpha parameter.
-    b    = The current value of the beta parameter.
-    x    = An array of data points used in the acceptance ratio computations, after uncertainty is calculated.
-    l0   = A constant value used in the acceptance ratio computations.
-    se   = The standard deviation used for the random walk in the Metropolis-Hastings algorithm.'''
-
-    a1   = np.exp(np.random.normal(np.log(a),se, 1))[0]
-    lp_a = np.exp( (len(x)*(math.lgamma(a1+b)-math.lgamma(a1)) - a1*(l0-np.sum(np.log(x)))) - (len(x)*(math.lgamma(a+b)-math.lgamma(a)) - a*(l0-np.sum(np.log(x)))) )
-    r    = min( 1, lp_a ) 
-
-    # Repeat until a valid value is obtained
-    while (np.isnan(lp_a) == True):
-        a1   = np.exp(np.random.normal(np.log(a),se, 1))[0]
-        lp_a = np.exp( (len(x)*(math.lgamma(a1+b)-math.lgamma(a1)) - a1*(l0-np.sum(np.log(x)))) - (len(x)*(math.lgamma(a+b)-math.lgamma(a)) - a*(l0-np.sum(np.log(x)))) )
-        r    = min( 1, lp_a )
+def mhalpha(a, b, x, l0, se):
+    """
+    Metropolis-Hastings step for alpha parameter (no numba).
     
-    # Accept or reject based on the acceptance ratio
-    if np.random.uniform(0,1) < r:
+    Parameters:
+    - a: The current value of the alpha parameter.
+    - b: The current value of the beta parameter.
+    - x: An array of data points used in the acceptance ratio computations.
+    - l0: A constant value used in the acceptance ratio computations.
+    - se: The standard deviation for the random walk in the Metropolis-Hastings algorithm.
+    
+    Returns:
+    - The updated alpha value.
+    """
+    a1 = np.exp(np.random.normal(np.log(a), se))
+    lp_a = np.exp(len(x) * (math.lgamma(a1 + b) - math.lgamma(a1)) - a1 * (l0 - np.sum(np.log(x))) - 
+                  (len(x) * (math.lgamma(a + b) - math.lgamma(a)) - a * (l0 - np.sum(np.log(x)))))
+    
+    r = min(1, lp_a)
+
+    while np.isnan(lp_a):
+        a1 = np.exp(np.random.normal(np.log(a), se))
+        lp_a = np.exp(len(x) * (math.lgamma(a1 + b) - math.lgamma(a1)) - a1 * (l0 - np.sum(np.log(x))) - 
+                      (len(x) * (math.lgamma(a + b) - math.lgamma(a)) - a * (l0 - np.sum(np.log(x)))))
+        r = min(1, lp_a)
+
+    # Acceptance
+    if np.random.uniform(0, 1) < r:
         return a1
     else:
         return a
 
 
 # Metropolis-Hastings step for beta parameter
-@njit(float64(float64, float64, float64[::1], float64, float64))
-def mhbeta(a,b,x,l0,se):
-    '''a = The current value of the alpha parameter.
-    b    = The current value of the beta parameter.
-    x    = An array of data points used in the acceptance ratio computations, after uncertainty is calculated.
-    l0   = A constant value used in the acceptance ratio computations.
-    se   = The standard deviation used for the random walk in the Metropolis-Hastings algorithm.'''
+
+def mhbeta(a, b, x, l0, se):
+    """
+    Metropolis-Hastings step for beta parameter (no numba).
     
-    b1   = np.exp(np.random.normal(np.log(b),se,1))[0]
-    lp_b = np.exp( (len(x)*(math.lgamma(a+b1)-math.lgamma(b1)) - b1*(l0-np.sum(np.log(1-x)))) - (len(x)*(math.lgamma(a+b)-math.lgamma(b)) - b*(l0-np.sum(np.log(1-x)))) )
-    r    = min(1, lp_b )
+    Parameters:
+    - a: The current value of the alpha parameter.
+    - b: The current value of the beta parameter.
+    - x: An array of data points used in the acceptance ratio computations.
+    - l0: A constant value used in the acceptance ratio computations.
+    - se: The standard deviation for the random walk in the Metropolis-Hastings algorithm.
     
-    # Repeat until a valid value is obtained
-    while (np.isnan(lp_b) == True):
-        b1   = np.exp(np.random.normal(np.log(b),se,1))[0]
-        lp_b = np.exp( (len(x)*(math.lgamma(a+b1)-math.lgamma(b1)) - b1*(l0-np.sum(np.log(1-x)))) - (len(x)*(math.lgamma(a+b)-math.lgamma(b)) - b*(l0-np.sum(np.log(1-x)))) )
-        r    = min(1, lp_b )
-    
-    # Accept or reject based on the acceptance ratio
-    if np.random.uniform(0,1) < r:
+    Returns:
+    - The updated beta value.
+    """
+    b1 = np.exp(np.random.normal(np.log(b), se))
+    lp_b = np.exp(len(x) * (math.lgamma(a + b1) - math.lgamma(b1)) - b1 * (l0 - np.sum(np.log(1 - x))) - 
+                  (len(x) * (math.lgamma(a + b) - math.lgamma(b)) - b * (l0 - np.sum(np.log(1 - x)))))
+
+    r = min(1, lp_b)
+
+    while np.isnan(lp_b):
+        b1 = np.exp(np.random.normal(np.log(b), se))
+        lp_b = np.exp(len(x) * (math.lgamma(a + b1) - math.lgamma(b1)) - b1 * (l0 - np.sum(np.log(1 - x))) - 
+                      (len(x) * (math.lgamma(a + b) - math.lgamma(b)) - b * (l0 - np.sum(np.log(1 - x)))))
+        r = min(1, lp_b)
+
+    # Acceptance
+    if np.random.uniform(0, 1) < r:
         return b1
     else:
         return b
 
 
 # Metropolis-Hastings algorithm using alpha and beta
-# @njit(float64[:, ::1]((float64, float64, float64[::1], float64, float64, int64, int64, int64))
 def emcmc(params):
-    '''alpha = The initial value of the alpha parameter.
-    beta     = The initial value of the beta parameter.
-    x        = An array of data points used in the acceptance ratio computations, after uncertainty is calculated.
-    l0       = A constant value used in the acceptance ratio computations.
-    se       = The standard deviation used for the random walk in the Metropolis-Hastings algorithm.
-    sim      = The number of total iterations in the Markov Chain Monte Carlo (MCMC) simulation.
-    thin     = The thinning parameter, i.e., the number of iterations to discard between saved samples.
-    burn     = The number of burn-in iterations to discard at the beginning of the simulation.'''
+    """
+    Metropolis-Hastings algorithm for alpha and beta parameters (no numba).
     
+    Parameters:
+    - params: tuple (alpha, beta, x, l0, se, sim, thin, burn)
+    
+    Returns:
+    - Gibbs samples for alpha and beta.
+    """
     alpha, beta, x, l0, se, sim, thin, burn = params
     n_size = np.linspace(burn, sim, int((sim - burn) / thin + 1))
-    usim   = np.round(n_size, 0, np.empty_like(n_size))
-    gibbs  = []
-    p      = 0
+    usim = np.round(n_size, 0).astype(int)
+    gibbs = []
+    p = 0
 
     for i in range(sim + 1):
-        alpha = mhalpha(alpha,beta,x,l0,se)
-        beta  = mhbeta(alpha,beta,x,l0,se)
+        alpha = mhalpha(alpha, beta, x, l0, se)
+        beta = mhbeta(alpha, beta, x, l0, se)
         
         if i == usim[p]:
             gibbs.append((alpha, beta))
             p += 1
             
-    gibbs = np.asarray(gibbs)      
-    return gibbs
+    return np.asarray(gibbs)
 
 # def parallel_emcmc(threads, alpha, beta, x, l0, se, sim, thin, burn):
 #     params = [(alpha, beta, x, l0, se, sim, thin, burn) for _ in range(threads)]
@@ -199,8 +207,25 @@ def run_acr_discrete(tree, columns, prediction_method="MPPA", model="F81", threa
     return prop2acr, forest[0]
 
 # Calculate the marginal probabilities for each continuous trait
-def run_acr_continuous(tree, columns):
-    return
+def run_acr_continuous(tree, transformed_dict, model="BM", prediction_method="ML", threads=1, outdir="./"):
+    acr_results = {}
+
+    # Parameters for OU model
+    alpha = 1.0
+    theta = 30.0
+    sigma = 5.0
+    sigma_prior = 10
+    sigma_drift = 5.0
+
+    for key, observed_traits in transformed_dict.items():
+        # Run ACR
+        if prediction_method == 'ML':
+            tree, acr_result = ml_acr(tree, key, observed_traits, model=model, sigma=sigma, alpha=alpha, theta=theta)
+        elif prediction_method == 'BAYESIAN':
+            tree, acr_result = by_acr(tree, key, observed_traits, model=model, sigma_prior=sigma_prior, sigma_drift=sigma_drift, alpha=alpha, theta=theta)
+        acr_results[key] = acr_result
+
+    return acr_result, tree
 
 # Calculate delta-statistic of marginal probabilities each discrete trait
 def run_delta(acr_results, tree, run_whole_tree=False, ent_type='LSE', lambda0=0.1, se=0.5, sim=10000, burn=100, thin=10, threads=1):

@@ -6,7 +6,7 @@ from ete4.smartview import TreeStyle, NodeStyle, TreeLayout, PieChartFace
 from ete4.smartview  import Face, RectFace, CircleFace, SeqMotifFace, TextFace, OutlineFace
 from ete4.smartview.renderer.draw_helpers import draw_text, draw_line, draw_array, draw_rect
 from treeprofiler.layouts.general_layouts import get_piechartface, get_stackedbarface
-
+from treeprofiler.src.utils import random_color, add_suffix
 """
 label_layout, colorbranch_layout, rectangular_layout   
 """
@@ -19,7 +19,6 @@ class AlignLinkFace(Face):
         """Line types: 0 solid, 1 dotted, 2 dashed"""
 
         Face.__init__(self, padding_x=0, padding_y=0)
-
         self.line = None
         self.width = width
         self.height = height
@@ -287,15 +286,16 @@ class LayoutColorbranch(TreeLayout):
                 pass
 
             if self.color_dict:
-                node.add_face(TextFace(node.name, color = self.color_dict.get(prop_text,""), 
-                padding_x=self.padding_x),column=0, position="branch_right")
+                if node.is_leaf:
+                    node.add_face(TextFace(node.name, color = self.color_dict.get(prop_text,""), 
+                    padding_x=self.padding_x),column=0, position="branch_right")
                 node.add_face(TextFace(node.name, color = self.color_dict.get(prop_text,""), 
                 padding_x=self.padding_x),column=self.column, position="branch_right", collapsed_only=True)
 
                 node.sm_style["hz_line_color"] = self.color_dict.get(prop_text,"")
-                node.sm_style["hz_line_width"] = 2
+                node.sm_style["hz_line_width"] = 3
                 node.sm_style["vt_line_color"] = self.color_dict.get(prop_text,"")
-                node.sm_style["vt_line_width"] = 2
+                node.sm_style["vt_line_width"] = 3
                 node.sm_style['outline_color'] = self.color_dict.get(prop_text,"")
                 node.add_face(RectFace(width=self.width, height=None, color=self.absence_color, \
                     padding_x=self.padding_x , padding_y=self.padding_y, tooltip=None),column=self.column, position="aligned")
@@ -322,7 +322,7 @@ class LayoutRect(TreeLayout):
         self.column = column
         self.color_dict = color_dict
         self.absence_color = "#EBEBEB"
-        self.internal_prop = text_prop+'_counter'
+        self.internal_prop = add_suffix(text_prop, 'counter')
         self.legend = legend
         self.width = width
         self.height = height
@@ -446,6 +446,7 @@ class LayoutBackground(TreeLayout):
     def set_node_style(self, node):
         prop_text = node.props.get(self.text_prop)
         if prop_text:
+            
             if type(prop_text) == list:
                 prop_text = ",".join(prop_text)
             else:
@@ -459,14 +460,15 @@ class LayoutBackground(TreeLayout):
             if self.color_dict:
                 color = self.color_dict.get(str(prop_text), self.absence_color)
                 align_link_face = AlignLinkFace(width=self.width*2, height=None,
-                    stroke_color=color, stroke_width=2, line_type=0, opacity=0.8)
+                    stroke_color=color, stroke_width=2, line_type=0, opacity=0.7)
                 node.sm_style["bgcolor"] = color
-                node.sm_style["fgopacity"] = 0.5
+                node.sm_style["fgopacity"] = 0.7
                 node.sm_style['outline_color'] = color
-                node.add_face(align_link_face,
-                    position='branch_right',
-                    #column=self.column,
-                    )
+                if node.is_leaf:
+                    node.add_face(align_link_face,
+                        position='branch_right',
+                        column=0,
+                        )
         elif node.is_leaf and node.props.get(self.internal_prop):
             stackedbar_face = get_stackedbarface(node, self.internal_prop, self.color_dict, width=self.width, padding_x=self.padding_x, padding_y=self.padding_y)
             node.add_face(stackedbar_face, column = self.column, position = "aligned", collapsed_only=False)
@@ -478,3 +480,64 @@ class LayoutBackground(TreeLayout):
         #     prop_face = RectFace(width=self.width, height=None, color=self.absence_color, \
         #             padding_x=self.padding_x , padding_y=self.padding_y, tooltip=None)
         #     node.add_face(prop_face, column=self.column, position="aligned", collapsed_only=True)
+
+class LayoutBubbleCategorical(TreeLayout):
+    def __init__(self, name=None, prop=None, position="branch_right", 
+            column=0, color_dict=None, 
+            max_radius=1, padding_x=2, padding_y=0, 
+            scale=True, legend=True, active=True):
+
+        name = name or f'Barplot_{size_prop}_{color_prop}'
+        super().__init__(name)
+
+        self.aligned_faces = True
+        self.prop = prop
+        self.internal_prop = add_suffix(prop, 'counter')
+        
+        self.column = column
+        self.position = position
+        self.color_dict = color_dict
+        self.absence_color = "#EBEBEB"
+        self.max_radius = float(max_radius)
+        self.fgopacity = 0.8
+
+        self.padding_x = padding_x
+        self.padding_y = padding_y
+   
+        self.legend = legend
+        self.active = active
+
+    def set_tree_style(self, tree, tree_style):
+        super().set_tree_style(tree, tree_style)
+        if self.legend:
+            if self.color_dict:
+                self.color_dict['NA'] = self.absence_color
+                tree_style.add_legend(title=self.prop,
+                                    variable='discrete',
+                                    colormap=self.color_dict
+                                    )
+            else:
+                tree_style.add_legend(title=self.prop,
+                                    variable='discrete',
+                                    colormap={'NA':self.absence_color}
+                                    )
+
+    def set_node_style(self, node):
+        prop_text = node.props.get(self.prop)
+        if prop_text is not None:
+            if type(prop_text) == list:
+                prop_text = ",".join(prop_text)
+            else:
+                pass
+            if self.color_dict:
+                bubble_color = self.color_dict.get(prop_text, self.absence_color)
+                bubble_size = self.max_radius
+                # node.sm_style["fgcolor"] = bubble_color
+                # node.sm_style["size"] = bubble_size
+                # node.sm_style["fgopacity"] = self.fgopacity
+                prop_face = CircleFace(radius=bubble_size, color=bubble_color, 
+                padding_x=self.padding_x, padding_y=self.padding_y)
+                node.add_face(prop_face, column=0, 
+                position="branch_right", collapsed_only=False)
+
+        

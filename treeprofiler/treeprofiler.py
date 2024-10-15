@@ -26,7 +26,7 @@ def populate_main_args(main_args_p):
     group.add_argument('-t', '--tree',
         type=str,
         required=True,
-        help="Input tree, .nw file, customized tree input")
+        help="Input tree file in .nw (Newick) format. Use '-' to read from standard input.")
     group.add_argument('--annotated-tree',
         default=False,
         action='store_true',
@@ -56,7 +56,7 @@ def populate_main_args(main_args_p):
         type=str,
         help="TAXONOMIC_LEVEL prune annotate tree by rank limit")
     group.add_argument('--pruned-by',
-        type=str,
+        type=tree_plot.string_or_file,
         action='append',
         help='target tree pruned by customized conditions, such as --pruned_by "name contains FALPE"')
 

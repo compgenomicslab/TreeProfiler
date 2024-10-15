@@ -1,0 +1,9 @@
+# TreeProfiler Conditional query Configuration
+# This file defines custom colors for properties of annotated tree nodes.
+# Columns: PROP, VALUE, COLOR, CONDITION
+
+# PROP: Property of the annotated tree node
+# VALUE: Value of the property to be colored
+# COLOR: Color to apply
+# CONDITION: operator
+PROP,VALUE,COLOR,CONDITION
