@@ -100,8 +100,11 @@ TreeProfiler requires
   - scipy >= 1.8.0
   - matplotlib >= 3.4
   - pymc >= 5.0.0
+  - numpy == 1.24.4
   - aesara
   - pastml (custom)
+  - webdriver_manager
+  - pyvirtualdisplay
 
 ### Quick install via pip
 ```
