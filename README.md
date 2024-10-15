@@ -207,7 +207,7 @@ python setup.py install
 Or 
 ```
 # install directly
-pip install https://github.com/dengzq1234/TreeProfiler/archive/refs/tags/v1.1.0.tar.gz
+pip install https://github.com/compgenomicslab/TreeProfiler/archive/main.zip
 ```
 
 ### Input files
