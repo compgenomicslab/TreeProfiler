@@ -95,11 +95,11 @@ TreeProfiler is command-line tool for profiling metadata table into phylogenetic
 TreeProfiler requires 
   - Python version >= 3.10
   - ETE Toolkit v4
-  - biopython
-  - selenium
-  - scipy
-  - matplotlib
-  - pymc >= 4
+  - biopython >= 1.8
+  - selenium >= 4.24
+  - scipy >= 1.8.0
+  - matplotlib >= 3.4
+  - pymc >= 5.0.0
   - aesara
   - pastml (custom)
 
@@ -182,7 +182,7 @@ To install ETE in a local directory to help with the development, you can:
 
 - Clone this repository (git clone https://github.com/etetoolkit/ete.git)
 - Install dependecies
-  - If you are using conda: `conda install -c conda-forge cython bottle brotli numpy pyqt`
+  - If you are using conda: `conda install -c conda-forge cython bottle brotli pyqt numpy<2.0`
   - Otherwise, you can install them with `pip install <dependencies>`
   - Build and install ete4 from the repository's root directory: `pip install -e .`
 
@@ -192,9 +192,9 @@ To install ETE in a local directory to help with the development, you can:
 Install dependencies
 ```
 # install BioPython, selenium, scipy via conda
-conda install -c conda-forge biopython selenium scipy matplotlib
+conda install -c conda-forge biopython selenium scipy matplotlib pymc aesara
 # or pip
-pip install biopython selenium scipy matplotlib
+pip install biopython selenium scipy matplotlib pymc aesara
 ```
 
 Install TreeProfiler
@@ -207,7 +207,7 @@ python setup.py install
 Or 
 ```
 # install directly
-pip install https://github.com/dengzq1234/TreeProfiler/archive/refs/tags/v1.1.0.tar.gz
+pip install https://github.com/compgenomicslab/TreeProfiler/archive/main.zip
 ```
 
 ### Input files
@@ -1564,7 +1564,7 @@ TreeProfiler is able receive and produce tree in standard format in order to int
 
 - Standard output, use `--quiet` and `--stdout` at the same time can mute the log and output annotated tree in newick format.
 ```
-cd
+cd basic_example0/
 
 treeprofiler annotate \
 -t demo1.tree \
@@ -1982,6 +1982,7 @@ treeprofiler plot \
 --barplot-colorby random_type
 ```
 ![barplot example](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_barplot_layout4.png?raw=true)
+
 #### Numerical Matrix Layout¶
 `--numerical-matrix-layout` is similar to `--heatmap-layout`but using draw_array from ete4 therefore it is suitable for large scale, and also visualize data matrix which was stored as a file in previous annotation step.. But the limit is only work on rectangular tree.
 

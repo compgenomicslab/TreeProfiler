@@ -16,13 +16,14 @@ Installation
 Dependencies
 ------------
 TreeProfiler requires 
-  - Python version >= 3.9
+  - Python version >= 3.10
   - ETE Toolkit v4
-  - biopython
-  - selenium
-  - scipy
-  - matplotlib
-  - numba
+  - biopython >= 1.8
+  - selenium >= 4.24
+  - scipy >= 1.8.0
+  - matplotlib >= 3.4
+  - pymc >= 5.0.0
+  - aesara
   - pastml (custom)
 
 Quick install via pip
@@ -32,8 +33,9 @@ Quick install via pip
     # Install ETE Toolkit v4
     pip install --force-reinstall https://github.com/etetoolkit/ete/archive/ete4.zip
 
+
     # Install TreeProfiler dependencies
-    pip install biopython selenium scipy matplotlib numba
+    pip install biopython selenium scipy matplotlib pymc aesara
 
     # Install custom pastml package for ete4
     pip install "git+https://github.com/dengzq1234/pastml.git@pastml2ete4" 
@@ -41,7 +43,7 @@ Quick install via pip
     # Install TreeProfiler tool via pip
     pip install TreeProfiler
 
-    # or installing main repo
+    # Or install directly from github
     pip install https://github.com/compgenomicslab/TreeProfiler/archive/main.zip
     # or development mode for latestest update
     pip install git+https://github.com/compgenomicslab/TreeProfiler@dev-repo
@@ -119,7 +121,7 @@ To install ETE in a local directory to help with the development, you can:
 - Install dependecies
   - If you are using conda: 
 
-  ``conda install -c conda-forge cython bottle brotli numpy pyqt``
+  ``conda install -c conda-forge cython bottle brotli pyqt numpy<2.0``
   
   - Otherwise, you can install them with 
   
@@ -137,7 +139,7 @@ Install dependencies
 ::
 
     # install BioPython, selenium, scipy via conda
-    conda install -c conda-forge biopython selenium scipy matplotlib
+    conda install -c conda-forge biopython selenium scipy matplotlib pymc
 
     # or pip
     pip install biopython selenium scipy matplotlib
@@ -154,7 +156,7 @@ or install inrectly from github
 ::
 
     # install directly
-    pip install https://github.com/dengzq1234/TreeProfiler/archive/refs/tags/v1.1.0.tar.gz
+    pip install https://github.com/compgenomicslab/TreeProfiler/archive/main.zip
 
 Input files
 -----------
@@ -196,61 +198,6 @@ The second subcommand ``plot`` is used to visualize tree with associated metadat
 Using TreeProfiler
 ==================
 In this Tutorial we will use TreeProfiler and demostrate basic usage with data in ``examples/``
-::
-
-    tree examples/
-    examples/
-    ├── automatic_query
-    │   ├── basic_example1_metadata1.tsv
-    │   ├── basic_example1.nw
-    │   ├── collapse_demo.sh
-    │   ├── highlight_demo.sh
-    │   └── prune_demo.sh
-    ├── basic_example1
-    │   ├── basic_example1_metadata1.tsv
-    │   ├── basic_example1_metadata2.tsv
-    │   ├── basic_example1.nw
-    │   └── example1_demo.sh
-    ├── basic_example2
-    │   ├── diauxic.array
-    │   ├── diauxic.nw
-    │   ├── example2_demo.sh
-    │   ├── FluA_H3_AA.fas
-    │   ├── MCC_FluA_H3_Genotype.txt
-    │   └── MCC_FluA_H3.nw
-    ├── pratical_example
-    │   ├── emapper
-    │   │   ├── 7955.ENSDARP00000116736.aln.faa
-    │   │   ├── 7955.ENSDARP00000116736.nw
-    │   │   ├── 7955.out.emapper.annotations
-    │   │   ├── 7955.out.emapper.pfam
-    │   │   ├── 7955.out.emapper.smart.out
-    │   │   ├── emapper_demo.sh
-    │   │   ├── nifH.faa.aln
-    │   │   ├── nifH.nw
-    │   │   ├── nifH.out.emapper.annotations
-    │   │   └── nifH.out.emapper.pfam
-    │   ├── gtdb_r202
-    │   │   ├── ar122_metadata_r202_lite.tar.gz
-    │   │   ├── bac120_metadata_r202_lite.tar.gz
-    │   │   ├── gtdbv202full_demo.sh
-    │   │   ├── gtdbv202lite_demo.sh
-    │   │   ├── gtdbv202.nw
-    │   │   ├── merge_gtdbtree.py
-    │   │   └── progenome3.tar.gz
-    │   └── progenome3
-    │       ├── progenome3.nw
-    │       ├── progenome3.tsv
-    │       └── progenome_demo.sh
-    └── taxonomy_example
-        ├── gtdb
-        │   ├── gtdb_demo.sh
-        │   ├── gtdb_example1.nw
-        │   └── gtdb_example1.tsv
-        └── ncbi
-            ├── ncbi_demo.sh
-            ├── ncbi_example.nw
-            └── ncbi_example.tsv
 
 Reading input tree
 ------------------
@@ -876,10 +823,9 @@ Using ``--column-summary-method``  can specify the summary method of each proper
 
 such as ``--column-summary-method sample1=none sample2=avg random_type=relative alignment=none``
 
-Noted that ``--data-matrix`` can be effected by ``--column-summary-method `` setting, in this case filename of the data matrix is property name, such as ``--data-matrix file.tsv --column-summary-method file.tsv=avg``
+Noted that ``--data-matrix`` can be effected by ``--column-summary-method`` setting, in this case filename of the data matrix is property name, such as ``--data-matrix file.tsv --column-summary-method file.tsv=avg``
 
-example:
-here we use three different metadata: ``categorical.tsv``, ``numerical.tsv`` and ``data matrix``
+example, here we use three different metadata: ``categorical.tsv``, ``numerical.tsv`` and ``data matrix``
 ::
 
   # cusomtize different summary methods for different column/property
@@ -1085,25 +1031,36 @@ When Taxon properties are embeded in different column or field in metadata, tree
 .. list-table:: 
    :header-rows: 1
 
-   * - metadata
+   * - metadata (`,` as column seperator)
      - taxon to be identified
      - command line setting
-   * - ``#leafname col1\n9598 wt``
+   * - ``#leafname,col1``
+       ``9598,wt``
      - 9598
-     - ``default``
-   * - ``#leafname col1\n7739.XP_002609184.1 wt``
+     - ``--taxon-column name``
+   * - ``#leafname,col1``
+       
+       ``7739.XP_002609184.1,wt``
      - 7739
-     - ``--taxon-column <default> --taxon-delimiter . --taxa-field 0``
-   * - ``#leafname ncbi_id\nleaf_A 7739``
-     - 7739
-     - ``--taxon-column ncbi_id --taxon-delimiter <default> --taxa-field <default>``
-   * - ``#leafname ncbi_id\nleaf_A 7739.XP_002609184.1``
+     - ``--taxon-column name --taxon-delimiter . --taxa-field 0``
+   * - ``#leafname,ncbi_id``
+
+       ``leaf_A,7739``
      - 7739
      - ``--taxon-column ncbi_id --taxon-delimiter . --taxa-field 0``
-   * - ``#leafname col1\nRS_GCF_001560035.1 wt``
+   * - ``#leafname,ncbi_id``
+
+       ``leaf_A,7739.XP_002609184.1``
+     - 7739
+     - ``--taxon-column ncbi_id --taxon-delimiter . --taxa-field 0``
+   * - ``#leafname,col1``
+
+       ``RS_GCF_001560035.1,wt``
      - RS_GCF_001560035.1
      - ``default``
-   * - ``#leafname gtdb_id\nleaf_A d__Archaea;p__Asgardarchaeota;c__Heimdallarchaeia;o__UBA460;f__Kariarchaeaceae;g__LC-2;s__LC-2 sp001940725``
+   * - ``#leafname,gtdb_id`` 
+       
+       ``leaf_A,d__Archaea;p__Asgardarchaeota;c__Heimdallarchaeia;o__UBA460;f__Kariarchaeaceae;g__LC-2;s__LC-2 sp001940725``
      - s__LC-2 sp001940725
      - ``--taxon-column gtdb_id --taxon-delimiter ; --taxa-field -1``
 
@@ -1407,12 +1364,21 @@ treeprofiler has integrated [pastml](https://github.com/evolbioinfo/pastml), a f
      - Description
    * - ``--acr-discrete-columns ACR_DISCRETE_COLUMNS [ACR_DISCRETE_COLUMNS ...]``
      - names of columns to perform acr analysis for discrete traits
-   * - ``--prediction-method {MPPA,MAP,JOINT,DOWNPASS,ACCTRAN,DELTRAN,COPY,ALL,ML,MP}``
-     - Prediction method for ACR discrete analysis. Options: MPPA, MAP, JOINT, DOWNPASS, ACCTRAN, DELTRAN, COPY, ALL, ML, MP. `[Default: MPPA]`
-   * - ``--model {JC, F81, EFT, HKY, JTT}``
-     - Evolutionary model for ML methods in ACR discrete analysis. Options: JC, F81, EFT, HKY, JTT. `[Default: F81]`
+   * - ``--acr-continuous-columns ACR_CONTINUOUS_COLUMNS [ACR_CONTINUOUS_COLUMNS ...]``
+     - names of columns to perform acr analysis for continuous traits
+   * - ``--prediction-method {MPPA,MAP,JOINT,DOWNPASS,ACCTRAN,DELTRAN,COPY,ALL,MP,ML,BAYESIAN}``
+     - Prediction method for ACR analysis.  
+       For **Discrete** traits: ``MPPA``, ``MAP``, ``JOINT``, ``DOWNPASS``, ``ACCTRAN``, ``DELTRAN``, ``COPY``, ``ALL``, ``ML``, ``MP``.  
+       For **Continuous** traits: ``ML``, ``BAYESIAN``.  
+       ``[Default: MPPA]``
+   * - ``--model {JC,F81,EFT,HKY,JTT,BM,OU}``
+     - Evolutionary model for ML methods in ACR analysis.  
+       For **discrete traits**: ``JC``, ``F81``, ``EFT``, ``HKY``, ``JTT``  
+       For **continuous traits**: ``BM``, ``OU``.  
+       ``[Default: F81]``
    * - ``--threads THREADS``
-     - Number of threads to use for annotation. `[Default: 4]`
+     - Number of threads to use for annotation.  
+       ``[Default: 4]``
 
 
 Example:
@@ -1664,6 +1630,77 @@ Delta statistic Examples
     'Country': 'Africa'
     }
 
+ACR for contiunous data
+^^^^^^^^^^^^^^^^^^^^^^^
+TreeProfiler supports ancestral character reconstruction for continuous traits using two main approaches: **Maximum Likelihood (ML)** and **Bayesian** inference. Both methods rely on evolutionary models for continuous data, specifically the **Brownian Motion (BM)** and **Ornstein-Uhlenbeck (OU)** models.
+
+TreeProfiler allows users to select the desired method and model using the following arguments:
+
+- ``--acr-continuous-columns <PROP>``: Specify the column names for the continuous traits.
+- ``--prediction-method <ML/BAYESIAN>``: Choose between the ML or Bayesian approach.
+- ``--model <BM/OU>``: Choose the evolutionary model for continuous trait analysis.
+
+Here is tree with example metadata which is continuous dataset ``Anolis.tre`` and ``svl.csv``:
+::
+  
+    head svl.csv
+    species,svl
+    ahli,4.039125443
+    alayoni,3.815704818
+    alfaroi,3.526654599
+    aliniger,4.036556538
+    allisoni,4.375390078
+
+    # now we run the acr for the continuous trait svl, here we turn off the descriptive statistic
+    treeprofiler annotate \
+    -t Anolis.tre \
+    --metadata svl.csv \
+    -s , \
+    --acr-continuous-columns svl \
+    --prediction-method ML \
+    --model BM \
+    --num-stat none \
+    -o ./
+
+    # now we check the 
+    python show_tree_props.py Anolis_annotated.nw
+    Target tree internal node Root contains the following properties:  
+    {
+      'name': 'Root', 
+      'svl': '4.065917563705425', 
+    }
+    Target tree leaf node ahlicontains the following propertiies:  
+    {
+      'name': 'ahli', 
+      'dist': 0.130889, 
+      'svl': '4.039125443'
+    }
+
+    # use Bayesian method with OU model
+    treeprofiler annotate \
+    -t Anolis.tre \
+    --metadata svl.csv \
+    -s , \
+    --acr-continuous-columns svl \
+    --prediction-method BAYESIAN \
+    --model OU \
+    --num-stat none \
+    -o ./
+
+    python show_tree_props.py Anolis_annotated.nw
+    Target tree internal node Root contains the following properties:  
+    {
+      'name': 'Root', 
+      'svl': '4.443782202699844'
+    }
+    Target tree leaf node ahlicontains the following propertiies:  
+    {
+      'name': 'ahli', 
+      'dist': 0.130889, 
+      'svl': '4.039125443'
+    }
+
+
 Lineage specificity analysis
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Using ``--ls-columns <prop_name>`` to start the lineage specificity analysis of boolean traits, the given trait need to be boolean value such as ``True`; ``False``; ``yes``; ``no``; ``t``; ``f``; ``1``; ``0``;  which fit the criteria in treeprofiler annotate. Calculated results will be stored in each internal nodes with suffix of ``_prec`` , ``_sens`` and ``_f1``.
@@ -1725,6 +1762,34 @@ In the following ``plot`` step, users can use either ``.nw`` or ``.ete`` by putt
  - newick file is more universal and be able to used in different other phylogenetic software although associated data of tree nodes will be considered as plain text, so if you use newick format, alongside with the prop2type config file which was generated before by adding ``--prop2type <prop2type_file>``
 
  - ete format is a novel format developed to solve the situation we encounter in the previous step, annotated tree can be **recover easily with all the annotated data without changing the data type**. Besides, the ete format optimized the tree file size after mapped with its associated data. Hence it's very handy for programers in their own script. At this moment we can only view the ete format in treeprofiler, but we will make the ete format more universal to other phylogenetic software. **Hence using ete format in `plot` subcommand is highly reccomended**
+
+Use standard input and output formats
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TreeProfiler is able to receive and produce trees in standard formats in order to integrate with command-line programs.
+
+- Standard output: Use ``--quiet`` and ``--stdout`` at the same time to mute the log and output the annotated tree in Newick format.
+
+::
+
+    cd basic_example0/
+    treeprofiler annotate \
+    -t demo1.tree \
+    --metadata categorical.tsv \
+    -s , \
+    --quiet \
+    --stdout
+
+    ((Taxa_3:0.219065[&&NHX:categorical1=C],(Taxa_4:0.188681[&&NHX:categorical1=C],Taxa_2:0.5196[&&NHX:categorical1=B])0.166914:0.90365[&&NHX:categorical1_counter=B--1||C--1:name=N3])0.138062:0.0632016[&&NHX:categorical1_counter=B--1||C--2:name=N4],(Taxa_0:0.190563[&&NHX:categorical1=A],Taxa_1:0.458423[&&NHX:categorical1=B])0.138062:0.97338[&&NHX:categorical1_counter=A--1||B--1:name=N7])[&&NHX:categorical1_counter=A--1||B--2||C--2:name=Root];
+
+- Standard input, use ``-`` as input in ``--tree`` argument to take standard input into account.
+
+::
+
+    cd basic_example0/
+
+    cat demo1.tree|treeprofiler annotate -t - --metadata categorical.tsv -s , --quiet --stdout
+
+    ((Taxa_3:0.219065[&&NHX:categorical1=C],(Taxa_4:0.188681[&&NHX:categorical1=C],Taxa_2:0.5196[&&NHX:categorical1=B])0.166914:0.90365[&&NHX:categorical1_counter=B--1||C--1:name=N3])0.138062:0.0632016[&&NHX:categorical1_counter=B--1||C--2:name=N4],(Taxa_0:0.190563[&&NHX:categorical1=A],Taxa_1:0.458423[&&NHX:categorical1=B])0.138062:0.97338[&&NHX:categorical1_counter=A--1||B--1:name=N7])[&&NHX:categorical1_counter=A--1||B--2||C--2:name=Root];
 
 ``treeprofiler-plot`` visualizing phylogenetic profiles and annotation
 ------------------------------------------------------------------------- 
@@ -1811,8 +1876,7 @@ Examples with basic parameters:
 
 Layouts for categorical data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Users can add the following flag to activate layouts for categorical data
+Users can add the following flag to activate layouts for categorical data.
 
 .. list-table:: 
    :header-rows: 1
@@ -1833,6 +1897,10 @@ Users can add the following flag to activate layouts for categorical data
      - ``<prop1> <prop2>`` names of properties where branches will be colored based on different values.
      - Branch with color
      - Stacked Horizontal RecFace (only collapsed)
+   * - ``--bubble-layout BUBBLE_LAYOUT [BUBBLE_LAYOUT ...]``
+     - ``<prop1> <prop2>`` names of properties where nodes will be colored based on different bubble.
+     - Circles with color
+     - None
    * - ``--background-layout BACKGROUND_LAYOUT [BACKGROUND_LAYOUT ...]``
      - ``<prop1> <prop2>`` names of properties where values will be labeled as rectangular color blocks on the aligned panel.
      - Background with color
@@ -1908,6 +1976,19 @@ If internal node doesn't have the given property, once it collapsed,  aligned pa
 
 .. image:: https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_colorbranch_layout_random.png?raw=true
     :alt: colorbranch_layout example
+
+Bubble Layout
+^^^^^^^^^^^^^^
+``--bubble-layout`` categorizes values of selected property by displaying color bubble on the corresponing leaf node.
+
+::
+
+    treeprofiler plot \
+    -t basic_example1_annotated.ete \
+    --bubble-layout random_type
+
+.. image:: https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_bubble_layout_randomtype.png?raw=true
+    :alt: bubble_layout example
 
 Background Layout
 ^^^^^^^^^^^^^^^^^
@@ -2251,6 +2332,9 @@ Barplot Layout
 
 ``--barplot-scale`` is the parameter to set the scale of barplot, if not given, the scale will be the maximum value of the property.
 
+``--barplot-colorby`` set the color of barplot by the a categorical property from metadata.[default: None]
+
+
 Examples:
 ::
 
@@ -2285,6 +2369,21 @@ Examples:
 
 .. image:: https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_barplot_layout3.png?raw=true
     :alt: barplot_layout3 example
+
+
+Noticed barplot in general is filled with one color for each column, using `--barplot-colorby` allows users to fill barplot based on other categorical data.
+
+here we color barplot ``abs_data`` by the categorical data ``random_type``
+
+::
+
+    treeprofiler plot \
+    -t basic_example1_annotated.ete \
+    --barplot-layout abs_data \
+    --barplot-colorby random_type
+
+.. image:: https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_barplot_layout4.png?raw=true
+    :alt: barplot_layout4 example
 
 Numerical Matrix Layout
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2341,9 +2440,11 @@ Users can add the following arguments to use layouts for Analytical data
    * - Argument
      - Description
    * - ``--acr-discrete-layout ACR_DISCRETE_LAYOUT [ACR_DISCRETE_LAYOUT ...]``
-     - <prop1> <prop2> names of properties which need to be plotted as acr-discrete-layout.
+     - ``<prop1> <prop2>`` names of properties that need to be plotted as acr-discrete-layout.
+   * - ``--acr-continuous-layout ACR_CONTINUOUS_LAYOUT [ACR_CONTINUOUS_LAYOUT ...]``
+     - ``<prop1> <prop2>`` names of properties that need to be plotted as acr-continuous-layout.
    * - ``--ls-layout LS_LAYOUT [LS_LAYOUT ...]``
-     - <prop1> <prop2> names of properties which need to be plotted as ls-layout.
+     - ``<prop1> <prop2>`` names of properties that need to be plotted as ls-layout.
 
 We use example from `examples/analytic_example`:
 ::
@@ -2401,6 +2502,30 @@ We use example from `examples/analytic_example`:
 
 .. image:: https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_ls_layout2.png?raw=true
     :alt: ls_layout example
+
+Ancestral Character Reconstruction for continuous traits
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Computing ACR for continuous traits:
+
+::
+
+    treeprofiler annotate \
+    -t Anolis.tre \
+    --metadata svl.csv \
+    -s , \
+    --acr-continuous-columns svl \
+    --prediction-method BAYESIAN \
+    --model OU \
+    --num-stat none \
+    -o ./
+
+
+    treeprofiler plot \
+    -t Anolis_annotated.ete \
+    --acr-continuous-layout svl
+
+.. image:: https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_acr_continuous_layout.png?raw=true
+    :alt: acr_continuous_layout example
 
 Layouts for Multiple Sequence Alignment
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -3121,6 +3246,90 @@ OR condition will be used more than one arguments:
 
 .. image:: https://github.com/dengzq1234/treeprofiler_gallery/blob/main/highlighted_or.png?raw=true
    :alt: highlighted_or
+
+Conditional query with config file
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+In conditinary query, it also accept to use config to customize the highlighted and collapsed visualization. Example config file in `color.config.template`. It has the same structure as color config but the CONDITION column here is for operators as we mentioned in previous session.
+
+::
+
+    cat color.config.template`
+    # TreeProfiler Conditional query Configuration
+    # This file defines custom colors for properties of annotated tree nodes.
+    # Columns: PROP, VALUE, COLOR, CONDITION
+
+    # PROP: Property of the annotated tree node
+    # VALUE: Value of the property to be colored
+    # COLOR: Color to apply
+    # CONDITION: operator
+
+    PROP,VALUE,COLOR,CONDITION
+
+Highlight with custom config
+'''''''''''''''''''''''''''''
+we use example of ``basic_example1.nw`` and ``basic_example1_metadata1.tsv``, we hope to highlight nodes whose `random_type` is `low` AND `sample1` greater than `0.50`, and we want to highlight those nodes in red. 
+
+First we customize the config ``color.config.query``:
+
+::
+
+    # TreeProfiler Conditional query Configuration
+    # This file defines custom colors for properties of annotated tree nodes.
+    # Columns: PROP, VALUE, COLOR, CONDITION
+
+    # PROP: Property of the annotated tree node
+    # VALUE: Value of the property to be colored
+    # COLOR: Color to apply
+    # CONDITION: operator
+
+    PROP,VALUE,COLOR,CONDITION
+    random_type,low,red,=
+    sample1,0.50,red,>
+
+we attach the config using the same ``--highlighted-by``, dont forget about the ``-s`` to indicate the seperator
+
+::
+
+    treeprofiler plot \
+    -t basic_example1_annotated.ete \
+    --highlighted-by color.config.query \
+    -s ,
+
+.. image:: https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_query_config1.png?raw=true
+    :alt: highlighted_query
+
+
+Collapse with custom config
+'''''''''''''''''''''''''''''
+Similar to ``--highlighted-by``, in this case we try to collapse the internal nodes whose average of leaf properties `sample1` greater than `0.50`, with color of green. 
+
+The config is in ``color.config.collapsed``
+
+::
+
+    # TreeProfiler Conditional query Configuration
+    # This file defines custom colors for properties of annotated tree nodes.
+    # Columns: PROP, VALUE, COLOR, CONDITION
+
+    # PROP: Property of the annotated tree node
+    # VALUE: Value of the property to be colored
+    # COLOR: Color to apply
+    # CONDITION: operator
+
+    PROP,VALUE,COLOR,CONDITION
+    #random_type_counter:high,0.35,red,>
+    sample1_avg,0.50,green,>
+
+example run 
+::
+
+    treeprofiler plot \
+    -t basic_example1_annotated.ete \
+    --collapsed-by color.config.collapsed \
+    -s ,
+
+.. image::https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_query_config2.png?raw=true 
+  :alt: collapse_query
 
 Conditional limit based on taxonomic level
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
