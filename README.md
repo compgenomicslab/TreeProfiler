@@ -118,12 +118,12 @@ pip install "git+https://github.com/dengzq1234/pastml.git@pastml2ete4"
 # Install TreeProfiler tool via pip
 pip install TreeProfiler
 
-# or installing main repo
+# Or install directly from github
 pip install https://github.com/compgenomicslab/TreeProfiler/archive/main.zip
 # or development mode for latestest update
 pip install git+https://github.com/compgenomicslab/TreeProfiler@dev-repo
-
 ```
+
 
 ### Quick Start with examples dataset
 TreeProfiler provide various example dataset for testing in `examples/` or https://github.com/compgenomicslab/TreeProfiler/tree/main/examples,
