@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "treeprofiler"
 description = "A command line tool to annotate and visualize metadata in phylogenetic tree."
-version = "1.2.3"
+version = "1.2.4.1"
 authors = [
   { name="Ziqi Deng", email="dengziqi1234@gmail.com" },
   { name="Jaime Huerta-Cepas", email="jhcepas@gmail.com" },
@@ -32,15 +32,15 @@ classifiers = [
 ]
 
 dependencies = [
-  "numpy>=1.22, <2.0",
+  "numpy==1.24",
   "biopython>=1.8",
   "selenium>=4.24.0",
   "scipy>=1.8.0",
   "matplotlib>=3.4.0",
   "pymc>=5.0.0",
-  "aesara",
-  "ete4@git+https://github.com/etetoolkit/ete.git@ete4#egg=ete4",
-  "pastml@git+https://github.com/dengzq1234/pastml.git@pastml2ete4#egg=pastml"
+  "pyvirtualdisplay",
+  "webdriver_manager>=4.0",
+  "aesara"
 ]
 
 [project.urls]
