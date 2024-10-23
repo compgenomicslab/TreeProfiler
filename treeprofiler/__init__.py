@@ -1,0 +1,1 @@
+from .treeprofiler import main
