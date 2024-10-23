@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Tree</title>
+
+    <!-- Tabler CSS -->
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/tabler.min.css" rel="stylesheet">
+
+    <!-- Additional Tabler Dependencies -->
+    <link href="/static/css/tabler-icons.min.css" rel="stylesheet">
+    <link href="/static/css/tabler-flags.min.css" rel="stylesheet">
+    <link href="/static/css/tabler-payments.min.css" rel="stylesheet">
+    <link href="/static/css/tabler-vendors.min.css" rel="stylesheet">
+
+    <!-- jQuery and Bootstrap JS -->
+    <script src="/static/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/jquery.min.js"></script>
+    <script src="/static/js/tabler.min.js"></script>
+</head>
+<body>
+
+<div class="container mt-5">
+    <h1>Upload a New Tree</h1>
+    <form id="uploadTreeForm" method="POST" action="/upload">
+        <div class="form-group">
+            <label for="treename">Tree Name</label>
+            <input type="text" class="form-control" id="treename" name="treename" placeholder="Enter Tree Name" required>
+        </div>
+        <div class="form-group">
+            <label for="tree">Tree Newick Format</label>
+            <textarea class="form-control" id="tree" name="tree" rows="5" placeholder="Enter tree in Newick format" required></textarea>
+        </div>
+        <div class="form-group">
+            <label for="aln">Alignment Data</label>
+            <textarea class="form-control" id="aln" name="aln" rows="5" placeholder="Enter alignment data"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Upload Tree</button>
+    </form>
+</div>
+    
+
+</body>
+</html>
