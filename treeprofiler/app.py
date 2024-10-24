@@ -1,9 +1,12 @@
 from bottle import route, run, request, redirect, template, static_file
 import threading
+from tempfile import NamedTemporaryFile
 
 from ete4 import Tree
-from treeprofiler.tree_annotate import run_tree_annotate  # or other functions you need
+from treeprofiler.tree_annotate import run_tree_annotate, parse_csv  # or other functions you need
+from treeprofiler import tree_plot
 
+from treeprofiler.src import utils
 # In-memory storage for simplicity (you can replace this with a database or file storage)
 trees = {}
 
@@ -22,17 +25,53 @@ def do_upload():
     tree_data = request.forms.get('tree')
     metadata = request.forms.get('metadata')
 
+    # here start the tree annotation process
+    # load the tree
+    tree = utils.ete4_parse(tree_data)
+    # parse the metadata
+    metadata_bytes = metadata.encode('utf-8')  # Convert string to bytes
+    with NamedTemporaryFile(suffix='.tsv') as f_annotation:
+        f_annotation.write(metadata_bytes)
+        f_annotation.flush()
+        metadata_dict, node_props, columns, prop2type = parse_csv([f_annotation.name],delimiter=',')
+
+    metadata_options = {
+        "metadata_dict": metadata_dict,
+        "node_props": node_props,
+        "columns": columns,
+        "prop2type": prop2type,
+    }
+    # run the tree_annotate function
+    annotated_tree, prop2type = run_tree_annotate(
+        tree,
+        **metadata_options,
+    )
+
+    annotated_newick = annotated_tree.write(props=None, format_root_node=True)
+    
+    # layouts information
+
+    level = 0
+    layouts = []
+    column_width = 70
+    padding_x = 1
+    padding_y = 0
+    color_config = {}
+    precomputed_props = columns
+    rectangle_layouts, level, color_dict = tree_plot.get_rectangle_layouts(tree, node_props, 
+            level, prop2type=prop2type, column_width=column_width, 
+            padding_x=padding_x, padding_y=padding_y, color_config=color_config)
+    layouts.extend(rectangle_layouts)
+
     # Store the tree data (in memory or file/db)
     trees[treename] = {
         'tree': tree_data,
-        'metadata': metadata
+        'metadata': metadata,
+        'node_props': node_props,
+        'annotated_tree': annotated_newick,
+        'prop2type': prop2type,
+        'layouts': layouts
     }
-
-    # here start the tree annotation process
-    #tree, eteformat_flag = utils.validate_tree(args.tree, args.input_type, args.internal)
-    # load the tree
-    # parse the metadata
-    # run the tree_annotate function
 
     # Redirect to the /tree/<treename> route after uploading
     return redirect(f'/tree/{treename}')
@@ -46,39 +85,45 @@ def show_tree(treename):
     else:
         return f"Tree '{treename}' not found."
 
-
-# Route to annotate the tree using treeprofiler
-@route('/annotate_tree/<treename>', method=['POST'])
-def annotate_tree(treename):
-    tree_info = trees.get(treename)
-    if not tree_info:
-        return "Tree not found"
-
-    # Extract metadata and call run_tree_annotate here with the relevant options
-    annotated_tree = run_tree_annotate(tree_info['tree'], metadata=tree_info['metadata'])
-    
-    # Save the annotated tree (e.g., Newick format, TSV, etc.)
-    # You could also store it in memory or generate download links
-    
-    return "Tree annotation complete!"
-
-@route('/explore_tree/<treename>')
+@route('/explore_tree/<treename>', method=['GET', 'POST'])
 def explore_tree(treename):
     tree_info = trees.get(treename)
     if tree_info:
-        # Convert Newick format tree string into an ETE4 Tree object
-        t = Tree(tree_info['tree'])
+        # Load previously stored layouts, props, and metadata
+        current_layouts = tree_info.get('layouts', [])
+        current_props = tree_info.get('props', list(tree_info['prop2type'].keys()))
+        t = Tree(tree_info['annotated_tree'])
+        
+        if request.method == 'POST':
+            selected_props = request.forms.getall('props') or current_props
+            selected_layout = request.forms.get('layout')
+            print(selected_props, selected_layout)
+            # Update layouts based on user selection
+            if selected_layout == 'rectangular':
+                current_layouts, _, _ = tree_plot.get_rectangle_layouts(t, selected_props, 1, tree_info['prop2type'])
 
-        # Run the ETE tree explorer in a separate thread
-        def start_explore():
-            t.explore(name=treename, port=5050, open_browser=True)
+            # Store updated props and layouts back to the tree_info
+            tree_info['layouts'] = current_layouts
+            tree_info['props'] = selected_props
 
-        explorer_thread = threading.Thread(target=start_explore)
-        explorer_thread.start()
+            # Run the ETE tree explorer in a separate thread with updated props and layout
+            def start_explore():
+                t.explore(name=treename, layouts=current_layouts, port=5050, open_browser=False, include_props=selected_props)
 
-        return f"ETE4 explorer launched for tree '{treename}'. It should open in a new browser tab."
+            explorer_thread = threading.Thread(target=start_explore)
+            explorer_thread.start()
+        else:
+            # Run the ETE tree explorer in a separate thread with updated props and layout
+            def start_explore():
+                t.explore(name=treename, layouts=current_layouts, port=5050, open_browser=False, include_props=current_props)
+            explorer_thread = threading.Thread(target=start_explore)
+            explorer_thread.start()
+            
+        return template('explore_tree', treename=treename, tree_info=tree_info, selected_props=current_props)
 
     return f"Tree '{treename}' not found."
+
+
 
 run(host='localhost', port=8080)
 

@@ -1156,7 +1156,7 @@ def get_colorbranch_layouts(tree, props, level, prop2type, column_width=70, padd
         level += 1
     return layouts, level, prop_color_dict
 
-def get_rectangle_layouts(tree, props, level, prop2type, column_width=70, padding_x=1, padding_y=0, color_config=None):
+def get_rectangle_layouts(tree, props, level, prop2type, column_width=70, padding_x=1, padding_y=0, color_config=None, precomputed_props={}):
     prop_color_dict = {}
     layouts = []
     for prop in props:
@@ -1165,11 +1165,14 @@ def get_rectangle_layouts(tree, props, level, prop2type, column_width=70, paddin
             if color_config.get(prop).get('value2color'):
                 color_dict = color_config.get(prop).get('value2color')
         else:
-            if prop2type and prop2type.get(prop) == list:
-                leaf_values = list(map(list,set(map(tuple,utils.tree_prop_array(tree, prop)))))    
-                prop_values = [val for sublist in leaf_values for val in sublist]
+            if precomputed_props and prop in precomputed_props:
+                prop_values = sorted(list(set(precomputed_props[prop])))
             else:
-                prop_values = sorted(list(set(utils.tree_prop_array(tree, prop))))
+                if prop2type and prop2type.get(prop) == list:
+                    leaf_values = list(map(list,set(map(tuple,utils.tree_prop_array(tree, prop)))))    
+                    prop_values = [val for sublist in leaf_values for val in sublist]
+                else:
+                    prop_values = sorted(list(set(utils.tree_prop_array(tree, prop))))
             
             if not prop_values:
                 logger.error(f"Property {prop} is empty. Please check annotation.")
