@@ -801,7 +801,7 @@ def run(args):
         "bool_prop_idx": args.bool_prop_idx,
         "prop2type_file": args.prop2type,
     }
-
+    
     # Group analysis-related arguments (ACR and Lineage Specificity options)
     analytic_options = {
         "acr_discrete_columns": args.acr_discrete_columns,
@@ -845,7 +845,7 @@ def run(args):
         "threads": args.threads,
         "outdir": args.outdir,
     }
-
+    
     # Simplified function call with grouped arguments
     annotated_tree, prop2type = run_tree_annotate(
         tree,
