@@ -79,9 +79,48 @@
             <div id="layoutSelection" class="form-group" style="display: none;">
                 <label for="layout">Select Layout Option:</label>
                 <select class="form-control" id="layout" name="layout">
-                    <option value="rectangular" selected>Rectangular Layout</option>
+                    <optgroup label="Categorical">
+                        <option value="colorbranch-layout">Color Branch Layout</option>
+                        <option value="label-layout">Label Layout</option>
+                        <option value="rectangle-layout" selected>Rectangular Layout</option>
+                        <option value="categorical-bubble-layout">Bubble Layout</option>
+                        <option value="background-layout">Background Layout</option>
+                        <option value="categorical-matrix-layout">Categorical Matrix Layout</option>
+                        <option value="piechart-layout">Piechart Layout</option>
+                        <option value="profiling-layout">Profiling Layout</option>
+                    </optgroup>
+                    <optgroup label="Binary">
+                        <option value="binary-layout">Binary Layout</option>
+                        <option value="binary-matrix-layout">Binary Matrix Layout</option>
+                        <!-- <option value="binary-aggregate-layout">Binary Aggregate Layout</option>
+                        <option value="binary-unicolor-layout">Binary Unicolor Layout</option>
+                        <option value="binary-unicolor-aggregate-layout">Binary Unicolor Aggregate Layout</option> -->
+                    </optgroup>
+                    <optgroup label="Numerical">
+                        <option value="branchscore-layout">Branch Score Layout</option>
+                        <option value="heatmap-layout">Heatmap Layout</option>
+                        <option value="heatmap-mean-layout">Heatmap Mean Layout</option>
+                        <option value="heatmap-zscore-layout">Heatmap Z-Score Layout</option>
+                        <option value="barplot-layout">Barplot Layout</option>
+                        <option value="numerical-matrix-layout">Numerical Matrix Layout</option>
+                        <option value="numerical-bubble-layout">Bubble Layout</option>
+                    </optgroup>
+                    <optgroup label="Analytic"> 
+                        <option value="acr-discrete-layout">ACR Discrete Layout</option>
+                        <option value="acr-continuous-layout">ACR Continuous Layout</option>
+                        <option value="ls-layout">LS Layout</option>
+                    </optgroup>
+                    <optgroup label="Taxonomy">  
+                        <option value="taxonclade-layout">Taxon Clade Layout</option>
+                        <option value="taxonrectangle-layout">Taxon Rectangle Layout</option>
+                        <option value="taxoncollapse-layout">Taxon Collapse Layout</option>
+                    </optgroup>
+                    <option value="emapper-layout">EggNOG-mapper Layout</option>
+                    <option value="domain-layout">Domain Layout</option>
+                    <option value="alignment-layout">Alignment Layout</option>
                 </select>
             </div>
+
             <div id="propsSelection" class="form-group mt-3" style="display: none;">
                 <label for="props">Select Properties to Visualize:</label>
                 <select multiple class="form-control" id="props" name="props">

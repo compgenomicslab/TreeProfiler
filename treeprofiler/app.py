@@ -63,6 +63,7 @@ def do_upload():
     # layouts.extend(rectangle_layouts)
 
     # Store the tree data (in memory or file/db)
+    node_props.extend(['name', 'dist'])
     trees[treename] = {
         'tree': tree_data,
         'metadata': metadata,
@@ -99,11 +100,24 @@ def explore_tree(treename):
             selected_layout = request.forms.get('layout')
             # Update layouts based on user selection
             column_width = 70
+            level = 0
             padding_x = 1
             padding_y = 0
             color_config = {}
-            if selected_layout == 'rectangular':
-                current_layouts, _, _ = tree_plot.get_rectangle_layouts(t, selected_props, 1, tree_info['prop2type'])
+
+            # categorical
+            if selected_layout == 'rectangle-layout':
+                current_layouts, level, _ = tree_plot.get_rectangle_layouts(t, selected_props, level, tree_info['prop2type'])
+            if selected_layout == 'label-layout':
+                current_layouts, level, _ = tree_plot.get_label_layouts(t, selected_props, level, tree_info['prop2type'])
+            if selected_layout == 'colorbranch-layout':
+                current_layouts, level, _ = tree_plot.get_colorbranch_layouts(t, selected_props, level, tree_info['prop2type'])
+            if selected_layout == 'categorical-bubble-layout':
+                current_layouts, level, _ = tree_plot.get_categorical_bubble_layouts(t, selected_props, level, tree_info['prop2type'])
+            if selected_layout == 'piechart-layout':
+                current_layouts, level, _ = tree_plot.get_piechart_layouts(t, selected_props, level, tree_info['prop2type'])
+            if selected_layout == 'background-layout':
+                current_layouts, level, _ = tree_plot.get_background_layouts(t, selected_props, level, tree_info['prop2type'])
 
             # Store updated props and layouts back to the tree_info
             tree_info['layouts'] = current_layouts
