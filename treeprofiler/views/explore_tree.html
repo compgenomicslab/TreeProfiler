@@ -19,30 +19,33 @@
                 <h3>Control Panel</h3>
             </div>
             <div class="card-body">
-                <form id="controlPanelForm" method="POST" action="/explore_tree/{{treename}}">
-                  <!-- Visualization Props (from node_props) -->
-                    <div class="form-group">
-                        <label for="props">Select Properties to Visualize:</label>
-                        <select multiple class="form-control" id="props" name="props">
-                            % for prop in tree_info['node_props']:
-                                <option value="{{ prop }}">{{ prop }}</option>
-                            % end
-                        </select>
-                        <small class="form-text text-muted">Hold down the Ctrl (Windows) or Command (Mac) button to select multiple options.</small>
-                    </div>
-                    <!-- Layout Options -->
-                    <div class="form-group mt-3">
-                        <label for="layout">Select Layout Option:</label>
-                        <select class="form-control" id="layout" name="layout">
-                            <option value="rectangular" selected>Rectangular Layout</option>
-                        </select>
-                    </div>
+                <!-- "Add Layout" Button -->
+                <button class="btn btn-primary mb-3" id="addLayoutBtn">Add Layout</button>
 
-                    <!-- Submit Button -->
-                    <div class="mt-4">
-                        <button type="submit" class="btn btn-success">Apply Visualization</button>
-                    </div>
-                </form>
+                <!-- Layout Selection (hidden initially) -->
+                <div id="layoutSelection" class="form-group" style="display: none;">
+                    <label for="layout">Select Layout Option:</label>
+                    <select class="form-control" id="layout" name="layout">
+                        <option value="rectangular" selected>Rectangular Layout</option>
+                        <!-- Future layouts can be added here -->
+                    </select>
+                </div>
+
+                <!-- Properties Selection for Selected Layout (hidden initially) -->
+                <div id="propsSelection" class="form-group mt-3" style="display: none;">
+                    <label for="props">Select Properties to Visualize:</label>
+                    <select multiple class="form-control" id="props" name="props">
+                        % for prop in tree_info['node_props']:
+                            <option value="{{ prop }}">{{ prop }}</option>
+                        % end
+                    </select>
+                    <small class="form-text text-muted">Hold down Ctrl (Windows) or Command (Mac) to select multiple options.</small>
+                </div>
+
+                <!-- Submit Button (hidden initially) -->
+                <div id="applyButton" class="mt-4" style="display: none;">
+                    <button type="submit" class="btn btn-success">Apply Visualization</button>
+                </div>
             </div>
         </div>
 
@@ -58,5 +61,19 @@
 
         <a href="/">Go back to upload</a>
     </div>
+    <script>
+        // JavaScript to handle dynamic form behavior
+        document.getElementById('addLayoutBtn').addEventListener('click', function() {
+            // Show the layout selection dropdown
+            document.getElementById('layoutSelection').style.display = 'block';
+            document.getElementById('propsSelection').style.display = 'block';
+            document.getElementById('applyButton').style.display = 'block';
+            // // Once layout is selected, show the properties and apply button
+            // document.getElementById('layout').addEventListener('change', function() {
+            //     document.getElementById('propsSelection').style.display = 'block';
+            //     document.getElementById('applyButton').style.display = 'block';
+            // });
+        });
+    </script>
 </body>
 </html>

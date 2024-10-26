@@ -50,18 +50,17 @@ def do_upload():
     annotated_newick = annotated_tree.write(props=None, format_root_node=True)
     
     # layouts information
-
     level = 0
     layouts = []
-    column_width = 70
-    padding_x = 1
-    padding_y = 0
-    color_config = {}
-    precomputed_props = columns
-    rectangle_layouts, level, color_dict = tree_plot.get_rectangle_layouts(tree, node_props, 
-            level, prop2type=prop2type, column_width=column_width, 
-            padding_x=padding_x, padding_y=padding_y, color_config=color_config)
-    layouts.extend(rectangle_layouts)
+    # column_width = 70
+    # padding_x = 1
+    # padding_y = 0
+    # color_config = {}
+    # precomputed_props = columns
+    # rectangle_layouts, level, color_dict = tree_plot.get_rectangle_layouts(tree, node_props, 
+    #         level, prop2type=prop2type, column_width=column_width, 
+    #         padding_x=padding_x, padding_y=padding_y, color_config=color_config)
+    # layouts.extend(rectangle_layouts)
 
     # Store the tree data (in memory or file/db)
     trees[treename] = {
@@ -91,14 +90,19 @@ def explore_tree(treename):
     if tree_info:
         # Load previously stored layouts, props, and metadata
         current_layouts = tree_info.get('layouts', [])
+        current_layouts = []
         current_props = tree_info.get('props', list(tree_info['prop2type'].keys()))
         t = Tree(tree_info['annotated_tree'])
         
         if request.method == 'POST':
             selected_props = request.forms.getall('props') or current_props
             selected_layout = request.forms.get('layout')
-            print(selected_props, selected_layout)
             # Update layouts based on user selection
+            column_width = 70
+            padding_x = 1
+            padding_y = 0
+            color_config = {}
+            
             if selected_layout == 'rectangular':
                 current_layouts, _, _ = tree_plot.get_rectangle_layouts(t, selected_props, 1, tree_info['prop2type'])
 
