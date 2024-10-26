@@ -50,8 +50,8 @@ def do_upload():
     annotated_newick = annotated_tree.write(props=None, format_root_node=True)
     
     # layouts information
-    level = 0
-    layouts = []
+    # level = 0
+    # layouts = []
     # column_width = 70
     # padding_x = 1
     # padding_y = 0
@@ -69,7 +69,7 @@ def do_upload():
         'node_props': node_props,
         'annotated_tree': annotated_newick,
         'prop2type': prop2type,
-        'layouts': layouts
+        'layouts': [],
     }
 
     # Redirect to the /tree/<treename> route after uploading
@@ -102,7 +102,6 @@ def explore_tree(treename):
             padding_x = 1
             padding_y = 0
             color_config = {}
-            
             if selected_layout == 'rectangular':
                 current_layouts, _, _ = tree_plot.get_rectangle_layouts(t, selected_props, 1, tree_info['prop2type'])
 
