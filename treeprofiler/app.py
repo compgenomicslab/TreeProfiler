@@ -97,6 +97,7 @@ def explore_tree(treename):
         
         if request.method == 'POST':
             selected_props = request.forms.getall('props') or current_props
+            current_props.extend(selected_props)
             selected_layout = request.forms.get('layout')
             # Update layouts based on user selection
             column_width = 70
@@ -136,6 +137,77 @@ def explore_tree(treename):
                 level += 1
 
             # binary
+            if selected_layout == 'binary-layout':
+                current_layouts, level, _ = tree_plot.get_binary_layouts(t, selected_props, 
+                                            level, tree_info['prop2type'], column_width=column_width, 
+                                            reverse=False, padding_x=padding_x, padding_y=padding_y,
+                                            color_config=color_config, same_color=False, aggregate=False)
+            if selected_layout == 'binary-aggregate-layout':
+                current_layouts, level, _ = tree_plot.get_binary_layouts(t, selected_props, 
+                                            level, tree_info['prop2type'], column_width=column_width, 
+                                            reverse=False, padding_x=padding_x, padding_y=padding_y,
+                                            color_config=color_config, same_color=False, aggregate=True)
+            if selected_layout == 'binary-unicolor-layout':
+                current_layouts, level, _ = tree_plot.get_binary_layouts(t, selected_props, 
+                                            level, tree_info['prop2type'], column_width=column_width, 
+                                            reverse=False, padding_x=padding_x, padding_y=padding_y,
+                                            color_config=color_config, same_color=True, aggregate=False)
+            if selected_layout == 'binary-unicolor-aggregate-layout':
+                current_layouts, level, _ = tree_plot.get_binary_layouts(t, selected_props, 
+                                            level, tree_info['prop2type'], column_width=column_width, 
+                                            reverse=False, padding_x=padding_x, padding_y=padding_y,
+                                            color_config=color_config, same_color=True, aggregate=True)
+            
+            # numerical
+            internal_num_rep = 'avg'
+            if selected_layout == 'branchscore-layout':
+                current_layouts = tree_plot.get_branchscore_layouts(t, selected_props, level, 
+                                    tree_info['prop2type'], internal_rep=internal_num_rep)
+            if selected_layout == 'barplot-layout':
+                current_layouts, level, _ = tree_plot.get_barplot_layouts(t, selected_props, level, 
+                                    tree_info['prop2type'], internal_rep=internal_num_rep)
+            if selected_layout == 'numerical-bubble-layout':
+                current_layouts, level, _ = tree_plot.get_numerical_bubble_layouts(t, selected_props, level, 
+                                    tree_info['prop2type'], internal_rep=internal_num_rep, color_config=color_config)
+            if selected_layout == 'heatmap-layout':
+                current_layouts, level = tree_plot.get_heatmap_layouts(t, selected_props, level,
+                                    column_width=column_width, padding_x=padding_x, padding_y=padding_y, 
+                                    internal_rep=internal_num_rep, color_config=color_config, norm_method='min-max',
+                                    global_scaling=True)
+            if selected_layout == 'heatmap-mean-layout':
+                current_layouts, level = tree_plot.get_heatmap_layouts(t, selected_props, level,
+                                    column_width=column_width, padding_x=padding_x, padding_y=padding_y, 
+                                    internal_rep=internal_num_rep, color_config=color_config, norm_method='mean',
+                                    global_scaling=True)
+            if selected_layout == 'heatmap-zscore-layout':
+                current_layouts, level = tree_plot.get_heatmap_layouts(t, selected_props, level,
+                                    column_width=column_width, padding_x=padding_x, padding_y=padding_y, 
+                                    internal_rep=internal_num_rep, color_config=color_config, norm_method='zscore',
+                                    global_scaling=True)
+            if selected_layout == 'numerical-matrix-layout':
+                matrix, minval, maxval, value2color, results_list, list_props, single_props = tree_plot.numerical2matrix(t, 
+                selected_props, count_negative=True, internal_num_rep=internal_num_rep, 
+                color_config=color_config, norm_method='min-max')
+                if list_props:
+                    index_map = {value: idx for idx, value in enumerate(selected_props)}
+                    sorted_list_props = sorted(list_props, key=lambda x: index_map[x])
+                    for list_prop in sorted_list_props:
+                        matrix, minval, maxval, value2color = results_list[list_prop]
+                        matrix_layout = tree_plot.profile_layouts.LayoutPropsMatrixOld(name=f"Numerical_matrix_{list_prop}", 
+                            matrix=matrix, matrix_type='numerical', matrix_props=[list_prop], is_list=True, 
+                            value_color=value2color, value_range=[minval, maxval], column=level,
+                            poswidth=column_width)
+                        level += 1
+                        current_layouts.append(matrix_layout)
+                if single_props:
+                    index_map = {value: idx for idx, value in enumerate(selected_props)}
+                    sorted_single_props = sorted(single_props, key=lambda x: index_map[x])
+                    matrix_layout = tree_plot.profile_layouts.LayoutPropsMatrixOld(name=f"Numerical_matrix_{sorted_single_props}", 
+                        matrix=matrix, matrix_type='numerical', matrix_props=sorted_single_props, is_list=False, 
+                        value_color=value2color, value_range=[minval, maxval], column=level,
+                        poswidth=column_width)
+                    level += 1
+                    current_layouts.append(matrix_layout)
 
             # Store updated props and layouts back to the tree_info
             tree_info['layouts'] = current_layouts
@@ -143,7 +215,7 @@ def explore_tree(treename):
 
             # Run the ETE tree explorer in a separate thread with updated props and layout
             def start_explore():
-                t.explore(name=treename, layouts=current_layouts, port=5050, open_browser=False, include_props=selected_props)
+                t.explore(name=treename, layouts=current_layouts, port=5050, open_browser=False, include_props=current_props)
 
             explorer_thread = threading.Thread(target=start_explore)
             explorer_thread.start()
