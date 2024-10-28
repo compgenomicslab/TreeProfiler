@@ -115,9 +115,27 @@ def explore_tree(treename):
             if selected_layout == 'categorical-bubble-layout':
                 current_layouts, level, _ = tree_plot.get_categorical_bubble_layouts(t, selected_props, level, tree_info['prop2type'])
             if selected_layout == 'piechart-layout':
-                current_layouts, level, _ = tree_plot.get_piechart_layouts(t, selected_props, level, tree_info['prop2type'])
+                current_layouts = tree_plot.get_piechart_layouts(t, selected_props, level, tree_info['prop2type'])
             if selected_layout == 'background-layout':
                 current_layouts, level, _ = tree_plot.get_background_layouts(t, selected_props, level, tree_info['prop2type'])
+            if selected_layout == 'profiling-layout':
+                for profiling_prop in selected_props:
+                    matrix, value2color, all_profiling_values = tree_plot.multiple2matrix(t, profiling_prop, prop2type=tree_info['prop2type'], color_config=color_config)
+                    matrix_layout = tree_plot.profile_layouts.LayoutPropsMatrixBinary(name=f"Profiling_{profiling_prop}",
+                    matrix=matrix, matrix_props=all_profiling_values, value_range=[0,1],
+                    value_color=value2color, column=level, poswidth=column_width)
+                    current_layouts.append(matrix_layout)
+                    level += 1
+            if selected_layout == 'categorical-matrix-layout':
+                # drawing as array in matrix
+                matrix, value2color = tree_plot.categorical2matrix(t, selected_props, color_config=color_config)
+                matrix_layout = tree_plot.profile_layouts.LayoutPropsMatrixOld(name=f"Categorical_matrix_{selected_props}",
+                matrix=matrix, matrix_type='categorical', matrix_props=selected_props,
+                value_color=value2color, column=level, poswidth=column_width)
+                current_layouts.append(matrix_layout)
+                level += 1
+
+            # binary
 
             # Store updated props and layouts back to the tree_info
             tree_info['layouts'] = current_layouts

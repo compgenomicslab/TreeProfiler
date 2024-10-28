@@ -1188,7 +1188,7 @@ def get_rectangle_layouts(tree, props, level, prop2type, column_width=70, paddin
         level += 1
     return layouts, level, prop_color_dict
 
-def get_background_layouts(tree, props, level, prop2type, column_width, padding_x=1, padding_y=0, color_config=None):
+def get_background_layouts(tree, props, level, prop2type, column_width=70, padding_x=1, padding_y=0, color_config=None):
     prop_color_dict = {}
     layouts = []
     for prop in props:
