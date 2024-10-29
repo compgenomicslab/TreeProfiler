@@ -778,7 +778,6 @@ def run(args):
         else:       
             pass
 
-        
         # assign color for each value of each rank
         for rank, value in sorted(rank2values.items()):
             value = list(set(value))
