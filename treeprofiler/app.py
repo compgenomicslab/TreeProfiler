@@ -209,6 +209,23 @@ def explore_tree(treename):
                     level += 1
                     current_layouts.append(matrix_layout)
 
+            # analytic
+            if selected_layout == 'acr-discrete-layout':
+                current_layouts, level, _ = tree_plot.get_acr_discrete_layouts(t, selected_props, level, prop2type=tree_info['prop2type'],
+                column_width=column_width, padding_x=padding_x, padding_y=padding_y, color_config=color_config) 
+                #delta statistic 
+                for suffix in ['delta', 'pval']:
+                    current_props.extend([utils.add_suffix(prop, suffix) for prop in selected_props])
+            
+            if selected_layout == 'acr-continuous-layout':
+                current_layouts, level, _ = tree_plot.get_acr_continuous_layouts(t, selected_props, level, prop2type=tree_info['prop2type'],
+                column_width=column_width, padding_x=padding_x, padding_y=padding_y, color_config=color_config, continuous=True)
+            
+            if selected_layout == 'ls-layout':
+                current_layouts, ls_props = tree_plot.get_ls_layouts(t, selected_props, level, prop2type=tree_info['prop2type'],
+                column_width=column_width, padding_x=padding_x, padding_y=padding_y, color_config=color_config)
+                current_props.extend(ls_props)
+            
             # Store updated props and layouts back to the tree_info
             tree_info['layouts'] = current_layouts
             tree_info['props'] = selected_props
