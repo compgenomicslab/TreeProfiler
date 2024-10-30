@@ -46,28 +46,37 @@ def upload_tree():
 
 @route('/upload_chunk', method='POST')
 def upload_chunk():
-    chunk = request.files.get('treeFile') or request.files.get('metadataFile')
+    # Determine the file type based on the request
+    chunk = request.files.get('treeFile') or request.files.get('metadataFile') or request.files.get('alignmentFile')
     chunk_index = int(request.forms.get("chunkIndex"))
     total_chunks = int(request.forms.get("totalChunks"))
     treename = request.forms.get("treename")
-    file_type = "tree" if 'treeFile' in request.files else "metadata"
 
-    # Initialize storage for the file chunks
+    # Identify the file type
+    if 'treeFile' in request.files:
+        file_type = "tree"
+    elif 'metadataFile' in request.files:
+        file_type = "metadata"
+    elif 'alignmentFile' in request.files:
+        file_type = "alignment"
+    else:
+        return "Unknown file type", 400
+
+    # Initialize chunk storage for each file type if it doesn't exist
     if treename not in uploaded_chunks:
-        uploaded_chunks[treename] = {"tree": [], "metadata": []}
-
-    # Save the chunk in the correct file part position
+        uploaded_chunks[treename] = {"tree": [], "metadata": [], "alignment": []}
+    
+    # Append the chunk to the corresponding file list
     uploaded_chunks[treename][file_type].append((chunk_index, chunk.file.read()))
 
-    # Assemble the file once all chunks are received
+    # Assemble the file when all chunks are received
     if len(uploaded_chunks[treename][file_type]) == total_chunks:
-        uploaded_chunks[treename][file_type].sort()
+        uploaded_chunks[treename][file_type].sort()  # Ensure chunks are in order
         with NamedTemporaryFile(delete=False) as assembled_file:
             for _, part in uploaded_chunks[treename][file_type]:
                 assembled_file.write(part)
             assembled_file_path = assembled_file.name
-
-        uploaded_chunks[treename][file_type] = assembled_file_path
+        uploaded_chunks[treename][file_type] = assembled_file_path  # Save assembled file path
 
     return "Chunk received"
 
@@ -76,26 +85,21 @@ def do_upload():
     treename = request.forms.get('treename')
     tree_data = request.forms.get('tree')
     metadata = request.forms.get('metadata')
+    alignment = request.forms.get('alignment')
+    column2method = {
+        'alignment': 'none',
+    }
     default_props = [
-        'name',
-        'dist',
-        'support',
-        'rank',
-        'sci_name',
-        'taxid',
-        'lineage',
-        'named_lineage',
-        'evoltype',
-        'dup_sp',
-        'dup_percent',
-        'lca'
+        'name', 'dist', 'support', 'rank', 'sci_name', 'taxid', 'lineage', 'named_lineage',
+        'evoltype', 'dup_sp', 'dup_percent', 'lca'
     ]
 
-    # Paths for uploaded files
+    # Get file paths for uploaded files
     tree_file_path = uploaded_chunks.get(treename, {}).get("tree")
     metadata_file_path = uploaded_chunks.get(treename, {}).get("metadata")
+    alignment_file_path = uploaded_chunks.get(treename, {}).get("alignment")
 
-    # Load tree from text input or uploaded file
+    # Load tree from text input or file
     if tree_data:
         tree = utils.ete4_parse(tree_data)
     elif tree_file_path and os.path.exists(tree_file_path):
@@ -103,15 +107,14 @@ def do_upload():
             tree = utils.ete4_parse(f.read())
         os.remove(tree_file_path)
 
-    # Load metadata from text input or uploaded file (if available)
+    # Load metadata from text input or file (if available)
+    metadata_bytes = None
     if metadata:
         metadata_bytes = metadata.encode('utf-8')
     elif metadata_file_path and os.path.exists(metadata_file_path):
         with open(metadata_file_path, 'rb') as f:
             metadata_bytes = f.read()
         os.remove(metadata_file_path)
-    else:
-        metadata_bytes = None  # Metadata is optional
 
     # Parse metadata if available
     metadata_options = {}
@@ -126,16 +129,20 @@ def do_upload():
             "columns": columns,
             "prop2type": prop2type,
         }
+    
+    # Annotate tree if metadata is provided
+    annotated_tree, prop2type = run_tree_annotate(tree, 
+    **metadata_options, 
+    alignment=alignment_file_path,
+    column2method=column2method
+    )
+    annotated_newick = annotated_tree.write(props=None, format_root_node=True)
+    
+    # Cleanup temporary alignment file after usage
+    if alignment_file_path and os.path.exists(alignment_file_path):
+        os.remove(alignment_file_path)
 
-    # Run tree annotation function if metadata is provided
-    if metadata_options:
-        annotated_tree, prop2type = run_tree_annotate(tree, **metadata_options)
-        annotated_newick = annotated_tree.write(props=None, format_root_node=True)
-    else:
-        annotated_tree, prop2type = tree, {}
-        annotated_newick = tree.write(props=None, format_root_node=True)
-
-    # Store the tree data (in memory or file/db)
+    # Store the tree data
     node_props = metadata_options.get('node_props', [])
     node_props.extend(default_props)
     trees[treename] = {
@@ -151,6 +158,7 @@ def do_upload():
     if treename in uploaded_chunks:
         del uploaded_chunks[treename]
 
+    # Redirect to tree page
     return redirect(f'/tree/{treename}')
 
 @route('/tree/<treename>')
@@ -359,6 +367,13 @@ def explore_tree(treename):
                     duplication_color="red", node_size = 3,
                     legend=True))
                 current_layouts = current_layouts + taxa_layouts
+
+            if selected_layout == 'alignment-layout':
+                lengh = len(max(utils.tree_prop_array(t, 'alignment'),key=len))
+                aln_layout = layouts.seq_layouts.LayoutAlignment(name='Alignment_layout', 
+                        alignment_prop='alignment', column=level, scale_range=lengh,
+                        summarize_inner_nodes=True)
+                current_layouts.append(aln_layout)
 
             # Store updated props and layouts back to the tree_info
             tree_info['layouts'] = current_layouts

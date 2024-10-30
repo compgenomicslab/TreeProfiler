@@ -15,7 +15,7 @@
     <form id="uploadTreeForm" enctype="multipart/form-data">
         <div class="form-group">
             <label for="treename">Tree Name</label>
-            <input type="text" class="form-control" id="treename" name="treename" placeholder="Enter Tree Name" required>
+            <input type="text" class="form-control" id="treename" name="treename" placeholder="Enter Tree Name" value="test" required>
         </div>
         <div class="form-group">
             <label for="tree">Tree Newick Format</label>
@@ -29,6 +29,12 @@
             <small class="form-text text-muted">Or upload a metadata file below.</small>
             <input type="file" class="form-control-file mt-2" id="metadataFile" name="metadataFile">
         </div>
+        <div class="form-group">
+            <label for="alignment">Alignment (Optional)</label>
+            <textarea class="form-control" id="alignment" name="alignment" rows="5" placeholder="Enter alignment"></textarea>
+            <small class="form-text text-muted">Or upload a metadata file below.</small>
+            <input type="file" class="form-control-file mt-2" id="alignmentFile" name="alignmentFile">
+        </div>
         <button type="button" class="btn btn-primary" onclick="submitForm()">Upload Tree and Metadata</button>
     </form>
 </div>
@@ -40,8 +46,10 @@
         const treename = document.getElementById('treename').value;
         const treeTextarea = document.getElementById('tree').value;
         const metadataTextarea = document.getElementById('metadata').value;
+        const alignmentTextarea = document.getElementById('alignment').value;
         const treeFile = document.getElementById('treeFile').files[0];
         const metadataFile = document.getElementById('metadataFile').files[0];
+        const alignmentFile = document.getElementById('alignmentFile').files[0];
 
         if (!treename) {
             alert("Please enter a tree name.");
@@ -66,6 +74,13 @@
             await uploadFileInChunks(metadataFile, 'metadataFile', treename);
         } else if (metadataTextarea) {
             formData.append("metadata", metadataTextarea);
+        }
+
+        // Upload metadata if provided
+        if (alignmentFile) {
+            await uploadFileInChunks(alignmentFile, 'alignmentFile', treename);
+        } else if (alignmentTextarea) {
+            formData.append("alignment", alignmentTextarea);
         }
 
         // Final submission with the text data

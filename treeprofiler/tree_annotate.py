@@ -1331,7 +1331,6 @@ def process_node(node_data):
             internal_props.update(internal_props_num)
 
     # Generate consensus sequence
-    
     consensus_seq = None
     if alignment and name2seq is not None:  # Check alignment and name2seq together
         aln_sum = column2method.get('alignment')
