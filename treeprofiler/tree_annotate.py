@@ -710,8 +710,9 @@ def run(args):
 
     # Validation: Ensure at least one of --outdir or --stdout is selected
     if not args.outdir and not args.stdout:
-        parser.error("You must specify either --outdir or --stdout to output results.")
-    
+        logger.error("You must specify either --outdir or --stdout to output results.")
+        sys.exit(1)
+
     if args.outdir:
         if not os.path.exists(args.outdir):
             logger.error(f"Output directory {args.outdir} does not exist.") 
@@ -1743,9 +1744,10 @@ def annot_tree_pfam_table(post_tree, pfam_table, alg_fasta, domain_prop='dom_arq
         # get the most common domain
         if not n.is_leaf:
             prop_list = utils.children_prop_array(n, domain_prop)
-            counter = dict(Counter(prop_list))
-            most_common_key = max(counter, key=counter.get)
-            n.add_prop(domain_prop, most_common_key)
+            if prop_list:
+                counter = dict(Counter(prop_list))
+                most_common_key = max(counter, key=counter.get)
+                n.add_prop(domain_prop, most_common_key)
 
     # for n in post_tree.traverse():
     #     print(n.name, n.props.get('dom_arq'))

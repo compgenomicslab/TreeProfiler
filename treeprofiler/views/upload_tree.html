@@ -35,6 +35,11 @@
             <small class="form-text text-muted">Or upload a metadata file below.</small>
             <input type="file" class="form-control-file mt-2" id="alignmentFile" name="alignmentFile">
         </div>
+        <div class="form-group">
+            <label for="pfam">Pfam annotation from emapper (Optional)</label>
+            <small class="form-text text-muted">Or upload a pfam annotation file from emapper below.</small>
+            <input type="file" class="form-control-file mt-2" id="pfamFile" name="pfamFile">
+        </div>
         <button type="button" class="btn btn-primary" onclick="submitForm()">Upload Tree and Metadata</button>
     </form>
 </div>
@@ -50,6 +55,7 @@
         const treeFile = document.getElementById('treeFile').files[0];
         const metadataFile = document.getElementById('metadataFile').files[0];
         const alignmentFile = document.getElementById('alignmentFile').files[0];
+        const pfamFile = document.getElementById('pfamFile').files[0];
 
         if (!treename) {
             alert("Please enter a tree name.");
@@ -81,6 +87,11 @@
             await uploadFileInChunks(alignmentFile, 'alignmentFile', treename);
         } else if (alignmentTextarea) {
             formData.append("alignment", alignmentTextarea);
+        }
+
+        // Upload pfam annotation if provided
+        if (pfamFile) {
+            await uploadFileInChunks(pfamFile, 'pfamFile', treename);
         }
 
         // Final submission with the text data

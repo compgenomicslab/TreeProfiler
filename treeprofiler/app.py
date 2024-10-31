@@ -47,7 +47,7 @@ def upload_tree():
 @route('/upload_chunk', method='POST')
 def upload_chunk():
     # Determine the file type based on the request
-    chunk = request.files.get('treeFile') or request.files.get('metadataFile') or request.files.get('alignmentFile')
+    chunk = request.files.get('treeFile') or request.files.get('metadataFile') or request.files.get('alignmentFile') or request.files.get('pfamFile')
     chunk_index = int(request.forms.get("chunkIndex"))
     total_chunks = int(request.forms.get("totalChunks"))
     treename = request.forms.get("treename")
@@ -59,12 +59,19 @@ def upload_chunk():
         file_type = "metadata"
     elif 'alignmentFile' in request.files:
         file_type = "alignment"
+    elif 'pfamFile' in request.files:
+        file_type = "pfam"
     else:
         return "Unknown file type", 400
 
     # Initialize chunk storage for each file type if it doesn't exist
     if treename not in uploaded_chunks:
-        uploaded_chunks[treename] = {"tree": [], "metadata": [], "alignment": []}
+        uploaded_chunks[treename] = {
+            "tree": [], 
+            "metadata": [], 
+            "alignment": [], 
+            "pfam": []
+        }
     
     # Append the chunk to the corresponding file list
     uploaded_chunks[treename][file_type].append((chunk_index, chunk.file.read()))
@@ -86,6 +93,8 @@ def do_upload():
     tree_data = request.forms.get('tree')
     metadata = request.forms.get('metadata')
     alignment = request.forms.get('alignment')
+    pfam = request.forms.get('pfam')
+    
     column2method = {
         'alignment': 'none',
     }
@@ -98,6 +107,7 @@ def do_upload():
     tree_file_path = uploaded_chunks.get(treename, {}).get("tree")
     metadata_file_path = uploaded_chunks.get(treename, {}).get("metadata")
     alignment_file_path = uploaded_chunks.get(treename, {}).get("alignment")
+    pfam_file_path = uploaded_chunks.get(treename, {}).get("pfam")
 
     # Load tree from text input or file
     if tree_data:
@@ -122,7 +132,7 @@ def do_upload():
         with NamedTemporaryFile(suffix='.tsv') as f_annotation:
             f_annotation.write(metadata_bytes)
             f_annotation.flush()
-            metadata_dict, node_props, columns, prop2type = parse_csv([f_annotation.name], delimiter=',')
+            metadata_dict, node_props, columns, prop2type = parse_csv([f_annotation.name], delimiter='\t')
         metadata_options = {
             "metadata_dict": metadata_dict,
             "node_props": node_props,
@@ -130,9 +140,17 @@ def do_upload():
             "prop2type": prop2type,
         }
     
+    # Group emapper-related arguments
+    if pfam_file_path:
+        emapper_options = {
+            "emapper_mode": False,
+            "emapper_pfam": pfam_file_path
+        }
+    
     # Annotate tree if metadata is provided
     annotated_tree, prop2type = run_tree_annotate(tree, 
-    **metadata_options, 
+    **metadata_options,
+    **emapper_options, 
     alignment=alignment_file_path,
     column2method=column2method
     )
@@ -374,6 +392,10 @@ def explore_tree(treename):
                         alignment_prop='alignment', column=level, scale_range=lengh,
                         summarize_inner_nodes=True)
                 current_layouts.append(aln_layout)
+
+            if selected_layout == 'domain-layout':
+                domain_layout = layouts.seq_layouts.LayoutDomain(name="Domain_layout", prop='dom_arq')
+                current_layouts.append(domain_layout)
 
             # Store updated props and layouts back to the tree_info
             tree_info['layouts'] = current_layouts
