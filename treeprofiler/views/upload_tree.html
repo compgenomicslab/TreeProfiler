@@ -47,7 +47,6 @@ Taxa_4,0.5915676489932427,-2.0927680151507433,17,C,False
         </div>
         <div class="form-group">
             <label for="alignment">Alignment (Optional)</label>
-            <textarea class="form-control" id="alignment" name="alignment" rows="5" placeholder="Enter alignment"></textarea>
             <small class="form-text text-muted">Or upload a metadata file below.</small>
             <input type="file" class="form-control-file mt-2" id="alignmentFile" name="alignmentFile">
         </div>
@@ -67,7 +66,6 @@ Taxa_4,0.5915676489932427,-2.0927680151507433,17,C,False
         const treename = document.getElementById('treename').value;
         const treeTextarea = document.getElementById('tree').value;
         const metadataTextarea = document.getElementById('metadata').value;
-        const alignmentTextarea = document.getElementById('alignment').value;
         const treeFile = document.getElementById('treeFile').files[0];
         const metadataFile = document.getElementById('metadataFile').files[0];
         const alignmentFile = document.getElementById('alignmentFile').files[0];
@@ -105,8 +103,6 @@ Taxa_4,0.5915676489932427,-2.0927680151507433,17,C,False
         // Upload metadata if provided
         if (alignmentFile) {
             await uploadFileInChunks(alignmentFile, 'alignmentFile', treename);
-        } else if (alignmentTextarea) {
-            formData.append("alignment", alignmentTextarea);
         }
 
         // Upload pfam annotation if provided
