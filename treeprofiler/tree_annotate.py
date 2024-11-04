@@ -1016,8 +1016,6 @@ def parse_csv(input_files, delimiter='\t', no_headers=False, duplicate=False):
                 first_line = next(f)
                 fields_len = len(first_line.split(delimiter))
 
-                
-
                 # Reset the file pointer to the beginning
                 f.seek(0)
 

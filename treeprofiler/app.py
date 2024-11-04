@@ -94,7 +94,8 @@ def do_upload():
     metadata = request.forms.get('metadata')
     alignment = request.forms.get('alignment')
     pfam = request.forms.get('pfam')
-    
+    separator = request.forms.get('separator')
+
     column2method = {
         'alignment': 'none',
     }
@@ -128,11 +129,14 @@ def do_upload():
 
     # Parse metadata if available
     metadata_options = {}
+    if separator == "<tab>":
+        separator = "\t"
+
     if metadata_bytes:
         with NamedTemporaryFile(suffix='.tsv') as f_annotation:
             f_annotation.write(metadata_bytes)
             f_annotation.flush()
-            metadata_dict, node_props, columns, prop2type = parse_csv([f_annotation.name], delimiter='\t')
+            metadata_dict, node_props, columns, prop2type = parse_csv([f_annotation.name], delimiter=separator)
         metadata_options = {
             "metadata_dict": metadata_dict,
             "node_props": node_props,
@@ -146,7 +150,11 @@ def do_upload():
             "emapper_mode": False,
             "emapper_pfam": pfam_file_path
         }
-    
+    else:
+        emapper_options = {
+            "emapper_mode": False,
+            "emapper_pfam": None
+        }
     # Annotate tree if metadata is provided
     annotated_tree, prop2type = run_tree_annotate(tree, 
     **metadata_options,
