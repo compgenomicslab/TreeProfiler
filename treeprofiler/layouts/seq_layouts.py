@@ -1,8 +1,10 @@
 
 from ete4 import SeqGroup
 from ete4.smartview import TreeLayout
-from ete4.smartview import AlignmentFace, SeqMotifFace, ScaleFace
+from ete4.smartview import AlignmentFace, SeqMotifFace, Face
 from ete4.smartview.renderer import draw_helpers
+from ete4.smartview.renderer.draw_helpers import draw_line, draw_text, Box
+
 #from utils import get_consensus_seq
 from pathlib import Path
 from io import StringIO
@@ -20,7 +22,8 @@ def get_colormap():
 class LayoutAlignment(TreeLayout):
     def __init__(self, name="Alignment",
             alignment=None, alignment_prop=None, format='seq', width=700, height=15,
-            column=0, scale_range=None, summarize_inner_nodes=True, aligned_faces=True):
+            column=0, scale_range=None, window=[1190,1339], summarize_inner_nodes=True, 
+            aligned_faces=True):
         super().__init__(name, aligned_faces=aligned_faces)
         #self.alignment = SeqGroup(alignment) if alignment else None
         self.alignment_prop = alignment_prop
@@ -32,35 +35,30 @@ class LayoutAlignment(TreeLayout):
 
         #self.length = len(next(self.alignment.iter_entries())[1]) if self.alignment else None
         self.scale_range = (0, scale_range) or (0, self.length)
+        self.window = window
         self.summarize_inner_nodes = summarize_inner_nodes
 
     def set_tree_style(self, tree, tree_style):
         if self.scale_range:
-            face = ScaleFace(width=self.width, scale_range=self.scale_range, padding_y=10)
-            tree_style.aligned_panel_header.add_face(face, column=self.column)
+            if self.window:
+                face = ScaleFace(width=self.width, scale_range=self.window, padding_y=10)
+                tree_style.aligned_panel_header.add_face(face, column=self.column)
+            else:
+                face = ScaleFace(width=self.width, scale_range=self.scale_range, padding_y=10)
+                tree_style.aligned_panel_header.add_face(face, column=self.column)
     
-    def _get_seq(self, node):
-        return node.props.get(self.alignment_prop, None)
-        # if self.alignment:
-        #     return self.alignment.get_seq(node.name)
-        # else:
-        #     return node.props.get(alignment_prop, None)
+    def get_seq(self, node, window=[]):
+        seq = node.props.get(self.alignment_prop, None)
+        return seq
 
-    def get_seq(self, node):
-        if node.is_leaf:
-            return self._get_seq(node)
-
-        if self.summarize_inner_nodes:
-            return self._get_seq(node)
-        else:
-            first_leaf = next(node.leaves())
-            return self._get_seq(first_leaf)
-    
     def set_node_style(self, node):
         seq = self.get_seq(node)
-
         if seq:
             seq = str(seq) # convert Bio.seq.seq to string seq
+            if self.window:
+                start, end = self.window
+                seq = seq[start:end]
+
             seqFace = AlignmentFace(seq, seq_format=self.format, bgcolor='grey',
                     width=self.width, height=self.height)
             node.add_face(seqFace, column=self.column, position='aligned',
@@ -139,3 +137,124 @@ class LayoutDomain(TreeLayout):
                         collapsed_only=(not node.is_leaf))
         else:
             print("no domain found for node %s" % node.name)
+
+class ScaleFace(Face):
+    def __init__(self, name='', width=None, color='black',
+            scale_range=(0, 0), tick_width=80, line_width=1,
+            formatter='%.0f',
+            min_fsize=6, max_fsize=12, ftype='sans-serif',
+            padding_x=0, padding_y=0):
+
+        Face.__init__(self, name=name,
+                padding_x=padding_x, padding_y=padding_y)
+
+        self.width = width
+        self.height = None
+        self.range = scale_range
+
+        self.color = color
+        self.min_fsize = min_fsize
+        self.max_fsize = max_fsize
+        self._fsize = max_fsize
+        self.ftype = ftype
+        self.formatter = formatter
+
+        self.tick_width = tick_width
+        self.line_width = line_width
+
+        self.vt_line_height = 10
+
+    def __name__(self):
+        return "ScaleFace"
+
+    def compute_bounding_box(self,
+            drawer,
+            point, size,
+            dx_to_closest_child,
+            bdx, bdy,
+            bdy0, bdy1,
+            pos, row,
+            n_row, n_col,
+            dx_before, dy_before):
+
+        if drawer.TYPE == 'circ' and abs(point[1]) >= pi/2:
+            pos = swap_pos(pos)
+
+        box = super().compute_bounding_box(
+            drawer,
+            point, size,
+            dx_to_closest_child,
+            bdx, bdy,
+            bdy0, bdy1,
+            pos, row,
+            n_row, n_col,
+            dx_before, dy_before)
+
+        x, y, _, dy = box
+        zx, zy = self.zoom
+
+        self.viewport = (drawer.viewport.x, drawer.viewport.x + drawer.viewport.dx)
+
+        self.height = (self.line_width + 10 + self.max_fsize) / zy
+
+        height = min(dy, self.height)
+
+        if pos == "aligned_bottom":
+            y = y + dy - height
+
+        self._box = Box(x, y, self.width / zx, height)
+        return self._box
+
+    def draw(self, drawer):
+        x0, y, _, dy = self._box
+        zx, zy = self.zoom
+
+        p1 = (x0, y + dy - 5 / zy)
+        p2 = (x0 + self.width, y + dy - self.vt_line_height / (2 * zy))
+        if drawer.TYPE == 'circ':
+            p1 = cartesian(p1)
+            p2 = cartesian(p2)
+        yield draw_line(p1, p2, style={'stroke-width': self.line_width,
+                                       'stroke': self.color})
+
+
+        nticks = round((self.width * zx) / self.tick_width)
+        dx = self.width / nticks
+        range_factor = (self.range[1] - self.range[0]) / self.width
+
+        if self.viewport:
+            sm_start = round(max(self.viewport[0] - self.viewport_margin - x0, 0) / dx)
+            sm_end = nticks - round(max(x0 + self.width - (self.viewport[1] +
+                self.viewport_margin), 0) / dx)
+        else:
+            sm_start, sm_end = 0, nticks
+
+        for i in range(sm_start, sm_end + 1):
+            x = x0 + i * dx
+            number = range_factor * i * dx + self.range[0]
+            
+            if number == 0:
+                text = "0"
+            else:
+                text = self.formatter % number if self.formatter else str(number)
+
+            text = text.rstrip('0').rstrip('.') if '.' in text else text
+
+            self.compute_fsize(self.tick_width / len(text), dy, zx, zy)
+            text_style = {
+                'max_fsize': self._fsize,
+                'text_anchor': 'middle',
+                'ftype': f'{self.ftype}, sans-serif', # default sans-serif
+                }
+            text_box = Box(x,
+                    y,
+                    # y + (dy - self._fsize / (zy * r)) / 2,
+                    dx, dy)
+
+            yield draw_text(text_box, text, style=text_style)
+
+            p1 = (x, y + dy - self.vt_line_height / zy)
+            p2 = (x, y + dy)
+
+            yield draw_line(p1, p2, style={'stroke-width': self.line_width,
+                                           'stroke': self.color})

@@ -263,6 +263,10 @@ def poplulate_plot_args(plot_args_p):
         default=False,
         action='store_true',
         help="Display Multiple Sequence Alignment layout in aligned panel.")
+    group.add_argument('--alignment-window',
+        default=None,
+        required=False,
+        help="Set the window of alignment layout. Such as: 3-200, from position 3 to 200.")
     group.add_argument('--profiling-layout',
         nargs='+',
         required=False,
@@ -589,9 +593,14 @@ def run(args):
 
         if layout == 'alignment-layout':
             lengh = len(max(utils.tree_prop_array(tree, 'alignment'),key=len))
+            if args.alignment_window:
+                window = [int(i) for i in args.alignment_window.split('-')]
+            else:
+                window = []
+
             aln_layout = seq_layouts.LayoutAlignment(name='Alignment_layout', 
-                        alignment_prop='alignment', column=level, scale_range=lengh,
-                        summarize_inner_nodes=True)
+                        alignment_prop='alignment', column=level, scale_range=lengh, 
+                        window=window, summarize_inner_nodes=True)
             layouts.append(aln_layout)
 
         if layout == 'domain-layout':
