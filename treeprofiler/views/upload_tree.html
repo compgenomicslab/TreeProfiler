@@ -27,14 +27,6 @@
         </div>
         <div class="form-group">
             <label for="metadata">Metadata (Optional)</label>
-            <textarea class="form-control" id="metadata" name="metadata" rows="5" placeholder="Enter metadata">
-name,random_column1,random_column2,random_column3,categorical1,binary1
-Taxa_0,0.45303222603186877,1.9801547427961053,43,A,True
-Taxa_1,0.3276816717486982,2.901485035789767,18,B,False
-Taxa_2,0.7817176831389784,0.8169962886608579,88,B,True
-Taxa_3,0.538278090458638,-2.9731013860390583,95,C,False
-Taxa_4,0.5915676489932427,-2.0927680151507433,17,C,False
-            </textarea>
             <small class="form-text text-muted">Or upload a metadata file below.</small>
             <input type="file" class="form-control-file mt-2" id="metadataFile" name="metadataFile">
         </div>
@@ -65,7 +57,7 @@ Taxa_4,0.5915676489932427,-2.0927680151507433,17,C,False
     async function submitForm() {
         const treename = document.getElementById('treename').value;
         const treeTextarea = document.getElementById('tree').value;
-        const metadataTextarea = document.getElementById('metadata').value;
+        //const metadataTextarea = document.getElementById('metadata').value;
         const treeFile = document.getElementById('treeFile').files[0];
         const metadataFile = document.getElementById('metadataFile').files[0];
         const alignmentFile = document.getElementById('alignmentFile').files[0];
@@ -93,9 +85,7 @@ Taxa_4,0.5915676489932427,-2.0927680151507433,17,C,False
         // Upload metadata if provided
         if (metadataFile) {
             await uploadFileInChunks(metadataFile, 'metadataFile', treename);
-        } else if (metadataTextarea) {
-            formData.append("metadata", metadataTextarea);
-        }
+        } 
         if (separator) {
             formData.append("separator", separator);
         }
