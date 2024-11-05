@@ -100,7 +100,7 @@ def do_upload():
     multiple_text_prop = request.forms.get('multiple_text_prop',[])
     alignment = request.forms.get('alignment')
     pfam = request.forms.get('pfam')
-    print(text_prop, type(text_prop))
+    
     column2method = {
         'alignment': 'none',
     }

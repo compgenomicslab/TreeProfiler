@@ -147,13 +147,13 @@
         if (separator) {
             formData.append("separator", separator);
         }
-        
-        // Add inferred column types to formData as comma-separated values
+
+        // Add inferred column types to formData as arrays
         const columnTypes = collectColumnTypes();
-        formData.append("text_prop", columnTypes.text_prop.join(','));
-        formData.append("num_prop", columnTypes.num_prop.join(','));
-        formData.append("bool_prop", columnTypes.bool_prop.join(','));
-        formData.append("multiple_text_prop", columnTypes.multiple_text_prop.join(','));
+        columnTypes.text_prop.forEach(item => formData.append("text_prop[]", item));
+        columnTypes.num_prop.forEach(item => formData.append("num_prop[]", item));
+        columnTypes.bool_prop.forEach(item => formData.append("bool_prop[]", item));
+        columnTypes.multiple_text_prop.forEach(item => formData.append("multiple_text_prop[]", item));
 
         // Upload alignment if provided
         if (alignmentFile) {
@@ -176,6 +176,8 @@
             alert("Error occurred during upload.");
         });
     }
+
+
     // Function to analyze the metadata file when the "Advanced Parsing" button is clicked
     document.getElementById('parseMetadataBtn').addEventListener('click', async () => {
         const file = document.getElementById('metadataFile').files[0];
