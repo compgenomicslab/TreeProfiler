@@ -12,41 +12,95 @@
 
 <div class="container mt-5">
     <h1>Upload a New Tree</h1>
+    
     <form id="uploadTreeForm" enctype="multipart/form-data">
-        <div class="form-group">
-            <label for="treename">Tree Name</label>
-            <input type="text" class="form-control" id="treename" name="treename" placeholder="Enter Tree Name" value="test" required>
-        </div>
-        <div class="form-group">
-            <label for="tree">Tree Newick Format</label>
-            <textarea class="form-control" id="tree" name="tree" rows="5" placeholder="Enter tree in Newick format">
-((Taxa_3:0.219065,(Taxa_4:0.188681,Taxa_2:0.5196)0.166914:0.90365)0.138062:0.0632016,(Taxa_0:0.190563,Taxa_1:0.458423)0.138062:0.97338);
-            </textarea>
-            <small class="form-text text-muted">Or upload a Newick file below.</small>
-            <input type="file" class="form-control-file mt-2" id="treeFile" name="treeFile">
-        </div>
-        <div class="form-group">
-            <label for="metadata">Metadata (Optional)</label>
-            <small class="form-text text-muted">Or upload a metadata file below.</small>
-            <input type="file" class="form-control-file mt-2" id="metadataFile" name="metadataFile">
-        </div>
-        <div class="form-group row">
-            <label for="separator" class="col-sm-3 col-form-label">Metadata Separator</label>
-            <div class="col-sm-3">
-                <input type="text" class="form-control" id="separator" name="separator" placeholder="<tab>" value="<tab>">
+        
+        <!-- Tree Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Tree</h5>
             </div>
-            <small class="form-text text-muted">Specify the metadata file separator; (default is "&lt;tab&gt;", for a comma-separated file put ",")</small>
+            <div class="card-body">
+                <div class="form-group">
+                    <label for="treename">Tree Name</label>
+                    <input type="text" class="form-control" id="treename" name="treename" placeholder="Enter Tree Name" value="test" required>
+                </div>
+                <div class="form-group">
+                    <label for="tree">Tree Newick Format</label>
+                    <textarea class="form-control" id="tree" name="tree" rows="5" placeholder="Enter tree in Newick format">
+((Taxa_3:0.219065,(Taxa_4:0.188681,Taxa_2:0.5196)0.166914:0.90365)0.138062:0.0632016,(Taxa_0:0.190563,Taxa_1:0.458423)0.138062:0.97338);
+                    </textarea>
+                    <small class="form-text text-muted">Or upload a Newick file below.</small>
+                    <input type="file" class="form-control-file mt-2" id="treeFile" name="treeFile">
+                </div>
+                <div class="form-group">
+                    <label for="treeparser">Tree Parser</label>
+                    <select class="form-control" id="treeparser" name="treeparser" required>
+                        <option value="name" >Name</option>
+                        <option value="support" selected>Support</option>
+                    </select>
+                </div>
+            </div>
         </div>
-        <div class="form-group">
-            <label for="alignment">Alignment (Optional)</label>
-            <small class="form-text text-muted">Or upload a metadata file below.</small>
-            <input type="file" class="form-control-file mt-2" id="alignmentFile" name="alignmentFile">
+        
+        <!-- Metadata Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Metadata (Optional)</h5>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label for="metadata">Metadata File</label>
+                    <small class="form-text text-muted">Or upload a metadata file below.</small>
+                    <input type="file" class="form-control-file mt-2" id="metadataFile" name="metadataFile">
+                </div>
+                <div class="form-group row mt-3">
+                    <label for="separator" class="col-sm-3 col-form-label">Metadata Separator</label>
+                    <div class="col-sm-3">
+                        <input type="text" class="form-control" id="separator" name="separator" placeholder="<tab>" value="<tab>">
+                    </div>
+                    <small class="form-text text-muted">Specify the metadata file separator (default is "&lt;tab&gt;", for comma use ",").</small>
+                </div>
+                <!-- Advanced Parsing Button and Column Type Detection Area -->
+                <div class="mt-3">
+                    <button type="button" class="btn btn-secondary" id="parseMetadataBtn">Advanced Parsing</button>
+                </div>
+                <div id="metadataAnalysis" class="mt-3" style="display: none;">
+                    <h6>Detected Column Types:</h6>
+                    <ul id="columnTypeList" class="list-group"></ul>
+                </div>
+            </div>
         </div>
-        <div class="form-group">
-            <label for="pfam">Pfam annotation from emapper (Optional)</label>
-            <small class="form-text text-muted">Or upload a pfam annotation file from emapper below.</small>
-            <input type="file" class="form-control-file mt-2" id="pfamFile" name="pfamFile">
+        
+        <!-- Alignment Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Alignment (Optional)</h5>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label for="alignment">Alignment File</label>
+                    <small class="form-text text-muted">Or upload an alignment file below.</small>
+                    <input type="file" class="form-control-file mt-2" id="alignmentFile" name="alignmentFile">
+                </div>
+            </div>
         </div>
+        
+        <!-- Pfam Annotation Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Pfam Annotation from emapper (Optional)</h5>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label for="pfam">Pfam annotation</label>
+                    <small class="form-text text-muted">Or upload a Pfam annotation file from emapper below.</small>
+                    <input type="file" class="form-control-file mt-2" id="pfamFile" name="pfamFile">
+                </div>
+            </div>
+        </div>
+        
+        <!-- Submit Button -->
         <button type="button" class="btn btn-primary" onclick="submitForm()">Upload Tree and Metadata</button>
     </form>
 </div>
@@ -54,10 +108,11 @@
 <script>
     const CHUNK_SIZE = 1024 * 1024; // 1MB
 
+    // Function to handle file upload
     async function submitForm() {
         const treename = document.getElementById('treename').value;
         const treeTextarea = document.getElementById('tree').value;
-        //const metadataTextarea = document.getElementById('metadata').value;
+        const treeparser = document.getElementById('treeparser').value;
         const treeFile = document.getElementById('treeFile').files[0];
         const metadataFile = document.getElementById('metadataFile').files[0];
         const alignmentFile = document.getElementById('alignmentFile').files[0];
@@ -82,6 +137,9 @@
             return;
         }
 
+        // Add tree parser to formData
+        formData.append("treeparser", treeparser);
+
         // Upload metadata if provided
         if (metadataFile) {
             await uploadFileInChunks(metadataFile, 'metadataFile', treename);
@@ -90,7 +148,13 @@
             formData.append("separator", separator);
         }
         
-        // Upload metadata if provided
+        // Add inferred column types to formData
+        const columnTypes = collectColumnTypes();
+        formData.append("text_prop", JSON.stringify(columnTypes.text_prop));
+        formData.append("num_prop", JSON.stringify(columnTypes.num_prop));
+        formData.append("bool_prop", JSON.stringify(columnTypes.bool_prop));
+        
+        // Upload alignment if provided
         if (alignmentFile) {
             await uploadFileInChunks(alignmentFile, 'alignmentFile', treename);
         }
@@ -110,6 +174,104 @@
             console.error("Error uploading files:", error);
             alert("Error occurred during upload.");
         });
+    }
+
+    // Function to analyze the metadata file when the "Advanced Parsing" button is clicked
+    document.getElementById('parseMetadataBtn').addEventListener('click', async () => {
+        const file = document.getElementById('metadataFile').files[0];
+        if (file) {
+            const separator = document.getElementById('separator').value === "<tab>" ? "\t" : document.getElementById('separator').value;
+            const text = await file.text();
+            parseMetadata(text, separator);
+        } else {
+            alert("Please select a metadata file first.");
+        }
+    });
+
+    function parseMetadata(text, separator) {
+        const rows = text.trim().split('\n');
+        if (rows.length < 2) {
+            alert("Metadata file is too short to analyze.");
+            return;
+        }
+
+        const headers = rows[0].split(separator);
+        const columnData = headers.map(() => []);
+
+        rows.slice(1).forEach(row => {
+            const cells = row.split(separator);
+            cells.forEach((cell, index) => {
+                columnData[index].push(cell.trim());
+            });
+        });
+
+        const columnTypes = headers.map((header, index) => {
+            return {
+                column: header,
+                type: index === 0 ? "Node ID Column" : detectColumnType(columnData[index])
+            };
+        });
+
+        // Display column types in the UI with options to manually select types (excluding "Node ID Column")
+        const columnTypeList = document.getElementById('columnTypeList');
+        columnTypeList.innerHTML = ""; // Clear previous results
+
+        columnTypes.forEach((col, index) => {
+            const listItem = document.createElement('li');
+            listItem.className = 'list-group-item';
+
+            if (index === 0) {
+                listItem.textContent = `${col.column}: Node ID Column`;
+            } else {
+                listItem.textContent = `${col.column}: `;
+                const select = document.createElement('select');
+                select.className = 'form-control-sm';
+                select.setAttribute('data-column', col.column);
+
+                ["Categorical", "Numerical", "Binary", "Taxonomic"].forEach(opt => {
+                    const option = document.createElement('option');
+                    option.value = opt;
+                    option.text = opt;
+                    option.selected = opt === col.type;
+                    if (col.type === "Categorical" && (opt === "Numerical" || opt === "Binary")) {
+                        option.disabled = true;
+                    }
+                    select.appendChild(option);
+                });
+                listItem.appendChild(select);
+            }
+            columnTypeList.appendChild(listItem);
+        });
+        document.getElementById('metadataAnalysis').style.display = 'block'; // Show the analysis section
+    }
+
+    function detectColumnType(values) {
+        const uniqueValues = [...new Set(values)];
+        const isBinary = uniqueValues.length === 2 && uniqueValues.every(val => ["0", "1", "true", "false", "t", "f"].includes(val.toLowerCase()));
+        const isNumeric = uniqueValues.every(val => !isNaN(val));
+        const isTaxonomic = uniqueValues.every(val => /^[A-Z][a-z]+(?:\s[a-z]+)?$/.test(val)); // e.g., "Homo sapiens"
+        
+        if (isNumeric) return "Numerical";
+        else if (isBinary) return "Binary";
+        else if (isTaxonomic) return "Taxonomic";
+        else return "Categorical";
+    }
+
+    function collectColumnTypes() {
+        const text_prop = [];
+        const num_prop = [];
+        const bool_prop = [];
+
+        document.querySelectorAll('#columnTypeList select').forEach(select => {
+            const colName = select.getAttribute('data-column');
+            const type = select.value;
+
+            if (type === 'Numerical') num_prop.push(colName);
+            else if (type === 'Binary') bool_prop.push(colName);
+            else text_prop.push(colName);
+        });
+
+        return { text_prop, num_prop, bool_prop };
     }
 
     async function uploadFileInChunks(file, fieldName, treename) {

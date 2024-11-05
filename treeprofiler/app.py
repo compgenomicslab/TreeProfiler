@@ -91,10 +91,16 @@ def upload_chunk():
 def do_upload():
     treename = request.forms.get('treename')
     tree_data = request.forms.get('tree')
+    treeparser = request.forms.get('treeparser')
     metadata = request.forms.get('metadata')
+    separator = request.forms.get('separator')
+    text_prop = request.forms.get('text_prop')
+    num_prop = request.forms.get('num_prop')
+    bool_prop = request.forms.get('bool_prop')
+    
     alignment = request.forms.get('alignment')
     pfam = request.forms.get('pfam')
-    separator = request.forms.get('separator')
+    
 
     column2method = {
         'alignment': 'none',
@@ -112,10 +118,10 @@ def do_upload():
 
     # Load tree from text input or file
     if tree_data:
-        tree = utils.ete4_parse(tree_data)
+        tree = utils.ete4_parse(tree_data, internal_parser=treeparser)
     elif tree_file_path and os.path.exists(tree_file_path):
         with open(tree_file_path, 'r') as f:
-            tree = utils.ete4_parse(f.read())
+            tree = utils.ete4_parse(f.read(), internal_parser=treeparser)
         os.remove(tree_file_path)
 
     # Load metadata from text input or file (if available)
@@ -142,6 +148,9 @@ def do_upload():
             "node_props": node_props,
             "columns": columns,
             "prop2type": prop2type,
+            "text_prop": text_prop,
+            "num_prop": num_prop,
+            "bool_prop": bool_prop
         }
     
     # Group emapper-related arguments
@@ -173,6 +182,7 @@ def do_upload():
     node_props.extend(default_props)
     trees[treename] = {
         'tree': tree_data,
+        'treeparser': treeparser,
         'metadata': metadata,
         'node_props': node_props,
         'annotated_tree': annotated_newick,
