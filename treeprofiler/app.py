@@ -94,14 +94,13 @@ def do_upload():
     treeparser = request.forms.get('treeparser')
     metadata = request.forms.get('metadata')
     separator = request.forms.get('separator')
-    text_prop = request.forms.get('text_prop')
-    num_prop = request.forms.get('num_prop')
-    bool_prop = request.forms.get('bool_prop')
-    
+    text_prop = request.forms.get('text_prop',[])
+    num_prop = request.forms.get('num_prop',[])
+    bool_prop = request.forms.get('bool_prop',[])
+    multiple_text_prop = request.forms.get('multiple_text_prop',[])
     alignment = request.forms.get('alignment')
     pfam = request.forms.get('pfam')
-    
-
+    print(text_prop, type(text_prop))
     column2method = {
         'alignment': 'none',
     }

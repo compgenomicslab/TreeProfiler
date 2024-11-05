@@ -148,12 +148,13 @@
             formData.append("separator", separator);
         }
         
-        // Add inferred column types to formData
+        // Add inferred column types to formData as comma-separated values
         const columnTypes = collectColumnTypes();
-        formData.append("text_prop", JSON.stringify(columnTypes.text_prop));
-        formData.append("num_prop", JSON.stringify(columnTypes.num_prop));
-        formData.append("bool_prop", JSON.stringify(columnTypes.bool_prop));
-        
+        formData.append("text_prop", columnTypes.text_prop.join(','));
+        formData.append("num_prop", columnTypes.num_prop.join(','));
+        formData.append("bool_prop", columnTypes.bool_prop.join(','));
+        formData.append("multiple_text_prop", columnTypes.multiple_text_prop.join(','));
+
         // Upload alignment if provided
         if (alignmentFile) {
             await uploadFileInChunks(alignmentFile, 'alignmentFile', treename);
@@ -175,7 +176,6 @@
             alert("Error occurred during upload.");
         });
     }
-
     // Function to analyze the metadata file when the "Advanced Parsing" button is clicked
     document.getElementById('parseMetadataBtn').addEventListener('click', async () => {
         const file = document.getElementById('metadataFile').files[0];
@@ -228,7 +228,7 @@
                 select.className = 'form-control-sm';
                 select.setAttribute('data-column', col.column);
 
-                ["Categorical", "Numerical", "Binary", "Taxonomic"].forEach(opt => {
+                ["Categorical", "List", "Numerical", "Binary", "Taxonomic"].forEach(opt => {
                     const option = document.createElement('option');
                     option.value = opt;
                     option.text = opt;
@@ -261,6 +261,7 @@
         const text_prop = [];
         const num_prop = [];
         const bool_prop = [];
+        const multiple_text_prop = [];
 
         document.querySelectorAll('#columnTypeList select').forEach(select => {
             const colName = select.getAttribute('data-column');
@@ -268,10 +269,11 @@
 
             if (type === 'Numerical') num_prop.push(colName);
             else if (type === 'Binary') bool_prop.push(colName);
+            else if (type === 'List') multiple_text_prop.push(colName);
             else text_prop.push(colName);
         });
 
-        return { text_prop, num_prop, bool_prop };
+        return { text_prop, num_prop, bool_prop, multiple_text_prop};
     }
 
     async function uploadFileInChunks(file, fieldName, treename) {

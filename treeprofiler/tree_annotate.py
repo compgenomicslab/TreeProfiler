@@ -9,6 +9,7 @@ import csv
 import tarfile
 
 from collections import defaultdict, Counter
+from itertools import chain
 import numpy as np
 from scipy import stats
 import requests
@@ -332,9 +333,16 @@ def run_tree_annotate(tree, input_annotated_tree=False,
                 prop2type[prop] = eval(value)
     else:
         # output datatype of each property of each tree node including internal nodes
+        # Flatten the lists into a single iterable for easy checking
+        print("text_prop", text_prop, type(text_prop))
+        print("multiple_text_prop", multiple_text_prop, type(multiple_text_prop))
+        print("num_prop", num_prop, type(multiple_text_prop))
+        print("bool_prop", bool_prop, type(multiple_text_prop))
+        all_props = text_prop + multiple_text_prop + num_prop + bool_prop
+        print(all_props)
         if prop2type:
             for key, dtype in prop2type.items():
-                if key in text_prop+multiple_text_prop+num_prop+bool_prop:
+                if key in all_props:
                     pass
                 
                 # taxon prop wouldn be process as numerical/text/bool/list value
