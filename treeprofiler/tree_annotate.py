@@ -1389,6 +1389,7 @@ def merge_text_annotations(nodes, target_props, column2method, emapper_mode=Fals
 
 def merge_multitext_annotations(nodes, target_props, column2method):
     # Seperator of multiple text 'GO:0000003,GO:0000902,GO:0000904'
+    
     multi_text_seperator = ','
     pair_seperator = "--"
     item_seperator = "||"
@@ -1399,7 +1400,6 @@ def merge_multitext_annotations(nodes, target_props, column2method):
     for target_prop in target_props:
         counter_stat = column2method.get(target_prop, "raw")
         prop_list = utils.children_prop_array(nodes, target_prop)
-        
         # Flatten the list of lists into a single list
         multi_prop_list = [item for sublist in prop_list for item in sublist]
         counter = dict(Counter(multi_prop_list))  # Store the counter

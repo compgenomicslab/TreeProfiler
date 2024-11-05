@@ -94,13 +94,13 @@ def do_upload():
     treeparser = request.forms.get('treeparser')
     metadata = request.forms.get('metadata')
     separator = request.forms.get('separator')
-    text_prop = request.forms.get('text_prop',[])
-    num_prop = request.forms.get('num_prop',[])
-    bool_prop = request.forms.get('bool_prop',[])
-    multiple_text_prop = request.forms.get('multiple_text_prop',[])
+    text_prop = request.forms.getlist('text_prop[]')
+    num_prop = request.forms.getlist('num_prop[]')
+    bool_prop = request.forms.getlist('bool_prop[]')
+    multiple_text_prop = request.forms.getlist('multiple_text_prop[]')
     alignment = request.forms.get('alignment')
     pfam = request.forms.get('pfam')
-    
+
     column2method = {
         'alignment': 'none',
     }
@@ -149,7 +149,8 @@ def do_upload():
             "prop2type": prop2type,
             "text_prop": text_prop,
             "num_prop": num_prop,
-            "bool_prop": bool_prop
+            "bool_prop": bool_prop,
+            "multiple_text_prop": multiple_text_prop
         }
     
     # Group emapper-related arguments
@@ -170,6 +171,14 @@ def do_upload():
     alignment=alignment_file_path,
     column2method=column2method
     )
+    list_keys = [key for key, value in prop2type.items() if value == list]
+    # Replace all commas in the tree with '||'
+    list_sep = '||'
+    for node in annotated_tree.leaves():
+        for key in list_keys:
+            if node.props.get(key):
+                list2str = list_sep.join(node.props.get(key))
+                node.add_prop(key, list2str)
     annotated_newick = annotated_tree.write(props=None, format_root_node=True)
     
     # Cleanup temporary alignment file after usage
@@ -213,6 +222,7 @@ def explore_tree(treename):
         current_layouts = tree_info.get('layouts', [])
         current_layouts = []
         current_props = tree_info.get('node_props', list(tree_info['prop2type'].keys()))
+        
         t = Tree(tree_info['annotated_tree'])
         
         if request.method == 'POST':
@@ -247,6 +257,7 @@ def explore_tree(treename):
                     value_color=value2color, column=level, poswidth=column_width)
                     current_layouts.append(matrix_layout)
                     level += 1
+            
             if selected_layout == 'categorical-matrix-layout':
                 # drawing as array in matrix
                 matrix, value2color = tree_plot.categorical2matrix(t, selected_props, color_config=color_config)

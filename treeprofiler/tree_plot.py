@@ -2183,7 +2183,6 @@ def multiple2matrix(tree, profiling_prop, prop2type=None, color_config=None, ete
 
     # Determine the data type of the profiling property
     data_type = prop2type.get(profiling_prop)
-
     # Get all categorical values based on whether data_type is a list and eteformat_flag
     if data_type and data_type == list:
         tree_prop_array = utils.tree_prop_array(tree, profiling_prop, leaf_only=True, list_type=not eteformat_flag)
