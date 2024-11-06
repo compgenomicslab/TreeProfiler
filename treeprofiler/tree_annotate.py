@@ -908,11 +908,17 @@ def run(args):
                 if node.props.get(key):
                     list2str = list_sep.join(node.props.get(key))
                     node.add_prop(key, list2str)
-        annotated_tree.write(outfile=os.path.join(args.outdir, out_newick), props=None, 
+        avail_props = list(prop2type.keys())
+        del avail_props[avail_props.index('name')]
+        del avail_props[avail_props.index('dist')]
+        if 'support' in avail_props:
+            del avail_props[avail_props.index('support')]
+        
+        annotated_tree.write(outfile=os.path.join(args.outdir, out_newick), props=avail_props, 
                     parser=utils.get_internal_parser(args.internal), format_root_node=True)
     
     if args.stdout:
-        print(annotated_tree.write(props=None, parser=utils.get_internal_parser(args.internal), format_root_node=True))
+        print(annotated_tree.write(props=avail_props, parser=utils.get_internal_parser(args.internal), format_root_node=True))
 
     # if args.outtsv:
     #     tree2table(annotated_tree, internal_node=True, outfile=args.outtsv)

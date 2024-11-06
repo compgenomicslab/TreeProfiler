@@ -99,6 +99,10 @@ def do_upload():
     num_prop = request.forms.getlist('num_prop[]')
     bool_prop = request.forms.getlist('bool_prop[]')
     multiple_text_prop = request.forms.getlist('multiple_text_prop[]')
+    taxon_column = request.forms.get('taxonomicIdColumn')
+    taxadb = request.forms.get('taxaDb')
+    speceies_delimiter = request.forms.get('speciesFieldDelimiter')
+    species_index = request.forms.get('speciesFieldIndex')
     alignment = request.forms.get('alignment')
     pfam = request.forms.get('pfam')
 
@@ -142,12 +146,13 @@ def do_upload():
     metadata_options = {}
     if separator == "<tab>":
         separator = "\t"
-
+    
     if metadata_bytes:
         with NamedTemporaryFile(suffix='.tsv') as f_annotation:
             f_annotation.write(metadata_bytes)
             f_annotation.flush()
             metadata_dict, node_props, columns, prop2type = parse_csv([f_annotation.name], delimiter=separator)
+        
         metadata_options = {
             "metadata_dict": metadata_dict,
             "node_props": node_props,
@@ -185,7 +190,13 @@ def do_upload():
             if node.props.get(key):
                 list2str = list_sep.join(node.props.get(key))
                 node.add_prop(key, list2str)
-    annotated_newick = annotated_tree.write(props=None, format_root_node=True)
+    avail_props = list(prop2type.keys())
+    del avail_props[avail_props.index('name')]
+    del avail_props[avail_props.index('dist')]
+    if 'support' in avail_props:
+        del avail_props[avail_props.index('support')]
+
+    annotated_newick = annotated_tree.write(props=avail_props, format_root_node=True)
     
     # Cleanup temporary alignment file after usage
     if alignment_file_path and os.path.exists(alignment_file_path):
