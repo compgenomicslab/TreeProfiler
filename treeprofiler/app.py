@@ -1,9 +1,10 @@
-from bottle import route, run, request, redirect, template, static_file
+from bottle import route, run, request, redirect, template, static_file, response 
 import threading
 from tempfile import NamedTemporaryFile
 from collections import defaultdict
 import os
 import json
+import time
 
 from ete4 import Tree
 from treeprofiler.tree_annotate import run_tree_annotate, parse_csv  # or other functions you need
@@ -35,6 +36,170 @@ paired_color = [
     '#6bb9bd', '#cb30eb', '#26bad0', '#d9e557'
 ]
 
+
+job_status = {}  # Dictionary to store job statuses
+@route('/upload', method='POST')
+def do_upload():
+    treename = request.forms.get('treename')
+    if not treename:
+        response.status = 400
+        return {"error": "Tree name is required"}
+
+    if treename in job_status:
+        response.status = 400
+        return {"error": "A job with this tree name is already in progress"}
+
+    job_status[treename] = "running"
+
+    # Collect all form data
+    job_args = {
+        "treename": treename,
+        "tree_data": request.forms.get('tree'),
+        "treeparser": request.forms.get('treeparser'),
+        "metadata": request.forms.get('metadata'),
+        "separator": request.forms.get('separator'),
+        "text_prop": request.forms.getlist('text_prop[]'),
+        "num_prop": request.forms.getlist('num_prop[]'),
+        "bool_prop": request.forms.getlist('bool_prop[]'),
+        "multiple_text_prop": request.forms.getlist('multiple_text_prop[]'),
+        "taxon_column": request.forms.get('taxonomicIdColumn'),
+        "taxadb": request.forms.get('taxaDb'),
+        "species_delimiter": request.forms.get('speciesFieldDelimiter'),
+        "species_index": int(request.forms.get('speciesFieldIndex') or 0),
+        "version": request.forms.get('version'),
+        "ignore_unclassified": request.forms.get('ignoreUnclassified') == 'True',
+        "alignment": request.forms.get('alignment'),
+        "pfam": request.forms.get('pfam'),
+        "summary_methods": request.forms.get('summary_methods')
+    }
+
+    # Start the upload job in a new thread
+    threading.Thread(target=process_upload_job, args=(job_args,)).start()
+    response.content_type = 'application/json'
+    return json.dumps({"job_id": treename})
+
+
+def process_upload_job(job_args):
+    """Function to handle the actual processing of the uploaded data."""
+    treename = job_args['treename']
+    try:
+        # Initialize variables and parse arguments
+        separator = "\t" if job_args.get("separator") == "<tab>" else job_args.get("separator", ",")
+        tree_data = job_args.get("tree_data")
+        treeparser = job_args.get("treeparser")
+        summary_methods = job_args.get("summary_methods")
+        
+        # Parse summary methods JSON, if provided
+        column2method = json.loads(summary_methods) if summary_methods else {}
+        column2method['alignment'] = 'none'
+        
+        # Retrieve paths for uploaded files
+        tree_file_path = uploaded_chunks.get(treename, {}).get("tree")
+        metadata_file_path = uploaded_chunks.get(treename, {}).get("metadata")
+        alignment_file_path = uploaded_chunks.get(treename, {}).get("alignment")
+        pfam_file_path = uploaded_chunks.get(treename, {}).get("pfam")
+        
+        # Load the tree data
+        if tree_data:
+            tree = utils.ete4_parse(tree_data, internal_parser=treeparser)
+        elif tree_file_path and os.path.exists(tree_file_path):
+            with open(tree_file_path, 'r') as f:
+                tree = utils.ete4_parse(f.read(), internal_parser=treeparser)
+            os.remove(tree_file_path)
+
+        # Prepare metadata processing if available
+        metadata_bytes = job_args.get("metadata").encode('utf-8') if job_args.get("metadata") else None
+        if metadata_file_path and os.path.exists(metadata_file_path):
+            with open(metadata_file_path, 'rb') as f:
+                metadata_bytes = f.read()
+            os.remove(metadata_file_path)
+
+        # Process metadata
+        metadata_options = {}
+        if metadata_bytes:
+            with NamedTemporaryFile(suffix='.tsv') as f_annotation:
+                f_annotation.write(metadata_bytes)
+                f_annotation.flush()
+                metadata_dict, node_props, columns, prop2type = parse_csv([f_annotation.name], delimiter=separator)
+
+            metadata_options = {
+                "metadata_dict": metadata_dict,
+                "node_props": node_props,
+                "columns": columns,
+                "prop2type": prop2type,
+                "text_prop": job_args.get("text_prop"),
+                "num_prop": job_args.get("num_prop"),
+                "bool_prop": job_args.get("bool_prop"),
+                "multiple_text_prop": job_args.get("multiple_text_prop")
+            }
+
+        # Taxonomic annotation options
+        taxonomic_options = {}
+        if job_args.get("taxon_column"):
+            taxonomic_options = {
+                "taxon_column": job_args.get("taxon_column"),
+                "taxadb": job_args.get("taxadb"),
+                "gtdb_version": job_args.get("version"),
+                "taxon_delimiter": job_args.get("species_delimiter"),
+                "taxa_field": job_args.get("species_index"),
+                "ignore_unclassified": job_args.get("ignore_unclassified")
+            }
+
+        # Emapper options
+        emapper_options = {
+            "emapper_mode": False,
+            "emapper_pfam": pfam_file_path if pfam_file_path else None
+        }
+
+        # Run annotation
+        annotated_tree, prop2type = run_tree_annotate(
+            tree,
+            **metadata_options,
+            **emapper_options,
+            **taxonomic_options,
+            alignment=alignment_file_path,
+            column2method=column2method
+        )
+
+        # Post-processing of annotated tree properties
+        list_keys = [key for key, value in prop2type.items() if value == list]
+        for node in annotated_tree.leaves():
+            for key in list_keys:
+                if node.props.get(key):
+                    node.add_prop(key, '||'.join(node.props[key]))
+
+        avail_props = [key for key in prop2type.keys() if key not in ['name', 'dist', 'support']]
+        annotated_newick = annotated_tree.write(props=avail_props, format_root_node=True)
+
+        # Store the processed data
+        trees[treename] = {
+            'tree': tree_data,
+            'treeparser': treeparser,
+            'metadata': job_args.get("metadata"),
+            'node_props': metadata_options.get('node_props', []) + [
+                'rank', 'sci_name', 'taxid', 'evoltype', 'dup_sp', 'dup_percent'
+            ],
+            'annotated_tree': annotated_newick,
+            'prop2type': prop2type,
+            'layouts': []
+        }
+
+        # Cleanup temporary alignment file after usage
+        if alignment_file_path and os.path.exists(alignment_file_path):
+            os.remove(alignment_file_path)
+
+        # Mark job as complete
+        job_status[treename] = "complete"
+        
+    except Exception as e:
+        job_status[treename] = "failed"
+        print(f"Error processing job {treename}: {e}")
+    finally:
+        # Remove stored chunks for the completed job
+        if treename in uploaded_chunks:
+            del uploaded_chunks[treename]
+
+
 # Route to serve static files like CSS and JS
 @route('/static/<filepath:path>')
 def server_static(filepath):
@@ -43,7 +208,6 @@ def server_static(filepath):
 @route('/')
 def upload_tree():
     return template('upload_tree')
-
 
 @route('/upload_chunk', method='POST')
 def upload_chunk():
@@ -88,160 +252,22 @@ def upload_chunk():
 
     return "Chunk received"
 
-@route('/upload', method='POST')
-def do_upload():
-    treename = request.forms.get('treename')
-    tree_data = request.forms.get('tree')
-    treeparser = request.forms.get('treeparser')
-    metadata = request.forms.get('metadata')
-    separator = request.forms.get('separator')
-    text_prop = request.forms.getlist('text_prop[]')
-    num_prop = request.forms.getlist('num_prop[]')
-    bool_prop = request.forms.getlist('bool_prop[]')
-    multiple_text_prop = request.forms.getlist('multiple_text_prop[]')
+@route('/job_status/<job_id>')
+def job_status_check(job_id):
+    status = job_status.get(job_id, "not_found")
+    response.content_type = 'application/json'
+    return {"status": status}
 
-    taxon_column = request.forms.get('taxonomicIdColumn', None)
-    taxadb = request.forms.get('taxaDb', None)
-    speceies_delimiter = request.forms.get('speciesFieldDelimiter', None)
-    species_index = request.forms.get('speciesFieldIndex', None)
-    if species_index:
-        species_index = int(species_index)
 
-    version = request.forms.get('version')
-    ignore_unclassified = bool(request.forms.get('ignoreUnclassified'))
+@route('/show_tree/<treename>')
+def show_tree(treename):
+    # Fetch and display the processed tree, if available
+    tree_info = trees.get(treename)
+    if tree_info:
+        return f"Tree '{treename}' processed successfully! Displaying results."
+    return "Processing still in progress or failed."
 
-    alignment = request.forms.get('alignment')
-    pfam = request.forms.get('pfam')
-    
-    # Convert the json received from the form to a dictionary
-    summary_method_str = request.forms.get('summary_methods')
-    if summary_method_str:
-        column2method = json.loads(summary_method_str)
-    else:
-        column2method = {}
-    column2method['alignment'] = 'none'
-
-    default_props = [
-        'name', 'dist', 'support', 'rank', 'sci_name', 'taxid', 'lineage', 'named_lineage',
-        'evoltype', 'dup_sp', 'dup_percent', 'lca'
-    ]
-
-    # Get file paths for uploaded files
-    tree_file_path = uploaded_chunks.get(treename, {}).get("tree")
-    metadata_file_path = uploaded_chunks.get(treename, {}).get("metadata")
-    alignment_file_path = uploaded_chunks.get(treename, {}).get("alignment")
-    pfam_file_path = uploaded_chunks.get(treename, {}).get("pfam")
-
-    # Load tree from text input or file
-    if tree_data:
-        tree = utils.ete4_parse(tree_data, internal_parser=treeparser)
-    elif tree_file_path and os.path.exists(tree_file_path):
-        with open(tree_file_path, 'r') as f:
-            tree = utils.ete4_parse(f.read(), internal_parser=treeparser)
-        os.remove(tree_file_path)
-
-    # Load metadata from text input or file (if available)
-    metadata_bytes = None
-    if metadata:
-        metadata_bytes = metadata.encode('utf-8')
-    elif metadata_file_path and os.path.exists(metadata_file_path):
-        with open(metadata_file_path, 'rb') as f:
-            metadata_bytes = f.read()
-        os.remove(metadata_file_path)
-
-    # Parse metadata if available
-    metadata_options = {}
-    if separator == "<tab>":
-        separator = "\t"
-    
-    if metadata_bytes:
-        with NamedTemporaryFile(suffix='.tsv') as f_annotation:
-            f_annotation.write(metadata_bytes)
-            f_annotation.flush()
-            metadata_dict, node_props, columns, prop2type = parse_csv([f_annotation.name], delimiter=separator)
-        
-        metadata_options = {
-            "metadata_dict": metadata_dict,
-            "node_props": node_props,
-            "columns": columns,
-            "prop2type": prop2type,
-            "text_prop": text_prop,
-            "num_prop": num_prop,
-            "bool_prop": bool_prop,
-            "multiple_text_prop": multiple_text_prop
-        }
-    # taxonomic annotation
-    taxonomic_options = {}
-    if taxon_column:
-        taxonomic_options = {
-            "taxon_column": taxon_column,
-            "taxadb": taxadb,
-            "gtdb_version": version,
-            "taxon_delimiter": speceies_delimiter,
-            "taxa_field": species_index,
-            "ignore_unclassified": ignore_unclassified
-        }
-    
-    # Group emapper-related arguments
-    if pfam_file_path:
-        emapper_options = {
-            "emapper_mode": False,
-            "emapper_pfam": pfam_file_path
-        }
-    else:
-        emapper_options = {
-            "emapper_mode": False,
-            "emapper_pfam": None
-        }
-    # Annotate tree if metadata is provided
-    annotated_tree, prop2type = run_tree_annotate(tree, 
-    **metadata_options,
-    **emapper_options,
-    **taxonomic_options, 
-    alignment=alignment_file_path,
-    column2method=column2method
-    )
-    list_keys = [key for key, value in prop2type.items() if value == list]
-    # Replace all commas in the tree with '||'
-    list_sep = '||'
-    for node in annotated_tree.leaves():
-        for key in list_keys:
-            if node.props.get(key):
-                list2str = list_sep.join(node.props.get(key))
-                node.add_prop(key, list2str)
-    avail_props = list(prop2type.keys())
-    del avail_props[avail_props.index('name')]
-    del avail_props[avail_props.index('dist')]
-    if 'support' in avail_props:
-        del avail_props[avail_props.index('support')]
-    
-    annotated_newick = annotated_tree.write(props=avail_props, format_root_node=True)
-    
-    # Cleanup temporary alignment file after usage
-    if alignment_file_path and os.path.exists(alignment_file_path):
-        os.remove(alignment_file_path)
-    
-    # Store the tree data
-    node_props = metadata_options.get('node_props', [])
-    node_props.extend(default_props)
-    trees[treename] = {
-        'tree': tree_data,
-        'treeparser': treeparser,
-        'metadata': metadata,
-        'node_props': node_props,
-        'annotated_tree': annotated_newick,
-        'prop2type': prop2type,
-        'layouts': [],
-    }
-
-    # Cleanup chunks after use
-    if treename in uploaded_chunks:
-        del uploaded_chunks[treename]
-
-    # Redirect to tree page
-    return redirect(f'/tree/{treename}')
-
-@route('/tree/<treename>')
+@route('/tree/<treename>/result')
 def show_tree(treename):
     # Fetch the tree data by its name
     tree_info = trees.get(treename)
@@ -249,6 +275,18 @@ def show_tree(treename):
         return template('tree_details', treename=treename, tree_info=tree_info)
     else:
         return f"Tree '{treename}' not found."
+
+@route('/tree/<treename>')
+def tree_status(treename):
+    """Serves the job_running.html template to show job status."""
+    return template('job_running', treename=treename, job_id=treename)
+
+@route('/check_job_status')
+def check_job_status():
+    """API endpoint to check the status of a given job."""
+    job_id = request.query.get('job_id')
+    status = job_status.get(job_id, "not_found")
+    return status
 
 @route('/explore_tree/<treename>', method=['GET', 'POST'])
 def explore_tree(treename):

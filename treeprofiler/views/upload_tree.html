@@ -141,7 +141,7 @@
         <!-- End Taxonomic section -->
 
         <!-- Analytic section -->
-        <!-- <div class="card mb-4">
+        <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5>Ancestral Character Reconstruction (Optional)</h5>
                 <button type="button" class="btn btn-secondary btn-sm" id="toggleACRBtn">Activate Ancestral Character Reconstruction</button>
@@ -149,7 +149,7 @@
             <div id="acrSection" class="card-body collapsed" style="display: none;">
             </div>
 
-        </div> -->
+        </div>
         <!-- End Analytic section -->
 
         <!-- Alignment Section -->
@@ -255,17 +255,30 @@
             await uploadFileInChunks(pfamFile, 'pfamFile', treename);
         }
 
-        fetch('/upload', {
+        const response = await fetch('/upload', {
             method: 'POST',
             body: formData
-        }).then(response => response.text()).then(result => {
-            window.location.href = `/tree/${treename}`;
-        }).catch(error => {
-            console.error("Error uploading files:", error);
-            alert("Error occurred during upload.");
         });
-    }
+        const data = await response.json();
+        const job_id = data.job_id;
 
+        // Redirect to status page for this job
+        window.location.href = `/tree/${job_id}?job_id=${job_id}`;
+        }
+    
+        
+    async function checkStatus(jobId) {
+        let response = await fetch(`/job_status/${jobId}`);
+        let data = await response.json();
+        if (data.status === "complete") {
+            window.location.href = `/show_tree/${jobId}`;
+        } else if (data.status === "failed") {
+            document.getElementById('status').innerText = "Job failed.";
+        } else {
+            setTimeout(() => checkStatus(jobId), 2000);  // Poll every 2 seconds
+        }
+    }
+    
     // Function to collect summary selections with simplified values
     function collectSummarySelections() {
         const summarySelections = {};
