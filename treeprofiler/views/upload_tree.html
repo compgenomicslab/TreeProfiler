@@ -21,28 +21,66 @@
                 <h5>Tree</h5>
             </div>
             <div class="card-body">
-                <div class="form-group">
-                    <label for="treename">Tree Name</label>
-                    <input type="text" class="form-control" id="treename" name="treename" placeholder="Enter Tree Name" value="test" required>
+                <div class="form-group row mt-3">
+                    <label for="treename" class="col-sm-3 col-form-label">Tree Name</label>
+                    <div class="col-sm-3">
+                        <input type="text" class="form-control" id="treename" name="treename" placeholder="Enter Tree Name" value="test" required>
+                    </div>
                 </div>
                 <div class="form-group">
-                    <label for="tree">Tree Newick Format</label>
-                    <textarea class="form-control" id="tree" name="tree" rows="5" placeholder="Enter tree in Newick format">
-((Taxa_3:0.219065,(Taxa_4:0.188681,Taxa_2:0.5196)0.166914:0.90365)0.138062:0.0632016,(Taxa_0:0.190563,Taxa_1:0.458423)0.138062:0.97338);
-                    </textarea>
-                    <small class="form-text text-muted">Or upload a Newick file below.</small>
+                    <label for="tree" class="col-sm-3 col-form-label">Upload Tree File in Newick Format</label>
+                    <!-- <small class="form-text text-muted">upload a Newick file</small> -->
                     <input type="file" class="form-control-file mt-2" id="treeFile" name="treeFile">
                 </div>
-                <div class="form-group">
-                    <label for="treeparser">Tree Parser</label>
-                    <select class="form-control" id="treeparser" name="treeparser" required>
-                        <option value="name" >Name</option>
-                        <option value="support" selected>Support</option>
-                    </select>
+                <div class="form-group row mt-3">
+                    <label for="treeparser" class="col-sm-3 col-form-label">Tree Parser</label>
+                    <div class="col-sm-3">
+                        <select class="form-control" id="treeparser" name="treeparser" required>
+                            <option value="name" >Name</option>
+                            <option value="support" selected>Support</option>
+                        </select>
+                    </div>
                 </div>
             </div>
         </div>
         
+        <!-- Metadata Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Metadata (Optional)</h5>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label for="metadata" class="col-sm-3 col-form-label">Metadata File</label>
+                    <input type="file" class="form-control-file mt-2" id="metadataFile" name="metadataFile">
+                </div>
+                <div class="form-group row mt-3">
+                    <label for="separator" class="col-sm-3 col-form-label">Metadata Separator</label>
+                    <div class="col-sm-3">
+                        <input type="text" class="form-control" id="separator" name="separator" placeholder="<tab>" value="<tab>">
+                    </div>
+                    <small class="form-text text-muted">Specify the metadata file separator (default is "&lt;tab&gt;", for comma use ",").</small>
+                </div>
+                <div class="mt-3">
+                    <button type="button" class="btn btn-secondary" id="parseMetadataBtn">Parsing metadata</button>
+                </div>
+                <div id="metadataAnalysis" class="mt-3" style="display: none;">
+                    <h6>Detected Column Types:</h6>
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Column</th>
+                                <th>Data Type</th>
+                                <th>Summary Method for Ancestor Nodes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="columnTypeList"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <!-- End Metada section -->
+
         <!-- Taxonomic Annotation Section -->
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
@@ -100,45 +138,20 @@
                 </div>
             </div>
         </div>
-        <!-- End -->
+        <!-- End Taxonomic section -->
 
-        <!-- Metadata Section -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5>Metadata (Optional)</h5>
+        <!-- Analytic section -->
+        <!-- <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5>Ancestral Character Reconstruction (Optional)</h5>
+                <button type="button" class="btn btn-secondary btn-sm" id="toggleACRBtn">Activate Ancestral Character Reconstruction</button>
             </div>
-            <div class="card-body">
-                <div class="form-group">
-                    <label for="metadata">Metadata File</label>
-                    <small class="form-text text-muted">Or upload a metadata file below.</small>
-                    <input type="file" class="form-control-file mt-2" id="metadataFile" name="metadataFile">
-                </div>
-                <div class="form-group row mt-3">
-                    <label for="separator" class="col-sm-3 col-form-label">Metadata Separator</label>
-                    <div class="col-sm-3">
-                        <input type="text" class="form-control" id="separator" name="separator" placeholder="<tab>" value="<tab>">
-                    </div>
-                    <small class="form-text text-muted">Specify the metadata file separator (default is "&lt;tab&gt;", for comma use ",").</small>
-                </div>
-                <div class="mt-3">
-                    <button type="button" class="btn btn-secondary" id="parseMetadataBtn">Parsing metadata</button>
-                </div>
-                <div id="metadataAnalysis" class="mt-3" style="display: none;">
-                    <h6>Detected Column Types:</h6>
-                    <table class="table table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Column</th>
-                                <th>Data Type</th>
-                                <th>Summary Method for Ancestor Nodes</th>
-                            </tr>
-                        </thead>
-                        <tbody id="columnTypeList"></tbody>
-                    </table>
-                </div>
+            <div id="acrSection" class="card-body collapsed" style="display: none;">
             </div>
-        </div>
-        
+
+        </div> -->
+        <!-- End Analytic section -->
+
         <!-- Alignment Section -->
         <div class="card mb-4">
             <div class="card-header">
@@ -146,8 +159,7 @@
             </div>
             <div class="card-body">
                 <div class="form-group">
-                    <label for="alignment">Alignment File</label>
-                    <small class="form-text text-muted">Or upload an alignment file below.</small>
+                    <label for="alignment" class="col-sm-3 col-form-label">Alignment File</label>
                     <input type="file" class="form-control-file mt-2" id="alignmentFile" name="alignmentFile">
                 </div>
             </div>
@@ -160,8 +172,7 @@
             </div>
             <div class="card-body">
                 <div class="form-group">
-                    <label for="pfam">Pfam annotation</label>
-                    <small class="form-text text-muted">Or upload a Pfam annotation file from emapper below.</small>
+                    <label for="pfam" class="col-sm-3 col-form-label">Pfam annotation</label>
                     <input type="file" class="form-control-file mt-2" id="pfamFile" name="pfamFile">
                 </div>
             </div>
@@ -177,7 +188,6 @@
 
     async function submitForm() {
         const treename = document.getElementById('treename').value;
-        const treeTextarea = document.getElementById('tree').value;
         const treeparser = document.getElementById('treeparser').value;
         const treeFile = document.getElementById('treeFile').files[0];
         const metadataFile = document.getElementById('metadataFile').files[0];
