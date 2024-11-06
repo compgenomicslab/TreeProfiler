@@ -99,13 +99,20 @@ def do_upload():
     num_prop = request.forms.getlist('num_prop[]')
     bool_prop = request.forms.getlist('bool_prop[]')
     multiple_text_prop = request.forms.getlist('multiple_text_prop[]')
-    taxon_column = request.forms.get('taxonomicIdColumn')
-    taxadb = request.forms.get('taxaDb')
-    speceies_delimiter = request.forms.get('speciesFieldDelimiter')
-    species_index = request.forms.get('speciesFieldIndex')
+
+    taxon_column = request.forms.get('taxonomicIdColumn', None)
+    taxadb = request.forms.get('taxaDb', None)
+    speceies_delimiter = request.forms.get('speciesFieldDelimiter', None)
+    species_index = request.forms.get('speciesFieldIndex', None)
+    if species_index:
+        species_index = int(species_index)
+
+    version = request.forms.get('version')
+    ignore_unclassified = bool(request.forms.get('ignoreUnclassified'))
+
     alignment = request.forms.get('alignment')
     pfam = request.forms.get('pfam')
-
+    
     # Convert the json received from the form to a dictionary
     summary_method_str = request.forms.get('summary_methods')
     if summary_method_str:
@@ -163,6 +170,17 @@ def do_upload():
             "bool_prop": bool_prop,
             "multiple_text_prop": multiple_text_prop
         }
+    # taxonomic annotation
+    taxonomic_options = {}
+    if taxon_column:
+        taxonomic_options = {
+            "taxon_column": taxon_column,
+            "taxadb": taxadb,
+            "gtdb_version": version,
+            "taxon_delimiter": speceies_delimiter,
+            "taxa_field": species_index,
+            "ignore_unclassified": ignore_unclassified
+        }
     
     # Group emapper-related arguments
     if pfam_file_path:
@@ -178,7 +196,8 @@ def do_upload():
     # Annotate tree if metadata is provided
     annotated_tree, prop2type = run_tree_annotate(tree, 
     **metadata_options,
-    **emapper_options, 
+    **emapper_options,
+    **taxonomic_options, 
     alignment=alignment_file_path,
     column2method=column2method
     )
@@ -195,13 +214,13 @@ def do_upload():
     del avail_props[avail_props.index('dist')]
     if 'support' in avail_props:
         del avail_props[avail_props.index('support')]
-
+    
     annotated_newick = annotated_tree.write(props=avail_props, format_root_node=True)
     
     # Cleanup temporary alignment file after usage
     if alignment_file_path and os.path.exists(alignment_file_path):
         os.remove(alignment_file_path)
-
+    
     # Store the tree data
     node_props = metadata_options.get('node_props', [])
     node_props.extend(default_props)

@@ -46,49 +46,61 @@
         <!-- Taxonomic Annotation Section -->
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5>Taxonomic Annotation and Evolutionary Event Detection (Optional)</h5>
-                <button class="btn btn-secondary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#taxonomicAnnotationBody" aria-expanded="false" aria-controls="taxonomicAnnotationBody">
-                    Activate Taxonomic Annotation
-                </button>
+                <h5>Taxonomic Annotation (Optional)</h5>
+                <button type="button" class="btn btn-secondary btn-sm" id="toggleTaxonomicBtn">Activate Taxonomic Annotation</button>
             </div>
-            <div class="card-body collapse" id="taxonomicAnnotationBody">
-                <div class="form-group">
-                    <label for="taxonomic">Taxonomic Annotation Information</label>
-                </div>
+            <div id="taxonomicSection" class="card-body collapsed" style="display: none;">
                 <div class="form-group row mt-3">
                     <!-- Taxonomic ID Column -->
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label for="taxonomicIdColumn">Taxonomic ID Column</label>
                         <select class="form-control" id="taxonomicIdColumn" name="taxonomicIdColumn">
-                            <!-- Options added dynamically on metadata upload -->
+                            <!-- Add column options dynamically based on metadata -->
                             <option value="name">name</option>
                         </select>
                     </div>
                     
                     <!-- Taxa DB -->
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label for="taxaDb">Taxa DB</label>
-                        <select class="form-control" id="taxaDb" name="taxaDb">
+                        <select class="form-control" id="taxaDb" name="taxaDb" onchange="updateVersionOptions()">
                             <option value="NCBI">NCBI</option>
                             <option value="GTDB">GTDB</option>
                         </select>
                     </div>
                     
+                    <!-- Version -->
+                    <div class="col-md-2">
+                        <label for="version">Version</label>
+                        <select class="form-control" id="version" name="version">
+                            <option value="-">-</option>
+                        </select>
+                    </div>
+
                     <!-- Species Field Delimiter -->
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label for="speciesFieldDelimiter">Species Field Delimiter</label>
-                        <input type="text" class="form-control" id="speciesFieldDelimiter" name="speciesFieldDelimiter" placeholder="," value=",">
+                        <input type="text" class="form-control" id="speciesFieldDelimiter" name="speciesFieldDelimiter" value=".">
                     </div>
                     
                     <!-- Species Field Index -->
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label for="speciesFieldIndex">Species Field Index</label>
                         <input type="text" class="form-control" id="speciesFieldIndex" name="speciesFieldIndex" placeholder="Enter index" value="0">
+                    </div>
+
+                     <!-- ignore unclassified -->
+                     <div class="col-md-2">
+                        <label for="ignoreUnclassified">ignore unclassified</label>
+                        <select class="form-control" id="ignoreUnclassified" name="ignoreUnclassified">
+                            <option value="False">False</option>
+                            <option value="True">True</option>
+                        </select>
                     </div>
                 </div>
             </div>
         </div>
-        <!-- End Taxonomic Annotation Section -->
+        <!-- End -->
 
         <!-- Metadata Section -->
         <div class="card mb-4">
@@ -172,7 +184,7 @@
         const alignmentFile = document.getElementById('alignmentFile').files[0];
         const pfamFile = document.getElementById('pfamFile').files[0];
         const separator = document.getElementById('separator').value;
-
+        
         if (!treename) {
             alert("Please enter a tree name.");
             return;
@@ -199,12 +211,24 @@
             formData.append("separator", separator);
         }
         
-        // Add Taxonomic Annotation fields to formData
-        formData.append("taxonomicIdColumn", taxonomicIdColumn);
-        formData.append("taxaDb", taxaDb);
-        formData.append("speciesFieldDelimiter", speciesFieldDelimiter);
-        formData.append("speciesFieldIndex", speciesFieldIndex);
+        // Check if taxonomic section is activated before adding fields
+        const taxonomicSection = document.getElementById("taxonomicSection");
+        if (!taxonomicSection.classList.contains("collapsed")) {  // Only add if section is active
+            const taxonomicIdColumn = document.getElementById("taxonomicIdColumn").value;
+            const taxaDb = document.getElementById("taxaDb").value;
+            const version = document.getElementById("version").value;
+            const speciesFieldDelimiter = document.getElementById("speciesFieldDelimiter").value;
+            const speciesFieldIndex = document.getElementById("speciesFieldIndex").value;
+            const ignoreUnclassified = document.getElementById("ignoreUnclassified").value;
 
+            formData.append("taxonomicIdColumn", taxonomicIdColumn);
+            formData.append("taxaDb", taxaDb);
+            formData.append("version", version);
+            formData.append("speciesFieldDelimiter", speciesFieldDelimiter);
+            formData.append("speciesFieldIndex", speciesFieldIndex);
+            formData.append("ignoreUnclassified", ignoreUnclassified);
+        }
+        
         const columnTypes = collectColumnTypes();
         columnTypes.text_prop.forEach(item => formData.append("text_prop[]", item));
         columnTypes.num_prop.forEach(item => formData.append("num_prop[]", item));
@@ -341,6 +365,31 @@
         });
     }
 
+    function updateVersionOptions() {
+        const taxaDb = document.getElementById("taxaDb").value;
+        const versionSelect = document.getElementById("version");
+
+        // Clear current options
+        versionSelect.innerHTML = "";
+
+        if (taxaDb === "GTDB") {
+            // Add GTDB versions
+            const gtdbVersions = ["95", "202", "207", "214", "220"];
+            gtdbVersions.forEach(version => {
+                const option = document.createElement("option");
+                option.value = version;
+                option.text = version;
+                versionSelect.appendChild(option);
+            });
+        } else {
+            // Default option for NCBI
+            const defaultOption = document.createElement("option");
+            defaultOption.value = "-";
+            defaultOption.text = "-";
+            versionSelect.appendChild(defaultOption);
+        }
+    }
+
     function generateSummaryOptions(type) {
         const options = {
             Numerical: ["all", "sum", "avg", "max", "min", "std", "none"],
@@ -409,6 +458,12 @@
             });
         }
     }
+    // Toggle visibility of taxonomic annotation section
+    document.getElementById("toggleTaxonomicBtn").addEventListener("click", () => {
+        const taxonomicSection = document.getElementById("taxonomicSection");
+        const isCollapsed = taxonomicSection.classList.toggle("collapsed");
+        taxonomicSection.style.display = isCollapsed ? "none" : "block";
+    });
 </script>
 </body>
 </html>
