@@ -61,17 +61,21 @@
                     </div>
                     <small class="form-text text-muted">Specify the metadata file separator (default is "&lt;tab&gt;", for comma use ",").</small>
                 </div>
-                <!-- Advanced Parsing Button and Column Type Detection Area -->
                 <div class="mt-3">
                     <button type="button" class="btn btn-secondary" id="parseMetadataBtn">Advanced Parsing</button>
                 </div>
                 <div id="metadataAnalysis" class="mt-3" style="display: none;">
                     <h6>Detected Column Types:</h6>
-                    <small class="form-text text-muted">
-                        Note: "List" type indicates multiple values separated by commas within a single cell. 
-                        Ensure it does not conflict with CSV metadata separators.
-                    </small>
-                    <ul id="columnTypeList" class="list-group"></ul>
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Column</th>
+                                <th>Data Type</th>
+                                <th>Summary Method for Ancestor Nodes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="columnTypeList"></tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -112,7 +116,6 @@
 <script>
     const CHUNK_SIZE = 1024 * 1024; // 1MB
 
-    // Function to handle file upload
     async function submitForm() {
         const treename = document.getElementById('treename').value;
         const treeTextarea = document.getElementById('tree').value;
@@ -131,7 +134,6 @@
         const formData = new FormData();
         formData.append("treename", treename);
 
-        // Upload tree data
         if (treeFile) {
             await uploadFileInChunks(treeFile, 'treeFile', treename);
         } else if (treeTextarea) {
@@ -141,48 +143,63 @@
             return;
         }
 
-        // Add tree parser to formData
         formData.append("treeparser", treeparser);
 
-        // Upload metadata if provided
         if (metadataFile) {
             await uploadFileInChunks(metadataFile, 'metadataFile', treename);
-        } 
+        }
         if (separator) {
             formData.append("separator", separator);
         }
 
-        // Add inferred column types to formData as arrays
         const columnTypes = collectColumnTypes();
         columnTypes.text_prop.forEach(item => formData.append("text_prop[]", item));
         columnTypes.num_prop.forEach(item => formData.append("num_prop[]", item));
         columnTypes.bool_prop.forEach(item => formData.append("bool_prop[]", item));
         columnTypes.multiple_text_prop.forEach(item => formData.append("multiple_text_prop[]", item));
 
-        // Upload alignment if provided
+        // Collect summary method selections as a list
+        const summarySelections = collectSummarySelections();
+        formData.append("summary_methods", JSON.stringify(summarySelections));
+
         if (alignmentFile) {
             await uploadFileInChunks(alignmentFile, 'alignmentFile', treename);
         }
-
-        // Upload pfam annotation if provided
         if (pfamFile) {
             await uploadFileInChunks(pfamFile, 'pfamFile', treename);
         }
 
-        // Final submission with the text data
         fetch('/upload', {
             method: 'POST',
             body: formData
         }).then(response => response.text()).then(result => {
-            window.location.href = `/tree/${treename}`;  // Redirect to /tree/<name> after completion
+            window.location.href = `/tree/${treename}`;
         }).catch(error => {
             console.error("Error uploading files:", error);
             alert("Error occurred during upload.");
         });
     }
 
+    // Function to collect summary selections with simplified values
+    function collectSummarySelections() {
+        const summarySelections = {};
+        document.querySelectorAll('.summary-method').forEach(select => {
+            const columnName = select.getAttribute('data-summary');
+            let summaryMethod = select.value;
 
-    // Function to analyze the metadata file when the "Advanced Parsing" button is clicked
+            // Simplify specific values
+            if (summaryMethod === 'raw counter') {
+                summaryMethod = 'raw';
+            } else if (summaryMethod === 'relative counter') {
+                summaryMethod = 'relative';
+            }
+
+            summarySelections[columnName] = summaryMethod;
+        });
+        return summarySelections;
+    }
+
+    // Advanced parsing of metadata file
     document.getElementById('parseMetadataBtn').addEventListener('click', async () => {
         const file = document.getElementById('metadataFile').files[0];
         if (file) {
@@ -218,44 +235,70 @@
             };
         });
 
-        // Display column types in the UI with options to manually select types (excluding "Node ID Column")
         const columnTypeList = document.getElementById('columnTypeList');
         columnTypeList.innerHTML = ""; // Clear previous results
 
         columnTypes.forEach((col, index) => {
-            const listItem = document.createElement('li');
-            listItem.className = 'list-group-item';
+            const row = document.createElement('tr');
+            const columnCell = document.createElement('td');
+            columnCell.textContent = col.column;
+            row.appendChild(columnCell);
 
+            const typeCell = document.createElement('td');
             if (index === 0) {
-                listItem.textContent = `${col.column}: Node ID Column`;
+                typeCell.textContent = "Node ID Column";
             } else {
-                listItem.textContent = `${col.column}: `;
-                const select = document.createElement('select');
-                select.className = 'form-control-sm';
-                select.setAttribute('data-column', col.column);
-
-                ["Categorical", "List", "Numerical", "Binary", "Taxonomic"].forEach(opt => {
-                    const option = document.createElement('option');
-                    option.value = opt;
-                    option.text = opt;
-                    option.selected = opt === col.type;
-                    if (col.type === "Categorical" && (opt === "Numerical" || opt === "Binary")) {
-                        option.disabled = true;
-                    }
-                    select.appendChild(option);
-                });
-                listItem.appendChild(select);
+                typeCell.innerHTML = `
+                    <select class="form-control-sm" data-column="${col.column}" onchange="updateSummaryOptions(this)">
+                        <option value="Categorical" ${col.type === 'Categorical' ? 'selected' : ''}>Categorical</option>
+                        <option value="List" ${col.type === 'List' ? 'selected' : ''}>List</option>
+                        <option value="Numerical" ${col.type === 'Numerical' ? 'selected' : ''}>Numerical</option>
+                        <option value="Binary" ${col.type === 'Binary' ? 'selected' : ''}>Binary</option>
+                        <option value="Taxonomic" ${col.type === 'Taxonomic' ? 'selected' : ''}>Taxonomic</option>
+                    </select>
+                `;
             }
-            columnTypeList.appendChild(listItem);
+            row.appendChild(typeCell);
+
+            const summaryCell = document.createElement('td');
+            if (index === 0) {
+                summaryCell.textContent = "-";
+            } else {
+                summaryCell.innerHTML = `
+                    <select class="form-control-sm summary-method" data-summary="${col.column}">
+                        ${generateSummaryOptions(col.type)}
+                    </select>
+                `;
+            }
+            row.appendChild(summaryCell);
+
+            columnTypeList.appendChild(row);
         });
-        document.getElementById('metadataAnalysis').style.display = 'block'; // Show the analysis section
+        document.getElementById('metadataAnalysis').style.display = 'block';
+    }
+
+    function generateSummaryOptions(type) {
+        const options = {
+            Numerical: ["all", "sum", "avg", "max", "min", "std", "none"],
+            Categorical: ["raw counter", "relative counter", "none"],
+            Binary: ["raw counter", "relative counter", "none"],
+            List: ["raw counter", "relative_counter","none"],
+        };
+        return options[type] ? options[type].map(opt => `<option value="${opt}">${opt}</option>`).join('') : '<option value="none">none</option>';
+    }
+
+    function updateSummaryOptions(selectElem) {
+        const column = selectElem.getAttribute('data-column');
+        const type = selectElem.value;
+        const summarySelect = document.querySelector(`select[data-summary="${column}"]`);
+        summarySelect.innerHTML = generateSummaryOptions(type);
     }
 
     function detectColumnType(values) {
         const uniqueValues = [...new Set(values)];
         const isBinary = uniqueValues.length === 2 && uniqueValues.every(val => ["0", "1", "true", "false", "t", "f"].includes(val.toLowerCase()));
         const isNumeric = uniqueValues.every(val => !isNaN(val));
-        const isTaxonomic = uniqueValues.every(val => /^[A-Z][a-z]+(?:\s[a-z]+)?$/.test(val)); // e.g., "Homo sapiens"
+        const isTaxonomic = uniqueValues.every(val => /^[A-Z][a-z]+(?:\s[a-z]+)?$/.test(val));
         
         if (isNumeric) return "Numerical";
         else if (isBinary) return "Binary";
@@ -303,5 +346,8 @@
         }
     }
 </script>
+</body>
+</html>
+
 </body>
 </html>

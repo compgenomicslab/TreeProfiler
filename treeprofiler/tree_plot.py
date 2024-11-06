@@ -1590,7 +1590,7 @@ def get_heatmap_layouts(tree, props, level, column_width=70, padding_x=1, paddin
                     sys.exit(1)
                 index = np.abs(index_values - normalized_value).argmin() + 1
                 value2color[search_value] = gradientscolor.get(index, "")
-
+        
         layout = staple_layouts.LayoutHeatmap(name=f'Heatmap_{prop}_{norm_method}', column=level,
                                               width=column_width, padding_x=padding_x, padding_y=padding_y,
                                               internal_rep=internal_rep, heatmap_prop=prop,

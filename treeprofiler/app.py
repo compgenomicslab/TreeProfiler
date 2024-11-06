@@ -3,6 +3,7 @@ import threading
 from tempfile import NamedTemporaryFile
 from collections import defaultdict
 import os
+import json
 
 from ete4 import Tree
 from treeprofiler.tree_annotate import run_tree_annotate, parse_csv  # or other functions you need
@@ -101,9 +102,14 @@ def do_upload():
     alignment = request.forms.get('alignment')
     pfam = request.forms.get('pfam')
 
-    column2method = {
-        'alignment': 'none',
-    }
+    # Convert the json received from the form to a dictionary
+    summary_method_str = request.forms.get('summary_methods')
+    if summary_method_str:
+        column2method = json.loads(summary_method_str)
+    else:
+        column2method = {}
+    column2method['alignment'] = 'none'
+
     default_props = [
         'name', 'dist', 'support', 'rank', 'sci_name', 'taxid', 'lineage', 'named_lineage',
         'evoltype', 'dup_sp', 'dup_percent', 'lca'
