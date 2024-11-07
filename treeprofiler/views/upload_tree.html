@@ -150,7 +150,7 @@
                 <div class="form-group row mt-3">
                     <div class="col-md-4">
                         <label for="acrColumn">Select ACR Column</label>
-                        <select class="form-control" id="acrColumn" name="acrColumn">
+                        <select class="form-control" id="acrColumn" name="acrColumn" multiple>
                             <!-- Options will be dynamically populated -->
                         </select>
                     </div>
@@ -213,8 +213,8 @@
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <label for="iterations">Iterations</label>
-                            <input type="number" class="form-control" id="iterations" name="iterations" value="100" min="1">
+                            <label for="iteration">Iterations</label>
+                            <input type="number" class="form-control" id="iteration" name="iteration" value="10000" min="1">
                         </div>
                         <div class="col-md-4">
                             <label for="lambda0">Lambda0</label>
@@ -317,6 +317,37 @@
         }
         if (separator) {
             formData.append("separator", separator);
+        }
+
+        // Collect and append ACR settings if the section is active
+        const acrSection = document.getElementById("acrSection");
+        if (!acrSection.classList.contains("collapsed")) {
+            const acrColumns = Array.from(document.getElementById("acrColumn").selectedOptions).map(option => option.value);
+            const acrMethod = document.getElementById("acrMethod").value;
+            const acrModel = document.getElementById("acrModel").value;
+            const phylosignal = document.getElementById("phylosignal").value;
+
+            acrColumns.forEach(column => formData.append("acrColumn[]", column));
+            formData.append("acrMethod", acrMethod);
+            formData.append("acrModel", acrModel);
+            formData.append("phylosignal", phylosignal);
+
+            // Append delta statistic options if selected
+            if (phylosignal === 'delta') {
+                const entType = document.getElementById("entType").value;
+                const iteration = document.getElementById("iteration").value;
+                const lambda0 = document.getElementById("lambda0").value;
+                const se = document.getElementById("se").value;
+                const thin = document.getElementById("thin").value;
+                const burn = document.getElementById("burn").value;
+
+                formData.append("entType", entType);
+                formData.append("iteration", iteration);
+                formData.append("lambda0", lambda0);
+                formData.append("se", se);
+                formData.append("thin", thin);
+                formData.append("burn", burn);
+            }
         }
         
         // Check if taxonomic section is activated before adding fields
@@ -504,7 +535,7 @@
         const deltaOptions = document.getElementById('deltaOptions');
         console.log(phylosignalSelect.value)
         if (phylosignalSelect.value === 'delta') {
-            deltaOptions.style.display = 'block';
+            deltaOptions.style.display = '';
         } else {
             deltaOptions.style.display = 'none';
         }

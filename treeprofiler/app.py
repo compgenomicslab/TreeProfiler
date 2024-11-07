@@ -68,6 +68,17 @@ def do_upload():
         "species_index": int(request.forms.get('speciesFieldIndex') or 0),
         "version": request.forms.get('version'),
         "ignore_unclassified": request.forms.get('ignoreUnclassified') == 'True',
+        
+        "acr_columns": request.forms.getlist('acrColumn[]'),
+        "prediction_method": request.forms.get('acrMethod'),
+        "model": request.forms.get('acrModel'),
+        "phylosignal": request.forms.get('phylosignal'),
+        "ent_type": request.forms.get('entType'),
+        "iteration": request.forms.get('iteration'),
+        "lambda0": request.forms.get('lambda0'),
+        "se": request.forms.get('se'),
+        "thin": request.forms.get('thin'),
+        "burn": request.forms.get('burn'),
         "alignment": request.forms.get('alignment'),
         "pfam": request.forms.get('pfam'),
         "summary_methods": request.forms.get('summary_methods')
@@ -82,122 +93,147 @@ def do_upload():
 def process_upload_job(job_args):
     """Function to handle the actual processing of the uploaded data."""
     treename = job_args['treename']
-    try:
-        # Initialize variables and parse arguments
-        separator = "\t" if job_args.get("separator") == "<tab>" else job_args.get("separator", ",")
-        tree_data = job_args.get("tree_data")
-        treeparser = job_args.get("treeparser")
-        summary_methods = job_args.get("summary_methods")
-        
-        # Parse summary methods JSON, if provided
-        column2method = json.loads(summary_methods) if summary_methods else {}
-        column2method['alignment'] = 'none'
-        
-        # Retrieve paths for uploaded files
-        tree_file_path = uploaded_chunks.get(treename, {}).get("tree")
-        metadata_file_path = uploaded_chunks.get(treename, {}).get("metadata")
-        alignment_file_path = uploaded_chunks.get(treename, {}).get("alignment")
-        pfam_file_path = uploaded_chunks.get(treename, {}).get("pfam")
-        
-        # Load the tree data
-        if tree_data:
-            tree = utils.ete4_parse(tree_data, internal_parser=treeparser)
-        elif tree_file_path and os.path.exists(tree_file_path):
-            with open(tree_file_path, 'r') as f:
-                tree = utils.ete4_parse(f.read(), internal_parser=treeparser)
-            os.remove(tree_file_path)
+    # Initialize variables and parse arguments
+    separator = "\t" if job_args.get("separator") == "<tab>" else job_args.get("separator", ",")
+    tree_data = job_args.get("tree_data")
+    treeparser = job_args.get("treeparser")
+    summary_methods = job_args.get("summary_methods")
+    
+    # Parse summary methods JSON, if provided
+    column2method = json.loads(summary_methods) if summary_methods else {}
+    column2method['alignment'] = 'none'
+    
+    # Retrieve paths for uploaded files
+    tree_file_path = uploaded_chunks.get(treename, {}).get("tree")
+    metadata_file_path = uploaded_chunks.get(treename, {}).get("metadata")
+    alignment_file_path = uploaded_chunks.get(treename, {}).get("alignment")
+    pfam_file_path = uploaded_chunks.get(treename, {}).get("pfam")
+    
+    # Load the tree data
+    if tree_data:
+        tree = utils.ete4_parse(tree_data, internal_parser=treeparser)
+    elif tree_file_path and os.path.exists(tree_file_path):
+        with open(tree_file_path, 'r') as f:
+            tree = utils.ete4_parse(f.read(), internal_parser=treeparser)
+        os.remove(tree_file_path)
 
-        # Prepare metadata processing if available
-        metadata_bytes = job_args.get("metadata").encode('utf-8') if job_args.get("metadata") else None
-        if metadata_file_path and os.path.exists(metadata_file_path):
-            with open(metadata_file_path, 'rb') as f:
-                metadata_bytes = f.read()
-            os.remove(metadata_file_path)
+    # Prepare metadata processing if available
+    metadata_bytes = job_args.get("metadata").encode('utf-8') if job_args.get("metadata") else None
+    if metadata_file_path and os.path.exists(metadata_file_path):
+        with open(metadata_file_path, 'rb') as f:
+            metadata_bytes = f.read()
+        os.remove(metadata_file_path)
 
-        # Process metadata
-        metadata_options = {}
-        if metadata_bytes:
-            with NamedTemporaryFile(suffix='.tsv') as f_annotation:
-                f_annotation.write(metadata_bytes)
-                f_annotation.flush()
-                metadata_dict, node_props, columns, prop2type = parse_csv([f_annotation.name], delimiter=separator)
+    # Process metadata
+    metadata_options = {}
+    if metadata_bytes:
+        with NamedTemporaryFile(suffix='.tsv') as f_annotation:
+            f_annotation.write(metadata_bytes)
+            f_annotation.flush()
+            metadata_dict, node_props, columns, prop2type = parse_csv([f_annotation.name], delimiter=separator)
 
-            metadata_options = {
-                "metadata_dict": metadata_dict,
-                "node_props": node_props,
-                "columns": columns,
-                "prop2type": prop2type,
-                "text_prop": job_args.get("text_prop"),
-                "num_prop": job_args.get("num_prop"),
-                "bool_prop": job_args.get("bool_prop"),
-                "multiple_text_prop": job_args.get("multiple_text_prop")
-            }
-
-        # Taxonomic annotation options
-        taxonomic_options = {}
-        if job_args.get("taxon_column"):
-            taxonomic_options = {
-                "taxon_column": job_args.get("taxon_column"),
-                "taxadb": job_args.get("taxadb"),
-                "gtdb_version": job_args.get("version"),
-                "taxon_delimiter": job_args.get("species_delimiter"),
-                "taxa_field": job_args.get("species_index"),
-                "ignore_unclassified": job_args.get("ignore_unclassified")
-            }
-
-        # Emapper options
-        emapper_options = {
-            "emapper_mode": False,
-            "emapper_pfam": pfam_file_path if pfam_file_path else None
+        metadata_options = {
+            "metadata_dict": metadata_dict,
+            "node_props": node_props,
+            "columns": columns,
+            "prop2type": prop2type,
+            "text_prop": job_args.get("text_prop"),
+            "num_prop": job_args.get("num_prop"),
+            "bool_prop": job_args.get("bool_prop"),
+            "multiple_text_prop": job_args.get("multiple_text_prop")
         }
 
-        # Run annotation
-        annotated_tree, prop2type = run_tree_annotate(
-            tree,
-            **metadata_options,
-            **emapper_options,
-            **taxonomic_options,
-            alignment=alignment_file_path,
-            column2method=column2method
-        )
-
-        # Post-processing of annotated tree properties
-        list_keys = [key for key, value in prop2type.items() if value == list]
-        for node in annotated_tree.leaves():
-            for key in list_keys:
-                if node.props.get(key):
-                    node.add_prop(key, '||'.join(node.props[key]))
-
-        avail_props = [key for key in prop2type.keys() if key not in ['name', 'dist', 'support']]
-        annotated_newick = annotated_tree.write(props=avail_props, format_root_node=True)
-
-        # Store the processed data
-        trees[treename] = {
-            'tree': tree_data,
-            'treeparser': treeparser,
-            'metadata': job_args.get("metadata"),
-            'node_props': metadata_options.get('node_props', []) + [
-                'rank', 'sci_name', 'taxid', 'evoltype', 'dup_sp', 'dup_percent'
-            ],
-            'annotated_tree': annotated_newick,
-            'prop2type': prop2type,
-            'layouts': []
+    # Taxonomic annotation options
+    taxonomic_options = {}
+    if job_args.get("taxon_column"):
+        taxonomic_options = {
+            "taxon_column": job_args.get("taxon_column"),
+            "taxadb": job_args.get("taxadb"),
+            "gtdb_version": job_args.get("version"),
+            "taxon_delimiter": job_args.get("species_delimiter"),
+            "taxa_field": job_args.get("species_index"),
+            "ignore_unclassified": job_args.get("ignore_unclassified")
         }
 
-        # Cleanup temporary alignment file after usage
-        if alignment_file_path and os.path.exists(alignment_file_path):
-            os.remove(alignment_file_path)
+    # for analytic methods
+    analytic_options = {}
+    acr_discrete_columns = []
+    acr_continuous_columns = []
+    if job_args.get("acr_columns"):
+        for acr_prop in job_args.get("acr_columns"):
+            if prop2type.get(acr_prop) == str:
+                acr_discrete_columns.append(acr_prop)
+            elif prop2type.get(acr_prop) == float:
+                acr_continuous_columns.append(acr_prop)
+        analytic_options = {
+            "acr_discrete_columns": acr_discrete_columns,
+            "acr_continuous_columns": acr_continuous_columns,
+            "prediction_method": job_args.get("prediction_method"),
+            "model": job_args.get("model")
+        }
+        if job_args.get("phylosignal") == 'delta':
+            analytic_options['delta_stats'] = True
+            analytic_options['ent_type'] = job_args.get("ent_type")
+            analytic_options['iteration'] = int(job_args.get("iteration"))
+            analytic_options['lambda0'] = float(job_args.get("lambda0"))
+            analytic_options['se'] = float(job_args.get("se"))
+            analytic_options['thin'] = int(job_args.get("thin"))
+            analytic_options['burn'] = int(job_args.get("burn"))
 
-        # Mark job as complete
-        job_status[treename] = "complete"
+    # Emapper options
+    emapper_options = {
+        "emapper_mode": False,
+        "emapper_pfam": pfam_file_path if pfam_file_path else None
+    }
+
+    # Run annotation
+    annotated_tree, prop2type = run_tree_annotate(
+        tree,
+        **metadata_options,
+        **emapper_options,
+        **taxonomic_options,
+        **analytic_options,
+        alignment=alignment_file_path,
+        column2method=column2method
+    )
+
+    # Post-processing of annotated tree properties
+    list_keys = [key for key, value in prop2type.items() if value == list]
+    for node in annotated_tree.leaves():
+        for key in list_keys:
+            if node.props.get(key):
+                node.add_prop(key, '||'.join(node.props[key]))
+
+    avail_props = [key for key in prop2type.keys() if key not in ['name', 'dist', 'support']]
+    annotated_newick = annotated_tree.write(props=avail_props, format_root_node=True)
+
+    # Store the processed data
+    trees[treename] = {
+        'tree': tree_data,
+        'treeparser': treeparser,
+        'metadata': job_args.get("metadata"),
+        'node_props': metadata_options.get('node_props', []) + [
+            'rank', 'sci_name', 'taxid', 'evoltype', 'dup_sp', 'dup_percent'
+        ],
+        'annotated_tree': annotated_newick,
+        'prop2type': prop2type,
+        'layouts': []
+    }
+
+    # Cleanup temporary alignment file after usage
+    if alignment_file_path and os.path.exists(alignment_file_path):
+        os.remove(alignment_file_path)
+
+    # Mark job as complete
+    job_status[treename] = "complete"
         
-    except Exception as e:
-        job_status[treename] = "failed"
-        print(f"Error processing job {treename}: {e}")
-    finally:
-        # Remove stored chunks for the completed job
-        if treename in uploaded_chunks:
-            del uploaded_chunks[treename]
+    # except Exception as e:
+    #     job_status[treename] = "failed"
+    #     print(f"Error processing job {treename}: {e}")
+    # finally:
+    #     # Remove stored chunks for the completed job
+    #     if treename in uploaded_chunks:
+    #         del uploaded_chunks[treename]
 
 
 # Route to serve static files like CSS and JS
@@ -423,12 +459,12 @@ def explore_tree(treename):
                     current_props.extend([utils.add_suffix(prop, suffix) for prop in selected_props])
             
             if selected_layout == 'acr-continuous-layout':
-                current_layouts, level, _ = tree_plot.get_acr_continuous_layouts(t, selected_props, level, prop2type=tree_info['prop2type'],
-                column_width=column_width, padding_x=padding_x, padding_y=padding_y, color_config=color_config, continuous=True)
+                current_layouts = tree_plot.get_acr_continuous_layouts(t, selected_props, level, prop2type=tree_info['prop2type'],
+                padding_x=padding_x, padding_y=padding_y)
             
             if selected_layout == 'ls-layout':
                 current_layouts, ls_props = tree_plot.get_ls_layouts(t, selected_props, level, prop2type=tree_info['prop2type'],
-                column_width=column_width, padding_x=padding_x, padding_y=padding_y, color_config=color_config)
+                padding_x=padding_x, padding_y=padding_y, color_config=color_config)
                 current_props.extend(ls_props)
             
             if selected_layout == 'taxoncollapse-layout':

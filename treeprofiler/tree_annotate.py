@@ -197,10 +197,10 @@ def populate_annotate_args(parser):
             [default: SE] for Shannon Entropy, other options are GINI for Gini impurity and LSE for Linear Shannon Entropy."
     )
     delta_group.add_argument('--iteration',
-        default=100,
+        default=10000,
         type=int,
         required=False,
-        help="Number of iterations for delta statistic calculation. [default: 100]"
+        help="Number of iterations for delta statistic calculation. [default: 10000]"
     )
     delta_group.add_argument('--lambda0', 
         type=float, 
@@ -824,7 +824,7 @@ def run(args):
         "prec_cutoff": args.prec_cutoff,
         "sens_cutoff": args.sens_cutoff,
     }
-
+    print(analytic_options)
     # Group taxonomic-related arguments
     taxonomic_options = {
         "taxadb": args.taxadb,
