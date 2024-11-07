@@ -140,17 +140,63 @@
         </div>
         <!-- End Taxonomic section -->
 
-        <!-- Analytic section -->
+        <!-- ACR section -->
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5>Ancestral Character Reconstruction (Optional)</h5>
                 <button type="button" class="btn btn-secondary btn-sm" id="toggleACRBtn">Activate Ancestral Character Reconstruction</button>
             </div>
             <div id="acrSection" class="card-body collapsed" style="display: none;">
+                <div class="form-group row mt-3">
+                    <div class="col-md-4">
+                        <label for="acrColumn">Select ACR Column</label>
+                        <select class="form-control" id="acrColumn" name="acrColumn">
+                            <!-- Options will be dynamically populated -->
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="acrMethod">ACR Method</label>
+                        <select class="form-control" id="acrMethod" name="acrMethod">
+                            <option value="ML">Maximum Likelihood (ML)</option>
+                            <option value="Bayesian">Bayesian</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="acrModel">Model of Evolution</label>
+                        <select class="form-control" id="acrModel" name="acrModel">
+                            <option value="EqualRates">Equal Rates</option>
+                            <option value="VariableRates">Variable Rates</option>
+                        </select>
+                    </div>
+                    
+                </div>
+                <div class="form-group row mt-3">
+                    <div class="col-md-4">
+                        <label for="delta">Delta analysis for phylogenetic signal</label>
+                        <select class="form-control" id="delta" name="delta">
+                            <option value="true">Activate</option>
+                            <option value="none">-</option>
+                        </select>
+                    </div>
+                    <!-- <div class="col-md-4">
+                        <label for="acrConfidence">Confidence Interval</label>
+                        <input type="text" class="form-control" id="acrConfidence" name="acrConfidence" placeholder="e.g., 95%">
+                    </div> -->
+                </div>
             </div>
-
         </div>
-        <!-- End Analytic section -->
+        <!-- End ACR section -->
+
+        <!-- Lineage specificity section -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5>Lineage specificity</h5>
+                <button type="button" class="btn btn-secondary btn-sm" id="toggleLStn">Activate Lineage specificity analysis</button>
+            </div>
+            <div id="lsSection" class="card-body collapsed" style="display: none;">
+            </div>
+        </div>
+        <!-- End Lineage specificity section -->
 
         <!-- Alignment Section -->
         <div class="card mb-4">
@@ -327,6 +373,7 @@
         });
 
         updateTaxonomicIdOptions(headers);  // Call the function to update options with metadata columns
+        updateAcrOptions(headers);          // Update options for ACR columns
 
         const columnTypes = headers.map((header, index) => {
             return {
@@ -385,6 +432,18 @@
             option.value = col;
             option.textContent = col;
             taxonomicIdColumn.appendChild(option);
+        });
+    }
+
+    function updateAcrOptions(columns) {
+        const acrColumnSelect = document.getElementById('acrColumn');
+        acrColumnSelect.innerHTML = ""; // Clear existing options
+
+        columns.forEach(col => {
+            const option = document.createElement('option');
+            option.value = col;
+            option.textContent = col;
+            acrColumnSelect.appendChild(option);
         });
     }
 
@@ -486,6 +545,20 @@
         const taxonomicSection = document.getElementById("taxonomicSection");
         const isCollapsed = taxonomicSection.classList.toggle("collapsed");
         taxonomicSection.style.display = isCollapsed ? "none" : "block";
+    });
+
+    // Toggle visibility of ACR section
+    document.getElementById("toggleACRBtn").addEventListener("click", () => {
+        const acrSection = document.getElementById("acrSection");
+        const isCollapsed = acrSection.classList.toggle("collapsed");
+        acrSection.style.display = isCollapsed ? "none" : "block";
+    });
+
+    // Toggle visibility of Lineage specificity section
+    document.getElementById("toggleLStn").addEventListener("click", () => {
+        const lsSection = document.getElementById("lsSection");
+        const isCollapsed = lsSection.classList.toggle("collapsed");
+        lsSection.style.display = isCollapsed ? "none" : "block";
     });
 </script>
 </body>
