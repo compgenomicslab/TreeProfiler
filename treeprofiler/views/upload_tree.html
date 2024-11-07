@@ -156,33 +156,85 @@
                     </div>
                     <div class="col-md-4">
                         <label for="acrMethod">ACR Method</label>
+                        <small class="form-text text-muted">(Datatype aligned with the metadata setting)</small>
                         <select class="form-control" id="acrMethod" name="acrMethod">
-                            <option value="ML">Maximum Likelihood (ML)</option>
-                            <option value="Bayesian">Bayesian</option>
+                            <optgroup label="Categorical">
+                                <option value="MPPA">Maximum Likelihood: MPPA</option>
+                                <option value="MAP">Maximum Likelihood: MAP</option>
+                                <option value="ML">Maximum Likelihood: ML</option>
+                                <option value="ACCTRAN">Maximum Parsimony: ACCTRAN</option>
+                                <option value="DELTRAN">Maximum Parsimony: DELTRAN</option>
+                                <option value="DOWNPASS">Maximum Parsimony: DOWNPASS</option>
+                                <option value="MP">Maximum Parsimony: MP</option>
+                            </optgroup>
+
+                            <optgroup label="Numerical">
+                                <option value="ML">Maximum Likelihood</option>
+                                <option value="BAYESIAN">Bayesian</option>
+                            </optgroup>
+
                         </select>
                     </div>
                     <div class="col-md-4">
                         <label for="acrModel">Model of Evolution</label>
                         <select class="form-control" id="acrModel" name="acrModel">
-                            <option value="EqualRates">Equal Rates</option>
-                            <option value="VariableRates">Variable Rates</option>
+                            <optgroup label="Categorical">
+                                <option value="F81">F81 (Felsenstein 1981)</option>
+                                <option value="JC">Jukes-Cantor</option>
+                                <option value="EFT">EFT (estimate-from-tips)</option>
+                            </optgroup>
+                            <optgroup label="Numerical">
+                                <option value="BM">BM (Brownian Motion)</option>
+                                <option value="OU">OU (Ornstein-Uhlenbeck)</option>
+                            </optgroup> 
                         </select>
                     </div>
                     
                 </div>
                 <div class="form-group row mt-3">
                     <div class="col-md-4">
-                        <label for="delta">Delta analysis for phylogenetic signal</label>
-                        <select class="form-control" id="delta" name="delta">
-                            <option value="true">Activate</option>
-                            <option value="none">-</option>
+                        <label for="phylosignal">Phylogenetic Signal Testing</label>
+                        <small class="form-text text-muted">(Only available for Maximum Likelihood methods)</small>
+                        <select class="form-control" id="phylosignal" name="phylosignal" onchange="showDeltaOptions()">
+                            <option value="">-</option>
+                            <optgroup label="Categorical">
+                                <option value="delta">Delta Statistic</option>
+                            </optgroup>
                         </select>
                     </div>
-                    <!-- <div class="col-md-4">
-                        <label for="acrConfidence">Confidence Interval</label>
-                        <input type="text" class="form-control" id="acrConfidence" name="acrConfidence" placeholder="e.g., 95%">
-                    </div> -->
+                    <!-- Delta Statistic Options (hidden by default) -->
+                    <div id="deltaOptions" class="form-group row mt-3" style="display: none;">
+                        <div class="col-md-4">
+                            <label for="entType">Ent-type</label>
+                            <select class="form-control" id="entType" name="entType">
+                                <option value="SE">Shannon Entropy (SE)</option>
+                                <option value="LSE">Linear Shannon Entropy (LSE)</option>
+                                <option value="GINI">Gini Impurity</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="iterations">Iterations</label>
+                            <input type="number" class="form-control" id="iterations" name="iterations" value="100" min="1">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="lambda0">Lambda0</label>
+                            <input type="number" class="form-control" id="lambda0" name="lambda0" value="0.1" step="0.01">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="se">Standard Deviation (SE)</label>
+                            <input type="number" class="form-control" id="se" name="se" value="0.5" step="0.01">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="thin">Thin</label>
+                            <input type="number" class="form-control" id="thin" name="thin" value="10" min="1">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="burn">Burn</label>
+                            <input type="number" class="form-control" id="burn" name="burn" value="100" min="0">
+                        </div>
+                    </div>
                 </div>
+                
             </div>
         </div>
         <!-- End ACR section -->
@@ -445,6 +497,17 @@
             option.textContent = col;
             acrColumnSelect.appendChild(option);
         });
+    }
+
+    function showDeltaOptions() {
+        const phylosignalSelect = document.getElementById('phylosignal');
+        const deltaOptions = document.getElementById('deltaOptions');
+        console.log(phylosignalSelect.value)
+        if (phylosignalSelect.value === 'delta') {
+            deltaOptions.style.display = 'block';
+        } else {
+            deltaOptions.style.display = 'none';
+        }
     }
 
     function updateVersionOptions() {

@@ -49,7 +49,7 @@ EMAPPER_HEADERS = ["#query", "seed_ortholog", "evalue", "score", "eggNOG_OGs",
 # Available methods and models for ACR
 # Discrete traits
 DISCRETE_METHODS = ['MPPA', 'MAP', 'JOINT', 'DOWNPASS', 'ACCTRAN', 'DELTRAN', 'COPY', 'ALL', 'ML', 'MP']
-DISCRETE_MODELS = ['JC', 'F81', 'EFT', 'HKY', 'JTT']
+DISCRETE_MODELS = ['JC', 'F81', 'EFT']
 
 # Continuous traits
 CONTINUOUS_METHODS = ['ML', 'BAYESIAN']
@@ -197,7 +197,7 @@ def populate_annotate_args(parser):
             [default: SE] for Shannon Entropy, other options are GINI for Gini impurity and LSE for Linear Shannon Entropy."
     )
     delta_group.add_argument('--iteration',
-        default=10000,
+        default=100,
         type=int,
         required=False,
         help="Number of iterations for delta statistic calculation. [default: 100]"
