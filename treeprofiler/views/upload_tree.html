@@ -246,6 +246,23 @@
                 <button type="button" class="btn btn-secondary btn-sm" id="toggleLStn">Activate Lineage specificity analysis</button>
             </div>
             <div id="lsSection" class="card-body collapsed" style="display: none;">
+                <div class="form-group row mt-3">
+                    <div class="col-md-4">
+                        <label for="acrColumn">Select LS Column</label>
+                        <select class="form-control" id="lsColumn" name="lsColumn" multiple>
+                            <!-- Options will be dynamically populated -->
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="percision">Percision</label>
+                        <input type="number" class="form-control" id="percision" name="percision" value="0.95" step="0.01">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="sensitivity">Sensitivity</label>
+                        <input type="number" class="form-control" id="sensitivity" name="sensitivity" value="0.95" step="0.01">
+                    </div>
+                </div>
+                
             </div>
         </div>
         <!-- End Lineage specificity section -->
@@ -348,6 +365,18 @@
                 formData.append("thin", thin);
                 formData.append("burn", burn);
             }
+        }
+
+        // Collect and append LS settings if the section is active
+        const lsSection = document.getElementById("lsSection");
+        if (!lsSection.classList.contains("collapsed")) {
+            const lsColumns = Array.from(document.getElementById("lsColumn").selectedOptions).map(option => option.value);
+            const percision = document.getElementById("percision").value;
+            const sensitivity = document.getElementById("sensitivity").value;
+
+            lsColumns.forEach(column => formData.append("lsColumn[]", column));
+            formData.append("percision", percision);
+            formData.append("sensitivity", sensitivity);
         }
         
         // Check if taxonomic section is activated before adding fields
@@ -457,6 +486,7 @@
 
         updateTaxonomicIdOptions(headers);  // Call the function to update options with metadata columns
         updateAcrOptions(headers);          // Update options for ACR columns
+        updateLsOptions(headers);           // Update options for LS columns
 
         const columnTypes = headers.map((header, index) => {
             return {
@@ -527,6 +557,18 @@
             option.value = col;
             option.textContent = col;
             acrColumnSelect.appendChild(option);
+        });
+    }
+
+    function updateLsOptions(columns) {
+        const lsColumnSelect = document.getElementById('lsColumn');
+        lsColumnSelect.innerHTML = ""; // Clear existing options
+
+        columns.forEach(col => {
+            const option = document.createElement('option');
+            option.value = col;
+            option.textContent = col;
+            lsColumnSelect.appendChild(option);
         });
     }
 
