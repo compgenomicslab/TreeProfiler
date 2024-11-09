@@ -22,7 +22,7 @@ def get_colormap():
 class LayoutAlignment(TreeLayout):
     def __init__(self, name="Alignment",
             alignment=None, alignment_prop=None, format='seq', width=700, height=15,
-            column=0, scale_range=None, window=[1190,1339], summarize_inner_nodes=True, 
+            column=0, scale_range=None, window=[], summarize_inner_nodes=True, 
             aligned_faces=True):
         super().__init__(name, aligned_faces=aligned_faces)
         #self.alignment = SeqGroup(alignment) if alignment else None
@@ -58,7 +58,6 @@ class LayoutAlignment(TreeLayout):
             if self.window:
                 start, end = self.window
                 seq = seq[start:end]
-
             seqFace = AlignmentFace(seq, seq_format=self.format, bgcolor='grey',
                     width=self.width, height=self.height)
             node.add_face(seqFace, column=self.column, position='aligned',

@@ -132,7 +132,10 @@ def populate_annotate_args(parser):
         help="attach eggNOG-mapper smart output out.emapper.smart")
     add('--alignment',
         help="Sequence alignment, .fasta format")
-
+    add('--consensus-cutoff', 
+        type=float, 
+        default=0.7,
+        help='Consensus cutoff for alignment annotation. If cutoff is 0.0 means no consensus sequences in ancestor nodes. [default: 0.7]')
     annotation_group = parser.add_argument_group(title='Internal nodes annotation arguments',
         description="Annotation parameters")
     annotation_group.add_argument('--column-summary-method', 
@@ -250,8 +253,9 @@ def populate_annotate_args(parser):
 def run_tree_annotate(tree, input_annotated_tree=False,
         metadata_dict={}, node_props=[], columns={}, prop2type={},
         text_prop=[], text_prop_idx=[], multiple_text_prop=[], num_prop=[], num_prop_idx=[],
-        bool_prop=[], bool_prop_idx=[], prop2type_file=None, alignment=None, emapper_mode=False, emapper_pfam=None,
-        emapper_smart=None, counter_stat='raw', num_stat='all', column2method={},
+        bool_prop=[], bool_prop_idx=[], prop2type_file=None, alignment=None, consensus_cutoff=0.7,
+        emapper_mode=False, emapper_pfam=None, emapper_smart=None, 
+        counter_stat='raw', num_stat='all', column2method={},
         taxadb='GTDB', gtdb_version=None, taxa_dump=None, taxon_column=None,
         taxon_delimiter='', taxa_field=0, ignore_unclassified=False,
         rank_limit=None, pruned_by=None, 
@@ -587,7 +591,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         for node in annotated_tree.traverse("postorder"):
             if not node.is_leaf:
                 nodes.append(node)
-                node_data = (node, node2leaves[node], text_prop, multiple_text_prop, bool_prop, num_prop, column2method, alignment if 'alignment' in locals() else None, name2seq if 'name2seq' in locals() else None, emapper_mode)
+                node_data = (node, node2leaves[node], text_prop, multiple_text_prop, bool_prop, num_prop, column2method, alignment if 'alignment' in locals() else None, name2seq if 'name2seq' in locals() else None, consensus_cutoff, emapper_mode)
                 nodes_data.append(node_data)
         
         # Process nodes in parallel if more than one thread is specified
@@ -843,6 +847,12 @@ def run(args):
         "emapper_smart": args.emapper_smart,
     }
 
+    # Group alignment-related arguments
+    alignment_options = {
+        "alignment": args.alignment,
+        "consensus_cutoff": args.consensus_cutoff,
+    }
+
     # Group output and miscellaneous options
     output_options = {
         "rank_limit": args.rank_limit,
@@ -856,10 +866,10 @@ def run(args):
         tree,
         input_annotated_tree=args.annotated_tree,
         **metadata_options,
-        alignment=args.alignment,
         counter_stat=args.counter_stat,
         num_stat=args.num_stat,
         column2method=column2method,
+        **alignment_options,
         **taxonomic_options,
         **analytic_options,
         **emapper_options,
@@ -1317,7 +1327,7 @@ def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, 
     return tree
 
 def process_node(node_data):
-    node, node_leaves, text_prop, multiple_text_prop, bool_prop, num_prop, column2method, alignment, name2seq, emapper_mode = node_data
+    node, node_leaves, text_prop, multiple_text_prop, bool_prop, num_prop, column2method, alignment, name2seq, consensus_cutoff, emapper_mode = node_data
     internal_props = {}
 
     # Process text, multitext, bool, and num properties
@@ -1343,9 +1353,9 @@ def process_node(node_data):
     if alignment and name2seq is not None:  # Check alignment and name2seq together
         aln_sum = column2method.get('alignment')
         if aln_sum is None or aln_sum != 'none':
-            matrix_string = build_matrix_string(node, name2seq)  # Assuming 'name2seq' is accessible here
-            consensus_seq = utils.get_consensus_seq(matrix_string, threshold=0.7)
-        
+            if consensus_cutoff:
+                matrix_string = build_matrix_string(node, name2seq)  # Assuming 'name2seq' is accessible here
+                consensus_seq = utils.get_consensus_seq(matrix_string, threshold=consensus_cutoff)
     return internal_props, consensus_seq
 
 def merge_text_annotations(nodes, target_props, column2method, emapper_mode=False):

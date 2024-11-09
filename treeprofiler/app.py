@@ -85,6 +85,8 @@ def do_upload():
         "sens_cutoff": request.forms.get('sensitivity'),
 
         "alignment": request.forms.get('alignment'),
+        "consensus_cutoff": request.forms.get('consensusCutoff'),
+
         "pfam": request.forms.get('pfam'),
         "summary_methods": request.forms.get('summary_methods')
     }
@@ -192,6 +194,14 @@ def process_upload_job(job_args):
         analytic_options['prec_cutoff'] = float(job_args.get("prec_cutoff"))
         analytic_options['sens_cutoff'] = float(job_args.get("sens_cutoff"))
 
+    # Alignment options
+    alignment_options = {}
+    if alignment_file_path:
+        alignment_options = {
+            "alignment": alignment_file_path,
+            "consensus_cutoff": float(job_args.get("consensus_cutoff"))
+        }
+
     # Emapper options
     emapper_options = {
         "emapper_mode": False,
@@ -205,7 +215,7 @@ def process_upload_job(job_args):
         **emapper_options,
         **taxonomic_options,
         **analytic_options,
-        alignment=alignment_file_path,
+        **alignment_options,
         column2method=column2method
     )
 
@@ -538,8 +548,9 @@ def explore_tree(treename):
 
             if selected_layout == 'alignment-layout':
                 lengh = len(max(utils.tree_prop_array(t, 'alignment'),key=len))
+                window = []
                 aln_layout = layouts.seq_layouts.LayoutAlignment(name='Alignment_layout', 
-                        alignment_prop='alignment', column=level, scale_range=lengh,
+                        alignment_prop='alignment', column=level, scale_range=lengh, window=window,
                         summarize_inner_nodes=True)
                 current_layouts.append(aln_layout)
 
