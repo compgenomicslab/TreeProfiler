@@ -79,6 +79,11 @@ def do_upload():
         "se": request.forms.get('se'),
         "thin": request.forms.get('thin'),
         "burn": request.forms.get('burn'),
+
+        "ls_columns": request.forms.getlist('lsColumn[]'),
+        "prec_cutoff": request.forms.get('percision'),
+        "sens_cutoff": request.forms.get('sensitivity'),
+
         "alignment": request.forms.get('alignment'),
         "pfam": request.forms.get('pfam'),
         "summary_methods": request.forms.get('summary_methods')
@@ -179,6 +184,13 @@ def process_upload_job(job_args):
             analytic_options['se'] = float(job_args.get("se"))
             analytic_options['thin'] = int(job_args.get("thin"))
             analytic_options['burn'] = int(job_args.get("burn"))
+
+    ls_columns = []
+    if job_args.get("ls_columns"):
+        ls_columns = job_args.get("ls_columns")
+        analytic_options['ls_columns'] = ls_columns
+        analytic_options['prec_cutoff'] = float(job_args.get("prec_cutoff"))
+        analytic_options['sens_cutoff'] = float(job_args.get("sens_cutoff"))
 
     # Emapper options
     emapper_options = {

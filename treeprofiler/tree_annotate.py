@@ -824,7 +824,7 @@ def run(args):
         "prec_cutoff": args.prec_cutoff,
         "sens_cutoff": args.sens_cutoff,
     }
-    print(analytic_options)
+
     # Group taxonomic-related arguments
     taxonomic_options = {
         "taxadb": args.taxadb,

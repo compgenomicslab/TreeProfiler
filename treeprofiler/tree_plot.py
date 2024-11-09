@@ -1042,7 +1042,8 @@ def get_ls_layouts(tree, props, level, prop2type, padding_x=1, padding_y=0, colo
             all_values = internalnode_all_values[~np.isnan(internalnode_all_values)]
             num = len(gradientscolor)
             index_values = np.linspace(minval, maxval, num)
-            if all_values:
+
+            if all_values.any():
                 for search_value in all_values:
                     if search_value not in value2color:
                         index = np.abs(index_values - search_value).argmin()+1
