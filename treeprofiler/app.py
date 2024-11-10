@@ -361,6 +361,9 @@ def explore_tree(treename):
             selected_props = request.forms.getall('props')
             current_props.extend(selected_props)
             selected_layout = request.forms.get('layout')
+            query_type = request.forms.get('customQueryType')
+            query_box = request.forms.get('queryBox')   
+            
             # Update layouts based on user selection
             column_width = 70
             level = 0
@@ -558,6 +561,11 @@ def explore_tree(treename):
                 domain_layout = layouts.seq_layouts.LayoutDomain(name="Domain_layout", prop='dom_arq')
                 current_layouts.append(domain_layout)
 
+            if query_type and query_box:
+                query_strings = convert_query_string(query_box)
+                
+
+
             # Store updated props and layouts back to the tree_info
             tree_info['layouts'] = current_layouts
             tree_info['props'] = selected_props
@@ -578,6 +586,22 @@ def explore_tree(treename):
 
     return f"Tree '{treename}' not found."
 
+def convert_query_string(query_string):
+    # Split the query by semicolon to get each statement
+    queries = [q.strip() for q in query_string.split(';') if q.strip()]
+    result = []
+
+    for query in queries:
+        if " OR " in query:
+            # Split the query by 'OR' and convert each condition
+            conditions = [cond.strip() for cond in query.split(" OR ")]
+            result.extend(conditions)  # Add each condition as a separate entry for 'OR'
+        elif " AND " in query:
+            # Split the query by 'AND' and convert each condition
+            conditions = [cond.strip() for cond in query.split(" AND ")]
+            result.append(','.join(conditions))  # Join conditions with a comma for 'AND'
+
+    return result
 
 run(host='localhost', port=8080)
 

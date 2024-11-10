@@ -141,9 +141,9 @@
                 <div class="form-group">
                     <label for="customQueryType">Select Query Type:</label>
                     <select class="form-control" id="customQueryType" name="customQueryType" onchange="toggleQueryFields()">
-                        <option value="prune">Prune</option>
-                        <option value="collapse">Collapse</option>
                         <option value="highlight">Highlight</option>
+                        <option value="collapse">Collapse</option>
+                        <option value="prune">Prune</option>
                         <option value="rank_limit">Rank Limit (only for taxonomic annotated tree)</option>
                     </select>
                 </div>
@@ -166,17 +166,24 @@
                     <input type="text" class="form-control" id="queryValue" name="queryValue" placeholder="Enter value">
 
                     <div class="mt-3">
-                        <button type="button" class="btn btn-secondary" id="addWithAndBtn">Add with AND</button>
-                        <button type="button" class="btn btn-secondary" id="addWithOrBtn">Add with OR</button>
+                        <div class="dropdown">
+                            <button type="button" class="btn btn-secondary dropdown-toggle" id="addQueryBtn" onclick="toggleDropdown()">
+                                ADD
+                            </button>
+                            <div class="dropdown-menu" id="addQueryOptions">
+                                <a class="dropdown-item" href="#" onclick="addQueryPart('AND')">AND</a>
+                                <a class="dropdown-item" href="#" onclick="addQueryPart('OR')">OR</a>
+                            </div>
+                        </div>
                     </div>
+
                     <!-- Query Box -->
                     <div class="form-group mt-3">
                         <label for="queryBox">Query Syntax</label>
                         <textarea class="form-control" id="queryBox" name="queryBox" rows="5" readonly></textarea>
+                        <small><a href="#" id="clearQueryBox" class="text-danger" style="cursor: pointer;">Clear</a></small>
                     </div>
                 </div>
-                
-
                 
                 <!-- Taxonomic Classification Options (hidden by default) -->
                 <div class="form-group mt-3" id="taxonomicOptions" style="display: none;">
@@ -267,6 +274,14 @@
         // Array to store query parts
         let queryParts = [];
 
+        // Function to reset the query button when switching types
+        function resetQueryButton() {
+            document.getElementById('addQueryBtn').innerText = 'ADD';
+            document.getElementById('addQueryOptions').style.display = 'none';
+            queryParts = [];
+            document.getElementById('queryBox').value = '';
+        }
+
         function toggleQueryFields() {
             const queryType = document.getElementById('customQueryType').value;
             const queryFields = document.getElementById('queryFields');
@@ -279,9 +294,20 @@
                 queryFields.style.display = 'block';
                 taxonomicOptions.style.display = 'none';
             }
+            resetQueryButton(); // Reset the query button
         }
 
-        function addQueryPart(operator) {
+        // Function to toggle the dropdown visibility
+        function toggleDropdown() {
+            const dropdownMenu = document.getElementById('addQueryOptions');
+            if (dropdownMenu.style.display === 'block') {
+                dropdownMenu.style.display = 'none';
+            } else {
+                dropdownMenu.style.display = 'block';
+            }
+        }
+        // Function to add query parts with selected logic
+        function addQueryPart(operator = '') {
             const queryType = document.getElementById('customQueryType').value;
             const prop = document.getElementById('queryProp').value.trim();
             const operation = document.getElementById('queryOperation').value;
@@ -293,42 +319,46 @@
             }
 
             // Build the query part
-            const queryPart = `[${queryType}] ${prop} ${operation} ${value}`;
+            let queryPart = `${prop} ${operation} ${value}`;
             if (queryParts.length > 0) {
-                queryParts.push(operator);
+                queryPart = `${operator} ${queryPart}`;
             }
             queryParts.push(queryPart);
 
-            // Update the query box
-            document.getElementById('queryBox').value = queryParts.join(' ');
+            // Update the query box with ';' as a separator between complete queries
+            document.getElementById('queryBox').value = queryParts.join(' ') + ';';
+
+            // Change the button text to show "AND" and reveal dropdown options
+            document.getElementById('addQueryBtn').innerText = 'AND';
+            document.getElementById('addQueryOptions').style.display = 'block';
 
             // Clear the input fields for the next entry
             document.getElementById('queryProp').value = '';
             document.getElementById('queryValue').value = '';
+            
+            // Hide the dropdown menu
+            document.getElementById('addQueryOptions').style.display = 'none';
         }
 
-        // Event listeners for adding query parts
-        document.getElementById('addWithAndBtn').addEventListener('click', function() {
-            addQueryPart('AND');
+        // Event listener to clear the query box
+        document.getElementById('clearQueryBox').addEventListener('click', function(event) {
+            event.preventDefault(); // Prevent the default anchor behavior
+            document.getElementById('queryBox').value = '';
+            queryParts = []; // Clear the stored query parts
+            resetQueryButton(); // Reset the query button
         });
-
-        document.getElementById('addWithOrBtn').addEventListener('click', function() {
-            addQueryPart('OR');
-        });
-
-        // Fullscreen Toggle for Iframe
-        document.getElementById('fullscreenBtn').addEventListener('click', function() {
-            var iframe = document.getElementById('treeIframe');
-            if (!document.fullscreenElement) {
-                iframe.requestFullscreen().catch(err => {
-                    alert(`Error attempting to enable full-screen mode: ${err.message}`);
-                });
-            } else {
-                document.exitFullscreen();
+        
+        // // Event listener for adding the first query part without operator
+        document.getElementById('addQueryBtn').addEventListener('click', function() {
+            if (document.getElementById('queryBox').value === '') {
+                addQueryPart(); // Add initial query without an operator
             }
         });
+
         // Initialize the toggle function when the page loads
         window.onload = toggleQueryFields;
+        // Initialize the toggle function when the page loads
+        window.onload = resetQueryButton;
     </script>
 </body>
 </html>
