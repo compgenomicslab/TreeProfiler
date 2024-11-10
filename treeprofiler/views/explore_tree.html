@@ -15,19 +15,23 @@
             top: 20px;
             right: 20px;
             width: 280px;
+            max-height: 80vh; /* Set a maximum height to trigger scrolling */
             padding: 15px;
             background-color: #f8f9fa;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
             border-radius: 8px;
             z-index: 1000;
             transition: transform 0.3s ease;
+            overflow-y: auto; /* Enable vertical scrolling */
+            resize: horizontal; /* Allow horizontal resizing */
+            border: 1px solid #ccc; /* Add a border for better visual feedback */
         }
-
+    
         /* Minimized state */
         .control-panel.minimized {
             transform: translateY(-100%);
         }
-
+    
         /* Control panel tab */
         .control-panel-tab {
             position: fixed;
@@ -50,7 +54,7 @@
             border-top: 1px solid #ddd;
             margin-top: 20px;
         }
-
+    
         /* Fullscreen button styling */
         .fullscreen-btn {
             position: absolute;
@@ -80,9 +84,9 @@
                 <label for="layout">Select Layout Option:</label>
                 <select class="form-control" id="layout" name="layout">
                     <optgroup label="Categorical">
-                        <option value="colorbranch-layout">Color Branch Layout</option>
+                        <option value="colorbranch-layout" selected>Color Branch Layout</option>
                         <option value="label-layout">Label Layout</option>
-                        <option value="rectangle-layout" selected>Rectangular Layout</option>
+                        <option value="rectangle-layout">Rectangular Layout</option>
                         <option value="categorical-bubble-layout">Bubble Layout</option>
                         <option value="background-layout">Background Layout</option>
                         <option value="categorical-matrix-layout">Categorical Matrix Layout</option>
@@ -130,9 +134,73 @@
                 </select>
                 <small class="form-text text-muted">Hold down Ctrl (Windows) or Command (Mac) to select multiple options.</small>
             </div>
+            
+            <!-- Custom Query Section -->
+            <div id="customQuery" class="mt-4" style="display: none;">
+                <h5>Custom Query</h5>
+                <div class="form-group">
+                    <label for="customQueryType">Select Query Type:</label>
+                    <select class="form-control" id="customQueryType" name="customQueryType" onchange="toggleQueryFields()">
+                        <option value="prune">Prune</option>
+                        <option value="collapse">Collapse</option>
+                        <option value="highlight">Highlight</option>
+                        <option value="rank_limit">Rank Limit (only for taxonomic annotated tree)</option>
+                    </select>
+                </div>
+
+                <!-- Query Syntax Fields -->
+                <div class="form-group mt-3" id="queryFields">
+                    <label for="queryProp">Property</label>
+                    <input type="text" class="form-control" id="queryProp" name="queryProp" placeholder="Enter property name">
+
+                    <label for="queryOperation" class="mt-2">Operation</label>
+                    <select class="form-control" id="queryOperation" name="queryOperation">
+                        <option value="=">Equals</option>
+                        <option value="!=">Not Equals</option>
+                        <option value="contains">Contains</option>
+                        <option value="&gt;">Greater Than</option>
+                        <option value="&lt;">Less Than</option>
+                    </select>
+
+                    <label for="queryValue" class="mt-2">Value</label>
+                    <input type="text" class="form-control" id="queryValue" name="queryValue" placeholder="Enter value">
+
+                    <div class="mt-3">
+                        <button type="button" class="btn btn-secondary" id="addWithAndBtn">Add with AND</button>
+                        <button type="button" class="btn btn-secondary" id="addWithOrBtn">Add with OR</button>
+                    </div>
+                    <!-- Query Box -->
+                    <div class="form-group mt-3">
+                        <label for="queryBox">Query Syntax</label>
+                        <textarea class="form-control" id="queryBox" name="queryBox" rows="5" readonly></textarea>
+                    </div>
+                </div>
+                
+
+                
+                <!-- Taxonomic Classification Options (hidden by default) -->
+                <div class="form-group mt-3" id="taxonomicOptions" style="display: none;">
+                    <label for="taxonomicRank">Select Taxonomic Rank:</label>
+                    <select class="form-control" id="taxonomicRank" name="taxonomicRank">
+                        <option value="species">Species</option>
+                        <option value="genus">Genus</option>
+                        <option value="family">Family</option>
+                        <option value="order">Order</option>
+                        <option value="class">Class</option>
+                        <option value="phylum">Phylum</option>
+                        <option value="kingdom">Kingdom</option>
+                        <option value="domain">Domain</option>
+                    </select>
+                </div>
+
+                
+                
+            </div>
+
             <div id="applyButton" class="mt-4" style="display: none;">
                 <button type="submit" class="btn btn-success">Apply Visualization</button>
             </div>
+
         </form>
         <div class="mt-4">
             <h5>Current Layouts</h5>
@@ -146,6 +214,7 @@
                 % end
             </ul>
         </div>
+        
 
         <!-- Control Panel Footer -->
         <div class="control-panel-footer mt-4">
@@ -180,6 +249,71 @@
             document.getElementById('layoutSelection').style.display = 'block';
             document.getElementById('propsSelection').style.display = 'block';
             document.getElementById('applyButton').style.display = 'block';
+            document.getElementById('customQuery').style.display = 'block';
+        });
+
+        // Show query-specific input based on selection
+        document.getElementById('customQueryType').addEventListener('change', function() {
+            const queryValueInput = document.getElementById('queryValue');
+            const selectedQuery = this.value;
+
+            if (selectedQuery === 'prune' || selectedQuery === 'collapse' || selectedQuery === 'highlight') {
+                queryValueInput.placeholder = "Enter node name or identifier";
+            } else if (selectedQuery === 'rank_limit') {
+                queryValueInput.placeholder = "Enter rank (e.g., species, genus)";
+            }
+        });
+        
+        // Array to store query parts
+        let queryParts = [];
+
+        function toggleQueryFields() {
+            const queryType = document.getElementById('customQueryType').value;
+            const queryFields = document.getElementById('queryFields');
+            const taxonomicOptions = document.getElementById('taxonomicOptions');
+
+            if (queryType === 'rank_limit') {
+                queryFields.style.display = 'none';
+                taxonomicOptions.style.display = 'block';
+            } else {
+                queryFields.style.display = 'block';
+                taxonomicOptions.style.display = 'none';
+            }
+        }
+
+        function addQueryPart(operator) {
+            const queryType = document.getElementById('customQueryType').value;
+            const prop = document.getElementById('queryProp').value.trim();
+            const operation = document.getElementById('queryOperation').value;
+            const value = document.getElementById('queryValue').value.trim();
+
+            if (!prop || !value) {
+                alert("Please fill in all query fields.");
+                return;
+            }
+
+            // Build the query part
+            const queryPart = `[${queryType}] ${prop} ${operation} ${value}`;
+            if (queryParts.length > 0) {
+                queryParts.push(operator);
+            }
+            queryParts.push(queryPart);
+
+            // Update the query box
+            document.getElementById('queryBox').value = queryParts.join(' ');
+
+            // Clear the input fields for the next entry
+            document.getElementById('queryProp').value = '';
+            document.getElementById('queryValue').value = '';
+        }
+
+        // Event listeners for adding query parts
+        document.getElementById('addWithAndBtn').addEventListener('click', function() {
+            addQueryPart('AND');
+        });
+
+        document.getElementById('addWithOrBtn').addEventListener('click', function() {
+            addQueryPart('OR');
         });
 
         // Fullscreen Toggle for Iframe
@@ -193,6 +327,8 @@
                 document.exitFullscreen();
             }
         });
+        // Initialize the toggle function when the page loads
+        window.onload = toggleQueryFields;
     </script>
 </body>
 </html>

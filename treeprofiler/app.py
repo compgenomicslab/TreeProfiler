@@ -358,7 +358,7 @@ def explore_tree(treename):
         t = Tree(tree_info['annotated_tree'])
         
         if request.method == 'POST':
-            selected_props = request.forms.getall('props') or current_props
+            selected_props = request.forms.getall('props')
             current_props.extend(selected_props)
             selected_layout = request.forms.get('layout')
             # Update layouts based on user selection
@@ -515,7 +515,7 @@ def explore_tree(treename):
                 current_layouts = current_layouts + taxa_layouts
                 level += 1
 
-            if selected_layout == 'taxonclade-layout' or 'taxonrectangle-layout':
+            if selected_layout == 'taxonclade-layout' or selected_layout == 'taxonrectangle-layout':
                 taxon_color_dict = {}
                 taxa_layouts = []
                 rank2values = defaultdict(list)
@@ -544,7 +544,7 @@ def explore_tree(treename):
                     speciation_color="blue", 
                     duplication_color="red", node_size = 3,
                     legend=True))
-                current_layouts = current_layouts + taxa_layouts
+                current_layouts.extend(taxa_layouts)
 
             if selected_layout == 'alignment-layout':
                 lengh = len(max(utils.tree_prop_array(t, 'alignment'),key=len))
