@@ -254,93 +254,83 @@
     </div>
 
     <script>
-        // Control Panel Toggle
-        document.getElementById('controlPanelTab').addEventListener('click', function() {
-            var controlPanel = document.getElementById('controlPanel');
+        // === Control Panel Functions ===
+        function toggleControlPanel() {
+            const controlPanel = document.getElementById('controlPanel');
             controlPanel.classList.toggle('minimized');
-        });
-
-        // Initialize Select2 on the #props element
-        $(document).ready(function() {
-            // for the visualization properties selection
+        }
+    
+        function initializeControlPanel() {
+            document.getElementById('controlPanelTab').addEventListener('click', toggleControlPanel);
+        }
+    
+        // === Select2 Initialization ===
+        function initializeSelect2() {
             $('#props').select2({
                 placeholder: "Type to search properties",
                 allowClear: true,
-                width: '100%'  // Adjust the width to fit your form layout
+                width: '100%'
             });
-
-            // for the custom query property selection
+    
             $('#queryProp').select2({
                 placeholder: "Type to search properties",
                 allowClear: true,
-                width: '100%'  // Adjust the width to fit your form layout
+                width: '100%'
             });
-
-            // Event handler for selecting properties
+        }
+    
+        // === Event Handlers for Select2 (Properties Selection) ===
+        function handlePropertySelect() {
             $('#queryProp').on('select2:select', function (e) {
-                var selectedProperty = e.params.data.id;
-
-                // Check if the selected property has a "_counter" suffix
+                const selectedProperty = e.params.data.id;
                 if (selectedProperty.endsWith('_counter')) {
-                    // Create an input field for the Counter prop
-                    var counterField = `
-                        <div class="form-group" id="input-${selectedProperty}">
-                            <label for="counterInput">Prop for ${selectedProperty}</label>
-                            <input type="text" class="form-control counter-input" 
-                                id="counterInput" 
-                                data-prop="${selectedProperty}" 
-                                placeholder="Enter Counter prop">
-                        </div>`;
-                    $('#dynamicCounterProps').append(counterField);
+                    addCounterInput(selectedProperty);
                 }
             });
-
-            // Optional: remove the input field when an item is unselected
+        }
+    
+        function handlePropertyUnselect() {
             $('#queryProp').on('select2:unselect', function(e) {
-                var unselectedProperty = e.params.data.id;
+                const unselectedProperty = e.params.data.id;
                 if (unselectedProperty.endsWith('_counter')) {
-                    $(`#input-${unselectedProperty}`).remove();
-                    $('#queryResult').val(''); // Clear or update the query result as needed
+                    removeCounterInput(unselectedProperty);
                 }
             });
-        });
-
-        // Show layout and properties selection on Add Layout button click
-        document.getElementById('addLayoutBtn').addEventListener('click', function() {
+        }
+    
+        function addCounterInput(selectedProperty) {
+            const counterField = `
+                <div class="form-group" id="input-${selectedProperty}">
+                    <label for="counterInput">Prop for ${selectedProperty}</label>
+                    <input type="text" class="form-control counter-input" 
+                        id="counterInput" 
+                        data-prop="${selectedProperty}" 
+                        placeholder="Enter Counter prop">
+                </div>`;
+            $('#dynamicCounterProps').append(counterField);
+        }
+    
+        function removeCounterInput(unselectedProperty) {
+            $(`#input-${unselectedProperty}`).remove();
+        }
+    
+        // === Layout and Query Section Display ===
+        function showLayoutOptions() {
             document.getElementById('layoutSelection').style.display = 'block';
             document.getElementById('propsSelection').style.display = 'block';
             document.getElementById('applyButton').style.display = 'block';
             document.getElementById('customQuery').style.display = 'block';
-        });
-
-        // Show query-specific input based on selection
-        document.getElementById('customQueryType').addEventListener('change', function() {
-            const queryValueInput = document.getElementById('queryValue');
-            const selectedQuery = this.value;
-
-            if (selectedQuery === 'prune' || selectedQuery === 'collapse' || selectedQuery === 'highlight') {
-                queryValueInput.placeholder = "Enter node name or identifier";
-            } else if (selectedQuery === 'rank_limit') {
-                queryValueInput.placeholder = "Enter rank (e.g., species, genus)";
-            }
-        });
-        
-        // Array to store query parts
-        let queryParts = [];
-
-        // Function to reset the query button when switching types
-        function resetQueryButton() {
-            document.getElementById('addQueryBtn').innerText = 'ADD';
-            document.getElementById('addQueryOptions').style.display = 'none';
-            queryParts = [];
-            document.getElementById('queryBox').value = '';
         }
-
+    
+        function initializeLayoutButton() {
+            document.getElementById('addLayoutBtn').addEventListener('click', showLayoutOptions);
+        }
+    
         function toggleQueryFields() {
             const queryType = document.getElementById('customQueryType').value;
             const queryFields = document.getElementById('queryFields');
             const taxonomicOptions = document.getElementById('taxonomicOptions');
-
+    
             if (queryType === 'rank_limit') {
                 queryFields.style.display = 'none';
                 taxonomicOptions.style.display = 'block';
@@ -348,110 +338,138 @@
                 queryFields.style.display = 'block';
                 taxonomicOptions.style.display = 'none';
             }
-            resetQueryButton(); // Reset the query button
+            resetQueryButton();
         }
-
-        // Function to toggle the dropdown visibility
-        function toggleDropdown() {
-            const dropdownMenu = document.getElementById('addQueryOptions');
-            if (dropdownMenu.style.display === 'block') {
-                dropdownMenu.style.display = 'none';
-            } else {
-                dropdownMenu.style.display = 'block';
+    
+        function updateQueryPlaceholder() {
+            const queryValueInput = document.getElementById('queryValue');
+            const selectedQuery = document.getElementById('customQueryType').value;
+    
+            if (selectedQuery === 'prune' || selectedQuery === 'collapse' || selectedQuery === 'highlight') {
+                queryValueInput.placeholder = "Enter node name or identifier";
+            } else if (selectedQuery === 'rank_limit') {
+                queryValueInput.placeholder = "Enter rank (e.g., species, genus)";
             }
         }
-        // Function to add query parts with selected logic
+    
+        function initializeQueryTypeChange() {
+            document.getElementById('customQueryType').addEventListener('change', () => {
+                toggleQueryFields();
+                updateQueryPlaceholder();
+            });
+        }
+    
+        // === Query Building Functions ===
+        let queryParts = [];
+    
+        function resetQueryButton() {
+            document.getElementById('addQueryBtn').innerText = 'ADD';
+            document.getElementById('addQueryOptions').style.display = 'none';
+            queryParts = [];
+            document.getElementById('queryBox').value = '';
+        }
+    
+        function toggleDropdown() {
+            const dropdownMenu = document.getElementById('addQueryOptions');
+            dropdownMenu.style.display = dropdownMenu.style.display === 'block' ? 'none' : 'block';
+        }
+    
         function addQueryPart(operator = '') {
             const queryType = document.getElementById('customQueryType').value;
             const prop = document.getElementById('queryProp').value.trim();
             const operation = document.getElementById('queryOperation').value;
             const value = document.getElementById('queryValue').value.trim();
-            //check if the element exists before accessing its value
-            const counterInputElement = document.querySelector('.counter-input'); // Selects the dynamically created input with class 'counter-input'
-            const counterValue = counterInputElement ? counterInputElement.value : null; 
-
+            const counterInputElement = document.querySelector('.counter-input');
+            const counterValue = counterInputElement ? counterInputElement.value : null;
+    
             if (!prop || !value) {
                 alert("Please fill in all query fields.");
-                resetQueryButton(); // Reset the query button
+                resetQueryButton();
                 return;
             }
-
-            // Build the query part
-            if (counterValue !== null) {
-                var queryPart = `${prop}:${counterValue} > ${value}`;
-            } else {
-                var queryPart = `${prop} ${operation} ${value}`;
-            }
-            // let queryPart = `${prop} ${operation} ${value}`;
-            // if (queryParts.length > 0) {
-            //     queryPart = `${operator} ${queryPart}`;
-            // }
+    
+            const queryPart = counterValue !== null ? `${prop}:${counterValue} > ${value}` : `${prop} ${operation} ${value}`;
             queryParts.push(queryPart);
-
-            // Update the query box with ';' as a separator between complete queries
+    
             document.getElementById('queryBox').value = queryParts.join(' ') + ';';
-
-            // Change the button text to show "AND" and reveal dropdown options
             document.getElementById('addQueryBtn').innerText = 'AND';
             document.getElementById('addQueryOptions').style.display = 'block';
-
-            // Clear the input fields for the next entry
+    
             document.getElementById('queryProp').value = '';
             document.getElementById('queryValue').value = '';
-            
-            // Hide the dropdown menu
             document.getElementById('addQueryOptions').style.display = 'none';
         }
-
-        // Event listener to clear the query box
-        document.getElementById('clearQueryBox').addEventListener('click', function(event) {
-            event.preventDefault(); // Prevent the default anchor behavior
+    
+        function initializeAddQueryButton() {
+            document.getElementById('addQueryBtn').addEventListener('click', function() {
+                if (document.getElementById('queryBox').value === '') {
+                    addQueryPart();
+                }
+            });
+        }
+    
+        function clearQueryBox(event) {
+            event.preventDefault();
             document.getElementById('queryBox').value = '';
-            queryParts = []; // Clear the stored query parts
-            resetQueryButton(); // Reset the query button
-        });
-        
-        // // Event listener for adding the first query part without operator
-        document.getElementById('addQueryBtn').addEventListener('click', function() {
-            if (document.getElementById('queryBox').value === '') {
-                addQueryPart(); // Add initial query without an operator
-            }
-        });
-
-        // Fullscreen toggle function
-        document.getElementById('fullscreenBtn').addEventListener('click', function() {
+            queryParts = [];
+            resetQueryButton();
+        }
+    
+        function initializeClearQueryBox() {
+            document.getElementById('clearQueryBox').addEventListener('click', clearQueryBox);
+        }
+    
+        // === Fullscreen Functionality ===
+        function toggleFullscreen() {
             const iframe = document.getElementById('treeIframe');
             
             if (!document.fullscreenElement) {
-                // Check if the browser supports requestFullscreen method
                 if (iframe.requestFullscreen) {
                     iframe.requestFullscreen();
-                } else if (iframe.mozRequestFullScreen) { // Firefox
+                } else if (iframe.mozRequestFullScreen) {
                     iframe.mozRequestFullScreen();
-                } else if (iframe.webkitRequestFullscreen) { // Chrome, Safari, and Opera
+                } else if (iframe.webkitRequestFullscreen) {
                     iframe.webkitRequestFullscreen();
-                } else if (iframe.msRequestFullscreen) { // IE/Edge
+                } else if (iframe.msRequestFullscreen) {
                     iframe.msRequestFullscreen();
                 } else {
                     alert('Fullscreen mode is not supported by your browser.');
                 }
             } else {
-                // Check if the browser supports exitFullscreen method
                 if (document.exitFullscreen) {
                     document.exitFullscreen();
-                } else if (document.mozCancelFullScreen) { // Firefox
+                } else if (document.mozCancelFullScreen) {
                     document.mozCancelFullScreen();
-                } else if (document.webkitExitFullscreen) { // Chrome, Safari, and Opera
+                } else if (document.webkitExitFullscreen) {
                     document.webkitExitFullscreen();
-                } else if (document.msExitFullscreen) { // IE/Edge
+                } else if (document.msExitFullscreen) {
                     document.msExitFullscreen();
                 }
             }
+        }
+    
+        function initializeFullscreenButton() {
+            document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
+        }
+    
+        // === Initialize All Functions on Document Ready ===
+        $(document).ready(function() {
+            initializeControlPanel();
+            initializeSelect2();
+            handlePropertySelect();
+            handlePropertyUnselect();
+            initializeLayoutButton();
+            initializeQueryTypeChange();
+            initializeAddQueryButton();
+            initializeClearQueryBox();
+            initializeFullscreenButton();
         });
-
-        // Initialize the toggle function when the page loads
-        window.onload = toggleQueryFields;
-        window.onload = resetQueryButton;
+    
+        // Run necessary functions on page load
+        window.onload = function() {
+            toggleQueryFields();
+            resetQueryButton();
+        };
     </script>
 </body>
 </html>
