@@ -353,8 +353,7 @@ def explore_tree(treename):
         # Load previously stored layouts, props, and metadata
         current_layouts = tree_info.get('layouts', [])
         current_layouts = []
-        current_props = tree_info.get('node_props', list(tree_info['prop2type'].keys()))
-        
+        current_props = list(tree_info['prop2type'].keys())
         t = Tree(tree_info['annotated_tree'])
         
         if request.method == 'POST':
@@ -562,18 +561,32 @@ def explore_tree(treename):
                 current_layouts.append(domain_layout)
 
             if query_type and query_box:
-                query_strings = convert_query_string(query_box)
-                
+                query_strings = convert_query_string(query_box) # convert query string to list of queries as treeprofiler
+                if query_type == 'highlight':
+                    for idx, condition in enumerate(query_strings):
+                        syntax_sep = ','
+                        condition_list = condition.split(syntax_sep)
+                        color2conditions  = {}
+                        color2conditions[paired_color[idx]] = condition_list
+                        s_layout = layouts.conditional_layouts.LayoutHighlight(name=f'Highlight_{condition}', color2conditions=color2conditions, column=level, prop2type = tree_info['prop2type'])               
+                        current_layouts.append(s_layout)
 
+                if query_type == 'collapse':
+                    for idx, condition in enumerate(query_strings):
+                        syntax_sep = ','
+                        condition_list = condition.split(syntax_sep)
+                        color2conditions  = {}
+                        color2conditions[paired_color[idx]] = condition_list
+                        c_layout = layouts.conditional_layouts.LayoutCollapse(name=f'Collapse_{condition}', color2conditions=color2conditions, column=level, prop2type = tree_info['prop2type'])               
+                        current_layouts.append(c_layout)
 
             # Store updated props and layouts back to the tree_info
             tree_info['layouts'] = current_layouts
             tree_info['props'] = selected_props
 
-            # Run the ETE tree explorer in a separate thread with updated props and layout
+            # Run the ete in a separate thread with updated props and layout
             def start_explore():
                 t.explore(name=treename, layouts=current_layouts, port=5050, open_browser=False, include_props=current_props)
-
             explorer_thread = threading.Thread(target=start_explore)
             explorer_thread.start()
         else:
@@ -590,7 +603,6 @@ def convert_query_string(query_string):
     # Split the query by semicolon to get each statement
     queries = [q.strip() for q in query_string.split(';') if q.strip()]
     result = []
-
     for query in queries:
         if " OR " in query:
             # Split the query by 'OR' and convert each condition
@@ -600,7 +612,8 @@ def convert_query_string(query_string):
             # Split the query by 'AND' and convert each condition
             conditions = [cond.strip() for cond in query.split(" AND ")]
             result.append(','.join(conditions))  # Join conditions with a comma for 'AND'
-
+        else:
+            result.append(query)
     return result
 
 run(host='localhost', port=8080)
