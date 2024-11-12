@@ -96,7 +96,6 @@ def do_upload():
     response.content_type = 'application/json'
     return json.dumps({"job_id": treename})
 
-
 def process_upload_job(job_args):
     """Function to handle the actual processing of the uploaded data."""
     treename = job_args['treename']
@@ -346,286 +345,623 @@ def check_job_status():
     status = job_status.get(job_id, "not_found")
     return status
 
+# @route('/explore_tree/<treename>', method=['GET', 'POST'])
+# def explore_tree(treename):
+#     tree_info = trees.get(treename)
+#     if tree_info:
+#         # Load previously stored layouts, props, and metadata
+#         current_layouts = tree_info.get('layouts', [])
+#         current_props = list(tree_info['prop2type'].keys())
+#         t = Tree(tree_info['annotated_tree'])
+        
+#         if request.method == 'POST':
+#             # selected_props = request.forms.getall('props')
+#             # current_props.extend(selected_props)
+#             # selected_layout = request.forms.get('layout')
+#             # query_type = request.forms.get('customQueryType')
+#             # query_box = request.forms.get('queryBox')   
+
+#             layers_data = request.forms.get('layers')
+#             if layers_data:
+#                 layers = json.loads(layers_data)
+#                 level = 0
+#                 for layer in layers:
+#                     selected_props = layer.get('props', [])
+#                     selected_layout = layer.get('layout', '')
+#                     query_type = layer.get('queryType', '')
+#                     query_box = layer.get('query', '')
+#                     current_props.extend(selected_props)
+
+#                     # Update layouts based on user selection
+#                     column_width = 70
+#                     padding_x = 1
+#                     padding_y = 0
+#                     color_config = {}
+#                     internal_num_rep = 'avg'
+
+#                     # categorical
+#                     if selected_layout == 'rectangle-layout':
+#                         rectangle_layouts, level, _ = tree_plot.get_rectangle_layouts(t, selected_props, level, tree_info['prop2type'])
+#                         current_layouts.extend(rectangle_layouts)
+#                     if selected_layout == 'label-layout':
+#                         label_layouts, level, _ = tree_plot.get_label_layouts(t, selected_props, level, tree_info['prop2type'])
+#                         current_layouts.extend(label_layouts)
+#                     if selected_layout == 'colorbranch-layout':
+#                         colorbranch_layouts, level, _ = tree_plot.get_colorbranch_layouts(t, selected_props, level, tree_info['prop2type'])
+#                         current_layouts.extend(colorbranch_layouts)
+#                     if selected_layout == 'categorical-bubble-layout':
+#                         bubble_layouts, level, _ = tree_plot.get_categorical_bubble_layouts(t, selected_props, level, tree_info['prop2type'])
+#                         current_layouts.extend(bubble_layouts)
+#                     if selected_layout == 'piechart-layout':
+#                         piechart_layouts = tree_plot.get_piechart_layouts(t, selected_props, level, tree_info['prop2type'])
+#                         current_layouts.extend(piechart_layouts)
+#                     if selected_layout == 'background-layout':
+#                         background_layouts, level, _ = tree_plot.get_background_layouts(t, selected_props, level, tree_info['prop2type'])
+#                         current_layouts.extend(background_layouts)
+#                     if selected_layout == 'profiling-layout':
+#                         for profiling_prop in selected_props:
+#                             matrix, value2color, all_profiling_values = tree_plot.multiple2matrix(t, profiling_prop, prop2type=tree_info['prop2type'], color_config=color_config)
+#                             matrix_layout = tree_plot.profile_layouts.LayoutPropsMatrixBinary(name=f"Profiling_{profiling_prop}",
+#                             matrix=matrix, matrix_props=all_profiling_values, value_range=[0,1],
+#                             value_color=value2color, column=level, poswidth=column_width)
+#                             current_layouts.append(matrix_layout)
+#                             level += 1
+#                     if selected_layout == 'categorical-matrix-layout':
+#                         # drawing as array in matrix
+#                         matrix, value2color = tree_plot.categorical2matrix(t, selected_props, color_config=color_config)
+#                         matrix_layout = tree_plot.profile_layouts.LayoutPropsMatrixOld(name=f"Categorical_matrix_{selected_props}",
+#                         matrix=matrix, matrix_type='categorical', matrix_props=selected_props,
+#                         value_color=value2color, column=level, poswidth=column_width)
+#                         current_layouts.append(matrix_layout)
+#                         level += 1
+
+#                     # binary
+#                     if selected_layout == 'binary-layout':
+#                         binary_layouts, level, _ = tree_plot.get_binary_layouts(t, selected_props, 
+#                                                     level, tree_info['prop2type'], column_width=column_width, 
+#                                                     reverse=False, padding_x=padding_x, padding_y=padding_y,
+#                                                     color_config=color_config, same_color=False, aggregate=False)
+#                         current_layouts.extend(binary_layouts)
+#                     if selected_layout == 'binary-aggregate-layout':
+#                         binary_layouts, level, _ = tree_plot.get_binary_layouts(t, selected_props, 
+#                                                     level, tree_info['prop2type'], column_width=column_width, 
+#                                                     reverse=False, padding_x=padding_x, padding_y=padding_y,
+#                                                     color_config=color_config, same_color=False, aggregate=True)
+#                         current_layouts.extend(binary_layouts)
+#                     if selected_layout == 'binary-unicolor-layout':
+#                         binary_layouts, level, _ = tree_plot.get_binary_layouts(t, selected_props, 
+#                                                     level, tree_info['prop2type'], column_width=column_width, 
+#                                                     reverse=False, padding_x=padding_x, padding_y=padding_y,
+#                                                     color_config=color_config, same_color=True, aggregate=False)
+#                         current_layouts.extend(binary_layouts)
+#                     if selected_layout == 'binary-unicolor-aggregate-layout':
+#                         binary_layouts, level, _ = tree_plot.get_binary_layouts(t, selected_props, 
+#                                                     level, tree_info['prop2type'], column_width=column_width, 
+#                                                     reverse=False, padding_x=padding_x, padding_y=padding_y,
+#                                                     color_config=color_config, same_color=True, aggregate=True)
+#                         current_layouts.extend(binary_layouts)
+                    
+#                     # numerical
+#                     if selected_layout == 'branchscore-layout':
+#                         branchscore_layouts = tree_plot.get_branchscore_layouts(t, selected_props, level, 
+#                                             tree_info['prop2type'], internal_rep=internal_num_rep)
+#                         current_layouts.extend(branchscore_layouts)
+#                     if selected_layout == 'barplot-layout':
+#                         barplot_layouts, level, _ = tree_plot.get_barplot_layouts(t, selected_props, level, 
+#                                             tree_info['prop2type'], internal_rep=internal_num_rep)
+#                         current_layouts.extend(barplot_layouts)
+#                     if selected_layout == 'numerical-bubble-layout':
+#                         bubble_layouts_layouts, level, _ = tree_plot.get_numerical_bubble_layouts(t, selected_props, level, 
+#                                             tree_info['prop2type'], internal_rep=internal_num_rep, color_config=color_config)
+#                         current_layouts.extend(bubble_layouts_layouts)
+#                     if selected_layout == 'heatmap-layout':
+#                         heatmap_layouts, level = tree_plot.get_heatmap_layouts(t, selected_props, level,
+#                                             column_width=column_width, padding_x=padding_x, padding_y=padding_y, 
+#                                             internal_rep=internal_num_rep, color_config=color_config, norm_method='min-max',
+#                                             global_scaling=True)
+#                         current_layouts.extend(heatmap_layouts)
+#                     if selected_layout == 'heatmap-mean-layout':
+#                         heatmap_layouts, level = tree_plot.get_heatmap_layouts(t, selected_props, level,
+#                                             column_width=column_width, padding_x=padding_x, padding_y=padding_y, 
+#                                             internal_rep=internal_num_rep, color_config=color_config, norm_method='mean',
+#                                             global_scaling=True)
+#                         current_layouts.extend(heatmap_layouts)
+#                     if selected_layout == 'heatmap-zscore-layout':
+#                         heatmap_layouts, level = tree_plot.get_heatmap_layouts(t, selected_props, level,
+#                                             column_width=column_width, padding_x=padding_x, padding_y=padding_y, 
+#                                             internal_rep=internal_num_rep, color_config=color_config, norm_method='zscore',
+#                                             global_scaling=True)
+#                         current_layouts.extend(heatmap_layouts)
+#                     if selected_layout == 'numerical-matrix-layout':
+#                         matrix, minval, maxval, value2color, results_list, list_props, single_props = tree_plot.numerical2matrix(t, 
+#                         selected_props, count_negative=True, internal_num_rep=internal_num_rep, 
+#                         color_config=color_config, norm_method='min-max')
+#                         if list_props:
+#                             index_map = {value: idx for idx, value in enumerate(selected_props)}
+#                             sorted_list_props = sorted(list_props, key=lambda x: index_map[x])
+#                             for list_prop in sorted_list_props:
+#                                 matrix, minval, maxval, value2color = results_list[list_prop]
+#                                 matrix_layout = tree_plot.profile_layouts.LayoutPropsMatrixOld(name=f"Numerical_matrix_{list_prop}", 
+#                                     matrix=matrix, matrix_type='numerical', matrix_props=[list_prop], is_list=True, 
+#                                     value_color=value2color, value_range=[minval, maxval], column=level,
+#                                     poswidth=column_width)
+#                                 level += 1
+#                                 current_layouts.append(matrix_layout)
+#                         if single_props:
+#                             index_map = {value: idx for idx, value in enumerate(selected_props)}
+#                             sorted_single_props = sorted(single_props, key=lambda x: index_map[x])
+#                             matrix_layout = tree_plot.profile_layouts.LayoutPropsMatrixOld(name=f"Numerical_matrix_{sorted_single_props}", 
+#                                 matrix=matrix, matrix_type='numerical', matrix_props=sorted_single_props, is_list=False, 
+#                                 value_color=value2color, value_range=[minval, maxval], column=level,
+#                                 poswidth=column_width)
+#                             level += 1
+#                             current_layouts.append(matrix_layout)
+
+#                     # analytic
+#                     if selected_layout == 'acr-discrete-layout':
+#                         acr_layouts, level, _ = tree_plot.get_acr_discrete_layouts(t, selected_props, level, prop2type=tree_info['prop2type'],
+#                         column_width=column_width, padding_x=padding_x, padding_y=padding_y, color_config=color_config) 
+#                         #delta statistic 
+#                         for suffix in ['delta', 'pval']:
+#                             current_props.extend([utils.add_suffix(prop, suffix) for prop in selected_props])
+#                         current_layouts.extend(acr_layouts)
+
+#                     if selected_layout == 'acr-continuous-layout':
+#                         acr_layouts = tree_plot.get_acr_continuous_layouts(t, selected_props, level, prop2type=tree_info['prop2type'],
+#                         padding_x=padding_x, padding_y=padding_y)
+#                         current_layouts.extend(acr_layouts)
+
+#                     if selected_layout == 'ls-layout':
+#                         ls_layouts, ls_props = tree_plot.get_ls_layouts(t, selected_props, level, prop2type=tree_info['prop2type'],
+#                         padding_x=padding_x, padding_y=padding_y, color_config=color_config)
+#                         current_props.extend(ls_props)
+#                         current_layouts.extend(ls_layouts)
+
+#                     if selected_layout == 'taxoncollapse-layout':
+#                         taxon_color_dict = {}
+#                         taxa_layouts = []
+#                         # generate a rank2values dict for pre taxonomic annotated tree
+#                         rank2values = defaultdict(list)
+#                         for n in t.traverse():
+#                             if n.props.get('lca'):
+#                                 lca_dict = utils.string_to_dict(n.props.get('lca'))
+#                                 for rank, sci_name in lca_dict.items():
+#                                     rank2values[rank].append(sci_name)
+
+#                             current_rank = n.props.get('rank')
+#                             if current_rank and current_rank != 'Unknown':
+#                                 rank2values[current_rank].append(n.props.get('sci_name',''))
+
+#                         # assign color for each value of each rank
+#                         for rank, value in sorted(rank2values.items()):
+#                             value = list(set(value))
+#                             color_dict = utils.assign_color_to_values(value, paired_color)
+#                             taxa_layout = layouts.taxon_layouts.TaxaCollapse(name = "TaxaCollapse_"+rank, rank=rank, 
+#                             rect_width=column_width, color_dict=color_dict, column=level)
+#                             taxa_layouts.append(taxa_layout)
+                            
+#                         current_layouts = current_layouts + taxa_layouts
+#                         level += 1
+
+#                     if selected_layout == 'taxonclade-layout' or selected_layout == 'taxonrectangle-layout':
+#                         taxon_color_dict = {}
+#                         taxa_layouts = []
+#                         rank2values = defaultdict(list)
+#                         for n in t.traverse():
+#                             if n.props.get('rank') and n.props.get('rank') != 'Unknown':
+#                                 rank = n.props.get('rank')
+#                                 rank2values[rank].append(n.props.get('sci_name',''))
+
+#                         # assign color for each value of each rank
+#                         for rank, value in sorted(rank2values.items()):
+#                             value = list(set(value))
+#                             color_dict = utils.assign_color_to_values(value, paired_color)
+#                             if selected_layout == 'taxonclade-layout':
+#                                 taxa_layout = layouts.taxon_layouts.TaxaClade(name='TaxaClade_'+rank, level=level, rank = rank, color_dict=color_dict)
+#                                 taxa_layouts.append(taxa_layout)
+
+#                             if selected_layout == 'taxonrectangle-layout':
+#                                 taxa_layout = layouts.taxon_layouts.TaxaRectangular(name = "TaxaRect_"+rank, rank=rank, rect_width=column_width, color_dict=color_dict, column=level)
+#                                 taxa_layouts.append(taxa_layout)
+#                                 #level += 1
+#                             taxon_color_dict[rank] = color_dict
+
+#                         #taxa_layouts.append(taxon_layouts.TaxaRectangular(name = "Last Common Ancester", color_dict=taxon_color_dict, column=level))
+#                         taxa_layouts.append(layouts.taxon_layouts.LayoutSciName(name = 'Taxa Scientific name', color_dict=taxon_color_dict))
+#                         taxa_layouts.append(layouts.taxon_layouts.LayoutEvolEvents(name='Taxa Evolutionary events', prop="evoltype",
+#                             speciation_color="blue", 
+#                             duplication_color="red", node_size = 3,
+#                             legend=True))
+#                         current_layouts.extend(taxa_layouts)
+
+#                     if selected_layout == 'alignment-layout':
+#                         lengh = len(max(utils.tree_prop_array(t, 'alignment'),key=len))
+#                         window = []
+#                         aln_layout = layouts.seq_layouts.LayoutAlignment(name='Alignment_layout', 
+#                                 alignment_prop='alignment', column=level, scale_range=lengh, window=window,
+#                                 summarize_inner_nodes=True)
+#                         current_layouts.append(aln_layout)
+
+#                     if selected_layout == 'domain-layout':
+#                         domain_layout = layouts.seq_layouts.LayoutDomain(name="Domain_layout", prop='dom_arq')
+#                         current_layouts.append(domain_layout)
+
+#                     if query_type and query_box:
+#                         query_strings = convert_query_string(query_box) # convert query string to list of queries as treeprofiler
+#                         if query_type == 'highlight':
+#                             for idx, condition in enumerate(query_strings):
+#                                 syntax_sep = ','
+#                                 condition_list = condition.split(syntax_sep)
+#                                 color2conditions  = {}
+#                                 color2conditions[paired_color[idx]] = condition_list
+#                                 s_layout = layouts.conditional_layouts.LayoutHighlight(name=f'Highlight_{condition}', color2conditions=color2conditions, column=level, prop2type = tree_info['prop2type'])               
+#                                 current_layouts.append(s_layout)
+
+#                         if query_type == 'collapse':
+#                             for idx, condition in enumerate(query_strings):
+#                                 syntax_sep = ','
+#                                 condition_list = condition.split(syntax_sep)
+#                                 color2conditions  = {}
+#                                 color2conditions[paired_color[idx]] = condition_list
+#                                 c_layout = layouts.conditional_layouts.LayoutCollapse(name=f'Collapse_{condition}', color2conditions=color2conditions, column=level, prop2type = tree_info['prop2type'])               
+#                                 current_layouts.append(c_layout)
+
+#                     # Store updated props and layouts back to the tree_info
+#                     tree_info['layouts'] = current_layouts
+#                     tree_info['props'] = selected_props
+
+#             # Run the ete in a separate thread with updated props and layout
+#             def start_explore():
+#                 t.explore(name=treename, layouts=current_layouts, port=5050, open_browser=False, include_props=current_props)
+#             explorer_thread = threading.Thread(target=start_explore)
+#             explorer_thread.start()
+#         else:
+#             def start_explore():
+#                 t.explore(name=treename, layouts=current_layouts, port=5050, open_browser=False, include_props=current_props)
+#             explorer_thread = threading.Thread(target=start_explore)
+#             explorer_thread.start()
+            
+#         return template('explore_tree', treename=treename, tree_info=tree_info, selected_props=current_props)
+
+#     return f"Tree '{treename}' not found."
+
 @route('/explore_tree/<treename>', method=['GET', 'POST'])
 def explore_tree(treename):
     tree_info = trees.get(treename)
-    if tree_info:
-        # Load previously stored layouts, props, and metadata
-        current_layouts = tree_info.get('layouts', [])
-        current_props = list(tree_info['prop2type'].keys())
-        t = Tree(tree_info['annotated_tree'])
-        
-        if request.method == 'POST':
-            # selected_props = request.forms.getall('props')
-            # current_props.extend(selected_props)
-            # selected_layout = request.forms.get('layout')
-            # query_type = request.forms.get('customQueryType')
-            # query_box = request.forms.get('queryBox')   
+    if not tree_info:
+        return f"Tree '{treename}' not found."
+    
+    # Retrieve and initialize layouts, properties, and tree
+    current_layouts = tree_info.get('layouts', [])
+    current_props = list(tree_info['prop2type'].keys())
+    t = Tree(tree_info['annotated_tree'])
 
-            layers_data = request.forms.get('layers')
-            if layers_data:
-                layers = json.loads(layers_data)
-                level = 0
-                for layer in layers:
-                    selected_props = layer.get('props', [])
-                    selected_layout = layer.get('layout', '')
-                    query_type = layer.get('queryType', '')
-                    query_box = layer.get('query', '')
-                    current_props.extend(selected_props)
+    # Default values for layout settings (can be passed from form in the future)
+    level = 0
+    column_width = 70
+    padding_x, padding_y = 1, 0
+    color_config = {}
+    internal_num_rep = 'avg'
 
-                    # Update layouts based on user selection
-                    column_width = 70
-                    padding_x = 1
-                    padding_y = 0
-                    color_config = {}
-                    internal_num_rep = 'avg'
+    # Process POST request
+    if request.method == 'POST':
+        layers_data = request.forms.get('layers')
+        if layers_data:
+            layers = json.loads(layers_data)
+            for layer in layers:
+                # Process each layer individually
+                current_layouts, current_props, level = process_layer(
+                    t, layer, tree_info, current_layouts, current_props, level,
+                    column_width, padding_x, padding_y, color_config, internal_num_rep, paired_color
+                )
+    
+    # Start the ete exploration thread
+    start_explore_thread(t, treename, current_layouts, current_props)
+    
+    # Render template
+    return template('explore_tree', treename=treename, tree_info=tree_info, selected_props=current_props)
 
-                    # categorical
-                    if selected_layout == 'rectangle-layout':
-                        rectangle_layouts, level, _ = tree_plot.get_rectangle_layouts(t, selected_props, level, tree_info['prop2type'])
-                        current_layouts.extend(rectangle_layouts)
-                    if selected_layout == 'label-layout':
-                        label_layouts, level, _ = tree_plot.get_label_layouts(t, selected_props, level, tree_info['prop2type'])
-                        current_layouts.extend(label_layouts)
-                    if selected_layout == 'colorbranch-layout':
-                        colorbranch_layouts, level, _ = tree_plot.get_colorbranch_layouts(t, selected_props, level, tree_info['prop2type'])
-                        current_layouts.extend(colorbranch_layouts)
-                    if selected_layout == 'categorical-bubble-layout':
-                        bubble_layouts, level, _ = tree_plot.get_categorical_bubble_layouts(t, selected_props, level, tree_info['prop2type'])
-                        current_layouts.extend(bubble_layouts)
-                    if selected_layout == 'piechart-layout':
-                        piechart_layouts = tree_plot.get_piechart_layouts(t, selected_props, level, tree_info['prop2type'])
-                        current_layouts.extend(piechart_layouts)
-                    if selected_layout == 'background-layout':
-                        background_layouts, level, _ = tree_plot.get_background_layouts(t, selected_props, level, tree_info['prop2type'])
-                        current_layouts.extend(background_layouts)
-                    if selected_layout == 'profiling-layout':
-                        for profiling_prop in selected_props:
-                            matrix, value2color, all_profiling_values = tree_plot.multiple2matrix(t, profiling_prop, prop2type=tree_info['prop2type'], color_config=color_config)
-                            matrix_layout = tree_plot.profile_layouts.LayoutPropsMatrixBinary(name=f"Profiling_{profiling_prop}",
-                            matrix=matrix, matrix_props=all_profiling_values, value_range=[0,1],
-                            value_color=value2color, column=level, poswidth=column_width)
-                            current_layouts.append(matrix_layout)
-                            level += 1
-                    
-                    if selected_layout == 'categorical-matrix-layout':
-                        # drawing as array in matrix
-                        matrix, value2color = tree_plot.categorical2matrix(t, selected_props, color_config=color_config)
-                        matrix_layout = tree_plot.profile_layouts.LayoutPropsMatrixOld(name=f"Categorical_matrix_{selected_props}",
-                        matrix=matrix, matrix_type='categorical', matrix_props=selected_props,
-                        value_color=value2color, column=level, poswidth=column_width)
-                        current_layouts.append(matrix_layout)
-                        level += 1
+def process_layer(t, layer, tree_info, current_layouts, current_props, level, column_width, padding_x, padding_y, color_config, internal_num_rep, paired_color):
+    """
+    Processes a single layer, applying user selections and updating layouts, properties, and level.
+    """
+    selected_props = layer.get('props', [])
+    selected_layout = layer.get('layout', '')
+    query_type = layer.get('queryType', '')
+    query_box = layer.get('query', '')
 
-                    # binary
-                    if selected_layout == 'binary-layout':
-                        binary_layouts, level, _ = tree_plot.get_binary_layouts(t, selected_props, 
-                                                    level, tree_info['prop2type'], column_width=column_width, 
-                                                    reverse=False, padding_x=padding_x, padding_y=padding_y,
-                                                    color_config=color_config, same_color=False, aggregate=False)
-                        current_layouts.extend(binary_layouts)
-                    if selected_layout == 'binary-aggregate-layout':
-                        binary_layouts, level, _ = tree_plot.get_binary_layouts(t, selected_props, 
-                                                    level, tree_info['prop2type'], column_width=column_width, 
-                                                    reverse=False, padding_x=padding_x, padding_y=padding_y,
-                                                    color_config=color_config, same_color=False, aggregate=True)
-                        current_layouts.extend(binary_layouts)
-                    if selected_layout == 'binary-unicolor-layout':
-                        binary_layouts, level, _ = tree_plot.get_binary_layouts(t, selected_props, 
-                                                    level, tree_info['prop2type'], column_width=column_width, 
-                                                    reverse=False, padding_x=padding_x, padding_y=padding_y,
-                                                    color_config=color_config, same_color=True, aggregate=False)
-                        current_layouts.extend(binary_layouts)
-                    if selected_layout == 'binary-unicolor-aggregate-layout':
-                        binary_layouts, level, _ = tree_plot.get_binary_layouts(t, selected_props, 
-                                                    level, tree_info['prop2type'], column_width=column_width, 
-                                                    reverse=False, padding_x=padding_x, padding_y=padding_y,
-                                                    color_config=color_config, same_color=True, aggregate=True)
-                        current_layouts.extend(binary_layouts)
-                    
-                    # numerical
-                    if selected_layout == 'branchscore-layout':
-                        branchscore_layouts = tree_plot.get_branchscore_layouts(t, selected_props, level, 
-                                            tree_info['prop2type'], internal_rep=internal_num_rep)
-                        current_layouts.extend(branchscore_layouts)
-                    if selected_layout == 'barplot-layout':
-                        barplot_layouts, level, _ = tree_plot.get_barplot_layouts(t, selected_props, level, 
-                                            tree_info['prop2type'], internal_rep=internal_num_rep)
-                        current_layouts.extend(barplot_layouts)
-                    if selected_layout == 'numerical-bubble-layout':
-                        bubble_layouts_layouts, level, _ = tree_plot.get_numerical_bubble_layouts(t, selected_props, level, 
-                                            tree_info['prop2type'], internal_rep=internal_num_rep, color_config=color_config)
-                        current_layouts.extend(bubble_layouts_layouts)
-                    if selected_layout == 'heatmap-layout':
-                        heatmap_layouts, level = tree_plot.get_heatmap_layouts(t, selected_props, level,
-                                            column_width=column_width, padding_x=padding_x, padding_y=padding_y, 
-                                            internal_rep=internal_num_rep, color_config=color_config, norm_method='min-max',
-                                            global_scaling=True)
-                        current_layouts.extend(heatmap_layouts)
-                    if selected_layout == 'heatmap-mean-layout':
-                        heatmap_layouts, level = tree_plot.get_heatmap_layouts(t, selected_props, level,
-                                            column_width=column_width, padding_x=padding_x, padding_y=padding_y, 
-                                            internal_rep=internal_num_rep, color_config=color_config, norm_method='mean',
-                                            global_scaling=True)
-                        current_layouts.extend(heatmap_layouts)
-                    if selected_layout == 'heatmap-zscore-layout':
-                        heatmap_layouts, level = tree_plot.get_heatmap_layouts(t, selected_props, level,
-                                            column_width=column_width, padding_x=padding_x, padding_y=padding_y, 
-                                            internal_rep=internal_num_rep, color_config=color_config, norm_method='zscore',
-                                            global_scaling=True)
-                        current_layouts.extend(heatmap_layouts)
-                    if selected_layout == 'numerical-matrix-layout':
-                        matrix, minval, maxval, value2color, results_list, list_props, single_props = tree_plot.numerical2matrix(t, 
-                        selected_props, count_negative=True, internal_num_rep=internal_num_rep, 
-                        color_config=color_config, norm_method='min-max')
-                        if list_props:
-                            index_map = {value: idx for idx, value in enumerate(selected_props)}
-                            sorted_list_props = sorted(list_props, key=lambda x: index_map[x])
-                            for list_prop in sorted_list_props:
-                                matrix, minval, maxval, value2color = results_list[list_prop]
-                                matrix_layout = tree_plot.profile_layouts.LayoutPropsMatrixOld(name=f"Numerical_matrix_{list_prop}", 
-                                    matrix=matrix, matrix_type='numerical', matrix_props=[list_prop], is_list=True, 
-                                    value_color=value2color, value_range=[minval, maxval], column=level,
-                                    poswidth=column_width)
-                                level += 1
-                                current_layouts.append(matrix_layout)
-                        if single_props:
-                            index_map = {value: idx for idx, value in enumerate(selected_props)}
-                            sorted_single_props = sorted(single_props, key=lambda x: index_map[x])
-                            matrix_layout = tree_plot.profile_layouts.LayoutPropsMatrixOld(name=f"Numerical_matrix_{sorted_single_props}", 
-                                matrix=matrix, matrix_type='numerical', matrix_props=sorted_single_props, is_list=False, 
-                                value_color=value2color, value_range=[minval, maxval], column=level,
-                                poswidth=column_width)
-                            level += 1
-                            current_layouts.append(matrix_layout)
+    current_props.extend(selected_props)
 
-                    # analytic
-                    if selected_layout == 'acr-discrete-layout':
-                        acr_layouts, level, _ = tree_plot.get_acr_discrete_layouts(t, selected_props, level, prop2type=tree_info['prop2type'],
-                        column_width=column_width, padding_x=padding_x, padding_y=padding_y, color_config=color_config) 
-                        #delta statistic 
-                        for suffix in ['delta', 'pval']:
-                            current_props.extend([utils.add_suffix(prop, suffix) for prop in selected_props])
-                        current_layouts.extend(acr_layouts)
+    # Process layout selection for the current layer
+    level, current_layouts = apply_layouts(
+        t, selected_layout, selected_props, tree_info, current_layouts, 
+        level, column_width, padding_x, padding_y, color_config, internal_num_rep
+    )
 
-                    if selected_layout == 'acr-continuous-layout':
-                        acr_layouts = tree_plot.get_acr_continuous_layouts(t, selected_props, level, prop2type=tree_info['prop2type'],
-                        padding_x=padding_x, padding_y=padding_y)
-                        current_layouts.extend(acr_layouts)
+    # Process query actions for the current layer
+    current_layouts = apply_queries(query_type, query_box, current_layouts, paired_color, tree_info, level)
 
-                    if selected_layout == 'ls-layout':
-                        ls_layouts, ls_props = tree_plot.get_ls_layouts(t, selected_props, level, prop2type=tree_info['prop2type'],
-                        padding_x=padding_x, padding_y=padding_y, color_config=color_config)
-                        current_props.extend(ls_props)
-                        current_layouts.extend(ls_layouts)
+    return current_layouts, current_props, level
 
-                    if selected_layout == 'taxoncollapse-layout':
-                        taxon_color_dict = {}
-                        taxa_layouts = []
-                        # generate a rank2values dict for pre taxonomic annotated tree
-                        rank2values = defaultdict(list)
-                        for n in t.traverse():
-                            if n.props.get('lca'):
-                                lca_dict = utils.string_to_dict(n.props.get('lca'))
-                                for rank, sci_name in lca_dict.items():
-                                    rank2values[rank].append(sci_name)
+def apply_layouts(t, selected_layout, selected_props, tree_info, current_layouts, level, column_width, padding_x, padding_y, color_config, internal_num_rep):
+    """
+    Applies the selected layout to the current tree and updates the layouts list.
+    """
+    # Additional layout types (Binary, Numerical, Analytic, Taxonomy, etc.)
+    # can be added here following the same pattern
+    # Categorical layouts
+    if selected_layout == 'rectangle-layout':
+        rectangle_layouts, level, _ = tree_plot.get_rectangle_layouts(t, selected_props, level, tree_info['prop2type'])
+        current_layouts.extend(rectangle_layouts)
+    elif selected_layout == 'label-layout':
+        label_layouts, level, _ = tree_plot.get_label_layouts(t, selected_props, level, tree_info['prop2type'])
+        current_layouts.extend(label_layouts)
+    elif selected_layout == 'colorbranch-layout':
+        colorbranch_layouts, level, _ = tree_plot.get_colorbranch_layouts(t, selected_props, level, tree_info['prop2type'])
+        current_layouts.extend(colorbranch_layouts)
+    elif selected_layout == 'category-bubble-layout':
+        bubble_layouts, level, _ = tree_plot.get_categorical_bubble_layouts(t, selected_props, level, tree_info['prop2type'])
+        current_layouts.extend(bubble_layouts)
+    elif selected_layout == 'piechart-layout':
+        piechart_layouts = tree_plot.get_piechart_layouts(t, selected_props, level, tree_info['prop2type'])
+        current_layouts.extend(piechart_layouts)
+    elif selected_layout == 'background-layout':
+        background_layouts, level, _ = tree_plot.get_background_layouts(t, selected_props, level, tree_info['prop2type'])
+        current_layouts.extend(background_layouts)
+    elif selected_layout == 'profiling-layout':
+        for profiling_prop in selected_props:
+            matrix, value2color, all_profiling_values = tree_plot.multiple2matrix(t, profiling_prop, prop2type=tree_info['prop2type'], color_config=color_config)
+            matrix_layout = tree_plot.profile_layouts.LayoutPropsMatrixBinary(name=f"Profiling_{profiling_prop}",
+            matrix=matrix, matrix_props=all_profiling_values, value_range=[0,1],
+            value_color=value2color, column=level, poswidth=column_width)
+            current_layouts.append(matrix_layout)
+            level += 1
+    elif selected_layout == 'categorical-matrix-layout':
+        # drawing as array in matrix
+        matrix, value2color = tree_plot.categorical2matrix(t, selected_props, color_config=color_config)
+        matrix_layout = tree_plot.profile_layouts.LayoutPropsMatrixOld(name=f"Categorical_matrix_{selected_props}",
+        matrix=matrix, matrix_type='categorical', matrix_props=selected_props,
+        value_color=value2color, column=level, poswidth=column_width)
+        current_layouts.append(matrix_layout)
+        level += 1
 
-                            current_rank = n.props.get('rank')
-                            if current_rank and current_rank != 'Unknown':
-                                rank2values[current_rank].append(n.props.get('sci_name',''))
+    # Binary layouts
+    if selected_layout == 'binary-layout':
+        binary_layouts, level, _ = tree_plot.get_binary_layouts(t, selected_props, 
+            level, tree_info['prop2type'], column_width=column_width, 
+            reverse=False, padding_x=padding_x, padding_y=padding_y,
+            color_config=color_config, same_color=False, aggregate=False)
+        current_layouts.extend(binary_layouts)
+    elif selected_layout == 'binary-aggregate-layout':
+        binary_layouts, level, _ = tree_plot.get_binary_layouts(t, selected_props, 
+            level, tree_info['prop2type'], column_width=column_width, 
+            reverse=False, padding_x=padding_x, padding_y=padding_y,
+            color_config=color_config, same_color=False, aggregate=True)
+        current_layouts.extend(binary_layouts)
+    elif selected_layout == 'binary-unicolor-layout':
+        binary_layouts, level, _ = tree_plot.get_binary_layouts(t, selected_props, 
+            level, tree_info['prop2type'], column_width=column_width, 
+            reverse=False, padding_x=padding_x, padding_y=padding_y,
+            color_config=color_config, same_color=True, aggregate=False)
+        current_layouts.extend(binary_layouts)
+    elif selected_layout == 'binary-unicolor-aggregate-layout':
+        binary_layouts, level, _ = tree_plot.get_binary_layouts(t, selected_props, 
+            level, tree_info['prop2type'], column_width=column_width, 
+            reverse=False, padding_x=padding_x, padding_y=padding_y,
+            color_config=color_config, same_color=True, aggregate=True)
+        current_layouts.extend(binary_layouts)
 
-                        # assign color for each value of each rank
-                        for rank, value in sorted(rank2values.items()):
-                            value = list(set(value))
-                            color_dict = utils.assign_color_to_values(value, paired_color)
-                            taxa_layout = layouts.taxon_layouts.TaxaCollapse(name = "TaxaCollapse_"+rank, rank=rank, 
-                            rect_width=column_width, color_dict=color_dict, column=level)
-                            taxa_layouts.append(taxa_layout)
-                            
-                        current_layouts = current_layouts + taxa_layouts
-                        level += 1
+    # Numerical layouts
+    if selected_layout == 'branchscore-layout':
+        branchscore_layouts = tree_plot.get_branchscore_layouts(t, selected_props, level, 
+            tree_info['prop2type'], internal_rep=internal_num_rep)
+        current_layouts.extend(branchscore_layouts)
+    elif selected_layout == 'barplot-layout':
+        barplot_layouts, level, _ = tree_plot.get_barplot_layouts(t, selected_props, level, 
+            tree_info['prop2type'], internal_rep=internal_num_rep)
+        current_layouts.extend(barplot_layouts)
+    elif selected_layout == 'numerical-bubble-layout':
+        bubble_layouts_layouts, level, _ = tree_plot.get_numerical_bubble_layouts(t, selected_props, level, 
+            tree_info['prop2type'], internal_rep=internal_num_rep, color_config=color_config)
+        current_layouts.extend(bubble_layouts_layouts)
+    elif selected_layout == 'heatmap-layout':
+        heatmap_layouts, level = tree_plot.get_heatmap_layouts(t, selected_props, level,
+            column_width=column_width, padding_x=padding_x, padding_y=padding_y, 
+            internal_rep=internal_num_rep, color_config=color_config, norm_method='min-max',
+            global_scaling=True)
+        current_layouts.extend(heatmap_layouts)
+    elif selected_layout == 'heatmap-mean-layout':
+        heatmap_layouts, level = tree_plot.get_heatmap_layouts(t, selected_props, level,
+            column_width=column_width, padding_x=padding_x, padding_y=padding_y, 
+            internal_rep=internal_num_rep, color_config=color_config, norm_method='mean',
+            global_scaling=True)
+        current_layouts.extend(heatmap_layouts)
+    elif selected_layout == 'heatmap-zscore-layout':
+        heatmap_layouts, level = tree_plot.get_heatmap_layouts(t, selected_props, level,
+            column_width=column_width, padding_x=padding_x, padding_y=padding_y, 
+            internal_rep=internal_num_rep, color_config=color_config, norm_method='zscore',
+            global_scaling=True)
+        current_layouts.extend(heatmap_layouts)
+    elif selected_layout == 'numerical-matrix-layout':
+        matrix, minval, maxval, value2color, results_list, list_props, single_props = tree_plot.numerical2matrix(t, 
+        selected_props, count_negative=True, internal_num_rep=internal_num_rep, 
+        color_config=color_config, norm_method='min-max')
+        if list_props:
+            index_map = {value: idx for idx, value in enumerate(selected_props)}
+            sorted_list_props = sorted(list_props, key=lambda x: index_map[x])
+            for list_prop in sorted_list_props:
+                matrix, minval, maxval, value2color = results_list[list_prop]
+                matrix_layout = tree_plot.profile_layouts.LayoutPropsMatrixOld(name=f"Numerical_matrix_{list_prop}", 
+                    matrix=matrix, matrix_type='numerical', matrix_props=[list_prop], is_list=True, 
+                    value_color=value2color, value_range=[minval, maxval], column=level,
+                    poswidth=column_width)
+                level += 1
+                current_layouts.append(matrix_layout)
+        if single_props:
+            index_map = {value: idx for idx, value in enumerate(selected_props)}
+            sorted_single_props = sorted(single_props, key=lambda x: index_map[x])
+            matrix_layout = tree_plot.profile_layouts.LayoutPropsMatrixOld(name=f"Numerical_matrix_{sorted_single_props}", 
+                matrix=matrix, matrix_type='numerical', matrix_props=sorted_single_props, is_list=False, 
+                value_color=value2color, value_range=[minval, maxval], column=level,
+                poswidth=column_width)
+            level += 1
+            current_layouts.append(matrix_layout)
 
-                    if selected_layout == 'taxonclade-layout' or selected_layout == 'taxonrectangle-layout':
-                        taxon_color_dict = {}
-                        taxa_layouts = []
-                        rank2values = defaultdict(list)
-                        for n in t.traverse():
-                            if n.props.get('rank') and n.props.get('rank') != 'Unknown':
-                                rank = n.props.get('rank')
-                                rank2values[rank].append(n.props.get('sci_name',''))
+    # Analytic layouts
+    if selected_layout == 'acr-discrete-layout':
+        acr_layouts, level, _ = tree_plot.get_acr_discrete_layouts(t, selected_props, level, prop2type=tree_info['prop2type'],
+        column_width=column_width, padding_x=padding_x, padding_y=padding_y, color_config=color_config) 
+        #delta statistic 
+        for suffix in ['delta', 'pval']:
+            current_props.extend([utils.add_suffix(prop, suffix) for prop in selected_props])
+        current_layouts.extend(acr_layouts)
 
-                        # assign color for each value of each rank
-                        for rank, value in sorted(rank2values.items()):
-                            value = list(set(value))
-                            color_dict = utils.assign_color_to_values(value, paired_color)
-                            if selected_layout == 'taxonclade-layout':
-                                taxa_layout = layouts.taxon_layouts.TaxaClade(name='TaxaClade_'+rank, level=level, rank = rank, color_dict=color_dict)
-                                taxa_layouts.append(taxa_layout)
+    if selected_layout == 'acr-continuous-layout':
+        acr_layouts = tree_plot.get_acr_continuous_layouts(t, selected_props, level, prop2type=tree_info['prop2type'],
+        padding_x=padding_x, padding_y=padding_y)
+        current_layouts.extend(acr_layouts)
 
-                            if selected_layout == 'taxonrectangle-layout':
-                                taxa_layout = layouts.taxon_layouts.TaxaRectangular(name = "TaxaRect_"+rank, rank=rank, rect_width=column_width, color_dict=color_dict, column=level)
-                                taxa_layouts.append(taxa_layout)
-                                #level += 1
-                            taxon_color_dict[rank] = color_dict
+    if selected_layout == 'ls-layout':
+        ls_layouts, ls_props = tree_plot.get_ls_layouts(t, selected_props, level, prop2type=tree_info['prop2type'],
+        padding_x=padding_x, padding_y=padding_y, color_config=color_config)
+        current_props.extend(ls_props)
+        current_layouts.extend(ls_layouts)
 
-                        #taxa_layouts.append(taxon_layouts.TaxaRectangular(name = "Last Common Ancester", color_dict=taxon_color_dict, column=level))
-                        taxa_layouts.append(layouts.taxon_layouts.LayoutSciName(name = 'Taxa Scientific name', color_dict=taxon_color_dict))
-                        taxa_layouts.append(layouts.taxon_layouts.LayoutEvolEvents(name='Taxa Evolutionary events', prop="evoltype",
-                            speciation_color="blue", 
-                            duplication_color="red", node_size = 3,
-                            legend=True))
-                        current_layouts.extend(taxa_layouts)
+    # Taxonomy layouts
+    if selected_layout == 'taxoncollapse-layout':
+        taxon_color_dict = {}
+        taxa_layouts = []
+        # generate a rank2values dict for pre taxonomic annotated tree
+        rank2values = defaultdict(list)
+        for n in t.traverse():
+            if n.props.get('lca'):
+                lca_dict = utils.string_to_dict(n.props.get('lca'))
+                for rank, sci_name in lca_dict.items():
+                    rank2values[rank].append(sci_name)
 
-                    if selected_layout == 'alignment-layout':
-                        lengh = len(max(utils.tree_prop_array(t, 'alignment'),key=len))
-                        window = []
-                        aln_layout = layouts.seq_layouts.LayoutAlignment(name='Alignment_layout', 
-                                alignment_prop='alignment', column=level, scale_range=lengh, window=window,
-                                summarize_inner_nodes=True)
-                        current_layouts.append(aln_layout)
+            current_rank = n.props.get('rank')
+            if current_rank and current_rank != 'Unknown':
+                rank2values[current_rank].append(n.props.get('sci_name',''))
 
-                    if selected_layout == 'domain-layout':
-                        domain_layout = layouts.seq_layouts.LayoutDomain(name="Domain_layout", prop='dom_arq')
-                        current_layouts.append(domain_layout)
-
-                    if query_type and query_box:
-                        query_strings = convert_query_string(query_box) # convert query string to list of queries as treeprofiler
-                        if query_type == 'highlight':
-                            for idx, condition in enumerate(query_strings):
-                                syntax_sep = ','
-                                condition_list = condition.split(syntax_sep)
-                                color2conditions  = {}
-                                color2conditions[paired_color[idx]] = condition_list
-                                s_layout = layouts.conditional_layouts.LayoutHighlight(name=f'Highlight_{condition}', color2conditions=color2conditions, column=level, prop2type = tree_info['prop2type'])               
-                                current_layouts.append(s_layout)
-
-                        if query_type == 'collapse':
-                            for idx, condition in enumerate(query_strings):
-                                syntax_sep = ','
-                                condition_list = condition.split(syntax_sep)
-                                color2conditions  = {}
-                                color2conditions[paired_color[idx]] = condition_list
-                                c_layout = layouts.conditional_layouts.LayoutCollapse(name=f'Collapse_{condition}', color2conditions=color2conditions, column=level, prop2type = tree_info['prop2type'])               
-                                current_layouts.append(c_layout)
-
-                    # Store updated props and layouts back to the tree_info
-                    tree_info['layouts'] = current_layouts
-                    tree_info['props'] = selected_props
-
-            # Run the ete in a separate thread with updated props and layout
-            def start_explore():
-                t.explore(name=treename, layouts=current_layouts, port=5050, open_browser=False, include_props=current_props)
-            explorer_thread = threading.Thread(target=start_explore)
-            explorer_thread.start()
-        else:
-            def start_explore():
-                t.explore(name=treename, layouts=current_layouts, port=5050, open_browser=False, include_props=current_props)
-            explorer_thread = threading.Thread(target=start_explore)
-            explorer_thread.start()
+        # assign color for each value of each rank
+        for rank, value in sorted(rank2values.items()):
+            value = list(set(value))
+            color_dict = utils.assign_color_to_values(value, paired_color)
+            taxa_layout = layouts.taxon_layouts.TaxaCollapse(name = "TaxaCollapse_"+rank, rank=rank, 
+            rect_width=column_width, color_dict=color_dict, column=level)
+            taxa_layouts.append(taxa_layout)
             
-        return template('explore_tree', treename=treename, tree_info=tree_info, selected_props=current_props)
+        current_layouts = current_layouts + taxa_layouts
+        level += 1
 
-    return f"Tree '{treename}' not found."
+    if selected_layout == 'taxonclade-layout' or selected_layout == 'taxonrectangle-layout':
+        taxon_color_dict = {}
+        taxa_layouts = []
+        rank2values = defaultdict(list)
+        for n in t.traverse():
+            if n.props.get('rank') and n.props.get('rank') != 'Unknown':
+                rank = n.props.get('rank')
+                rank2values[rank].append(n.props.get('sci_name',''))
+
+        # assign color for each value of each rank
+        for rank, value in sorted(rank2values.items()):
+            value = list(set(value))
+            color_dict = utils.assign_color_to_values(value, paired_color)
+            if selected_layout == 'taxonclade-layout':
+                taxa_layout = layouts.taxon_layouts.TaxaClade(name='TaxaClade_'+rank, level=level, rank = rank, color_dict=color_dict)
+                taxa_layouts.append(taxa_layout)
+
+            if selected_layout == 'taxonrectangle-layout':
+                taxa_layout = layouts.taxon_layouts.TaxaRectangular(name = "TaxaRect_"+rank, rank=rank, rect_width=column_width, color_dict=color_dict, column=level)
+                taxa_layouts.append(taxa_layout)
+                #level += 1
+            taxon_color_dict[rank] = color_dict
+
+        #taxa_layouts.append(taxon_layouts.TaxaRectangular(name = "Last Common Ancester", color_dict=taxon_color_dict, column=level))
+        taxa_layouts.append(layouts.taxon_layouts.LayoutSciName(name = 'Taxa Scientific name', color_dict=taxon_color_dict))
+        taxa_layouts.append(layouts.taxon_layouts.LayoutEvolEvents(name='Taxa Evolutionary events', prop="evoltype",
+            speciation_color="blue", 
+            duplication_color="red", node_size = 3,
+            legend=True))
+        current_layouts.extend(taxa_layouts)
+    
+    # Alignment layout
+    if selected_layout == 'alignment-layout':
+        lengh = len(max(utils.tree_prop_array(t, 'alignment'),key=len))
+        window = []
+        aln_layout = layouts.seq_layouts.LayoutAlignment(name='Alignment_layout', 
+                alignment_prop='alignment', column=level, scale_range=lengh, window=window,
+                summarize_inner_nodes=True)
+        current_layouts.append(aln_layout)
+    
+    # Domain layout
+    if selected_layout == 'domain-layout':
+        domain_layout = layouts.seq_layouts.LayoutDomain(name="Domain_layout", prop='dom_arq')
+        current_layouts.append(domain_layout)
+    
+    return level, current_layouts
+
+def apply_queries(query_type, query_box, current_layouts, paired_color, tree_info, level):
+    """
+    Applies conditional queries to the tree based on the provided query type and query box.
+    """
+    if query_type and query_box:
+        query_strings = convert_query_string(query_box)  # convert query to list format
+
+        if query_type == 'highlight':
+            current_layouts = apply_highlight_queries(query_strings, current_layouts, paired_color, tree_info, level)
+        
+        elif query_type == 'collapse':
+            current_layouts = apply_collapse_queries(query_strings, current_layouts, paired_color, tree_info, level)
+
+    return current_layouts
+
+
+def apply_highlight_queries(query_strings, current_layouts, paired_color, tree_info, level):
+    """
+    Processes highlight queries and appends them to current layouts.
+    """
+    for idx, condition in enumerate(query_strings):
+        syntax_sep = ','
+        condition_list = condition.split(syntax_sep)
+        color2conditions = {paired_color[idx]: condition_list}
+        
+        s_layout = layouts.conditional_layouts.LayoutHighlight(
+            name=f'Highlight_{condition}', color2conditions=color2conditions, 
+            column=level, prop2type=tree_info['prop2type']
+        )
+        current_layouts.append(s_layout)
+    
+    return current_layouts
+
+
+def apply_collapse_queries(query_strings, current_layouts, paired_color, tree_info, level):
+    """
+    Processes collapse queries and appends them to current layouts.
+    """
+    for idx, condition in enumerate(query_strings):
+        syntax_sep = ','
+        condition_list = condition.split(syntax_sep)
+        color2conditions = {paired_color[idx]: condition_list}
+        
+        c_layout = layouts.conditional_layouts.LayoutCollapse(
+            name=f'Collapse_{condition}', color2conditions=color2conditions, 
+            column=level, prop2type=tree_info['prop2type']
+        )
+        current_layouts.append(c_layout)
+    
+    return current_layouts
+
+def start_explore_thread(t, treename, current_layouts, current_props):
+    """
+    Starts the ete exploration in a separate thread.
+    """
+
+    def explore():
+        t.explore(name=treename, layouts=current_layouts, port=5050, open_browser=False, include_props=current_props)
+    
+    explorer_thread = threading.Thread(target=explore)
+    explorer_thread.start()
 
 def convert_query_string(query_string):
     # Split the query by semicolon to get each statement

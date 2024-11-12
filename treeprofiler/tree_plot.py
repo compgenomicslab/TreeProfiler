@@ -1168,6 +1168,7 @@ def get_colorbranch_layouts(tree, props, level, prop2type, column_width=70, padd
 def get_rectangle_layouts(tree, props, level, prop2type, column_width=70, padding_x=1, padding_y=0, color_config=None, precomputed_props={}):
     prop_color_dict = {}
     layouts = []
+    print(color_config)
     for prop in props:
         color_dict = {} # key = value, value = color id
         if color_config and color_config.get(prop):
