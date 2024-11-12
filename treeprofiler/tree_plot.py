@@ -132,6 +132,11 @@ def poplulate_plot_args(plot_args_p):
         default=None,
         help="find the barplot column as scale anchor.[default: None]"
     )
+    group.add_argument('--barplot-range',
+        type=float,
+        default=None,
+        help="find the barplot maximum range. if None, the range is the maximum value of the selected property [default: None]"
+    )
     group.add_argument('--barplot-colorby',
         type=str,
         default=None,
@@ -581,7 +586,8 @@ def run(args):
         if layout == 'barplot-layout':
             barplot_layouts, level, color_dict = get_barplot_layouts(tree, args.barplot_layout, level, 
             prop2type, column_width=args.barplot_width, padding_x=args.padding_x, padding_y=args.padding_y, 
-            internal_rep=internal_num_rep, anchor_column=args.barplot_scale, color_config=color_config, barplot_colorby=args.barplot_colorby)
+            internal_rep=internal_num_rep, anchor_column=args.barplot_scale, color_config=color_config, 
+            barplot_colorby=args.barplot_colorby, max_range=args.barplot_range)
             layouts.extend(barplot_layouts)
             total_color_dict.append(color_dict)
             visualized_props.extend(args.barplot_layout)
@@ -1360,7 +1366,7 @@ def get_branchscore_layouts(tree, props, prop2type, padding_x=1, padding_y=0, in
 
     return layouts
 
-def get_barplot_layouts(tree, props, level, prop2type, column_width=70, padding_x=1, padding_y=0, internal_rep='avg', anchor_column=None, color_config=None, barplot_colorby=None):
+def get_barplot_layouts(tree, props, level, prop2type, column_width=70, padding_x=1, padding_y=0, internal_rep='avg', anchor_column=None, color_config=None, barplot_colorby=None, max_range=None):
     def get_barplot_color(level):
         global paired_color
         """Determines the color for the barplot based on the level and available paired colors."""
@@ -1392,9 +1398,9 @@ def get_barplot_layouts(tree, props, level, prop2type, column_width=70, padding_
             'name': f'Barplot_{prop}',
             'prop': prop,
             'width': new_column_width,
-            'color': None if color_dict else barplot_color,
-            'colors': color_dict,
-            'color_prop': color_prop,
+            'color': None if color_dict else barplot_color, # single color for all barplot
+            'colors': color_dict, # color dict for each value based on barplot_colorby
+            'color_prop': color_prop, # barplot_colorby prop
             'size_prop': size_prop,
             'column': level,
             'internal_rep': internal_rep,
@@ -1417,14 +1423,13 @@ def get_barplot_layouts(tree, props, level, prop2type, column_width=70, padding_
     if anchor_column:
         anchor_column_values = process_prop_values(tree, anchor_column)
         anchormax = anchor_column_values.max()
-
+    
     for prop in props:
         prop_values = process_prop_values(tree, prop)    
         maxval = prop_values.max()
         size_prop = prop if prop_values.any() else f"{prop}_{internal_rep}"
         new_column_width = calculate_column_width(prop_values, anchormax)
         
-
         # Determine color configuration if available
         if color_config:
             for key, value in color_config.items():
@@ -1449,11 +1454,14 @@ def get_barplot_layouts(tree, props, level, prop2type, column_width=70, padding_
                 barplot_color = get_barplot_color(level)
                 prop_color_dict[prop] = barplot_color
 
-        # Configure and add layout
-        if maxval and maxval > barplot_minval:
-            size_range = [barplot_minval, maxval]
+        # Automatically set size range if not provided
+        if not max_range:
+            if maxval and maxval > barplot_minval:
+                size_range = [barplot_minval, maxval]
+            else:
+                size_range = [] # auto detect in program
         else:
-            size_range = []
+            size_range = [0, max_range]
         layout = configure_layout(prop, new_column_width, color_dict, color_prop, size_prop, barplot_color, size_range)
         layouts.append(layout)
         level += 1
