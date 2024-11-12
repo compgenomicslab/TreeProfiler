@@ -426,7 +426,17 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
     query_type = layer.get('queryType', '')
     query_box = layer.get('query', '')
     prop2type = tree_info['prop2type']
-    color_scheme = layer.get('colorScheme', 'RdYlBu')
+    # Process color configuration for the current layer
+    categorical_color_scheme = layer.get('categoricalColorscheme', 'RdYlBu')
+    numerical_color_scheme = layer.get('numericalColorscheme', 'bwr')
+    maxval = layer.get('maxval', '') # this should be automatically calculated
+    minval = layer.get('minval', '') # this should be automatically calculated
+    
+    # TODO: special layout setting for barplot
+
+    # TODO: bubble scale setting
+    # 1) scale 
+    # 2) color
 
     # Process color configuration for the current layer
     for prop in selected_props:
@@ -434,17 +444,29 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
         if prop2type.get(prop) == list:
             leaf_values = list(map(list,set(map(tuple, utils.tree_prop_array(t, prop)))))    
             prop_values = [val for sublist in leaf_values for val in sublist]
-            paired_color = get_colormap_hex_colors(color_scheme, len(prop_values))
+            paired_color = get_colormap_hex_colors(categorical_color_scheme, len(prop_values))
             color_config[prop] = {}
             color_config[prop]['value2color'] = utils.assign_color_to_values(prop_values, paired_color)
             color_config[prop]['detail2color'] = {}
-        elif prop2type.get(prop) == str or prop2type.get(prop) == bool:
+        elif prop2type.get(prop) == str:
             prop_values = sorted(list(set(utils.tree_prop_array(t, prop))))
-            paired_color = get_colormap_hex_colors(color_scheme, len(prop_values))
+            paired_color = get_colormap_hex_colors(categorical_color_scheme, len(prop_values))
             color_config[prop] = {}
             color_config[prop]['value2color'] = utils.assign_color_to_values(prop_values, paired_color)
             color_config[prop]['detail2color'] = {}
-    
+        elif prop2type.get(prop) == float or prop2type.get(prop) == int:
+            paired_color = get_colormap_hex_colors(numerical_color_scheme, 3)
+            color_min, color_mid, color_max = paired_color
+            color_config[prop] = {}
+            color_config[prop]['value2color'] = {}
+            color_config[prop]['detail2color'] = {}
+            color_config[prop]['detail2color']['color_max'] = (color_max, maxval)
+            color_config[prop]['detail2color']['color_mid'] = (color_mid, '')
+            color_config[prop]['detail2color']['color_min'] = (color_min, minval)
+
+        elif prop2type.get(prop) == bool:
+            pass
+
     # Process layout selection for the current layer
     level, current_layouts = apply_layouts(
         t, selected_layout, selected_props, tree_info, current_layouts, 
@@ -514,7 +536,7 @@ def apply_layouts(t, selected_layout, selected_props, tree_info, current_layouts
         current_layouts.append(matrix_layout)
         level += 1
 
-    # Binary layouts
+    # Binary layouts (special color settings)
     if selected_layout == 'binary-layout':
         binary_layouts, level, _ = tree_plot.get_binary_layouts(t, selected_props, 
             level, tree_info['prop2type'], column_width=column_width, 
@@ -542,14 +564,15 @@ def apply_layouts(t, selected_layout, selected_props, tree_info, current_layouts
 
     # Numerical layouts
     if selected_layout == 'branchscore-layout':
-        branchscore_layouts = tree_plot.get_branchscore_layouts(t, selected_props, level, 
-            tree_info['prop2type'], internal_rep=internal_num_rep)
+        branchscore_layouts = tree_plot.get_branchscore_layouts(t, selected_props, 
+            prop2type=tree_info['prop2type'], padding_x=padding_x, padding_y=padding_y,
+            internal_rep=internal_num_rep, color_config=color_config)
         current_layouts.extend(branchscore_layouts)
-    elif selected_layout == 'barplot-layout':
+    elif selected_layout == 'barplot-layout': # no color config yet
         barplot_layouts, level, _ = tree_plot.get_barplot_layouts(t, selected_props, level, 
             tree_info['prop2type'], internal_rep=internal_num_rep)
         current_layouts.extend(barplot_layouts)
-    elif selected_layout == 'numerical-bubble-layout':
+    elif selected_layout == 'numerical-bubble-layout': # no color config yet
         bubble_layouts_layouts, level, _ = tree_plot.get_numerical_bubble_layouts(t, selected_props, level, 
             tree_info['prop2type'], internal_rep=internal_num_rep, color_config=color_config)
         current_layouts.extend(bubble_layouts_layouts)
@@ -610,7 +633,7 @@ def apply_layouts(t, selected_layout, selected_props, tree_info, current_layouts
         padding_x=padding_x, padding_y=padding_y)
         current_layouts.extend(acr_layouts)
 
-    if selected_layout == 'ls-layout':
+    if selected_layout == 'ls-layout': 
         ls_layouts, ls_props = tree_plot.get_ls_layouts(t, selected_props, level, prop2type=tree_info['prop2type'],
         padding_x=padding_x, padding_y=padding_y, color_config=color_config)
         current_props.extend(ls_props)

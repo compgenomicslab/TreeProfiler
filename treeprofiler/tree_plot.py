@@ -503,6 +503,7 @@ def run(args):
 
             numerical_props = [prop for prop in args.colorbranch_layout if prop2type.get(prop) in [float, int]]
             if numerical_props:
+                print(color_config)
                 branchscore_layouts = get_branchscore_layouts(tree, numerical_props, 
                 prop2type, padding_x=args.padding_x, padding_y=args.padding_y, 
                 internal_rep=internal_num_rep, color_config=color_config)
