@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Explore Tree: {{treename}}</title>
     <!-- Bootstrap CSS and other dependencies -->
-    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet"/>
     <script src="/static/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     
@@ -85,9 +85,10 @@
     <div class="control-panel" id="controlPanel">
         <h5>Control Panel</h5>
         <form id="controlPanelForm" method="POST" action="/explore_tree/{{treename}}">
-            <button type="button" class="btn btn-primary mb-3" id="addLayoutBtn">Add Layout</button>
+            <!-- Layout Selection -->
+            <button type="button" class="btn btn-primary mb-3" id="addLayoutBtn">Layout Settings</button>
             <div id="layoutSelection" class="form-group" style="display: none;">
-                <label for="layout">Select Layout Option:</label>
+                <h5>Select Layout Option</h5>
                 <select class="form-control" id="layout" name="layout">
                     <optgroup label="Categorical">
                         <option value="colorbranch-layout" selected>Color Branch Layout</option>
@@ -130,7 +131,8 @@
                     <option value="alignment-layout">Alignment Layout</option>
                 </select>
             </div>
-
+    
+            <!-- Properties Selection -->
             <div id="propsSelection" class="form-group mt-3" style="display: none;">
                 <label for="props">Select Properties to Visualize:</label>
                 <select multiple class="form-control" id="props" name="props">
@@ -140,30 +142,27 @@
                 </select>
                 <small class="form-text text-muted">Hold down Ctrl (Windows) or Command (Mac) to select multiple options.</small>
             </div>
-            
+    
             <!-- Custom Query Section -->
             <div id="customQuery" class="mt-4" style="display: none;">
                 <h5>Custom Query</h5>
                 <div class="form-group">
                     <label for="customQueryType">Select Query Type:</label>
-                    <select class="form-control" id="customQueryType" name="customQueryType" onchange="toggleQueryFields()">
+                    <select class="form-control" id="customQueryType" name="customQueryType">
                         <option value="highlight">Highlight</option>
                         <option value="collapse">Collapse</option>
                         <option value="prune">Prune</option>
-                        <option value="rank_limit">Rank Limit (only for taxonomic annotated tree)</option>
+                        <option value="rank_limit">Rank Limit (for taxonomic trees only)</option>
                     </select>
                 </div>
-
-                <!-- Query Syntax Fields -->
-                <div class="form-group mt-3" id="queryFields">
+                <div id="queryFields" class="form-group mt-3">
                     <label for="queryProp">Property</label>
-                    <!-- <input type="text" class="form-control" id="queryProp" name="queryProp" placeholder="Enter property name"> -->
                     <select class="form-control" id="queryProp" name="queryProp">
                         % for prop in selected_props:
                             <option value="{{ prop }}">{{ prop }}</option>
                         % end
                     </select>
-                    <div id="dynamicCounterProps"></div> <!-- Placeholder for Counter prop input -->
+                    <div id="dynamicCounterProps"></div> <!-- Counter Prop Placeholder -->
                     <label for="queryOperation" class="mt-2">Operation</label>
                     <select class="form-control" id="queryOperation" name="queryOperation">
                         <option value="=">Equals</option>
@@ -172,71 +171,33 @@
                         <option value="&gt;">Greater Than</option>
                         <option value="&lt;">Less Than</option>
                     </select>
-
                     <label for="queryValue" class="mt-2">Value</label>
                     <input type="text" class="form-control" id="queryValue" name="queryValue" placeholder="Enter value">
-
                     <div class="mt-3">
-                        <div class="dropdown">
-                            <button type="button" class="btn btn-secondary dropdown-toggle" id="addQueryBtn" onclick="toggleDropdown()">
-                                ADD
-                            </button>
-                            <div class="dropdown-menu" id="addQueryOptions">
-                                <a class="dropdown-item" href="#" onclick="addQueryPart('AND')">AND</a>
-                                <a class="dropdown-item" href="#" onclick="addQueryPart('OR')">OR</a>
-                            </div>
+                        <button type="button" class="btn btn-secondary dropdown-toggle" id="addQueryBtn">ADD</button>
+                        <div id="addQueryOptions" class="dropdown-menu">
+                            <a class="dropdown-item" href="#" onclick="addQueryPart('AND')">AND</a>
+                            <a class="dropdown-item" href="#" onclick="addQueryPart('OR')">OR</a>
                         </div>
                     </div>
-
-                    <!-- Query Box -->
-                    <div class="form-group mt-3">
-                        <label for="queryBox">Query Syntax</label>
-                        <textarea class="form-control" id="queryBox" name="queryBox" rows="5" readonly></textarea>
-                        <small><a href="#" id="clearQueryBox" class="text-danger" style="cursor: pointer;">Clear</a></small>
-                    </div>
+                    <textarea class="form-control mt-3" id="queryBox" name="queryBox" rows="3" readonly></textarea>
+                    <small><a href="#" id="clearQueryBox" class="text-danger">Clear Query</a></small>
                 </div>
-                
-                <!-- Taxonomic Classification Options (hidden by default) -->
-                <div class="form-group mt-3" id="taxonomicOptions" style="display: none;">
-                    <label for="taxonomicRank">Select Taxonomic Rank:</label>
-                    <select class="form-control" id="taxonomicRank" name="taxonomicRank">
-                        <option value="species">Species</option>
-                        <option value="genus">Genus</option>
-                        <option value="family">Family</option>
-                        <option value="order">Order</option>
-                        <option value="class">Class</option>
-                        <option value="phylum">Phylum</option>
-                        <option value="kingdom">Kingdom</option>
-                        <option value="domain">Domain</option>
-                    </select>
-                </div>
-
             </div>
-
-            <div id="applyButton" class="mt-4" style="display: none;">
-                <button type="submit" class="btn btn-success">Apply Visualization</button>
+    
+            <!-- Layer Management Section -->
+            <div class="mt-4">
+                <h5>Manage Layers</h5>
+                <ul id="layerList" class="list-group mb-3"></ul>
+                <button type="button" id="addLayerBtn" class="btn btn-secondary mb-3">Add Layer</button>
+                <button type="button" id="applyLayersBtn" class="btn btn-success mb-3">Apply Layers</button>
             </div>
-
         </form>
-        <div class="mt-4">
-            <h5>Current Layouts</h5>
-            <ul id="currentLayouts">
-                % if tree_info['layouts']:
-                    % for layout in tree_info['layouts']:
-                        <li>{{ layout.name }}</li>
-                    % end
-                % else:
-                    <li><em>No layouts added yet.</em></li>
-                % end
-            </ul>
-        </div>
-        
-
-        <!-- Control Panel Footer -->
         <div class="control-panel-footer mt-4">
             <button class="btn btn-primary" onclick="window.location.reload();">Refresh</button>
             <button class="btn btn-secondary" id="fullscreenBtn">Fullscreen</button>
         </div>
+        
     </div>
 
     <!-- Main Content -->
@@ -245,26 +206,22 @@
 
         <!-- Iframe container -->
         <div class="position-relative mt-3">
-            
             <iframe src="http://localhost:5050" id="treeIframe" width="100%" height="800px" frameborder="0" allowfullscreen></iframe>
-            
         </div>
 
-        <a href="/">Go back to upload</a>
+        
     </div>
 
     <script>
-        // === Control Panel Functions ===
-        function toggleControlPanel() {
-            const controlPanel = document.getElementById('controlPanel');
-            controlPanel.classList.toggle('minimized');
-        }
+        $(document).ready(function() {
+            initializeSelect2();
+            setupEventListeners();
+        });
     
-        function initializeControlPanel() {
-            document.getElementById('controlPanelTab').addEventListener('click', toggleControlPanel);
-        }
-    
-        // === Select2 Initialization ===
+        /*********************
+         * Initialization Functions
+         *********************/
+        // Initialize Select2 dropdowns
         function initializeSelect2() {
             $('#props').select2({
                 placeholder: "Type to search properties",
@@ -279,51 +236,30 @@
             });
         }
     
-        // === Event Handlers for Select2 (Properties Selection) ===
-        function handlePropertySelect() {
-            $('#queryProp').on('select2:select', function (e) {
-                const selectedProperty = e.params.data.id;
-                if (selectedProperty.endsWith('_counter')) {
-                    addCounterInput(selectedProperty);
-                }
-            });
+        // Set up event listeners for UI elements
+        function setupEventListeners() {
+            document.getElementById('controlPanelTab').addEventListener('click', toggleControlPanel);
+            document.getElementById('addLayoutBtn').addEventListener('click', showLayoutOptions);
+            document.getElementById('customQueryType').addEventListener('change', toggleQueryFields);
+            document.getElementById('clearQueryBox').addEventListener('click', clearQueryBox);
+            document.getElementById('addQueryBtn').addEventListener('click', addInitialQueryPart);
+            document.getElementById('addLayerBtn').addEventListener('click', addLayer);
+            document.getElementById('applyLayersBtn').addEventListener('click', applyLayers);
+            $('#queryProp').on('select2:select', handleDynamicCounterInput);
+            $('#queryProp').on('select2:unselect', removeCounterInputField);
         }
     
-        function handlePropertyUnselect() {
-            $('#queryProp').on('select2:unselect', function(e) {
-                const unselectedProperty = e.params.data.id;
-                if (unselectedProperty.endsWith('_counter')) {
-                    removeCounterInput(unselectedProperty);
-                }
-            });
+        /*********************
+         * UI Toggle Functions
+         *********************/
+        function toggleControlPanel() {
+            document.getElementById('controlPanel').classList.toggle('minimized');
         }
     
-        function addCounterInput(selectedProperty) {
-            const counterField = `
-                <div class="form-group" id="input-${selectedProperty}">
-                    <label for="counterInput">Prop for ${selectedProperty}</label>
-                    <input type="text" class="form-control counter-input" 
-                        id="counterInput" 
-                        data-prop="${selectedProperty}" 
-                        placeholder="Enter Counter prop">
-                </div>`;
-            $('#dynamicCounterProps').append(counterField);
-        }
-    
-        function removeCounterInput(unselectedProperty) {
-            $(`#input-${unselectedProperty}`).remove();
-        }
-    
-        // === Layout and Query Section Display ===
         function showLayoutOptions() {
             document.getElementById('layoutSelection').style.display = 'block';
             document.getElementById('propsSelection').style.display = 'block';
-            document.getElementById('applyButton').style.display = 'block';
             document.getElementById('customQuery').style.display = 'block';
-        }
-    
-        function initializeLayoutButton() {
-            document.getElementById('addLayoutBtn').addEventListener('click', showLayoutOptions);
         }
     
         function toggleQueryFields() {
@@ -341,25 +277,64 @@
             resetQueryButton();
         }
     
-        function updateQueryPlaceholder() {
-            const queryValueInput = document.getElementById('queryValue');
-            const selectedQuery = document.getElementById('customQueryType').value;
     
-            if (selectedQuery === 'prune' || selectedQuery === 'collapse' || selectedQuery === 'highlight') {
-                queryValueInput.placeholder = "Enter node name or identifier";
-            } else if (selectedQuery === 'rank_limit') {
-                queryValueInput.placeholder = "Enter rank (e.g., species, genus)";
-            }
+        /*********************
+         * Layer Management Functions
+         *********************/
+        let layers = [];
+    
+        function addLayer() {
+            const layout = document.getElementById('layout').value;
+            const props = $('#props').val();
+            const queryType = document.getElementById('customQueryType').value;
+            const query = document.getElementById('queryBox').value;
+    
+            const layer = { layout, props, queryType, query };
+            layers.push(layer);
+            renderLayers();
+            clearInputs();
         }
     
-        function initializeQueryTypeChange() {
-            document.getElementById('customQueryType').addEventListener('change', () => {
-                toggleQueryFields();
-                updateQueryPlaceholder();
+        function renderLayers() {
+            const layerList = document.getElementById('layerList');
+            layerList.innerHTML = '';
+    
+            layers.forEach((layer, index) => {
+                const layerItem = document.createElement('li');
+                layerItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+                layerItem.textContent = `Layer ${index + 1}: ${layer.layout} (${layer.queryType || 'No Query'})`;
+    
+                const deleteButton = document.createElement('button');
+                deleteButton.className = 'btn btn-sm btn-danger';
+                deleteButton.textContent = 'Delete';
+                deleteButton.onclick = () => {
+                    layers.splice(index, 1);
+                    renderLayers();
+                };
+    
+                layerItem.appendChild(deleteButton);
+                layerList.appendChild(layerItem);
             });
         }
     
-        // === Query Building Functions ===
+        function clearInputs() {
+            document.getElementById('layout').value = '';
+            $('#props').val(null).trigger('change');
+            document.getElementById('customQueryType').value = '';
+            document.getElementById('queryBox').value = '';
+        }
+    
+        function applyLayers() {
+            const layersData = JSON.stringify(layers);
+            $.post('/explore_tree/{{treename}}', { layers: layersData }, function(response) {
+                console.log('Layers applied:', layersData);
+                window.location.reload();
+            });
+        }
+    
+        /*********************
+         * Query Management Functions
+         *********************/
         let queryParts = [];
     
         function resetQueryButton() {
@@ -369,9 +344,10 @@
             document.getElementById('queryBox').value = '';
         }
     
-        function toggleDropdown() {
-            const dropdownMenu = document.getElementById('addQueryOptions');
-            dropdownMenu.style.display = dropdownMenu.style.display === 'block' ? 'none' : 'block';
+        function addInitialQueryPart() {
+            if (document.getElementById('queryBox').value === '') {
+                addQueryPart();
+            }
         }
     
         function addQueryPart(operator = '') {
@@ -388,10 +364,10 @@
                 return;
             }
     
-            const queryPart = counterValue !== null ? `${prop}:${counterValue} > ${value}` : `${prop} ${operation} ${value}`;
+            const queryPart = counterValue ? `${prop}:${counterValue} > ${value}` : `${prop} ${operation} ${value}`;
             queryParts.push(queryPart);
-    
             document.getElementById('queryBox').value = queryParts.join(' ') + ';';
+    
             document.getElementById('addQueryBtn').innerText = 'AND';
             document.getElementById('addQueryOptions').style.display = 'block';
     
@@ -400,12 +376,30 @@
             document.getElementById('addQueryOptions').style.display = 'none';
         }
     
-        function initializeAddQueryButton() {
-            document.getElementById('addQueryBtn').addEventListener('click', function() {
-                if (document.getElementById('queryBox').value === '') {
-                    addQueryPart();
-                }
-            });
+        /*********************
+         * Additional Input Handlers
+         *********************/
+        function handleDynamicCounterInput(e) {
+            var selectedProperty = e.params.data.id;
+            if (selectedProperty.endsWith('_counter')) {
+                const counterField = `
+                    <div class="form-group" id="input-${selectedProperty}">
+                        <label for="counterInput">Prop for ${selectedProperty}</label>
+                        <input type="text" class="form-control counter-input"
+                            id="counterInput"
+                            data-prop="${selectedProperty}"
+                            placeholder="Enter Counter prop">
+                    </div>`;
+                $('#dynamicCounterProps').append(counterField);
+            }
+        }
+    
+        function removeCounterInputField(e) {
+            const unselectedProperty = e.params.data.id;
+            if (unselectedProperty.endsWith('_counter')) {
+                $(`#input-${unselectedProperty}`).remove();
+                $('#queryResult').val('');
+            }
         }
     
         function clearQueryBox(event) {
@@ -414,62 +408,22 @@
             queryParts = [];
             resetQueryButton();
         }
-    
-        function initializeClearQueryBox() {
-            document.getElementById('clearQueryBox').addEventListener('click', clearQueryBox);
-        }
-    
-        // === Fullscreen Functionality ===
-        function toggleFullscreen() {
-            const iframe = document.getElementById('treeIframe');
-            
-            if (!document.fullscreenElement) {
-                if (iframe.requestFullscreen) {
-                    iframe.requestFullscreen();
-                } else if (iframe.mozRequestFullScreen) {
-                    iframe.mozRequestFullScreen();
-                } else if (iframe.webkitRequestFullscreen) {
-                    iframe.webkitRequestFullscreen();
-                } else if (iframe.msRequestFullscreen) {
-                    iframe.msRequestFullscreen();
-                } else {
-                    alert('Fullscreen mode is not supported by your browser.');
-                }
-            } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                } else if (document.mozCancelFullScreen) {
-                    document.mozCancelFullScreen();
-                } else if (document.webkitExitFullscreen) {
-                    document.webkitExitFullscreen();
-                } else if (document.msExitFullscreen) {
-                    document.msExitFullscreen();
-                }
-            }
-        }
-    
-        function initializeFullscreenButton() {
-            document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
-        }
-    
-        // === Initialize All Functions on Document Ready ===
-        $(document).ready(function() {
-            initializeControlPanel();
-            initializeSelect2();
-            handlePropertySelect();
-            handlePropertyUnselect();
-            initializeLayoutButton();
-            initializeQueryTypeChange();
-            initializeAddQueryButton();
-            initializeClearQueryBox();
-            initializeFullscreenButton();
-        });
-    
-        // Run necessary functions on page load
-        window.onload = function() {
-            toggleQueryFields();
-            resetQueryButton();
-        };
     </script>
+    <script>
+        const togglebtn = document.getElementById("fullscreenBtn");
+        const iframe = document.getElementById("treeIframe");
+
+        togglebtn.addEventListener("click", function() {
+            if(iframe.requestFullscreen){
+                iframe.requestFullscreen();
+            }else if(iframe.mozRequestFullScreen){ // Firefox
+                iframe.mozRequestFullScreen();
+            }else if(iframe.webkitRequestFullscreen){ // Chrome,Safari,Opera
+                iframe.webkitRequestFullscreen();
+            }else if(iframe.msRequestFullscreen){ // I.E, Edge
+                iframe.msRequestFullscreen();
+            }
+        });
+    </script>    
 </body>
 </html>
