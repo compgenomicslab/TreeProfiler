@@ -2,6 +2,8 @@ from bottle import route, run, request, redirect, template, static_file, respons
 import threading
 from tempfile import NamedTemporaryFile
 from collections import defaultdict
+import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 import os
 import json
 import time
@@ -35,7 +37,22 @@ paired_color = [
     '#60e72e', '#d1941c', '#1045a8', '#c1b03a', '#0c62a5', '#7ac9b2',
     '#6bb9bd', '#cb30eb', '#26bad0', '#d9e557'
 ]
-
+continuous_colormaps = [
+    # Sequential
+    'magma', 'inferno', 'plasma', 'viridis', 'cividis', 'twilight', 'twilight_shifted', 'turbo',
+    'Blues', 'BuGn', 'BuPu', 'GnBu', 'Greens', 'Greys', 'OrRd', 'Oranges', 
+    'PuBu', 'PuBuGn', 'PuRd', 'Purples', 'Reds', 'YlGn', 'YlGnBu', 'YlOrBr', 'YlOrRd',
+    
+    # Diverging
+    'BrBG', 'PRGn', 'PiYG', 'PuOr', 'RdBu', 'RdGy', 'RdYlBu', 'RdYlGn', 'Spectral', 'coolwarm', 
+    'bwr', 'seismic',
+    
+    # Cyclic
+    'twilight', 'twilight_shifted', 'hsv',
+    
+    # Miscellaneous
+    'cubehelix', 'rainbow', 'nipy_spectral', 'gist_earth', 'terrain', 'ocean'
+]
 
 job_status = {}  # Dictionary to store job statuses
 @route('/upload', method='POST')
@@ -355,13 +372,24 @@ def explore_tree(treename):
     current_layouts = tree_info.get('layouts', [])
     current_props = list(tree_info['prop2type'].keys())
     t = Tree(tree_info['annotated_tree'])
-
+    
+    default_configs = {
+        "level": 0,
+        "column_width": 70,
+        "padding_x": 1,
+        "padding_y": 0,
+        "color_config": {},
+        "internal_num_rep": 'avg'
+    }
+    tree_info['default_configs'] = default_configs
+    
     # Default values for layout settings (can be passed from form in the future)
-    level = 0
-    column_width = 70
-    padding_x, padding_y = 1, 0
-    color_config = {}
-    internal_num_rep = 'avg'
+    level = default_configs.get('level', 0)
+    column_width = default_configs.get('column_width', 70)
+    padding_x = default_configs.get('padding_x', 1)
+    padding_y = default_configs.get('padding_y', 0) 
+    color_config = default_configs.get('color_config', {})
+    internal_num_rep = default_configs.get('internal_num_rep', 'avg')
 
     # Process POST request
     if request.method == 'POST':
@@ -374,12 +402,20 @@ def explore_tree(treename):
                     t, layer, tree_info, current_layouts, current_props, level,
                     column_width, padding_x, padding_y, color_config, internal_num_rep, paired_color
                 )
-    
+
     # Start the ete exploration thread
     start_explore_thread(t, treename, current_layouts, current_props)
     
     # Render template
     return template('explore_tree', treename=treename, tree_info=tree_info, selected_props=current_props)
+
+def get_colormap_hex_colors(colormap_name, num_colors):
+    if colormap_name == 'default':
+        return paired_color
+    else:
+        cmap = plt.get_cmap(colormap_name)
+        colors = [mcolors.to_hex(cmap(i / (num_colors - 1))) for i in range(num_colors)]
+        return colors
 
 def process_layer(t, layer, tree_info, current_layouts, current_props, level, column_width, padding_x, padding_y, color_config, internal_num_rep, paired_color):
     """
@@ -389,9 +425,26 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
     selected_layout = layer.get('layout', '')
     query_type = layer.get('queryType', '')
     query_box = layer.get('query', '')
+    prop2type = tree_info['prop2type']
+    color_scheme = layer.get('colorScheme', 'RdYlBu')
 
-    current_props.extend(selected_props)
-
+    # Process color configuration for the current layer
+    for prop in selected_props:
+        # for categorical properties
+        if prop2type.get(prop) == list:
+            leaf_values = list(map(list,set(map(tuple, utils.tree_prop_array(t, prop)))))    
+            prop_values = [val for sublist in leaf_values for val in sublist]
+            paired_color = get_colormap_hex_colors(color_scheme, len(prop_values))
+            color_config[prop] = {}
+            color_config[prop]['value2color'] = utils.assign_color_to_values(prop_values, paired_color)
+            color_config[prop]['detail2color'] = {}
+        elif prop2type.get(prop) == str or prop2type.get(prop) == bool:
+            prop_values = sorted(list(set(utils.tree_prop_array(t, prop))))
+            paired_color = get_colormap_hex_colors(color_scheme, len(prop_values))
+            color_config[prop] = {}
+            color_config[prop]['value2color'] = utils.assign_color_to_values(prop_values, paired_color)
+            color_config[prop]['detail2color'] = {}
+    
     # Process layout selection for the current layer
     level, current_layouts = apply_layouts(
         t, selected_layout, selected_props, tree_info, current_layouts, 
@@ -400,6 +453,7 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
 
     # Process query actions for the current layer
     current_layouts = apply_queries(query_type, query_box, current_layouts, paired_color, tree_info, level)
+    current_props.extend(selected_props)
 
     return current_layouts, current_props, level
 
@@ -407,26 +461,41 @@ def apply_layouts(t, selected_layout, selected_props, tree_info, current_layouts
     """
     Applies the selected layout to the current tree and updates the layouts list.
     """
-    # Additional layout types (Binary, Numerical, Analytic, Taxonomy, etc.)
-    # can be added here following the same pattern
+
     # Categorical layouts
     if selected_layout == 'rectangle-layout':
-        rectangle_layouts, level, _ = tree_plot.get_rectangle_layouts(t, selected_props, level, tree_info['prop2type'])
+        rectangle_layouts, level, _ = tree_plot.get_rectangle_layouts(t, 
+        selected_props, level, prop2type=tree_info['prop2type'], 
+        column_width=column_width, padding_x=padding_x, padding_y=padding_y,
+        color_config=color_config)
         current_layouts.extend(rectangle_layouts)
     elif selected_layout == 'label-layout':
-        label_layouts, level, _ = tree_plot.get_label_layouts(t, selected_props, level, tree_info['prop2type'])
+        label_layouts, level, _ = tree_plot.get_label_layouts(t, 
+        selected_props, level, prop2type=tree_info['prop2type'],
+        column_width=column_width, padding_x=padding_x, padding_y=padding_y,
+        color_config=color_config)
         current_layouts.extend(label_layouts)
     elif selected_layout == 'colorbranch-layout':
-        colorbranch_layouts, level, _ = tree_plot.get_colorbranch_layouts(t, selected_props, level, tree_info['prop2type'])
+        colorbranch_layouts, level, _ = tree_plot.get_colorbranch_layouts(t, 
+        selected_props, level, prop2type=tree_info['prop2type'],
+        column_width=column_width, padding_x=padding_x, padding_y=padding_y,
+        color_config=color_config)
         current_layouts.extend(colorbranch_layouts)
-    elif selected_layout == 'category-bubble-layout':
-        bubble_layouts, level, _ = tree_plot.get_categorical_bubble_layouts(t, selected_props, level, tree_info['prop2type'])
+    elif selected_layout == 'categorical-bubble-layout':
+        bubble_layouts, level, _ = tree_plot.get_categorical_bubble_layouts(t, 
+        selected_props, level, prop2type=tree_info['prop2type'],
+        column_width=column_width, padding_x=padding_x, padding_y=padding_y,
+        color_config=color_config)
         current_layouts.extend(bubble_layouts)
     elif selected_layout == 'piechart-layout':
-        piechart_layouts = tree_plot.get_piechart_layouts(t, selected_props, level, tree_info['prop2type'])
+        piechart_layouts = tree_plot.get_piechart_layouts(t, 
+        selected_props, level, prop2type=tree_info['prop2type'],
+        padding_x=padding_x, padding_y=padding_y,
+        color_config=color_config)
         current_layouts.extend(piechart_layouts)
     elif selected_layout == 'background-layout':
-        background_layouts, level, _ = tree_plot.get_background_layouts(t, selected_props, level, tree_info['prop2type'])
+        background_layouts, level, _ = tree_plot.get_background_layouts(t, 
+        selected_props, level, prop2type=tree_info['prop2type'])
         current_layouts.extend(background_layouts)
     elif selected_layout == 'profiling-layout':
         for profiling_prop in selected_props:
