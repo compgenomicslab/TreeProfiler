@@ -1423,7 +1423,7 @@ def get_barplot_layouts(tree, props, level, prop2type, column_width=70, padding_
                 elif 'barplot_color' in list(color_config.get(key).get('detail2color').keys()):
                     color_dict = None
                     color_prop = None
-                    barplot_color = color_config.get(key).get('detail2color').get('barplot_color')[0]
+                    barplot_color = color_config.get(prop).get('detail2color').get('barplot_color')[0]
                 else:        
                     color_dict = color_config.get(prop, {}).get('value2color', None)
                     color_prop = None
@@ -1446,10 +1446,11 @@ def get_barplot_layouts(tree, props, level, prop2type, column_width=70, padding_
             size_range = [barplot_minval, maxval]
         else:
             size_range = []
+
         layout = configure_layout(prop, new_column_width, color_dict, color_prop, size_prop, barplot_color, size_range)
         layouts.append(layout)
         level += 1
-    
+
     return layouts, level, prop_color_dict
 
 def get_categorical_bubble_layouts(tree, props, level, prop2type, column_width=70, padding_x=0, padding_y=0, color_config=None):
