@@ -216,6 +216,12 @@ def poplulate_plot_args(plot_args_p):
         nargs='+',
         required=False,
         help="(experimental) <prop1> <prop2> names of properties which need to be plot as bubble-layout")
+    group.add_argument('--bubble-range',
+        type=float, 
+        nargs=2, 
+        metavar=('MIN', 'MAX'),
+        default=None, 
+        help="Specify the bubble range in the format: --bubble-range MIN MAX. Example: --bubble-range -1 1")
     group.add_argument('--background-layout',
         nargs='+',
         required=False,
@@ -527,7 +533,8 @@ def run(args):
                 bubble_layouts, level, color_dict = get_numerical_bubble_layouts(tree, numerical_props, 
                 level=level, prop2type=prop2type, 
                 padding_x=args.padding_x, padding_y=args.padding_y, 
-                internal_rep=internal_num_rep, color_config=color_config)
+                internal_rep=internal_num_rep, bubble_range=args.bubble_range, 
+                color_config=color_config)
                 layouts.extend(bubble_layouts)
                 visualized_props.extend(numerical_props)
 
@@ -1508,27 +1515,64 @@ def get_categorical_bubble_layouts(tree, props, level, prop2type, column_width=7
         level += 1
     return layouts, level, prop_color_dict
 
-def get_numerical_bubble_layouts(tree, props, level, prop2type, padding_x=0, padding_y=0, internal_rep='avg', color_config=None):
+def get_numerical_bubble_layouts(tree, props, level, prop2type, padding_x=0, padding_y=0, internal_rep='avg', bubble_range=[], color_config=None):
     def process_prop_values(tree, prop):
         """Extracts and processes property values, excluding NaNs."""
-        prop_values = np.array(list(set(utils.tree_prop_array(tree, prop)))).astype('float64')
+        prop_values = np.concatenate((
+                utils.tree_prop_array(tree, prop, numeric=True),
+                utils.tree_prop_array(tree, utils.add_suffix(prop, internal_rep), numeric=True)
+        ))
         return prop_values[~np.isnan(prop_values)]
 
     prop_color_dict = {}
     layouts = []
     max_radius = 15
-
+    
     for prop in props:
         prop_values = process_prop_values(tree, prop)
 
         #minval, maxval = all_prop_values.min(), all_prop_values.max()
-        abs_maxval = np.abs(prop_values).max()
-        size_prop = prop if prop_values.any() else f"{prop}_{internal_rep}"
+        if bubble_range:
+            abs_maxval = np.abs(bubble_range).max()
+            max_val = bubble_range[1]
+            min_val = bubble_range[0]
+        else:
+            abs_maxval = np.abs(prop_values).max()
+            # Normalize the values in prop_values between 0 and 1
+            max_val = max(prop_values)
+            min_val = min(prop_values)
+            bubble_range = [min_val, max_val]
+
+        if color_config and color_config.get(prop):
+            pass
+        else:
+            gradientscolor = utils.build_color_gradient(20, colormap_name='jet')
+        
+        # assign color to each value
+        if max_val == min_val:
+            value2color = {val: gradientscolor[0] for val in prop_values}
+        else:
+            value2color = {}
+            for val in prop_values:
+                
+                # Normalize the value to a scale between 0 and 1
+                normalized_val = (val - min_val) / (max_val - min_val)
+                
+                # Scale it to match the length of gradientscolor
+                color_index = int(normalized_val * (len(gradientscolor) - 1))
+                if color_index == 0:
+                    color_index = 1
+
+                # Assign the color from the gradient
+                value2color[val] = gradientscolor[color_index+1]
 
         # Configure and add layout
-        layout = staple_layouts.LayoutBubbleNumerical(name=f'Bubble_{prop}', column=level, 
-        prop=prop, max_radius=max_radius, abs_maxval=abs_maxval, 
-        padding_x=padding_x, padding_y=padding_y)
+        layout = staple_layouts.LayoutBubbleNumerical(name=f'Bubble_{prop}', 
+        column=level, prop=prop, max_radius=max_radius, abs_maxval=abs_maxval, 
+        padding_x=padding_x, padding_y=padding_y, value2color=value2color, 
+        bubble_range=bubble_range, 
+        color_range=[gradientscolor[20], gradientscolor[10], gradientscolor[1]],
+        internal_rep=internal_rep)
         layouts.append(layout)
         level += 1
 

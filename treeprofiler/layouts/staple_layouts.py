@@ -564,10 +564,10 @@ class LayoutBranchScore(TreeLayout):
 
 class LayoutBubbleNumerical(TreeLayout):
     def __init__(self, name=None, prop=None, position="aligned", 
-            column=0, color=None, max_radius=10, abs_maxval=None,
-            padding_x=2, padding_y=0, 
-            scale=True, legend=True, active=True, 
-            internal_rep='avg'):
+            column=0, max_radius=10, abs_maxval=None,
+            padding_x=2, padding_y=0, value2color=None,
+            bubble_range=[], color_range=[], internal_rep='avg',
+            scale=True, legend=True, active=True):
 
         name = name or f'Barplot_{size_prop}_{color_prop}'
         super().__init__(name)
@@ -578,12 +578,12 @@ class LayoutBubbleNumerical(TreeLayout):
         
         self.column = column
         self.position = position
-        self.color = color
-        self.positive_color = "#ff0000"
-        self.negative_color = "#0000ff"
         self.internal_rep = internal_rep
         self.max_radius = float(max_radius)
         self.abs_maxval = float(abs_maxval)
+        self.value2color = value2color
+        self.color_range = color_range
+        self.bubble_range = bubble_range
         self.fgopacity = 0.7
         self.padding_x = padding_x
         self.padding_y = padding_y
@@ -595,15 +595,13 @@ class LayoutBubbleNumerical(TreeLayout):
         super().set_tree_style(tree, tree_style)
         text = TextFace(self.num_prop, min_fsize=5, max_fsize=15, padding_x=self.padding_x, rotation=315)
         tree_style.aligned_panel_header.add_face(text, column=self.column)
-        colormap = {
-            "positive": self.positive_color,
-            "negative": self.negative_color
-            }
+
         if self.legend:
-            tree_style.add_legend(title=self.num_prop,
-                                    variable='discrete',
-                                    colormap=colormap
-                                    )
+            tree_style.add_legend(title=self.name,
+                                variable='continuous',
+                                value_range=self.bubble_range,
+                                color_range=self.color_range
+                                )
 
     def _get_bubble_size(self, search_value):
         search_value = abs(float(search_value))
@@ -619,7 +617,7 @@ class LayoutBubbleNumerical(TreeLayout):
             
             # Set bubble size and color based on the number's value
             bubble_size = self._get_bubble_size(number)
-            bubble_color = self.positive_color if number > 0 else self.negative_color
+            bubble_color = self.value2color.get(number)
             
             # Apply styles to the node
             node.sm_style["size"] = bubble_size
@@ -632,7 +630,7 @@ class LayoutBubbleNumerical(TreeLayout):
             
             # Set bubble size and color based on the number's value
             bubble_size = self._get_bubble_size(number)
-            bubble_color = self.positive_color if number > 0 else self.negative_color
+            bubble_color = self.value2color.get(number)
 
             # Apply styles to the node
             node.sm_style["size"] = bubble_size
@@ -642,10 +640,10 @@ class LayoutBubbleNumerical(TreeLayout):
         elif node.props.get(self.internal_prop):
             # Handle non-leaf nodes with internal properties
             number = float(node.props.get(self.internal_prop))
-            
+
             # Set bubble size and color based on the number's value
             bubble_size = self._get_bubble_size(number)
-            bubble_color = self.positive_color if number > 0 else self.negative_color
+            bubble_color = self.value2color.get(number)
 
             # Apply styles to the node
             node.sm_style["size"] = bubble_size
