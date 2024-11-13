@@ -38,6 +38,7 @@ TAXONOMICDICT = {# start with leaf name
                 'evoltype': str,
                 'dup_sp': str,
                 'dup_percent': float,
+                'lca': str,
                 }
 
 # Global Variable for emapper headers
