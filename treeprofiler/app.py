@@ -39,7 +39,7 @@ paired_color = [
 ]
 continuous_colormaps = [
     # Sequential
-    'magma', 'inferno', 'plasma', 'viridis', 'cividis', 'twilight', 'twilight_shifted', 'turbo',
+    'default', 'magma', 'inferno', 'plasma', 'viridis', 'cividis', 'twilight', 'twilight_shifted', 'turbo',
     'Blues', 'BuGn', 'BuPu', 'GnBu', 'Greens', 'Greys', 'OrRd', 'Oranges', 
     'PuBu', 'PuBuGn', 'PuRd', 'Purples', 'Reds', 'YlGn', 'YlGnBu', 'YlOrBr', 'YlOrRd',
     
@@ -406,7 +406,7 @@ def explore_tree(treename):
     start_explore_thread(t, treename, current_layouts, current_props)
     
     # Render template
-    return template('explore_tree', treename=treename, tree_info=tree_info, selected_props=current_props)
+    return template('explore_tree', treename=treename, tree_info=tree_info, selected_props=current_props, color_schemes=continuous_colormaps)
 
 def get_colormap_hex_colors(colormap_name, num_colors):
     if colormap_name == 'default':
@@ -426,7 +426,7 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
     query_box = layer.get('query', '')
     prop2type = tree_info['prop2type']
     # Process color configuration for the current layer
-    categorical_color_scheme = layer.get('categoricalColorscheme', 'RdYlBu')
+    categorical_color_scheme = layer.get('categoricalColorscheme', 'default')
     numerical_color_scheme = layer.get('numericalColorscheme', 'bwr')
     maxval = layer.get('maxval', '') # this should be automatically calculated
     minval = layer.get('minval', '') # this should be automatically calculated

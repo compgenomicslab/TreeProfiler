@@ -156,6 +156,16 @@
                         </select>
                         <small class="form-text text-muted">Hold down Ctrl (Windows) or Command (Mac) to select multiple options.</small>
                     </div>
+
+                    <!-- Categorical Layout Settings -->
+                    <div id="categoricalSettings" class="form-group mt-3" style="display: none;">
+                        <label for="props">Color Scheme</label>
+                        <select class="form-control" id="categoricalColorscheme" name="categoricalColorscheme">
+                            % for colormap in color_schemes:
+                                <option value="{{ colormap }}">{{ colormap }}</option>
+                            % end
+                        </select>
+                    </div>
                 </div>
     
                 <!-- Custom Query Tab -->
@@ -242,6 +252,7 @@
             controlPanelTab.addEventListener("click", function() {
                 controlPanel.style.display = controlPanel.style.display === "none" ? "block" : "none";
             });
+
             initializeSelect2();
             setupEventListeners();
         });
@@ -267,7 +278,26 @@
         // Set up event listeners for UI elements
         function setupEventListeners() {
             document.getElementById('controlPanelTab').addEventListener('click', toggleControlPanel);
-            // document.getElementById('addLayoutBtn').addEventListener('click', showLayoutOptions);
+            document.getElementById('layout').addEventListener('change', function() {
+                const selectedLayout = $(this).val();
+                // Check if the selected layout is one of the categorical layouts
+                const categoricalLayouts = [
+                    "colorbranch-layout",
+                    "label-layout",
+                    "rectangle-layout",
+                    "categorical-bubble-layout",
+                    "background-layout",
+                    "categorical-matrix-layout",
+                    "piechart-layout",
+                    "profiling-layout"
+                ];
+                
+                if (categoricalLayouts.includes(selectedLayout)) {
+                    $('#categoricalSettings').show();
+                } else {
+                    $('#categoricalSettings').hide();
+                }
+            });
             document.getElementById('customQueryType').addEventListener('change', toggleQueryFields);
             document.getElementById('clearQueryBox').addEventListener('click', clearQueryBox);
             document.getElementById('addQueryBtn').addEventListener('click', addInitialQueryPart);
@@ -316,8 +346,9 @@
             const props = $('#props').val();
             const queryType = document.getElementById('customQueryType').value;
             const query = document.getElementById('queryBox').value;
+            const categoricalColorscheme = document.getElementById('categoricalColorscheme').value;
     
-            const layer = { layout, props, queryType, query };
+            const layer = { layout, props, queryType, query, categoricalColorscheme};
             layers.push(layer);
             renderLayers();
             clearInputs();
