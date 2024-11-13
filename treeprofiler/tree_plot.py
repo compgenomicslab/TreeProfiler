@@ -1448,7 +1448,10 @@ def get_barplot_layouts(tree, props, level, prop2type, column_width=70, padding_
                 elif 'barplot_color' in list(color_config.get(key).get('detail2color').keys()):
                     color_dict = None
                     color_prop = None
-                    barplot_color = color_config.get(prop).get('detail2color').get('barplot_color')[0]
+                    if color_config.get(prop):
+                        barplot_color = color_config.get(prop).get('detail2color').get('barplot_color')[0]
+                    else:
+                        barplot_color = get_barplot_color(level)
                 else:        
                     color_dict = color_config.get(prop, {}).get('value2color', None)
                     color_prop = None

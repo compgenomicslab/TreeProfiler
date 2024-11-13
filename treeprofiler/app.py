@@ -432,11 +432,16 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
     maxval = layer.get('maxval', '') # this should be automatically calculated
     minval = layer.get('minval', '') # this should be automatically calculated
     
-    # TODO: special layout setting for barplot
+    # TODO: barplot setting
 
     # TODO: bubble scale setting
     # 1) scale 
     # 2) color
+
+    # TODO: heatmap setting
+    # 1) color scheme
+    # 2) scale
+    # 3) normalization
 
     # Process color configuration for the current layer
     for prop in selected_props:
