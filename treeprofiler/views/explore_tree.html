@@ -6,8 +6,9 @@
     <title>Explore Tree: {{treename}}</title>
     <!-- Bootstrap CSS and other dependencies -->
     <link href="/static/css/bootstrap.min.css" rel="stylesheet"/>
-    <script src="/static/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="/static/js/bootstrap.bundle.min.js"></script>
+    
     
     <!-- Include Select2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
@@ -20,7 +21,7 @@
             position: fixed;
             top: 20px;
             right: 20px;
-            width: 280px;
+            width: 340px;
             max-height: 80vh; /* Set a maximum height to trigger scrolling */
             padding: 15px;
             background-color: #f8f9fa;
@@ -85,104 +86,120 @@
     <div class="control-panel" id="controlPanel">
         <h5>Control Panel</h5>
         <form id="controlPanelForm" method="POST" action="/explore_tree/{{treename}}">
-            <!-- Layout Selection -->
-            <button type="button" class="btn btn-primary mb-3" id="addLayoutBtn">Layout Settings</button>
-            <div id="layoutSelection" class="form-group" style="display: none;">
-                <h5>Select Layout Option</h5>
-                <select class="form-control" id="layout" name="layout">
-                    <optgroup label="Categorical">
-                        <option value="colorbranch-layout" selected>Color Branch Layout</option>
-                        <option value="label-layout">Label Layout</option>
-                        <option value="rectangle-layout">Rectangular Layout</option>
-                        <option value="categorical-bubble-layout">Bubble Layout</option>
-                        <option value="background-layout">Background Layout</option>
-                        <option value="categorical-matrix-layout">Categorical Matrix Layout</option>
-                        <option value="piechart-layout">Piechart Layout</option>
-                        <option value="profiling-layout">Profiling Layout</option>
-                    </optgroup>
-                    <optgroup label="Binary">
-                        <option value="binary-layout">Binary Layout</option>
-                        <option value="binary-matrix-layout">Binary Matrix Layout</option>
-                        <option value="binary-aggregate-layout">Binary Aggregate Layout</option>
-                        <option value="binary-unicolor-layout">Binary Unicolor Layout</option>
-                        <option value="binary-unicolor-aggregate-layout">Binary Unicolor Aggregate Layout</option>
-                    </optgroup>
-                    <optgroup label="Numerical">
-                        <option value="branchscore-layout">Color Branch Layout</option>
-                        <option value="heatmap-layout">Heatmap Layout</option>
-                        <option value="heatmap-mean-layout">Heatmap Mean Layout</option>
-                        <option value="heatmap-zscore-layout">Heatmap Z-Score Layout</option>
-                        <option value="barplot-layout">Barplot Layout</option>
-                        <option value="numerical-matrix-layout">Numerical Matrix Layout</option>
-                        <option value="numerical-bubble-layout">Bubble Layout</option>
-                    </optgroup>
-                    <optgroup label="Analytic"> 
-                        <option value="acr-discrete-layout">ACR Discrete Layout</option>
-                        <option value="acr-continuous-layout">ACR Continuous Layout</option>
-                        <option value="ls-layout">LS Layout</option>
-                    </optgroup>
-                    <optgroup label="Taxonomy">  
-                        <option value="taxonclade-layout">Taxon Clade Layout</option>
-                        <option value="taxonrectangle-layout">Taxon Rectangle Layout</option>
-                        <option value="taxoncollapse-layout">Taxon Collapse Layout</option>
-                    </optgroup>
-                    <option value="emapper-layout">EggNOG-mapper Layout</option>
-                    <option value="domain-layout">Domain Layout</option>
-                    <option value="alignment-layout">Alignment Layout</option>
-                </select>
-            </div>
+            <!-- Control Panel Tabs -->
+            <ul class="nav nav-tabs" id="controlPanelTabs" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" id="layout-settings-tab" data-toggle="tab" href="#layoutSettings" role="tab" aria-controls="layoutSettings" aria-selected="true">Layout Settings</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="custom-query-tab" data-toggle="tab" href="#customQueryTab" role="tab" aria-controls="customQueryTab" aria-selected="false">Custom Query</a>
+                </li>
+            </ul>
+            
+            <div class="tab-content" id="controlPanelTabContent">
+                <!-- Layout Settings Tab -->
+                <div class="tab-pane fade show active" id="layoutSettings" role="tabpanel" aria-labelledby="layout-settings-tab">
+                    <!-- Layout Selection -->
+                    <div class="form-group mt-3">
+                        <h5>Select Layout Option</h5>
+                        <select class="form-control" id="layout" name="layout">
+                            <option value=""></option>
+                            <optgroup label="Categorical">
+                                <option value="colorbranch-layout">Color Branch Layout</option>
+                                <option value="label-layout">Label Layout</option>
+                                <option value="rectangle-layout">Rectangular Layout</option>
+                                <option value="categorical-bubble-layout">Bubble Layout</option>
+                                <option value="background-layout">Background Layout</option>
+                                <option value="categorical-matrix-layout">Categorical Matrix Layout</option>
+                                <option value="piechart-layout">Piechart Layout</option>
+                                <option value="profiling-layout">Profiling Layout</option>
+                            </optgroup>
+                            <optgroup label="Binary">
+                                <option value="binary-layout">Binary Layout</option>
+                                <option value="binary-matrix-layout">Binary Matrix Layout</option>
+                                <option value="binary-aggregate-layout">Binary Aggregate Layout</option>
+                                <option value="binary-unicolor-layout">Binary Unicolor Layout</option>
+                                <option value="binary-unicolor-aggregate-layout">Binary Unicolor Aggregate Layout</option>
+                            </optgroup>
+                            <optgroup label="Numerical">
+                                <option value="branchscore-layout">Color Branch Layout</option>
+                                <option value="heatmap-layout">Heatmap Layout</option>
+                                <option value="heatmap-mean-layout">Heatmap Mean Layout</option>
+                                <option value="heatmap-zscore-layout">Heatmap Z-Score Layout</option>
+                                <option value="barplot-layout">Barplot Layout</option>
+                                <option value="numerical-matrix-layout">Numerical Matrix Layout</option>
+                                <option value="numerical-bubble-layout">Bubble Layout</option>
+                            </optgroup>
+                            <optgroup label="Analytic"> 
+                                <option value="acr-discrete-layout">ACR Discrete Layout</option>
+                                <option value="acr-continuous-layout">ACR Continuous Layout</option>
+                                <option value="ls-layout">LS Layout</option>
+                            </optgroup>
+                            <optgroup label="Taxonomy">  
+                                <option value="taxonclade-layout">Taxon Clade Layout</option>
+                                <option value="taxonrectangle-layout">Taxon Rectangle Layout</option>
+                                <option value="taxoncollapse-layout">Taxon Collapse Layout</option>
+                            </optgroup>
+                            <option value="emapper-layout">EggNOG-mapper Layout</option>
+                            <option value="domain-layout">Domain Layout</option>
+                            <option value="alignment-layout">Alignment Layout</option>
+                        </select>
+                    </div>
     
-            <!-- Properties Selection -->
-            <div id="propsSelection" class="form-group mt-3" style="display: none;">
-                <label for="props">Select Properties to Visualize:</label>
-                <select multiple class="form-control" id="props" name="props">
-                    % for prop in tree_info['node_props']:
-                        <option value="{{ prop }}">{{ prop }}</option>
-                    % end
-                </select>
-                <small class="form-text text-muted">Hold down Ctrl (Windows) or Command (Mac) to select multiple options.</small>
-            </div>
-    
-            <!-- Custom Query Section -->
-            <div id="customQuery" class="mt-4" style="display: none;">
-                <h5>Custom Query</h5>
-                <div class="form-group">
-                    <label for="customQueryType">Select Query Type:</label>
-                    <select class="form-control" id="customQueryType" name="customQueryType">
-                        <option value=""></option>
-                        <option value="highlight">Highlight</option>
-                        <option value="collapse">Collapse</option>
-                        <option value="prune">Prune</option>
-                        <option value="rank_limit">Rank Limit (for taxonomic trees only)</option>
-                    </select>
+                    <!-- Properties Selection -->
+                    <div id="propsSelection" class="form-group mt-3">
+                        <label for="props">Select Properties to Visualize:</label>
+                        <select multiple class="form-control" id="props" name="props">
+                            % for prop in tree_info['node_props']:
+                                <option value="{{ prop }}">{{ prop }}</option>
+                            % end
+                        </select>
+                        <small class="form-text text-muted">Hold down Ctrl (Windows) or Command (Mac) to select multiple options.</small>
+                    </div>
                 </div>
-                <div id="queryFields" class="form-group mt-3">
-                    <label for="queryProp">Property</label>
-                    <select class="form-control" id="queryProp" name="queryProp">
-                        % for prop in selected_props:
-                            <option value="{{ prop }}">{{ prop }}</option>
-                        % end
-                    </select>
-                    <div id="dynamicCounterProps"></div> <!-- Counter Prop Placeholder -->
-                    <label for="queryOperation" class="mt-2">Operation</label>
-                    <select class="form-control" id="queryOperation" name="queryOperation">
-                        <option value="=">Equals</option>
-                        <option value="!=">Not Equals</option>
-                        <option value="contains">Contains</option>
-                        <option value="&gt;">Greater Than</option>
-                        <option value="&lt;">Less Than</option>
-                    </select>
-                    <label for="queryValue" class="mt-2">Value</label>
-                    <input type="text" class="form-control" id="queryValue" name="queryValue" placeholder="Enter value">
-                    <div class="mt-3">
-                        <button type="button" class="btn btn-secondary dropdown-toggle" id="addQueryBtn">ADD</button>
-                        <div id="addQueryOptions" class="dropdown-menu">
-                            <a class="dropdown-item" href="#" onclick="addQueryPart('AND')">AND</a>
-                            <a class="dropdown-item" href="#" onclick="addQueryPart('OR')">OR</a>
+    
+                <!-- Custom Query Tab -->
+                <div class="tab-pane fade" id="customQueryTab" role="tabpanel" aria-labelledby="custom-query-tab">
+                    <div id="customQuery" class="mt-3">
+                        <h5>Custom Query</h5>
+                        <div class="form-group">
+                            <label for="customQueryType">Select Query Type:</label>
+                            <select class="form-control" id="customQueryType" name="customQueryType">
+                                <option value=""></option>
+                                <option value="highlight">Highlight</option>
+                                <option value="collapse">Collapse</option>
+                                <option value="prune">Prune</option>
+                                <option value="rank_limit">Rank Limit (for taxonomic trees only)</option>
+                            </select>
+                        </div>
+                        <div id="queryFields" class="form-group mt-3">
+                            <label for="queryProp">Property</label>
+                            <select class="form-control" id="queryProp" name="queryProp">
+                                % for prop in selected_props:
+                                    <option value="{{ prop }}">{{ prop }}</option>
+                                % end
+                            </select>
+                            <label for="queryOperation" class="mt-2">Operation</label>
+                            <select class="form-control" id="queryOperation" name="queryOperation">
+                                <option value="=">Equals</option>
+                                <option value="!=">Not Equals</option>
+                                <option value="contains">Contains</option>
+                                <option value="&gt;">Greater Than</option>
+                                <option value="&lt;">Less Than</option>
+                            </select>
+                            <label for="queryValue" class="mt-2">Value</label>
+                            <input type="text" class="form-control" id="queryValue" name="queryValue" placeholder="Enter value">
+                            <div class="mt-3">
+                                <button type="button" class="btn btn-secondary dropdown-toggle" id="addQueryBtn">ADD</button>
+                                <div id="addQueryOptions" class="dropdown-menu">
+                                    <a class="dropdown-item" href="#" onclick="addQueryPart('AND')">AND</a>
+                                    <a class="dropdown-item" href="#" onclick="addQueryPart('OR')">OR</a>
+                                </div>
+                            </div>
+                            <textarea class="form-control mt-3" id="queryBox" name="queryBox" rows="3" readonly></textarea>
+                            <small><a href="#" id="clearQueryBox" class="text-danger">Clear Query</a></small>
                         </div>
                     </div>
-                    <textarea class="form-control mt-3" id="queryBox" name="queryBox" rows="3" readonly></textarea>
-                    <small><a href="#" id="clearQueryBox" class="text-danger">Clear Query</a></small>
                 </div>
             </div>
     
@@ -202,19 +219,29 @@
     </div>
 
     <!-- Main Content -->
-    <div class="container mt-4">
+    <div class="container-fluid mt-4">
         <h1>Explore Tree: {{treename}}</h1>
 
         <!-- Iframe container -->
         <div class="position-relative mt-3">
             <iframe src="http://localhost:5050" id="treeIframe" width="100%" height="800px" frameborder="0" allowfullscreen></iframe>
         </div>
-
-        
     </div>
-
     <script>
         $(document).ready(function() {
+            // Enable Bootstrap tab functionality explicitly
+            $('#controlPanelTabs a[data-toggle="tab"]').on('click', function(e) {
+                e.preventDefault();
+                $(this).tab('show');
+            });
+            
+            // Toggle control panel display
+            const controlPanel = document.getElementById("controlPanel");
+            const controlPanelTab = document.getElementById("controlPanelTab");
+            
+            controlPanelTab.addEventListener("click", function() {
+                controlPanel.style.display = controlPanel.style.display === "none" ? "block" : "none";
+            });
             initializeSelect2();
             setupEventListeners();
         });
@@ -240,7 +267,7 @@
         // Set up event listeners for UI elements
         function setupEventListeners() {
             document.getElementById('controlPanelTab').addEventListener('click', toggleControlPanel);
-            document.getElementById('addLayoutBtn').addEventListener('click', showLayoutOptions);
+            // document.getElementById('addLayoutBtn').addEventListener('click', showLayoutOptions);
             document.getElementById('customQueryType').addEventListener('change', toggleQueryFields);
             document.getElementById('clearQueryBox').addEventListener('click', clearQueryBox);
             document.getElementById('addQueryBtn').addEventListener('click', addInitialQueryPart);
