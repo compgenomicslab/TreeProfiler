@@ -1260,12 +1260,10 @@ def get_binary_layouts(tree, props, level, prop2type, column_width=70, reverse=F
 
         # If you still need a sorted list of unique property values
         prop_values = sorted(set(prop_values))
-
         if can_convert_to_bool(prop_values):
             if color_config and color_config.get(prop):
                 if color_config.get(prop).get('value2color'):
                     color_dict = color_config.get(prop).get('value2color')
-
                     if can_convert_to_bool(color_dict.keys()):
                         color_dict = {eval(k): v for k, v in color_dict.items()}
                         color = color_dict.get(True, "#ff0000") #get true color

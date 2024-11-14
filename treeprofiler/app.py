@@ -431,15 +431,20 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
     maxval = layer.get('maxval', '') # this should be automatically calculated
     minval = layer.get('minval', '') # this should be automatically calculated
     
+    # binary settings
     if selected_layout == 'binary-layout':
-        is_unicolor = layer.get('isBinary', True)
-        if is_unicolor:
+        same_color = layer.get('isUnicolor', True)
+        if not same_color:
             bianry_color_scheme = layer.get('binaryColorscheme', 'default')
         else:
-            unicolorColor = layer.get('unicolorColor', 'red')
+            unicolorColor = layer.get('unicolorColor', '#ff0000')
         aggregate_option = layer.get('aggregateOption', 'gradient')
+        
+        if aggregate_option == 'gradient':
+            aggregate = False
+        else:
+            aggregate = True
 
-    # TODO: Binary
     # TODO: barplot setting
 
     # TODO: bubble scale setting
@@ -452,7 +457,7 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
     # 3) normalization
 
     # Process color configuration for the current layer
-    for prop in selected_props:
+    for index, prop in enumerate(selected_props):
         # for categorical properties
         if prop2type.get(prop) == list:
             leaf_values = list(map(list,set(map(tuple, utils.tree_prop_array(t, prop)))))    
@@ -467,6 +472,7 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
             color_config[prop] = {}
             color_config[prop]['value2color'] = utils.assign_color_to_values(prop_values, paired_color)
             color_config[prop]['detail2color'] = {}
+            print(color_config[prop])
         elif prop2type.get(prop) == float or prop2type.get(prop) == int:
             paired_color = get_colormap_hex_colors(numerical_color_scheme, 3)
             color_min, color_mid, color_max = paired_color
@@ -477,19 +483,28 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
             color_config[prop]['detail2color']['color_mid'] = (color_mid, '')
             color_config[prop]['detail2color']['color_min'] = (color_min, minval)
         elif prop2type.get(prop) == bool:
-            pass
+            prop_values = utils.tree_prop_array(t, prop, leaf_only=True)
+            max_count = utils.find_bool_representations(prop_values)
+            prop_values = sorted(set(prop_values))
+            color_config[prop] = {}
+            color_config[prop]['value2color'] = {}
+            if same_color:
+                color_config[prop]['value2color']['True'] = unicolorColor
+            else:
+                color_config[prop]['value2color']['True'] = paired_color[index]
 
-    # Process layout selection for the current layer
-    # level, current_layouts = apply_layouts(
-    #     t, selected_layout, selected_props, tree_info, current_layouts, 
-    #     level, column_width, padding_x, padding_y, color_config, internal_num_rep
-    # )
 
     # Apply selected layout based on type directly within this function
     if selected_layout in ['rectangle-layout', 'label-layout', 'colorbranch-layout']:
         level, current_layouts = apply_categorical_layouts(t, selected_layout, selected_props, tree_info, current_layouts, level, column_width, padding_x, padding_y, color_config)
     elif selected_layout == 'binary-layout':
-        level, current_layouts = apply_binary_layouts(t, selected_layout, selected_props, tree_info, current_layouts, level, column_width, padding_x, padding_y, color_config)
+        binary_layouts, level, _ = tree_plot.get_binary_layouts(
+        t, selected_props, level, prop2type=tree_info['prop2type'],
+        column_width=column_width, reverse=False, padding_x=padding_x, padding_y=padding_y,
+        color_config=color_config, same_color=same_color, aggregate=aggregate)
+        current_layouts.extend(binary_layouts)
+
+        #level, current_layouts = apply_binary_layouts(t, selected_layout, selected_props, tree_info, current_layouts, level, column_width, padding_x, padding_y, color_config)
     elif selected_layout in ['branchscore-layout', 'barplot-layout', 'numerical-bubble-layout', 'heatmap-layout', 'numerical-matrix-layout']:
         level, current_layouts = apply_numerical_layouts(t, selected_layout, selected_props, tree_info, current_layouts, level, column_width, padding_x, padding_y, color_config, internal_num_rep)
     elif selected_layout in ['acr-discrete-layout', 'acr-continuous-layout', 'ls-layout']:
@@ -581,22 +596,21 @@ def apply_categorical_layouts(t, selected_layout, selected_props, tree_info, cur
 
     return level, current_layouts
 
-def apply_binary_layouts(t, selected_layout, selected_props, tree_info, current_layouts, level, column_width, padding_x, padding_y, color_config):
-    """
-    Applies binary layouts with various configurations.
-    """
-    reverse = False
-    same_color = 'unicolor' in selected_layout
-    aggregate = 'aggregate' in selected_layout
+# def apply_binary_layouts(t, selected_layout, selected_props, tree_info, current_layouts, level, column_width, padding_x, padding_y, color_config):
+#     """
+#     Applies binary layouts with various configurations.
+#     """
+#     reverse = False
+#     same_color = 'unicolor' in selected_layout
+#     aggregate = 'aggregate' in selected_layout
     
-    binary_layouts, level, _ = tree_plot.get_binary_layouts(
-        t, selected_props, level, prop2type=tree_info['prop2type'],
-        column_width=column_width, reverse=reverse, padding_x=padding_x, padding_y=padding_y,
-        color_config=color_config, same_color=same_color, aggregate=aggregate
-    )
-    current_layouts.extend(binary_layouts)
-    return level, current_layouts
-
+#     binary_layouts, level, _ = tree_plot.get_binary_layouts(
+#         t, selected_props, level, prop2type=tree_info['prop2type'],
+#         column_width=column_width, reverse=reverse, padding_x=padding_x, padding_y=padding_y,
+#         color_config=color_config, same_color=same_color, aggregate=aggregate
+#     )
+#     current_layouts.extend(binary_layouts)
+#     return level, current_layouts
 
 def apply_numerical_layouts(t, selected_layout, selected_props, tree_info, current_layouts, level, column_width, padding_x, padding_y, color_config, internal_num_rep):
     """
