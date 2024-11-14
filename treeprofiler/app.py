@@ -431,6 +431,15 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
     maxval = layer.get('maxval', '') # this should be automatically calculated
     minval = layer.get('minval', '') # this should be automatically calculated
     
+    if selected_layout == 'binary-layout':
+        is_unicolor = layer.get('isBinary', True)
+        if is_unicolor:
+            bianry_color_scheme = layer.get('binaryColorscheme', 'default')
+        else:
+            unicolorColor = layer.get('unicolorColor', 'red')
+        aggregate_option = layer.get('aggregateOption', 'gradient')
+
+    # TODO: Binary
     # TODO: barplot setting
 
     # TODO: bubble scale setting
@@ -479,7 +488,7 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
     # Apply selected layout based on type directly within this function
     if selected_layout in ['rectangle-layout', 'label-layout', 'colorbranch-layout']:
         level, current_layouts = apply_categorical_layouts(t, selected_layout, selected_props, tree_info, current_layouts, level, column_width, padding_x, padding_y, color_config)
-    elif selected_layout in ['binary-layout', 'binary-aggregate-layout', 'binary-unicolor-layout', 'binary-unicolor-aggregate-layout']:
+    elif selected_layout == 'binary-layout':
         level, current_layouts = apply_binary_layouts(t, selected_layout, selected_props, tree_info, current_layouts, level, column_width, padding_x, padding_y, color_config)
     elif selected_layout in ['branchscore-layout', 'barplot-layout', 'numerical-bubble-layout', 'heatmap-layout', 'numerical-matrix-layout']:
         level, current_layouts = apply_numerical_layouts(t, selected_layout, selected_props, tree_info, current_layouts, level, column_width, padding_x, padding_y, color_config, internal_num_rep)

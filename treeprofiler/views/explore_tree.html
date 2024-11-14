@@ -116,10 +116,6 @@
                             </optgroup>
                             <optgroup label="Binary">
                                 <option value="binary-layout">Binary Layout</option>
-                                <option value="binary-matrix-layout">Binary Matrix Layout</option>
-                                <option value="binary-aggregate-layout">Binary Aggregate Layout</option>
-                                <option value="binary-unicolor-layout">Binary Unicolor Layout</option>
-                                <option value="binary-unicolor-aggregate-layout">Binary Unicolor Aggregate Layout</option>
                             </optgroup>
                             <optgroup label="Numerical">
                                 <option value="branchscore-layout">Color Branch Layout</option>
@@ -165,6 +161,43 @@
                                 <option value="{{ colormap }}">{{ colormap }}</option>
                             % end
                         </select>
+                    </div>
+                    <!-- Binary layout settings -->
+                    <div id="binarySettings" class="form-group mt-3" style="display: none;">
+                        <h5>Settings for Binary Layout</h5>
+                        
+                        <!-- Unicolor Option -->
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="unicolor" id="unicolorOption" name="unicolorOption">
+                            <label class="form-check-label" for="unicolorOption">
+                                Use Unicolor
+                            </label>
+                        </div>
+                        
+                        <!-- Unicolor Color Picker (Only visible when Unicolor is checked) -->
+                        <div id="unicolorPicker" class="form-group mt-2" style="display: none;">
+                            <label for="unicolorColor">Select Unicolor:</label>
+                            <input type="color" id="unicolorColor" name="unicolorColor" class="form-control" value="#0000ff">
+                        </div>
+                        
+                        <!-- Color Scheme Dropdown (Only visible when Unicolor is unchecked) -->
+                        <div id="binaryColorScheme" class="form-group mt-2" style="display: none;">
+                            <label for="binaryColorSchemeSelect">Select Color Scheme:</label>
+                            <select class="form-control" id="binaryColorSchemeSelect" name="binaryColorScheme">
+                                % for colormap in color_schemes:
+                                    <option value="{{ colormap }}">{{ colormap }}</option>
+                                % end
+                            </select>
+                        </div>
+                    
+                        <!-- Aggregate Option as Dropdown -->
+                        <div id="aggregateSettings" class="form-group mt-2">
+                            <label for="aggregateOption">Summary for Collapsed Nodes: </label>
+                            <select class="form-control" id="aggregateOption" name="aggregateOption">
+                                <option value="gradient">Gradient</option>
+                                <option value="aggregate">Aggregate</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
     
@@ -297,6 +330,23 @@
                 } else {
                     $('#categoricalSettings').hide();
                 }
+
+                if (selectedLayout === "binary-layout") {
+                    $('#binarySettings').show();
+                } else {
+                    $('#binarySettings').hide();
+                }
+            });
+            document.getElementById('unicolorOption').addEventListener('change', function() {
+                const unicolorPicker = document.getElementById('unicolorPicker');
+                const binaryColorScheme = document.getElementById('binaryColorScheme');
+                if (this.checked) {
+                    unicolorPicker.style.display = 'block';
+                    binaryColorScheme.style.display = 'none';
+                } else {
+                    unicolorPicker.style.display = 'none';
+                    binaryColorScheme.style.display = 'block';
+                }
             });
             document.getElementById('customQueryType').addEventListener('change', toggleQueryFields);
             document.getElementById('clearQueryBox').addEventListener('click', clearQueryBox);
@@ -346,9 +396,27 @@
             const props = $('#props').val();
             const queryType = document.getElementById('customQueryType').value;
             const query = document.getElementById('queryBox').value;
+
+            // Categorical layout settings
             const categoricalColorscheme = document.getElementById('categoricalColorscheme').value;
-    
-            const layer = { layout, props, queryType, query, categoricalColorscheme};
+            
+            // Binary layout settings
+            const isUnicolor = document.getElementById('unicolorOption').checked;
+            const binaryColorScheme = isUnicolor ? null : document.getElementById('binaryColorSchemeSelect').value;
+            const unicolorColor = isUnicolor ? document.getElementById('unicolorColor').value : null;
+            const aggregateOption = document.getElementById('aggregateOption').value;
+
+            const layer = {
+                layout, 
+                props, 
+                queryType, 
+                query, 
+                categoricalColorscheme,
+                isUnicolor,
+                binaryColorScheme, 
+                unicolorColor, 
+                aggregateOption
+            };
             layers.push(layer);
             renderLayers();
             clearInputs();
