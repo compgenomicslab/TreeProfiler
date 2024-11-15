@@ -432,7 +432,7 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
     categorical_color_scheme = layer.get('categoricalColorscheme', 'default')
 
     # numerical settings
-    barplot_color_scheme = layer.get('barplotColorscheme', 'default')
+    
     maxval = layer.get('maxVal', '') # this should be automatically calculated
     minval = layer.get('minVal', '') # this should be automatically calculated
     color_min = layer.get('colorMin', '#0000ff')
@@ -440,6 +440,13 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
     color_max = layer.get('colorMax', '#ff0000')
 
     # TODO barplot settings
+    barplot_width = layer.get('barplotWidth', 200)
+    barplot_scale = layer.get('barplotScaleProperty', '')
+    barplot_range = layer.get('barplotRange', '')
+    barplotColorOption = layer.get('barplotColorOption', 'same')
+    barplot_color_scheme = layer.get('barplotColorscheme', 'default')
+    barplot_colorby = layer.get('barplotFillProperty', None)
+    
     # binary settings
     if selected_layout == 'binary-layout':
         same_color = layer.get('isUnicolor', True)
@@ -471,14 +478,24 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
             color_config[prop]['value2color'] = utils.assign_color_to_values(prop_values, paired_color)
             color_config[prop]['detail2color'] = {}
         elif prop2type.get(prop) == float or prop2type.get(prop) == int:
-            # paired_color = get_colormap_hex_colors(numerical_color_scheme, 3)
-            # color_min, color_mid, color_max = paired_color
-            color_config[prop] = {}
-            color_config[prop]['value2color'] = {}
-            color_config[prop]['detail2color'] = {}
-            color_config[prop]['detail2color']['color_max'] = (color_max, maxval)
-            color_config[prop]['detail2color']['color_mid'] = (color_mid, '')
-            color_config[prop]['detail2color']['color_min'] = (color_min, minval)
+            if selected_layout == 'barplot-layout':
+                if barplotColorOption == 'colorby':
+                    color_config = None
+                else:
+                    paired_color = get_colormap_hex_colors(barplot_color_scheme, len(selected_props))
+                    color_config[prop] = {}
+                    color_config[prop]['value2color'] = {}
+                    color_config[prop]['detail2color'] = {}
+                    color_config[prop]['detail2color']['barplot_color'] = (paired_color[index], '')
+            else:
+                # paired_color = get_colormap_hex_colors(numerical_color_scheme, 3)
+                # color_min, color_mid, color_max = paired_color
+                color_config[prop] = {}
+                color_config[prop]['value2color'] = {}
+                color_config[prop]['detail2color'] = {}
+                color_config[prop]['detail2color']['color_max'] = (color_max, maxval)
+                color_config[prop]['detail2color']['color_mid'] = (color_mid, '')
+                color_config[prop]['detail2color']['color_min'] = (color_min, minval)
         elif prop2type.get(prop) == bool:
             prop_values = utils.tree_prop_array(t, prop, leaf_only=True)
             max_count = utils.find_bool_representations(prop_values)
@@ -508,10 +525,23 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
         )
         current_layouts.extend(branchscore_layouts)
     elif selected_layout == 'barplot-layout':
+        if barplot_range != '':
+            barplot_range = float(barplot_range)
+        if barplot_width != '':
+            barplot_width = int(barplot_width)
+        
         barplot_layouts, level, _ = tree_plot.get_barplot_layouts(
-            t, selected_props, level, tree_info['prop2type'], internal_rep=internal_num_rep
-        )
+            t, selected_props, level, tree_info['prop2type'], 
+            column_width=barplot_width, padding_x=padding_x, padding_y=padding_y,
+            internal_rep=internal_num_rep, anchor_column=barplot_scale, color_config=color_config,
+            barplot_colorby=barplot_colorby, max_range=barplot_range)
         current_layouts.extend(barplot_layouts)
+        """
+        barplot_layouts, level, color_dict = get_barplot_layouts(tree, args.barplot_layout, level, 
+            prop2type, column_width=args.barplot_width, padding_x=args.padding_x, padding_y=args.padding_y, 
+            internal_rep=internal_num_rep, anchor_column=args.barplot_scale, color_config=color_config, 
+            barplot_colorby=args.barplot_colorby, max_range=args.barplot_range)
+        """
     elif selected_layout == 'numerical-bubble-layout':
         # Convert maxval and minval to floats if they exist
         if maxval:

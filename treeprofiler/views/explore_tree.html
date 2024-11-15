@@ -225,21 +225,21 @@
                     </div>
                     <!-- Barplot -->
                     <div id="barplotOptions" class="form-group mt-3" style="display: none;">
-                        <label for="barplotWidth">Barplot Width:</label>
-                        <input type="number" class="form-control" id="barplotWidth" name="barplotWidth" placeholder="Enter width">
-                    
+                        <label for="barplotWidth">Barplot Column Width (px):</label>
+                        <input type="number" class="form-control" id="barplotWidth" name="barplotWidth" placeholder="Enter width" value="200">
+                        
+                        
                         <label for="barplotScaleProperty" class="mt-2">Scale Based On Property:</label>
                         <select class="form-control" id="barplotScaleProperty" name="barplotScaleProperty">
-                            <!-- Options will be added dynamically -->
                         </select>
                     
-                        <label for="barplotRange" class="mt-2">Barplot Range (Max Value):</label>
-                        <input type="number" class="form-control" id="barplotRange" name="barplotRange" placeholder="Enter max value">
+                        <label for="barplotRange" class="mt-2">Custom Barplot Scale (Max Value):</label>
+                        <input type="number" class="form-control" id="barplotRange" name="barplotRange" placeholder="Enter max value for the property">
                     
                         <label for="barplotColorOption" class="mt-2">Barplot Color:</label>
                         <select class="form-control" id="barplotColorOption" name="barplotColorOption">
                             <option value="same">Color Scheme</option>
-                            <option value="filled">Fill by Property</option>
+                            <option value="colorby">Fill by Property</option>
                         </select>
                     
                         <!-- Conditional color selector or property selector -->
@@ -254,7 +254,7 @@
                                 </select>
                             </div>
                             
-                            <!-- Property dropdown for 'filled' option -->
+                            <!-- Property dropdown for 'colorby' option -->
                             <select class="form-control" id="barplotFillProperty" name="barplotFillProperty" style="display: none;">
                                 % for prop in tree_info['node_props']:
                                     <option value="{{ prop }}">{{ prop }}</option>
@@ -422,10 +422,10 @@
                 // Toggle color picker or property selector based on color option choice
                 $('#barplotColorOption').change(function() {
                     if ($(this).val() === 'same') {
-                        $('#barplotColorPicker').show();
+                        $('#barplotColorScheme').show();
                         $('#barplotFillProperty').hide();
-                    } else if ($(this).val() === 'filled') {
-                        $('#barplotColorPicker').hide();
+                    } else if ($(this).val() === 'colorby') {
+                        $('#barplotColorScheme').hide();
                         $('#barplotFillProperty').show();
                     }
                 });
@@ -437,6 +437,8 @@
                 // Clear and repopulate the #barplotScaleProperty options based on selectedProps
                 const barplotScaleProperty = $('#barplotScaleProperty');
                 barplotScaleProperty.empty(); // Clear existing options
+
+                barplotScaleProperty.append(new Option("", "")); // Add an empty option as the first choice
 
                 if (selectedProps && selectedProps.length > 0) {
                     selectedProps.forEach(function(prop) {
@@ -521,6 +523,15 @@
             const colorMin = document.getElementById('colorMin').value;
             const colorMid = document.getElementById('colorMid').value;
             const colorMax = document.getElementById('colorMax').value;
+
+            const barplotWidth = document.getElementById('barplotWidth').value;
+            const barplotScaleProperty = document.getElementById('barplotScaleProperty').value;
+            const barplotRange = document.getElementById('barplotRange').value;
+            const barplotColorOption = document.getElementById('barplotColorOption').value;
+            const barplotColorScheme = document.getElementById('barplotColorScheme').value;
+            const barplotFillProperty = document.getElementById('barplotFillProperty').value;
+
+            // Barplot layout settings
             const layer = {
                 layout, 
                 props, 
@@ -535,7 +546,13 @@
                 maxVal,
                 colorMin,
                 colorMid,
-                colorMax
+                colorMax,
+                barplotWidth,
+                barplotScaleProperty,
+                barplotRange,
+                barplotColorOption,
+                barplotColorScheme,
+                barplotFillProperty
             };
             layers.push(layer);
             renderLayers();
