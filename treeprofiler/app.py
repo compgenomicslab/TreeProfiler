@@ -294,9 +294,18 @@ def process_upload_job(job_args):
 def server_static(filepath):
     return static_file(filepath, root='./static')
 
+explore_threads = {}  # Store threads and stop signals for exploration sessions
 @route('/')
-def upload_tree():
-    return template('upload_tree')
+def home():
+    # Stop all exploration threads
+    print(explore_threads)
+    if explore_threads:
+        for treename, (thread, stop_event) in list(explore_threads.items()):
+            stop_event.set()  # Signal the thread to stop
+            thread.join(timeout=1)  # Wait for the thread to terminate
+            del explore_threads[treename]  # Clean up
+
+    return template('upload_tree')  # Render the home page
 
 @route('/upload_chunk', method='POST')
 def upload_chunk():
@@ -912,12 +921,19 @@ def start_explore_thread(t, treename, current_layouts, current_props):
     """
     Starts the ete exploration in a separate thread.
     """
-
+    stop_event = threading.Event()
     def explore():
         t.explore(name=treename, layouts=current_layouts, host='138.4.138.153', port=5050, open_browser=False, include_props=current_props)
-    
-    explorer_thread = threading.Thread(target=explore)
+        while not stop_event.is_set():
+            time.sleep(0.1)  # Check periodically for the stop signal
+    # Start the thread
+    explorer_thread = threading.Thread(target=explore, daemon=True)
+    # Store the thread and its stop event
+    explore_threads[treename] = (explorer_thread, stop_event)
+    print(explore_threads)
     explorer_thread.start()
+
+    
 
 def convert_query_string(query_string):
     # Split the query by semicolon to get each statement
