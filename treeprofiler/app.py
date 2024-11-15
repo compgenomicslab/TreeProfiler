@@ -458,7 +458,7 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
     color_mid = layer.get('colorMid', '#ffffff')
     color_max = layer.get('colorMax', '#ff0000')
 
-    # TODO barplot settings
+    # barplot settings
     barplot_width = layer.get('barplotWidth', 200)
     barplot_scale = layer.get('barplotScaleProperty', '')
     barplot_range = layer.get('barplotRange', '')
@@ -480,6 +480,10 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
         else:
             aggregate = True
 
+    # alignment settings
+    alg_start = layer.get('algStart', '')
+    alg_end = layer.get('algEnd', '')
+    
     # Apply selected layout based on type directly within this function
     if selected_layout in categorical_layout_list:
         for index, prop in enumerate(selected_props):
@@ -646,10 +650,26 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
     elif selected_layout in ['taxoncollapse-layout', 'taxonclade-layout', 'taxonrectangle-layout']:
         level, current_layouts = apply_taxonomic_layouts(t, selected_layout, selected_props, tree_info, current_layouts, level, column_width, padding_x, padding_y, paired_color)
     elif selected_layout == 'alignment-layout':
-        level, current_layouts = apply_alignment_layout(t, selected_props, current_layouts, level, column_width)
-    elif selected_layout == 'domain-layout':
-        level, current_layouts = apply_domain_layout(t, selected_props, current_layouts, level)
+        if alg_start != '':
+            alg_start = int(alg_start)
+        if alg_end != '':
+            alg_end = int(alg_end)
 
+        if alg_start != '' and alg_end != '':
+            window = [alg_start, alg_end]
+        else:
+            window = []
+
+        lengh = len(max(utils.tree_prop_array(t, 'alignment'), key=len))
+        aln_layout = layouts.seq_layouts.LayoutAlignment(
+            name='Alignment_layout', alignment_prop='alignment', 
+            column=level, scale_range=lengh,
+            window=window, summarize_inner_nodes=True)
+        current_layouts.append(aln_layout)
+    elif selected_layout == 'domain-layout':
+        domain_layout = layouts.seq_layouts.LayoutDomain(name="Domain_layout", prop='dom_arq')
+        current_layouts.append(domain_layout)
+        
     # Process query actions for the current layer
     current_layouts = apply_queries(query_type, query_box, current_layouts, paired_color, tree_info, level)
     current_props.extend(selected_props)
@@ -835,28 +855,6 @@ def apply_taxonomic_layouts(t, selected_layout, selected_props, tree_info, curre
     current_layouts.extend(taxa_layouts)
     level += 1
 
-    return level, current_layouts
-
-
-def apply_alignment_layout(t, selected_props, current_layouts, level, column_width):
-    """
-    Applies alignment layout to the tree.
-    """
-    lengh = len(max(utils.tree_prop_array(t, 'alignment'), key=len))
-    aln_layout = layouts.seq_layouts.LayoutAlignment(
-        name='Alignment_layout', alignment_prop='alignment', column=level, scale_range=lengh,
-        summarize_inner_nodes=True
-    )
-    current_layouts.append(aln_layout)
-    return level, current_layouts
-
-
-def apply_domain_layout(t, selected_props, current_layouts, level):
-    """
-    Applies domain layout to the tree.
-    """
-    domain_layout = layouts.seq_layouts.LayoutDomain(name="Domain_layout", prop='dom_arq')
-    current_layouts.append(domain_layout)
     return level, current_layouts
 
 def apply_queries(query_type, query_box, current_layouts, paired_color, tree_info, level):

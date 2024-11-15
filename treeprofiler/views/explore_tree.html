@@ -294,6 +294,21 @@
                             </select>
                         </div>
                     </div>
+
+                    <!-- Alignment settings -->
+                    <div id="alignmentSettings" class="form-group mt-3" style="display: none;">
+                        <label for="alignmentType">Alignment window:</label>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <label for="alignment">Start</label>
+                                <input type="number" class="form-control" id="algStart" name="algStart" placeholder="Enter start pos">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="alignment">End</label>
+                                <input type="number" class="form-control" id="algEnd" name="algEnd" placeholder="Enter end pos">
+                            </div>
+                        </div>
+                    </div>
                 </div>
     
                 <!-- Custom Query Tab -->
@@ -463,6 +478,26 @@
                         $('#barplotFillProperty').show();
                     }
                 });
+
+                // Alignment layout settings
+                if (selectedLayout === "alignment-layout") {
+                    $('#alignmentSettings').show();
+                    $('#propsSelection').hide();
+                    $('#generalSettings').hide();
+                } else {
+                    $('#alignmentSettings').hide();
+                    $('#propsSelection').show();
+                    $('#generalSettings').show();
+                }
+
+                // Domain layout settings
+                if (selectedLayout === "domain-layout") {
+                    $('#propsSelection').hide();
+                    $('#generalSettings').hide();
+                } else {
+                    $('#propsSelection').show();
+                    $('#generalSettings').show();
+                }
             });
             // Update barplot scale options when properties are selected
             $('#props').change(function() {
@@ -557,6 +592,7 @@
             const colorMid = document.getElementById('colorMid').value;
             const colorMax = document.getElementById('colorMax').value;
 
+            // Barplot layout settings
             const barplotWidth = document.getElementById('barplotWidth').value;
             const barplotScaleProperty = document.getElementById('barplotScaleProperty').value;
             const barplotRange = document.getElementById('barplotRange').value;
@@ -564,7 +600,10 @@
             const barplotColorScheme = document.getElementById('barplotColorScheme').value;
             const barplotFillProperty = document.getElementById('barplotFillProperty').value;
 
-            // Barplot layout settings
+            // alignment layout settings
+            const algStart = document.getElementById('algStart').value;
+            const algEnd = document.getElementById('algEnd').value;
+
             const layer = {
                 layout, 
                 props, 
@@ -585,7 +624,9 @@
                 barplotRange,
                 barplotColorOption,
                 barplotColorScheme,
-                barplotFillProperty
+                barplotFillProperty,
+                algStart,
+                algEnd
             };
             layers.push(layer);
             renderLayers();
