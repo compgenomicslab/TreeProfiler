@@ -199,6 +199,69 @@
                             </select>
                         </div>
                     </div>
+                    <!-- Numerical Settings Section -->
+                    <div id="numericalSettings" class="form-group mt-3" style="display: none;">
+                        <label for="minVal" >Minimum Value (Auto detected if it is empty):</label>
+                        <input type="number" class="form-control" id="minVal" name="min_val" placeholder="Enter min value">
+                        
+                        <label for="maxVal" class="mt-2">Maximum Value (Auto detected if it is empty):</label>
+                        <input type="number" class="form-control" id="maxVal" name="max_val" placeholder="Enter max value">
+                        
+                        <!-- Color Selection -->
+                        <div class="form-row mt-2">
+                            <div class="col">
+                                <label for="colorMin">Color Min:</label>
+                                <input type="color" class="form-control" id="colorMin" name="color_min" value="#0000ff">
+                            </div>
+                            <div class="col">
+                                <label for="colorMid">Color Mid:</label>
+                                <input type="color" class="form-control" id="colorMid" name="color_mid" value="#ffffff">
+                            </div>
+                            <div class="col">
+                                <label for="colorMax">Color Max:</label>
+                                <input type="color" class="form-control" id="colorMax" name="color_max" value="#ff0000">
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Barplot -->
+                    <div id="barplotOptions" class="form-group mt-3" style="display: none;">
+                        <label for="barplotWidth">Barplot Width:</label>
+                        <input type="number" class="form-control" id="barplotWidth" name="barplotWidth" placeholder="Enter width">
+                    
+                        <label for="barplotScaleProperty" class="mt-2">Scale Based On Property:</label>
+                        <select class="form-control" id="barplotScaleProperty" name="barplotScaleProperty">
+                            <!-- Options will be added dynamically -->
+                        </select>
+                    
+                        <label for="barplotRange" class="mt-2">Barplot Range (Max Value):</label>
+                        <input type="number" class="form-control" id="barplotRange" name="barplotRange" placeholder="Enter max value">
+                    
+                        <label for="barplotColorOption" class="mt-2">Barplot Color:</label>
+                        <select class="form-control" id="barplotColorOption" name="barplotColorOption">
+                            <option value="same">Color Scheme</option>
+                            <option value="filled">Fill by Property</option>
+                        </select>
+                    
+                        <!-- Conditional color selector or property selector -->
+                        <div id="barplotColorSettings" class="mt-2">
+                            <!-- Color input for 'same' option -->
+                            <div class="form-group mt-3">
+                                <label for="barplotColor">Barplot Color</label>
+                                <select class="form-control" id="barplotColorScheme" name="barplotColorScheme">
+                                    % for colormap in color_schemes:
+                                        <option value="{{ colormap }}">{{ colormap }}</option>
+                                    % end
+                                </select>
+                            </div>
+                            
+                            <!-- Property dropdown for 'filled' option -->
+                            <select class="form-control" id="barplotFillProperty" name="barplotFillProperty" style="display: none;">
+                                % for prop in tree_info['node_props']:
+                                    <option value="{{ prop }}">{{ prop }}</option>
+                                % end
+                            </select>
+                        </div>
+                    </div>
                 </div>
     
                 <!-- Custom Query Tab -->
@@ -336,6 +399,50 @@
                 } else {
                     $('#binarySettings').hide();
                 }
+
+                // numerical layout settings
+                // Detect if a layout option is numerical
+                const numericalLayouts = [
+                    "branchscore-layout", "heatmap-layout", "heatmap-mean-layout", 
+                    "heatmap-zscore-layout", "numerical-matrix-layout", 
+                    "numerical-bubble-layout"
+                ];
+                if (numericalLayouts.includes(selectedLayout)) {
+                    $('#numericalSettings').show();
+                } else {
+                    $('#numericalSettings').hide();
+                }
+
+                // Barplot layout settings
+                if (selectedLayout === "barplot-layout") {
+                    $('#barplotOptions').show();
+                } else {
+                    $('#barplotOptions').hide();
+                }
+                // Toggle color picker or property selector based on color option choice
+                $('#barplotColorOption').change(function() {
+                    if ($(this).val() === 'same') {
+                        $('#barplotColorPicker').show();
+                        $('#barplotFillProperty').hide();
+                    } else if ($(this).val() === 'filled') {
+                        $('#barplotColorPicker').hide();
+                        $('#barplotFillProperty').show();
+                    }
+                });
+            });
+            // Update barplot scale options when properties are selected
+            $('#props').change(function() {
+                const selectedProps = $(this).val(); // Get selected properties in #props
+
+                // Clear and repopulate the #barplotScaleProperty options based on selectedProps
+                const barplotScaleProperty = $('#barplotScaleProperty');
+                barplotScaleProperty.empty(); // Clear existing options
+
+                if (selectedProps && selectedProps.length > 0) {
+                    selectedProps.forEach(function(prop) {
+                        barplotScaleProperty.append(new Option(prop, prop)); // Add each selected prop as an option
+                    });
+                }
             });
             document.getElementById('unicolorOption').addEventListener('change', function() {
                 const unicolorPicker = document.getElementById('unicolorPicker');
@@ -355,6 +462,8 @@
             document.getElementById('applyLayersBtn').addEventListener('click', applyLayers);
             $('#queryProp').on('select2:select', handleDynamicCounterInput);
             $('#queryProp').on('select2:unselect', removeCounterInputField);
+
+            
         }
     
         /*********************
@@ -405,7 +514,13 @@
             const binaryColorScheme = isUnicolor ? null : document.getElementById('binaryColorSchemeSelect').value;
             const unicolorColor = isUnicolor ? document.getElementById('unicolorColor').value : null;
             const aggregateOption = document.getElementById('aggregateOption').value;
-
+            
+            // numerical layout settings
+            const minVal = document.getElementById('minVal').value;
+            const maxVal = document.getElementById('maxVal').value;
+            const colorMin = document.getElementById('colorMin').value;
+            const colorMid = document.getElementById('colorMid').value;
+            const colorMax = document.getElementById('colorMax').value;
             const layer = {
                 layout, 
                 props, 
@@ -415,7 +530,12 @@
                 isUnicolor,
                 binaryColorScheme, 
                 unicolorColor, 
-                aggregateOption
+                aggregateOption,
+                minVal,
+                maxVal,
+                colorMin,
+                colorMid,
+                colorMax
             };
             layers.push(layer);
             renderLayers();

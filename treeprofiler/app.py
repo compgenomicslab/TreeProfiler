@@ -249,6 +249,7 @@ def process_upload_job(job_args):
     trees[treename] = {
         'tree': tree_data,
         'treeparser': treeparser,
+        'columns': columns,
         'metadata': job_args.get("metadata"),
         'node_props': metadata_options.get('node_props', []) + [
             'rank', 'sci_name', 'taxid', 'evoltype', 'dup_sp', 'dup_percent', 'lca'
@@ -425,12 +426,20 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
     query_type = layer.get('queryType', '')
     query_box = layer.get('query', '')
     prop2type = tree_info['prop2type']
+
     # Process color configuration for the current layer
+    # categorical settings
     categorical_color_scheme = layer.get('categoricalColorscheme', 'default')
-    numerical_color_scheme = layer.get('numericalColorscheme', 'bwr')
-    maxval = layer.get('maxval', '') # this should be automatically calculated
-    minval = layer.get('minval', '') # this should be automatically calculated
-    
+
+    # numerical settings
+    barplot_color_scheme = layer.get('barplotColorscheme', 'default')
+    maxval = layer.get('maxVal', '') # this should be automatically calculated
+    minval = layer.get('minVal', '') # this should be automatically calculated
+    color_min = layer.get('colorMin', '#0000ff')
+    color_mid = layer.get('colorMid', '#ffffff')
+    color_max = layer.get('colorMax', '#ff0000')
+
+    # TODO barplot settings
     # binary settings
     if selected_layout == 'binary-layout':
         same_color = layer.get('isUnicolor', True)
@@ -444,17 +453,6 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
             aggregate = False
         else:
             aggregate = True
-
-    # TODO: barplot setting
-
-    # TODO: bubble scale setting
-    # 1) scale 
-    # 2) color
-
-    # TODO: heatmap setting
-    # 1) color scheme (done)
-    # 2) scale 
-    # 3) normalization
 
     # Process color configuration for the current layer
     for index, prop in enumerate(selected_props):
@@ -472,10 +470,9 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
             color_config[prop] = {}
             color_config[prop]['value2color'] = utils.assign_color_to_values(prop_values, paired_color)
             color_config[prop]['detail2color'] = {}
-            print(color_config[prop])
         elif prop2type.get(prop) == float or prop2type.get(prop) == int:
-            paired_color = get_colormap_hex_colors(numerical_color_scheme, 3)
-            color_min, color_mid, color_max = paired_color
+            # paired_color = get_colormap_hex_colors(numerical_color_scheme, 3)
+            # color_min, color_mid, color_max = paired_color
             color_config[prop] = {}
             color_config[prop]['value2color'] = {}
             color_config[prop]['detail2color'] = {}
@@ -503,10 +500,76 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
         column_width=column_width, reverse=False, padding_x=padding_x, padding_y=padding_y,
         color_config=color_config, same_color=same_color, aggregate=aggregate)
         current_layouts.extend(binary_layouts)
-
-        #level, current_layouts = apply_binary_layouts(t, selected_layout, selected_props, tree_info, current_layouts, level, column_width, padding_x, padding_y, color_config)
-    elif selected_layout in ['branchscore-layout', 'barplot-layout', 'numerical-bubble-layout', 'heatmap-layout', 'numerical-matrix-layout']:
-        level, current_layouts = apply_numerical_layouts(t, selected_layout, selected_props, tree_info, current_layouts, level, column_width, padding_x, padding_y, color_config, internal_num_rep)
+    elif selected_layout == 'branchscore-layout':
+        branchscore_layouts = tree_plot.get_branchscore_layouts(
+            t, selected_props, prop2type=tree_info['prop2type'], 
+            padding_x=padding_x, padding_y=padding_y, internal_rep=internal_num_rep,
+            color_config=color_config
+        )
+        current_layouts.extend(branchscore_layouts)
+    elif selected_layout == 'barplot-layout':
+        barplot_layouts, level, _ = tree_plot.get_barplot_layouts(
+            t, selected_props, level, tree_info['prop2type'], internal_rep=internal_num_rep
+        )
+        current_layouts.extend(barplot_layouts)
+    elif selected_layout == 'numerical-bubble-layout':
+        # Convert maxval and minval to floats if they exist
+        if maxval:
+            maxval = float(maxval)
+        if minval:
+            minval = float(minval)
+        if minval and maxval:
+            bubble_range=[minval, maxval]
+        else:
+            bubble_range = []
+        bubble_layouts, level, _ = tree_plot.get_numerical_bubble_layouts(
+            t, selected_props, level, tree_info['prop2type'], internal_rep=internal_num_rep,
+            bubble_range=bubble_range, color_config=color_config
+        )
+        current_layouts.extend(bubble_layouts)
+    elif selected_layout == 'heatmap-layout':
+        heatmap_layouts, level = tree_plot.get_heatmap_layouts(
+            t, selected_props, level, column_width=column_width, padding_x=padding_x, padding_y=padding_y, 
+            internal_rep=internal_num_rep, color_config=color_config, norm_method='min-max',
+            global_scaling=True
+        )
+        current_layouts.extend(heatmap_layouts)
+    elif selected_layout == 'heatmap-mean-layout':
+        heatmap_layouts, level = tree_plot.get_heatmap_layouts(t, selected_props, level,
+            column_width=column_width, padding_x=padding_x, padding_y=padding_y, 
+            internal_rep=internal_num_rep, color_config=color_config, norm_method='mean',
+            global_scaling=True)
+        current_layouts.extend(heatmap_layouts)
+    elif selected_layout == 'heatmap-zscore-layout':
+        heatmap_layouts, level = tree_plot.get_heatmap_layouts(t, selected_props, level,
+            column_width=column_width, padding_x=padding_x, padding_y=padding_y, 
+            internal_rep=internal_num_rep, color_config=color_config, norm_method='zscore',
+            global_scaling=True)
+        current_layouts.extend(heatmap_layouts)
+    elif selected_layout == 'numerical-matrix-layout':
+        matrix, minval, maxval, value2color, results_list, list_props, single_props = tree_plot.numerical2matrix(t, 
+        selected_props, count_negative=True, internal_num_rep=internal_num_rep, 
+        color_config=color_config, norm_method='min-max')
+        if list_props:
+            index_map = {value: idx for idx, value in enumerate(selected_props)}
+            sorted_list_props = sorted(list_props, key=lambda x: index_map[x])
+            for list_prop in sorted_list_props:
+                matrix, minval, maxval, value2color = results_list[list_prop]
+                matrix_layout = tree_plot.profile_layouts.LayoutPropsMatrixOld(name=f"Numerical_matrix_{list_prop}", 
+                    matrix=matrix, matrix_type='numerical', matrix_props=[list_prop], is_list=True, 
+                    value_color=value2color, value_range=[minval, maxval], column=level,
+                    poswidth=column_width)
+                level += 1
+                current_layouts.append(matrix_layout)
+        if single_props:
+            index_map = {value: idx for idx, value in enumerate(selected_props)}
+            sorted_single_props = sorted(single_props, key=lambda x: index_map[x])
+            matrix_layout = tree_plot.profile_layouts.LayoutPropsMatrixOld(name=f"Numerical_matrix_{sorted_single_props}", 
+                matrix=matrix, matrix_type='numerical', matrix_props=sorted_single_props, is_list=False, 
+                value_color=value2color, value_range=[minval, maxval], column=level,
+                poswidth=column_width)
+            level += 1
+            current_layouts.append(matrix_layout)
     elif selected_layout in ['acr-discrete-layout', 'acr-continuous-layout', 'ls-layout']:
         level, current_layouts = apply_analytic_layouts(t, selected_layout, selected_props, tree_info, current_layouts, level, column_width, padding_x, padding_y, color_config)
     elif selected_layout in ['taxoncollapse-layout', 'taxonclade-layout', 'taxonrectangle-layout']:
@@ -595,54 +658,6 @@ def apply_categorical_layouts(t, selected_layout, selected_props, tree_info, cur
         level += 1
 
     return level, current_layouts
-
-# def apply_binary_layouts(t, selected_layout, selected_props, tree_info, current_layouts, level, column_width, padding_x, padding_y, color_config):
-#     """
-#     Applies binary layouts with various configurations.
-#     """
-#     reverse = False
-#     same_color = 'unicolor' in selected_layout
-#     aggregate = 'aggregate' in selected_layout
-    
-#     binary_layouts, level, _ = tree_plot.get_binary_layouts(
-#         t, selected_props, level, prop2type=tree_info['prop2type'],
-#         column_width=column_width, reverse=reverse, padding_x=padding_x, padding_y=padding_y,
-#         color_config=color_config, same_color=same_color, aggregate=aggregate
-#     )
-#     current_layouts.extend(binary_layouts)
-#     return level, current_layouts
-
-def apply_numerical_layouts(t, selected_layout, selected_props, tree_info, current_layouts, level, column_width, padding_x, padding_y, color_config, internal_num_rep):
-    """
-    Applies numerical layouts like branchscore, barplot, bubble, and heatmap.
-    """
-    if selected_layout == 'branchscore-layout':
-        branchscore_layouts = tree_plot.get_branchscore_layouts(
-            t, selected_props, prop2type=tree_info['prop2type'], 
-            padding_x=padding_x, padding_y=padding_y, internal_rep=internal_num_rep,
-            color_config=color_config
-        )
-        current_layouts.extend(branchscore_layouts)
-    elif selected_layout == 'barplot-layout':
-        barplot_layouts, level, _ = tree_plot.get_barplot_layouts(
-            t, selected_props, level, tree_info['prop2type'], internal_rep=internal_num_rep
-        )
-        current_layouts.extend(barplot_layouts)
-    elif selected_layout == 'numerical-bubble-layout':
-        bubble_layouts, level, _ = tree_plot.get_numerical_bubble_layouts(
-            t, selected_props, level, tree_info['prop2type'], internal_rep=internal_num_rep,
-            color_config=color_config
-        )
-        current_layouts.extend(bubble_layouts)
-    elif selected_layout == 'heatmap-layout':
-        heatmap_layouts, level = tree_plot.get_heatmap_layouts(
-            t, selected_props, level, column_width=column_width, padding_x=padding_x, padding_y=padding_y, 
-            internal_rep=internal_num_rep, color_config=color_config, norm_method='min-max',
-            global_scaling=True
-        )
-        current_layouts.extend(heatmap_layouts)
-    return level, current_layouts
-
 
 def apply_analytic_layouts(t, selected_layout, selected_props, tree_info, current_layouts, level, column_width, padding_x, padding_y, color_config):
     """

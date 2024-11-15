@@ -509,7 +509,6 @@ def run(args):
 
             numerical_props = [prop for prop in args.colorbranch_layout if prop2type.get(prop) in [float, int]]
             if numerical_props:
-                print(color_config)
                 branchscore_layouts = get_branchscore_layouts(tree, numerical_props, 
                 prop2type, padding_x=args.padding_x, padding_y=args.padding_y, 
                 internal_rep=internal_num_rep, color_config=color_config)
@@ -1534,6 +1533,7 @@ def get_numerical_bubble_layouts(tree, props, level, prop2type, padding_x=0, pad
 
         #minval, maxval = all_prop_values.min(), all_prop_values.max()
         if bubble_range:
+            print(bubble_range)
             abs_maxval = np.abs(bubble_range).max()
             max_val = bubble_range[1]
             min_val = bubble_range[0]
@@ -1545,7 +1545,31 @@ def get_numerical_bubble_layouts(tree, props, level, prop2type, padding_x=0, pad
             bubble_range = [min_val, max_val]
 
         if color_config and color_config.get(prop):
-            pass
+            # Check for custom colors in color_config
+            max_color = 'red'
+            min_color = 'white'
+            mid_color = None
+
+            color_dict = color_config.get(prop, {}).get('value2color', {})
+            value2color = {float(k): v for k, v in color_dict.items()} if color_dict else {}
+            detail2color = color_config.get(prop, {}).get('detail2color', {})
+            
+            temp_min_color, temp_min_val = detail2color.get('color_min', (None, None))
+            temp_max_color, temp_max_val = detail2color.get('color_max', (None, None))
+            temp_mid_color, temp_mid_val = detail2color.get('color_mid', (None, None))
+            # Update colors if specified in color_config
+            if temp_max_color:
+                max_color = temp_max_color
+            if temp_min_color:
+                min_color = temp_min_color
+            if temp_mid_color:
+                mid_color = temp_mid_color
+            if temp_min_val:
+                minval = float(temp_min_val)
+            if temp_max_val:
+                maxval = float(temp_max_val)
+
+            gradientscolor = utils.build_custom_gradient(20, min_color, max_color, mid_color)
         else:
             gradientscolor = utils.build_color_gradient(20, colormap_name='jet')
         
@@ -1598,13 +1622,12 @@ def get_heatmap_layouts(tree, props, level, column_width=70, padding_x=1, paddin
         min_color = 'white'
         mid_color = None
         nan_color = '#EBEBEB'
-
+        
         # Check for custom colors in color_config
         detail2color = color_config.get(prop, {}).get('detail2color', {})
         color_dict = color_config.get(prop, {}).get('value2color', {})
         
         value2color = {float(k): v for k, v in color_dict.items()} if color_dict else {}
-        
         temp_min_color, temp_min_val = detail2color.get('color_min', (None, None))
         temp_max_color, temp_max_val = detail2color.get('color_max', (None, None))
         temp_mid_color, temp_mid_val = detail2color.get('color_mid', (None, None))
