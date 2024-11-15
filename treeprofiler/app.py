@@ -914,7 +914,7 @@ def start_explore_thread(t, treename, current_layouts, current_props):
     """
 
     def explore():
-        t.explore(name=treename, layouts=current_layouts, port=5050, open_browser=False, include_props=current_props)
+        t.explore(name=treename, layouts=current_layouts, host='138.4.138.153', port=5050, open_browser=False, include_props=current_props)
     
     explorer_thread = threading.Thread(target=explore)
     explorer_thread.start()
@@ -936,5 +936,5 @@ def convert_query_string(query_string):
             result.append(query)
     return result
 
-run(host='localhost', port=8080)
+run(host='138.4.138.153', port=8080)
 
