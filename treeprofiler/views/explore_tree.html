@@ -152,7 +152,39 @@
                         </select>
                         <small class="form-text text-muted">Hold down Ctrl (Windows) or Command (Mac) to select multiple options.</small>
                     </div>
-
+                    
+                    <!-- General Settings -->
+                    <div id="generalSettings" class="form-group mt-3">
+                        <h5>General Settings</h5>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <label for="columnWidth">Width</label>
+                                <input type="number" class="form-control" id="columnWidth" name="columnWidth" placeholder="Enter column width" value="70">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="paddingX">Padding X</label>
+                                <input type="number" class="form-control" id="paddingX" name="paddingX" placeholder="Enter padding X" value="1">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="paddingY">Padding Y</label>
+                                <input type="number" class="form-control" id="paddingY" name="paddingY" placeholder="Enter padding Y" value="0">
+                            </div>
+                        </div>
+                        <!-- Numerical-Specific Settings -->
+                        <div id="internalNumerical" class="form-group mt-3" style="display: none;">
+                            <label for="internalNumRep">Internal Number Representation</label>
+                            <select class="form-control" id="internalNumRep" name="internalNumRep">
+                                <option value=""></option>
+                                <option value="sum">Sum</option>
+                                <option value="avg">Average</option>
+                                <option value="max">Maximum</option>
+                                <option value="min">Minimum</option>
+                                <option value="std">Standard Deviation</option>
+                                <option value="none">None</option>
+                            </select>
+                        </div>
+                    </div>
+                    
                     <!-- Categorical Layout Settings -->
                     <div id="categoricalSettings" class="form-group mt-3" style="display: none;">
                         <label for="props">Color Scheme</label>
@@ -409,8 +441,10 @@
                 ];
                 if (numericalLayouts.includes(selectedLayout)) {
                     $('#numericalSettings').show();
+                    $('#internalNumerical').show();
                 } else {
                     $('#numericalSettings').hide();
+                    $('#internalNumerical').hide();
                 }
 
                 // Barplot layout settings
@@ -510,7 +544,6 @@
 
             // Categorical layout settings
             const categoricalColorscheme = document.getElementById('categoricalColorscheme').value;
-            
             // Binary layout settings
             const isUnicolor = document.getElementById('unicolorOption').checked;
             const binaryColorScheme = isUnicolor ? null : document.getElementById('binaryColorSchemeSelect').value;
@@ -589,8 +622,37 @@
         }
     
         function applyLayers() {
+            // Collect general settings
+            const columnWidth = document.getElementById("columnWidth").value || null;
+            const paddingX = document.getElementById("paddingX").value || null;
+            const paddingY = document.getElementById("paddingY").value || null;
+
+            // Numerical-specific setting (applies only if a numerical layout exists in layers)
+            let internalNumRep = null;
+            const numericalLayouts = [
+                "branchscore-layout",
+                "heatmap-layout",
+                "heatmap-mean-layout",
+                "heatmap-zscore-layout",
+                "barplot-layout",
+                "numerical-matrix-layout",
+                "numerical-bubble-layout",
+            ];
+            if (layers.some(layer => numericalLayouts.includes(layer.layout))) {
+                internalNumRep = document.getElementById("internalNumRep").value || null;
+            }
+            // Prepare layers data
             const layersData = JSON.stringify(layers);
-            $.post('/explore_tree/{{treename}}', { layers: layersData }, function(response) {
+            $.post(
+                '/explore_tree/{{treename}}', 
+                {
+                    layers: layersData,
+                    column_width: columnWidth,
+                    padding_x: paddingX,
+                    padding_y: paddingY,
+                    internal_num_rep: internalNumRep
+                }, 
+                function(response) {
                 console.log('Layers applied:', layersData);
                 window.location.reload();
             });
