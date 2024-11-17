@@ -1,4 +1,6 @@
-from bottle import route, run, request, redirect, template, static_file, response 
+from bottle import route, run, request, redirect, template, static_file, response, ServerAdapter
+from bottle import Bottle
+import requests
 import threading
 from tempfile import NamedTemporaryFile
 from collections import defaultdict
@@ -7,6 +9,8 @@ import matplotlib.colors as mcolors
 import os
 import json
 import time
+from wsgiref.simple_server import WSGIServer, WSGIRequestHandler
+
 
 from ete4 import Tree
 from treeprofiler.tree_annotate import run_tree_annotate, parse_csv  # or other functions you need
@@ -63,17 +67,81 @@ categorical_layout_list = [
     'categorical-matrix-layout',
     'profiling-layout'
 ]
-
+# Global control variable for restarting
 job_status = {}  # Dictionary to store job statuses
-@route('/upload', method='POST')
+# Global variables
+app = Bottle()
+server_thread = None
+server_instance = None
+stop_event = threading.Event()
+
+class CustomWSGIServer(WSGIServer):
+    """Custom WSGI server to enable graceful shutdown."""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.running = True
+
+    def serve_forever(self):
+        """Serve requests until `running` is set to False."""
+        while self.running:
+            self.handle_request()
+
+    def shutdown(self):
+        """Stop the server."""
+        self.running = False
+
+
+class CustomServerAdapter(ServerAdapter):
+    """Custom server adapter for Bottle to use CustomWSGIServer."""
+    def run(self, handler):
+        self.options['handler_class'] = WSGIRequestHandler
+        self.server = CustomWSGIServer((self.host, self.port), self.options.get('handler_class', WSGIRequestHandler))
+        self.server.set_app(handler)  # Set the Bottle app
+        self.server.serve_forever()
+
+    def stop(self):
+        if hasattr(self, 'server'):
+            self.server.shutdown()
+
+
+def run_server():
+    """Run the Bottle app."""
+    global server_instance
+    server_instance = CustomServerAdapter(host='localhost', port=8080)
+    app.run(server=server_instance)
+
+
+def start_server():
+    """Start the Bottle app in a separate thread."""
+    global server_thread, stop_event
+    stop_event.clear()
+    server_thread = threading.Thread(target=run_server)
+    server_thread.start()
+    print("Server started on http://localhost:8080")
+
+
+@app.route('/stop_explore')
+def stop_explore():
+    """Stop and restart the server."""
+    global server_thread, stop_event, job_status
+    job_status = {} # clean up the job status
+    print("Stopping server for restart...")
+
+    # Signal the server thread to stop
+    stop_event.set()
+    return redirect('/')
+
+@app.route('/upload', method='POST')
 def do_upload():
     treename = request.forms.get('treename')
     if not treename:
         response.status = 400
+        print({"error": "Tree name is required"})
         return {"error": "Tree name is required"}
 
     if treename in job_status:
         response.status = 400
+        print({"error": "A job with this tree name is already in progress"})
         return {"error": "A job with this tree name is already in progress"}
 
     job_status[treename] = "running"
@@ -282,30 +350,29 @@ def process_upload_job(job_args):
     job_status[treename] = "complete"
         
 
-    # if job_status[treename] = "failed"
-    #     print(f"Error processing job {treename}: {e}")
+    if job_status[treename] == "failed":
+        print(f"Error processing job {treename}: {e}")
     
     # Remove stored chunks for the completed job
     if treename in uploaded_chunks:
         del uploaded_chunks[treename]
 
 # Route to serve static files like CSS and JS
-@route('/static/<filepath:path>')
+@app.route('/static/<filepath:path>')
 def server_static(filepath):
     return static_file(filepath, root='./static')
 
-@route('/')
+@app.route('/')
 def upload_tree():
     return template('upload_tree')
 
-@route('/upload_chunk', method='POST')
+@app.route('/upload_chunk', method='POST')
 def upload_chunk():
     # Determine the file type based on the request
     chunk = request.files.get('treeFile') or request.files.get('metadataFile') or request.files.get('alignmentFile') or request.files.get('pfamFile')
     chunk_index = int(request.forms.get("chunkIndex"))
     total_chunks = int(request.forms.get("totalChunks"))
     treename = request.forms.get("treename")
-
     # Identify the file type
     if 'treeFile' in request.files:
         file_type = "tree"
@@ -341,14 +408,14 @@ def upload_chunk():
 
     return "Chunk received"
 
-@route('/job_status/<job_id>')
+@app.route('/job_status/<job_id>')
 def job_status_check(job_id):
     status = job_status.get(job_id, "not_found")
     response.content_type = 'application/json'
     return {"status": status}
 
 
-@route('/show_tree/<treename>')
+@app.route('/show_tree/<treename>')
 def show_tree(treename):
     # Fetch and display the processed tree, if available
     tree_info = trees.get(treename)
@@ -356,7 +423,7 @@ def show_tree(treename):
         return f"Tree '{treename}' processed successfully! Displaying results."
     return "Processing still in progress or failed."
 
-@route('/tree/<treename>/result')
+@app.route('/tree/<treename>/result')
 def show_tree(treename):
     # Fetch the tree data by its name
     tree_info = trees.get(treename)
@@ -365,19 +432,19 @@ def show_tree(treename):
     else:
         return f"Tree '{treename}' not found."
 
-@route('/tree/<treename>')
+@app.route('/tree/<treename>')
 def tree_status(treename):
     """Serves the job_running.html template to show job status."""
     return template('job_running', treename=treename, job_id=treename)
 
-@route('/check_job_status')
+@app.route('/check_job_status')
 def check_job_status():
     """API endpoint to check the status of a given job."""
     job_id = request.query.get('job_id')
     status = job_status.get(job_id, "not_found")
     return status
 
-@route('/explore_tree/<treename>', method=['GET', 'POST'])
+@app.route('/explore_tree/<treename>', method=['GET', 'POST'])
 def explore_tree(treename):
     tree_info = trees.get(treename)
     if not tree_info:
@@ -416,6 +483,7 @@ def explore_tree(treename):
         if layers_data:
             layers = json.loads(layers_data)
             for layer in layers:
+                
                 # Process each layer individually
                 current_layouts, current_props, level = process_layer(
                     t, layer, tree_info, current_layouts, current_props, level,
@@ -440,10 +508,12 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
     """
     Processes a single layer, applying user selections and updating layouts, properties, and level.
     """
+
     selected_props = layer.get('props', [])
     selected_layout = layer.get('layout', '')
     query_type = layer.get('queryType', '')
     query_box = layer.get('query', '')
+
     prop2type = tree_info['prop2type']
 
     # Process color configuration for the current layer
@@ -919,6 +989,7 @@ def start_explore_thread(t, treename, current_layouts, current_props):
     explorer_thread = threading.Thread(target=explore)
     explorer_thread.start()
 
+
 def convert_query_string(query_string):
     # Split the query by semicolon to get each statement
     queries = [q.strip() for q in query_string.split(';') if q.strip()]
@@ -936,5 +1007,5 @@ def convert_query_string(query_string):
             result.append(query)
     return result
 
-run(host='localhost', port=8080)
-
+if __name__ == "__main__":
+    start_server()
