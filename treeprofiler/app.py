@@ -415,13 +415,13 @@ def job_status_check(job_id):
     return {"status": status}
 
 
-@app.route('/show_tree/<treename>')
-def show_tree(treename):
-    # Fetch and display the processed tree, if available
-    tree_info = trees.get(treename)
-    if tree_info:
-        return f"Tree '{treename}' processed successfully! Displaying results."
-    return "Processing still in progress or failed."
+# @app.route('/show_tree/<treename>')
+# def show_tree(treename):
+#     # Fetch and display the processed tree, if available
+#     tree_info = trees.get(treename)
+#     if tree_info:
+#         return f"Tree '{treename}' processed successfully! Displaying results."
+#     return "Processing still in progress or failed."
 
 @app.route('/tree/<treename>/result')
 def show_tree(treename):

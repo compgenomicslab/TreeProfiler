@@ -438,7 +438,7 @@
         let response = await fetch(`/job_status/${jobId}`);
         let data = await response.json();
         if (data.status === "complete") {
-            window.location.href = `/show_tree/${jobId}`;
+            window.location.href = `/explore_tree/${jobId}`;
         } else if (data.status === "failed") {
             document.getElementById('status').innerText = "Job failed.";
         } else {
