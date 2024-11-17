@@ -304,6 +304,7 @@ def process_upload_job(job_args):
     }
 
     # Run annotation
+    threads = 6
     annotated_tree, prop2type = run_tree_annotate(
         tree,
         **metadata_options,
@@ -311,7 +312,8 @@ def process_upload_job(job_args):
         **taxonomic_options,
         **analytic_options,
         **alignment_options,
-        column2method=column2method
+        column2method=column2method,
+        threads=threads
     )
 
     # Post-processing of annotated tree properties
