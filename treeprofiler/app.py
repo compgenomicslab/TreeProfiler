@@ -474,7 +474,7 @@ def explore_tree(treename):
     padding_y = default_configs.get('padding_y', 0) 
     color_config = default_configs.get('color_config', {})
     internal_num_rep = default_configs.get('internal_num_rep', 'avg')
-
+    
     # Process POST request
     if request.method == 'POST':
         layers_data = request.forms.get('layers')

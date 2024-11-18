@@ -1412,6 +1412,7 @@ def get_barplot_layouts(tree, props, level, prop2type, column_width=70, padding_
             'padding_x': padding_x * 10,
             'size_range': size_range,
         }
+
         if color_dict is None:
             del layout_params['colors']
             del layout_params['color_prop']
