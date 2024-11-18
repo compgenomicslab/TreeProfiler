@@ -107,7 +107,7 @@ class CustomServerAdapter(ServerAdapter):
 def run_server():
     """Run the Bottle app."""
     global server_instance
-    server_instance = CustomServerAdapter(host='localhost', port=8080)
+    server_instance = CustomServerAdapter(host='localhost', port=8081)
     app.run(server=server_instance)
 
 
@@ -986,7 +986,7 @@ def start_explore_thread(t, treename, current_layouts, current_props):
     """
 
     def explore():
-        t.explore(name=treename, layouts=current_layouts, port=5050, open_browser=False, include_props=current_props)
+        t.explore(name=treename, layouts=current_layouts, port=5051, open_browser=False, include_props=current_props)
     
     explorer_thread = threading.Thread(target=explore)
     explorer_thread.start()
