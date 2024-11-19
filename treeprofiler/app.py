@@ -117,7 +117,6 @@ def start_server():
     stop_event.clear()
     server_thread = threading.Thread(target=run_server)
     server_thread.start()
-    print("Server started on http://localhost:8080")
 
 
 @app.route('/stop_explore')
@@ -206,7 +205,9 @@ def process_upload_job(job_args):
     
     # Retrieve paths for uploaded files
     tree_file_path = uploaded_chunks.get(treename, {}).get("tree")
-    metadata_file_path = uploaded_chunks.get(treename, {}).get("metadata")
+    metadata_file_paths = uploaded_chunks.get(treename, {}).get("metadata")
+    metadata_file_list = list(metadata_file_paths.values())
+    
     alignment_file_path = uploaded_chunks.get(treename, {}).get("alignment")
     pfam_file_path = uploaded_chunks.get(treename, {}).get("pfam")
     
@@ -218,33 +219,23 @@ def process_upload_job(job_args):
             tree = utils.ete4_parse(f.read(), internal_parser=treeparser)
         os.remove(tree_file_path)
 
-    # Prepare metadata processing if available
-    metadata_bytes = job_args.get("metadata").encode('utf-8') if job_args.get("metadata") else None
-    if metadata_file_path and os.path.exists(metadata_file_path):
-        with open(metadata_file_path, 'rb') as f:
-            metadata_bytes = f.read()
-        os.remove(metadata_file_path)
-
     # Process metadata
     metadata_options = {}
     columns = {}
-    if metadata_bytes:
-        with NamedTemporaryFile(suffix='.tsv') as f_annotation:
-            f_annotation.write(metadata_bytes)
-            f_annotation.flush()
-            metadata_dict, node_props, columns, prop2type = parse_csv([f_annotation.name], delimiter=separator)
 
-        metadata_options = {
-            "metadata_dict": metadata_dict,
-            "node_props": node_props,
-            "columns": columns,
-            "prop2type": prop2type,
-            "text_prop": job_args.get("text_prop"),
-            "num_prop": job_args.get("num_prop"),
-            "bool_prop": job_args.get("bool_prop"),
-            "multiple_text_prop": job_args.get("multiple_text_prop")
-        }
+    metadata_dict, node_props, columns, prop2type = parse_csv(metadata_file_list, delimiter=separator)
 
+    metadata_options = {
+        "metadata_dict": metadata_dict,
+        "node_props": node_props,
+        "columns": columns,
+        "prop2type": prop2type,
+        "text_prop": job_args.get("text_prop"),
+        "num_prop": job_args.get("num_prop"),
+        "bool_prop": job_args.get("bool_prop"),
+        "multiple_text_prop": job_args.get("multiple_text_prop")
+    }
+    
     # Taxonomic annotation options
     taxonomic_options = {}
     if job_args.get("taxon_column"):
@@ -375,6 +366,8 @@ def upload_chunk():
     chunk_index = int(request.forms.get("chunkIndex"))
     total_chunks = int(request.forms.get("totalChunks"))
     treename = request.forms.get("treename")
+    file_id = request.forms.get("fileId", None)  # Use provided fileId or generate one
+
     # Identify the file type
     if 'treeFile' in request.files:
         file_type = "tree"
@@ -387,26 +380,35 @@ def upload_chunk():
     else:
         return "Unknown file type", 400
 
-    # Initialize chunk storage for each file type if it doesn't exist
+    # Initialize storage
     if treename not in uploaded_chunks:
-        uploaded_chunks[treename] = {
-            "tree": [], 
-            "metadata": [], 
-            "alignment": [], 
-            "pfam": []
-        }
-    
-    # Append the chunk to the corresponding file list
-    uploaded_chunks[treename][file_type].append((chunk_index, chunk.file.read()))
+        uploaded_chunks[treename] = {"tree": {}, "metadata": {}, "alignment": {}, "pfam": {}}
 
-    # Assemble the file when all chunks are received
-    if len(uploaded_chunks[treename][file_type]) == total_chunks:
-        uploaded_chunks[treename][file_type].sort()  # Ensure chunks are in order
-        with NamedTemporaryFile(delete=False) as assembled_file:
-            for _, part in uploaded_chunks[treename][file_type]:
-                assembled_file.write(part)
-            assembled_file_path = assembled_file.name
-        uploaded_chunks[treename][file_type] = assembled_file_path  # Save assembled file path
+    # Handle metadata specifically for multiple files
+    if file_type == "metadata":
+        if file_id not in uploaded_chunks[treename][file_type]:
+            uploaded_chunks[treename][file_type][file_id] = []
+        uploaded_chunks[treename][file_type][file_id].append((chunk_index, chunk.file.read()))
+
+        # Assemble the file when all chunks are received
+        if len(uploaded_chunks[treename][file_type][file_id]) == total_chunks:
+            uploaded_chunks[treename][file_type][file_id].sort()
+            with NamedTemporaryFile(delete=False) as assembled_file:
+                for _, part in uploaded_chunks[treename][file_type][file_id]:
+                    assembled_file.write(part)
+                uploaded_chunks[treename][file_type][file_id] = assembled_file.name
+    else:
+        # Handle other file types
+        if "chunks" not in uploaded_chunks[treename][file_type]:
+            uploaded_chunks[treename][file_type]["chunks"] = []
+        uploaded_chunks[treename][file_type]["chunks"].append((chunk_index, chunk.file.read()))
+
+        if len(uploaded_chunks[treename][file_type]["chunks"]) == total_chunks:
+            uploaded_chunks[treename][file_type]["chunks"].sort()
+            with NamedTemporaryFile(delete=False) as assembled_file:
+                for _, part in uploaded_chunks[treename][file_type]["chunks"]:
+                    assembled_file.write(part)
+                uploaded_chunks[treename][file_type] = assembled_file.name
 
     return "Chunk received"
 

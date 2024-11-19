@@ -52,7 +52,8 @@
             <div class="card-body">
                 <div class="form-group">
                     <label for="metadata" class="col-sm-3 col-form-label">Metadata File</label>
-                    <input type="file" class="form-control-file mt-2" id="metadataFile" name="metadataFile">
+                    <!-- <input type="file" class="form-control-file mt-2" id="metadataFile" name="metadataFile"> -->
+                    <input type="file" class="form-control-file mt-2" id="metadataFiles" name="metadataFiles" multiple>
                 </div>
                 <div class="form-group row mt-3">
                     <label for="separator" class="col-sm-3 col-form-label">Metadata Separator</label>
@@ -306,13 +307,12 @@
 </div>
 
 <script>
-    const CHUNK_SIZE = 1024 * 1024; // 1MB
-
     async function submitForm() {
         const treename = document.getElementById('treename').value;
         const treeparser = document.getElementById('treeparser').value;
         const treeFile = document.getElementById('treeFile').files[0];
-        const metadataFile = document.getElementById('metadataFile').files[0];
+        // const metadataFile = document.getElementById('metadataFile').files[0];
+        const metadataFiles = document.getElementById('metadataFiles').files;
         const alignmentFile = document.getElementById('alignmentFile').files[0];
         const pfamFile = document.getElementById('pfamFile').files[0];
         const separator = document.getElementById('separator').value;
@@ -336,9 +336,17 @@
 
         formData.append("treeparser", treeparser);
 
-        if (metadataFile) {
-            await uploadFileInChunks(metadataFile, 'metadataFile', treename);
+        // Process metadata files as chunks
+        if (metadataFiles.length > 0) {
+            const metadataFilesList = [];
+            for (const [index, file] of Array.from(metadataFiles).entries()) {
+                const fileId = `metadata_${index}`;
+                await uploadFileInChunks(file, 'metadataFile', treename, fileId);
+                metadataFilesList.push(fileId);
+            }
+            formData.append("metadataFiles", JSON.stringify(metadataFilesList));
         }
+
         if (separator) {
             formData.append("separator", separator);
         }
@@ -665,8 +673,10 @@
         return { text_prop, num_prop, bool_prop, multiple_text_prop};
     }
 
-    async function uploadFileInChunks(file, fieldName, treename) {
+    async function uploadFileInChunks(file, fieldName, treename, fileId = null) {
+        const CHUNK_SIZE = 1024 * 1024; // 1MB
         const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+        fileId = fileId || `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`; // Generate unique ID if not provided
 
         for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
             const start = chunkIndex * CHUNK_SIZE;
@@ -678,6 +688,7 @@
             chunkFormData.append(fieldName, chunk);
             chunkFormData.append("chunkIndex", chunkIndex);
             chunkFormData.append("totalChunks", totalChunks);
+            chunkFormData.append("fileId", fileId);
 
             await fetch('/upload_chunk', {
                 method: 'POST',
