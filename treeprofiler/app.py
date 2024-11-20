@@ -222,9 +222,13 @@ def process_upload_job(job_args):
     # Process metadata
     metadata_options = {}
     columns = {}
-
-    metadata_dict, node_props, columns, prop2type = parse_csv(metadata_file_list, delimiter=separator)
-
+    if metadata_file_list:
+        metadata_dict, node_props, columns, prop2type = parse_csv(metadata_file_list, delimiter=separator)
+    else:
+        metadata_dict = {}
+        node_props = []
+        prop2type = {}
+        
     metadata_options = {
         "metadata_dict": metadata_dict,
         "node_props": node_props,
