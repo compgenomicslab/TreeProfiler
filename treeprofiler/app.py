@@ -222,13 +222,16 @@ def process_upload_job(job_args):
     # Process metadata
     metadata_options = {}
     columns = {}
+
     if metadata_file_list:
         metadata_dict, node_props, columns, prop2type = parse_csv(metadata_file_list, delimiter=separator)
     else:
         metadata_dict = {}
         node_props = []
         prop2type = {}
-        
+    
+    node_props = list(prop2type.keys())
+
     metadata_options = {
         "metadata_dict": metadata_dict,
         "node_props": node_props,
@@ -239,6 +242,7 @@ def process_upload_job(job_args):
         "bool_prop": job_args.get("bool_prop"),
         "multiple_text_prop": job_args.get("multiple_text_prop")
     }
+    
     
     # Taxonomic annotation options
     taxonomic_options = {}

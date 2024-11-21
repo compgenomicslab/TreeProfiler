@@ -473,16 +473,85 @@
         return summarySelections;
     }
 
+    // document.getElementById('parseMetadataBtn').addEventListener('click', async () => {
+    //     const file = document.getElementById('metadataFile').files[0];
+    //     if (file) {
+    //         const separator = document.getElementById('separator').value === "<tab>" ? "\t" : document.getElementById('separator').value;
+    //         const text = await file.text();
+    //         parseMetadata(text, separator);
+    //     } else {
+    //         alert("Please select a metadata file first.");
+    //     }
+    // });
+    
     document.getElementById('parseMetadataBtn').addEventListener('click', async () => {
-        const file = document.getElementById('metadataFile').files[0];
-        if (file) {
+        const files = document.getElementById('metadataFiles').files; // Get all selected files
+        if (files.length > 0) {
             const separator = document.getElementById('separator').value === "<tab>" ? "\t" : document.getElementById('separator').value;
-            const text = await file.text();
-            parseMetadata(text, separator);
+
+            // Call the function to parse multiple metadata files
+            await parseMultipleMetadata(files, separator);
+
+            console.log("Metadata parsing completed.");
         } else {
-            alert("Please select a metadata file first.");
+            alert("Please select one or more metadata files first.");
         }
     });
+
+    async function parseMultipleMetadata(files, separator) {
+        const combinedHeaders = new Set(); // Use a Set to track unique headers
+        const combinedData = {}; // Store data keyed by header
+        let isFirstFile = true; // Track if the file is the first for Node ID column
+
+        for (const file of files) {
+            const text = await file.text();
+            const rows = text.trim().split('\n');
+
+            if (rows.length < 2) {
+                alert(`File "${file.name}" is too short to analyze.`);
+                continue;
+            }
+
+            const headers = rows[0].split(separator);
+            const columnData = headers.map(() => []);
+
+            rows.slice(1).forEach(row => {
+                const cells = row.split(separator);
+                cells.forEach((cell, index) => {
+                    columnData[index].push(cell.trim());
+                });
+            });
+
+            // Update global combined data
+            headers.forEach((header, index) => {
+                if (!combinedData[header]) {
+                    combinedData[header] = [];
+                }
+                combinedData[header] = combinedData[header].concat(columnData[index]);
+            });
+
+            // Add headers to the combined set
+            headers.forEach(header => combinedHeaders.add(header));
+
+            // Only update column options for the first file
+            if (isFirstFile) {
+                updateTaxonomicIdOptions(headers);
+                updateAcrOptions(headers);
+                updateLsOptions(headers);
+                isFirstFile = false;
+            }
+        }
+
+        // Detect column types and render results
+        const columnTypes = Array.from(combinedHeaders).map((header, index) => {
+            const columnValues = combinedData[header] || [];
+            const type = index === 0 ? "Node ID Column" : detectColumnType(columnValues);
+            return { column: header, type };
+        });
+
+        renderColumnTypeTable(columnTypes);
+        document.getElementById('metadataAnalysis').style.display = 'block';
+    }
 
     function parseMetadata(text, separator) {
         const rows = text.trim().split('\n');
@@ -553,6 +622,46 @@
         document.getElementById('metadataAnalysis').style.display = 'block';
     }
 
+    function renderColumnTypeTable(columnTypes) {
+        const columnTypeList = document.getElementById('columnTypeList');
+        columnTypeList.innerHTML = ""; // Clear the table
+
+        columnTypes.forEach((col, index) => {
+            const row = document.createElement('tr');
+            const columnCell = document.createElement('td');
+            columnCell.textContent = col.column;
+            row.appendChild(columnCell);
+
+            const typeCell = document.createElement('td');
+            if (col.type === "Node ID Column" && index === 0) {
+                typeCell.textContent = "Node ID Column";
+            } else {
+                typeCell.innerHTML = `
+                    <select class="form-control-sm" data-column="${col.column}" onchange="updateSummaryOptions(this)">
+                        <option value="Categorical" ${col.type === 'Categorical' ? 'selected' : ''}>Categorical</option>
+                        <option value="List" ${col.type === 'List' ? 'selected' : ''}>List</option>
+                        <option value="Numerical" ${col.type === 'Numerical' ? 'selected' : ''}>Numerical</option>
+                        <option value="Binary" ${col.type === 'Binary' ? 'selected' : ''}>Binary</option>
+                    </select>
+                `;
+            }
+            row.appendChild(typeCell);
+
+            const summaryCell = document.createElement('td');
+            if (col.type === "Node ID Column" && index === 0) {
+                summaryCell.textContent = "-";
+            } else {
+                summaryCell.innerHTML = `
+                    <select class="form-control-sm summary-method" data-summary="${col.column}">
+                        ${generateSummaryOptions(col.type)}
+                    </select>
+                `;
+            }
+            row.appendChild(summaryCell);
+
+            columnTypeList.appendChild(row);
+        });
+    }
     function updateTaxonomicIdOptions(columns) {
         const taxonomicIdColumn = document.getElementById('taxonomicIdColumn');
         taxonomicIdColumn.innerHTML = "";  // Clear existing options
