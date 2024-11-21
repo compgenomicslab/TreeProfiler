@@ -785,6 +785,11 @@
             const counterInputElement = document.querySelector('.counter-input');
             const counterValue = counterInputElement ? counterInputElement.value : null;
 
+            if !queryType {
+                alert("Please select a query type.");
+                return;
+            }
+
             if (!prop || !value) {
                 alert("Please fill in all query fields.");
                 //resetQueryButton();
@@ -806,7 +811,6 @@
             document.getElementById('queryBox').value = queryParts.join(' ') + ';';
 
             // Reset the input fields for the next query
-            document.getElementById('queryProp').value = '';
             document.getElementById('queryValue').value = '';
         }
 
