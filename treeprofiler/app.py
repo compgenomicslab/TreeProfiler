@@ -506,7 +506,7 @@ def explore_tree(treename):
     start_explore_thread(t, treename, current_layouts, current_props)
     
     # Render template
-    return template('explore_tree', treename=treename, tree_info=tree_info, selected_props=current_props, color_schemes=continuous_colormaps)
+    return template('explore_tree_v2', treename=treename, tree_info=tree_info, selected_props=current_props, color_schemes=continuous_colormaps)
 
 def get_colormap_hex_colors(colormap_name, num_colors):
     if colormap_name == 'default':
