@@ -37,8 +37,12 @@
 </head>
 <body>
     <div class="control-panel">
-        <h5>Control Panel</h5>
+        <h5>Properties Table</h5>
 
+        <div class="mb-2">
+            <button id="selectAllProps" class="btn btn-sm btn-primary me-2">Select All</button>
+            <button id="deselectAllProps" class="btn btn-sm btn-secondary">Deselect All</button>
+        </div>
         <!-- Properties Table -->
         <table class="table table-striped">
             <thead>
@@ -49,96 +53,261 @@
                 </tr>
             </thead>
             <tbody id="propertiesTable">
-                <!-- Dynamically populated -->
+                % for prop in tree_info['node_props']:
                 <tr>
-                    <td><input type="checkbox" class="selectProperty" value="Branch Length"></td>
-                    <td>Branch Length</td>
-                    <td>Numerical</td>
+                    <td><input type="checkbox" class="selectProperty" value="{{prop}}"></td>
+                    <td>{{prop}}</td>
+                    <td class="propType">{{tree_info['prop2type'][prop]}}</td>
                 </tr>
-                <tr>
-                    <td><input type="checkbox" class="selectProperty" value="Bootstrap Support"></td>
-                    <td>Bootstrap Support</td>
-                    <td>Binary</td>
-                </tr>
-                <tr>
-                    <td><input type="checkbox" class="selectProperty" value="Node Label"></td>
-                    <td>Node Label</td>
-                    <td>Categorical</td>
-                </tr>
-                <tr>
-                    <td><input type="checkbox" class="selectProperty" value="Taxonomic Group"></td>
-                    <td>Taxonomic Group</td>
-                    <td>Categorical</td>
-                </tr>
+                % end
             </tbody>
         </table>
 
-        <button id="applyLayoutBtn" class="btn btn-primary mt-3">Apply Layout to Selected</button>
+        <button id="applyLayoutBtn" class="btn btn-primary mt-3">Select Layout</button>
 
         <!-- Layout Configuration Section -->
-        <div id="layoutConfigSection" class="layout-settings">
+        <div id="layoutConfigSection" class="layout-settings mt-3">
             <h5>Configure Layout</h5>
             <select class="form-control" id="layoutSelect">
-                <option value="heatmap-layout">Heatmap Layout</option>
-                <option value="colorbranch-layout">Color Branch Layout</option>
+                <optgroup label="Categorical">
+                    <option value="colorbranch-layout">Color Branch Layout</option>
+                    <option value="label-layout">Label Layout</option>
+                    <option value="rectangle-layout">Rectangular Layout</option>
+                    <option value="categorical-bubble-layout">Bubble Layout</option>
+                    <option value="background-layout">Background Layout</option>
+                    <option value="categorical-matrix-layout">Categorical Matrix Layout</option>
+                    <option value="piechart-layout">Piechart Layout</option>
+                    <option value="profiling-layout">Profiling Layout</option>
+                </optgroup>
+                <optgroup label="Binary">
+                    <option value="binary-layout">Binary Layout</option>
+                </optgroup>
+                <optgroup label="Numerical">
+                    <option value="branchscore-layout">Color Branch Layout</option>
+                    <option value="heatmap-layout">Heatmap Layout</option>
+                    <option value="heatmap-mean-layout">Heatmap Mean Layout</option>
+                    <option value="heatmap-zscore-layout">Heatmap Z-Score Layout</option>
+                    <option value="barplot-layout">Barplot Layout</option>
+                    <option value="numerical-matrix-layout">Numerical Matrix Layout</option>
+                    <option value="numerical-bubble-layout">Bubble Layout</option>
+                </optgroup>
+                <optgroup label="Analytic">
+                    <option value="acr-discrete-layout">ACR Discrete Layout</option>
+                    <option value="acr-continuous-layout">ACR Continuous Layout</option>
+                    <option value="ls-layout">LS Layout</option>
+                </optgroup>
+                <optgroup label="Taxonomy">
+                    <option value="taxonclade-layout">Taxon Clade Layout</option>
+                    <option value="taxonrectangle-layout">Taxon Rectangle Layout</option>
+                    <option value="taxoncollapse-layout">Taxon Collapse Layout</option>
+                </optgroup>
+                <option value="emapper-layout">EggNOG-mapper Layout</option>
+                <option value="domain-layout">Domain Layout</option>
+                <option value="alignment-layout">Alignment Layout</option>
             </select>
             <div id="layoutSettings" class="mt-3">
                 <!-- Add additional layout-specific settings here -->
                 <label for="columnWidth">Column Width</label>
                 <input type="number" id="columnWidth" class="form-control" value="70">
             </div>
-            <button id="addLayerBtn" class="btn btn-success mt-3">Add Layer</button>
+            <button id="addLayerBtn" class="btn btn-primary mt-3">Add Layout</button>
         </div>
     </div>
 
+    <!-- Main Content -->
+    <div class="container-fluid mt-4">
+        <h1>Explore Tree: {{treename}}</h1>
+
+        <!-- Iframe container -->
+        <div class="position-relative mt-3">
+            <iframe src="http://localhost:5051" id="treeIframe" width="100%" height="800px" frameborder="0"
+                allowfullscreen></iframe>
+        </div>
+        <!-- Back Home Button -->
+        <div class="mt-3">
+            <a href="/stop_explore" class="btn btn-primary">Back Home</a>
+        </div>
+    </div>
     <script>
         // Track selected properties
+        let layers = [];
         const selectedProperties = [];
-
-        // Handle property selection
-        $(document).on('change', '.selectProperty', function () {
-            const property = $(this).val();
-            if ($(this).is(':checked')) {
-                selectedProperties.push(property);
-            } else {
-                const index = selectedProperties.indexOf(property);
-                if (index > -1) selectedProperties.splice(index, 1);
-            }
+        
+        // Handle Select All button
+        $('#selectAllProps').click(() => {
+            $('.selectProperty').prop('checked', true);
+            updateSelectedProperties();
         });
-
-        // Handle Apply Layout Button
+    
+        // Handle Deselect All button
+        $('#deselectAllProps').click(() => {
+            $('.selectProperty').prop('checked', false);
+            updateSelectedProperties();
+        });
+    
+        // Update selected properties array
+        function updateSelectedProperties() {
+            selectedProperties.length = 0; // Clear current selections
+            $('.selectProperty:checked').each(function () {
+                selectedProperties.push($(this).val());
+            });
+        }
+    
+        // Handle individual property selection
+        $(document).on('change', '.selectProperty', function () {
+            updateSelectedProperties();
+        });
+    
+        // Show Layout Config Section
         $('#applyLayoutBtn').click(() => {
             if (selectedProperties.length === 0) {
                 alert('Please select at least one property.');
                 return;
             }
-
             $('#layoutConfigSection').show();
-            alert(`Selected Properties: ${selectedProperties.join(', ')}`);
         });
-
-        // Handle Add Layer Button
+        
+        
+        // Handle Add Layout Button
         $('#addLayerBtn').click(() => {
+            // const props = $('#props').val();
+            // const queryType = document.getElementById('customQueryType').value;
+            // const query = document.getElementById('queryBox').value;
+
+            // // Categorical layout settings
+            // const categoricalColorscheme = document.getElementById('categoricalColorscheme').value;
+            // // Binary layout settings
+            // const isUnicolor = document.getElementById('unicolorOption').checked;
+            // const binaryColorScheme = isUnicolor ? null : document.getElementById('binaryColorSchemeSelect').value;
+            // const unicolorColor = isUnicolor ? document.getElementById('unicolorColor').value : null;
+            // const aggregateOption = document.getElementById('aggregateOption').value;
+
+            // // numerical layout settings
+            // const minVal = document.getElementById('minVal').value;
+            // const maxVal = document.getElementById('maxVal').value;
+            // const colorMin = document.getElementById('colorMin').value;
+            // const colorMid = document.getElementById('colorMid').value;
+            // const colorMax = document.getElementById('colorMax').value;
+
+            // // Barplot layout settings
+            // const barplotWidth = document.getElementById('barplotWidth').value;
+            // const barplotScaleProperty = document.getElementById('barplotScaleProperty').value;
+            // const barplotRange = document.getElementById('barplotRange').value;
+            // const barplotColorOption = document.getElementById('barplotColorOption').value;
+            // const barplotColorScheme = document.getElementById('barplotColorScheme').value;
+            // const barplotFillProperty = document.getElementById('barplotFillProperty').value;
+
+            // // alignment layout settings
+            // const algStart = document.getElementById('algStart').value;
+            // const algEnd = document.getElementById('algEnd').value;
+            const props = selectedProperties;
             const layout = $('#layoutSelect').val();
             if (!layout) {
                 alert('Please select a layout.');
                 return;
             }
+            
+            const layer = {
+                layout,
+                props,
+                // queryType,
+                // query,
+                // categoricalColorscheme,
+                // isUnicolor,
+                // binaryColorScheme,
+                // unicolorColor,
+                // aggregateOption,
+                // minVal,
+                // maxVal,
+                // colorMin,
+                // colorMid,
+                // colorMax,
+                // barplotWidth,
+                // barplotScaleProperty,
+                // barplotRange,
+                // barplotColorOption,
+                // barplotColorScheme,
+                // barplotFillProperty,
+                // algStart,
+                // algEnd
+            };
+            layers.push(layer);
 
             const columnWidth = $('#columnWidth').val();
-            const layerConfig = {
-                layout,
-                properties: selectedProperties,
-                settings: { columnWidth }
+            if (!selectedProperties.length) {
+                alert('Please select properties before adding a layout.');
+                return;
+            }
+            const paddingX = document.getElementById("paddingX").value || null;
+            const paddingY = document.getElementById("paddingY").value || null;
+            
+            // Numerical-specific setting (applies only if a numerical layout exists in layers)
+            let internalNumRep = null;
+            const numericalLayouts = [
+                "branchscore-layout",
+                "heatmap-layout",
+                "heatmap-mean-layout",
+                "heatmap-zscore-layout",
+                "barplot-layout",
+                "numerical-matrix-layout",
+                "numerical-bubble-layout",
+            ];
+            if (numericalLayouts.includes(layout)) {
+                internalNumRep = document.getElementById("internalNumRep").value || null;
+            }
+
+            const layersData = JSON.stringify(layers);
+
+            // Construct the form data to send to the backend
+            // const formData = {
+            //     layout: layout,
+            //     props: selectedProperties,
+            //     settings: { columnWidth: columnWidth }
+            // };
+    
+            const formData = {
+                layers: layersData,
+                columnWidth: columnWidth,
+                paddingX: paddingX,
+                paddingY: paddingY,
+                internalNumRep: internalNumRep
             };
-
-            // Send the layer configuration to the backend (replace alert with backend interaction)
-            alert(`Layer Added:\n${JSON.stringify(layerConfig, null, 2)}`);
-
-            // Clear selections and reset UI
-            $('.selectProperty').prop('checked', false);
-            selectedProperties.length = 0;
-            $('#layoutConfigSection').hide();
+            console.log('Form Data:', formData);
+            // Submit the data to the backend
+            $.post(
+                '/explore_tree/{{treename}}',
+                formData,
+                (response) => {
+                    console.log('Layout added:', response);
+                    alert('Layout added successfully!');
+                    // Optionally reset the UI after a successful submission
+                    $('.selectProperty').prop('checked', false);
+                    selectedProperties.length = 0;
+                    $('#layoutConfigSection').hide();
+                }
+            );
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Define a mapping for the Python class names to user-friendly types
+            const typeMapping = {
+                "float": "Numerical",
+                "int": "Numerical",
+                "str": "Categorical",
+                "bool": "Binary"
+            };
+    
+            // Select all rows in the properties table
+            document.querySelectorAll('#propertiesTable .propType').forEach(cell => {
+                const rawType = cell.textContent.trim(); // e.g., "<class 'float'>"
+                const typeName = rawType.match(/<class '(\w+)'>/); // Extract the type name, e.g., "float"
+                if (typeName && typeName[1] in typeMapping) {
+                    cell.textContent = typeMapping[typeName[1]]; // Replace with user-friendly type
+                } else {
+                    cell.textContent = "Unknown"; // Default to "Unknown" if no mapping exists
+                }
+            });
         });
     </script>
 </body>
