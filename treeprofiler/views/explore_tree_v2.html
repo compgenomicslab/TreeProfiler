@@ -297,7 +297,13 @@
         <button id="activateDomainLayout" class="btn btn-secondary mb-3">Activate Domain Layout</button>
         % end
 
+        <!-- Refresh button -->
+        <div class="control-panel-footer mt-4">
+            <button class="btn btn-primary" onclick="window.location.reload();">Refresh</button>
+            <button class="btn btn-secondary" id="fullscreenBtn">Fullscreen</button>
+        </div>
     </div>
+    
 
     <!-- Main Content -->
     <div class="container-fluid mt-4">
@@ -680,6 +686,23 @@
                 }
             });
         };
+    </script>
+    <script>
+        <!-- Fullscreen Button Script -->
+        const togglebtn = document.getElementById("fullscreenBtn");
+        const iframe = document.getElementById("treeIframe");
+
+        togglebtn.addEventListener("click", function () {
+            if (iframe.requestFullscreen) {
+                iframe.requestFullscreen();
+            } else if (iframe.mozRequestFullScreen) { // Firefox
+                iframe.mozRequestFullScreen();
+            } else if (iframe.webkitRequestFullscreen) { // Chrome,Safari,Opera
+                iframe.webkitRequestFullscreen();
+            } else if (iframe.msRequestFullscreen) { // I.E, Edge
+                iframe.msRequestFullscreen();
+            }
+        });
     </script>
 </body>
 </html>
