@@ -1028,22 +1028,7 @@ def get_ls_layouts(tree, props, level, prop2type, padding_x=1, padding_y=0, colo
     ls_props = []
     for prop in props:
         value2color = {}
-        if color_config and color_config.get(prop) is not None:
-            prop_config = color_config[prop]
-            
-            color_dict = {}
-            # First, try to use value2color mappings if they exist and are applicable
-            if 'value2color' in prop_config and prop_config['value2color']:
-                color_dict = prop_config['value2color']
-                sorted_color_dict = {float(key): value for key, value in color_dict.items()}
-                gradientscolor = sorted_color_dict.values()
-            elif 'detail2color' in prop_config and prop_config['detail2color']:
-                min_color = prop_config['detail2color'].get('color_min', 'white')
-                max_color = prop_config['detail2color'].get('color_max', 'red')
-                mid_color = prop_config['detail2color'].get('color_mid', None)
-                gradientscolor = utils.build_custom_gradient(20, min_color, max_color, mid_color)
-        else:
-            gradientscolor = utils.build_color_gradient(20, colormap_name='bwr')
+        gradientscolor = utils.build_color_gradient(20, colormap_name='bwr')
 
         for suffix in [precision_suffix, sensitivity_suffix, f1_suffix]:
             

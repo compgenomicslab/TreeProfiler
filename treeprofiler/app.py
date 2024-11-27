@@ -857,7 +857,6 @@ def apply_analytic_layouts(t, selected_layout, selected_props, tree_info, curren
             t, selected_props, level, prop2type=tree_info['prop2type'],
             padding_x=padding_x, padding_y=padding_y, color_config=color_config
         )
-        current_props.extend(ls_props)
         current_layouts.extend(ls_layouts)
     return level, current_layouts
 
