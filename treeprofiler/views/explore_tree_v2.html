@@ -37,270 +37,288 @@
 </head>
 <body>
     <div class="control-panel">
-        <h5>Properties Table</h5>
-
-        <div class="mb-2">
-            <button id="selectAllProps" class="btn btn-sm btn-primary me-2">Select All</button>
-            <button id="deselectAllProps" class="btn btn-sm btn-secondary">Deselect All</button>
-        </div>
-        <!-- Properties Table -->
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Select</th>
-                    <th>Property Name</th>
-                    <th>Type</th>
-                </tr>
-            </thead>
-            <tbody id="propertiesTable">
-                % for prop in tree_info['node_props']:
-                <tr>
-                    <td><input type="checkbox" class="selectProperty" value="{{prop}}"></td>
-                    <td>{{prop}}</td>
-                    <td class="propType">{{tree_info['prop2type'][prop]}}</td>
-                </tr>
-                % end
-            </tbody>
-        </table>
-
-        <button id="applyLayoutBtn" class="btn btn-primary mt-3">Select Layout</button>
-
-        <!-- Layout Configuration Section -->
-        <div id="layoutConfigSection" class="layout-settings mt-3">
-            <h5>Configure Layout</h5>
-            <select class="form-control" id="layout" name="layout">
-                <optgroup label="Categorical">
-                    <option value="colorbranch-layout">Color Branch Layout</option>
-                    <option value="label-layout">Label Layout</option>
-                    <option value="rectangle-layout">Rectangular Layout</option>
-                    <option value="categorical-bubble-layout">Bubble Layout</option>
-                    <option value="background-layout">Background Layout</option>
-                    <option value="categorical-matrix-layout">Categorical Matrix Layout</option>
-                    <option value="piechart-layout">Piechart Layout</option>
-                    <option value="profiling-layout">Profiling Layout</option>
-                </optgroup>
-                <optgroup label="Binary">
-                    <option value="binary-layout">Binary Layout</option>
-                </optgroup>
-                <optgroup label="Numerical">
-                    <option value="branchscore-layout">Color Branch Layout</option>
-                    <option value="heatmap-layout">Heatmap Layout</option>
-                    <option value="heatmap-mean-layout">Heatmap Mean Layout</option>
-                    <option value="heatmap-zscore-layout">Heatmap Z-Score Layout</option>
-                    <option value="barplot-layout">Barplot Layout</option>
-                    <option value="numerical-matrix-layout">Numerical Matrix Layout</option>
-                    <option value="numerical-bubble-layout">Bubble Layout</option>
-                </optgroup>
-                <optgroup label="Analytic">
-                    <option value="acr-discrete-layout">ACR Discrete Layout</option>
-                    <option value="acr-continuous-layout">ACR Continuous Layout</option>
-                    <option value="ls-layout">LS Layout</option>
-                </optgroup>
-                <optgroup label="Taxonomy">
-                    <option value="taxonclade-layout">Taxon Clade Layout</option>
-                    <option value="taxonrectangle-layout">Taxon Rectangle Layout</option>
-                    <option value="taxoncollapse-layout">Taxon Collapse Layout</option>
-                </optgroup>
-                <option value="emapper-layout">EggNOG-mapper Layout</option>
-                <option value="domain-layout">Domain Layout</option>
-                <option value="alignment-layout">Alignment Layout</option>
-            </select>
-            <div id="layoutSettings" class="form-group mt-3">
-                <h5>General Settings</h5>
-                <div class="row">
-                    <div class="col-md-4">
-                        <!-- Add additional layout-specific settings here -->
-                        <label for="columnWidth">Col Width</label>
-                        <input type="number" id="columnWidth" name="columnWidth" class="form-control" placeholder="Enter column width" value="70">
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <button class="btn d-flex align-items-center w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#propertiesCard" aria-expanded="false" aria-controls="propertiesCard">
+                    Layout settings
+                    <span id="propertiesCardArrow" class="ms-auto">&#x25BC;</span> <!-- Downward arrow initially -->
+                </button>
+            </div>
+            
+            <div id="propertiesCard" class="collapse">
+                <div class="card-body">
+                    <div class="mb-2">
+                        <button id="selectAllProps" class="btn btn-sm btn-primary me-2">Select All</button>
+                        <button id="deselectAllProps" class="btn btn-sm btn-secondary">Deselect All</button>
                     </div>
-                    <div class="col-md-4">
-                        <label for="paddingX">Padding X</label>
-                        <input type="number" class="form-control" id="paddingX" name="paddingX"
-                            placeholder="Enter padding X" value="1">
-                    </div>
-                    <div class="col-md-4">
-                        <label for="paddingY">Padding Y</label>
-                        <input type="number" class="form-control" id="paddingY" name="paddingY"
-                            placeholder="Enter padding Y" value="0">
-                    </div>
-                </div>
-                <!-- Numerical-Specific Settings -->
-                <div id="internalNumerical" class="form-group mt-3" style="display: none;">
-                    <label for="internalNumRep">Internal Number Representation</label>
-                    <select class="form-control" id="internalNumRep" name="internalNumRep">
-                        <option value="avg">Average</option>
-                        <option value="sum">Sum</option>
-                        <option value="max">Maximum</option>
-                        <option value="min">Minimum</option>
-                        <option value="std">Standard Deviation</option>
-                        <option value="none">None</option>
-                    </select>
-                </div>
-
-                <!-- Categorical Layout Settings -->
-                <div id="categoricalSettings" class="form-group mt-3" style="display: none;">
-                    <label for="props">Color Scheme</label>
-                    <select class="form-control" id="categoricalColorscheme" name="categoricalColorscheme">
-                        % for colormap in color_schemes:
-                        <option value="{{ colormap }}">{{ colormap }}</option>
-                        % end
-                    </select>
-                </div>
-
-                <!-- Binary layout settings -->
-                <div id="binarySettings" class="form-group mt-3" style="display: none;">
-                    <h5>Settings for Binary Layout</h5>
-
-                    <!-- Unicolor Option -->
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" value="unicolor" id="unicolorOption"
-                            name="unicolorOption">
-                        <label class="form-check-label" for="unicolorOption">
-                            Use Unicolor
-                        </label>
-                    </div>
-
-                    <!-- Unicolor Color Picker (Only visible when Unicolor is checked) -->
-                    <div id="unicolorPicker" class="form-group mt-2" style="display: none;">
-                        <label for="unicolorColor">Select Unicolor:</label>
-                        <input type="color" id="unicolorColor" name="unicolorColor" class="form-control"
-                            value="#0000ff">
-                    </div>
-
-                    <!-- Color Scheme Dropdown (Only visible when Unicolor is unchecked) -->
-                    <div id="binaryColorScheme" class="form-group mt-2" style="display: block;">
-                        <label for="binaryColorSchemeSelect">Select Color Scheme:</label>
-                        <select class="form-control" id="binaryColorSchemeSelect" name="binaryColorScheme">
-                            % for colormap in color_schemes:
-                            <option value="{{ colormap }}">{{ colormap }}</option>
-                            % end
-                        </select>
-                    </div>
-
-                    <!-- Aggregate Option as Dropdown -->
-                    <div id="aggregateSettings" class="form-group mt-2">
-                        <label for="aggregateOption">Summary for Collapsed Nodes: </label>
-                        <select class="form-control" id="aggregateOption" name="aggregateOption">
-                            <option value="gradient">Gradient</option>
-                            <option value="aggregate">Aggregate</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Numerical Settings Section -->
-                <div id="numericalSettings" class="form-group mt-3" style="display: none;">
-                    <label for="minVal">Minimum Value (Auto detected if it is empty):</label>
-                    <input type="number" class="form-control" id="minVal" name="min_val"
-                        placeholder="Enter min value">
-
-                    <label for="maxVal" class="mt-2">Maximum Value (Auto detected if it is empty):</label>
-                    <input type="number" class="form-control" id="maxVal" name="max_val"
-                        placeholder="Enter max value">
-
-                    <!-- Color Selection -->
-                    <div class="form-row mt-2">
-                        <div class="col">
-                            <label for="colorMin">Color Min:</label>
-                            <input type="color" class="form-control" id="colorMin" name="color_min" value="#0000ff">
-                        </div>
-                        <div class="col">
-                            <label for="colorMid">Color Mid:</label>
-                            <input type="color" class="form-control" id="colorMid" name="color_mid" value="#ffffff">
-                        </div>
-                        <div class="col">
-                            <label for="colorMax">Color Max:</label>
-                            <input type="color" class="form-control" id="colorMax" name="color_max" value="#ff0000">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Barplot -->
-                <div id="barplotOptions" class="form-group mt-3" style="display: none;">
-                    <label for="barplotWidth">Barplot Column Width (px):</label>
-                    <input type="number" class="form-control" id="barplotWidth" name="barplotWidth"
-                        placeholder="Enter width" value="200">
-
-
-                    <label for="barplotScaleProperty" class="mt-2">Scale Based On Property:</label>
-                    <select class="form-control" id="barplotScaleProperty" name="barplotScaleProperty">
-                    </select>
-
-                    <label for="barplotRange" class="mt-2">Custom Barplot Scale (Max Value):</label>
-                    <input type="number" class="form-control" id="barplotRange" name="barplotRange"
-                        placeholder="Enter max value for the property">
-
-                    <label for="barplotColorOption" class="mt-2">Barplot Color:</label>
-                    <select class="form-control" id="barplotColorOption" name="barplotColorOption">
-                        <option value="same">Color Scheme</option>
-                        <option value="colorby">Fill by Property</option>
-                    </select>
-
-                    <!-- Conditional color selector or property selector -->
-                    <div id="barplotColorSettings" class="mt-2">
-                        <!-- Color input for 'same' option -->
-                        <div class="form-group mt-3">
-                            <label for="barplotColor">Barplot Color</label>
-                            <select class="form-control" id="barplotColorScheme" name="barplotColorScheme">
-                                % for colormap in color_schemes:
-                                <option value="{{ colormap }}">{{ colormap }}</option>
-                                % end
-                            </select>
-                        </div>
-
-                        <!-- Property dropdown for 'colorby' option -->
-                        <select class="form-control" id="barplotFillProperty" name="barplotFillProperty"
-                            style="display: none;">
+                    <!-- Properties Table -->
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Select</th>
+                                <th>Property Name</th>
+                                <th>Type</th>
+                            </tr>
+                        </thead>
+                        <tbody id="propertiesTable">
                             % for prop in tree_info['node_props']:
-                            <option value="{{ prop }}">{{ prop }}</option>
+                            <tr>
+                                <td><input type="checkbox" class="selectProperty" value="{{prop}}"></td>
+                                <td>{{prop}}</td>
+                                <td class="propType">{{tree_info['prop2type'][prop]}}</td>
+                            </tr>
                             % end
+                        </tbody>
+                    </table>
+        
+                    <button id="applyLayoutBtn" class="btn btn-primary mt-3">Select Layout</button>
+        
+                    <!-- Layout Configuration Section -->
+                    <div id="layoutConfigSection" class="layout-settings mt-3">
+                        <h5>Configure Layout</h5>
+                        <select class="form-control" id="layout" name="layout">
+                            <optgroup label="Categorical">
+                                <option value="colorbranch-layout">Color Branch Layout</option>
+                                <option value="label-layout">Label Layout</option>
+                                <option value="rectangle-layout">Rectangular Layout</option>
+                                <option value="categorical-bubble-layout">Bubble Layout</option>
+                                <option value="background-layout">Background Layout</option>
+                                <option value="categorical-matrix-layout">Categorical Matrix Layout</option>
+                                <option value="piechart-layout">Piechart Layout</option>
+                                <option value="profiling-layout">Profiling Layout</option>
+                            </optgroup>
+                            <optgroup label="Binary">
+                                <option value="binary-layout">Binary Layout</option>
+                            </optgroup>
+                            <optgroup label="Numerical">
+                                <option value="branchscore-layout">Color Branch Layout</option>
+                                <option value="heatmap-layout">Heatmap Layout</option>
+                                <option value="heatmap-mean-layout">Heatmap Mean Layout</option>
+                                <option value="heatmap-zscore-layout">Heatmap Z-Score Layout</option>
+                                <option value="barplot-layout">Barplot Layout</option>
+                                <option value="numerical-matrix-layout">Numerical Matrix Layout</option>
+                                <option value="numerical-bubble-layout">Bubble Layout</option>
+                            </optgroup>
+                            <optgroup label="Analytic">
+                                <option value="acr-discrete-layout">ACR Discrete Layout</option>
+                                <option value="acr-continuous-layout">ACR Continuous Layout</option>
+                                <option value="ls-layout">LS Layout</option>
+                            </optgroup>
+                            <optgroup label="Taxonomy">
+                                <option value="taxonclade-layout">Taxon Clade Layout</option>
+                                <option value="taxonrectangle-layout">Taxon Rectangle Layout</option>
+                                <option value="taxoncollapse-layout">Taxon Collapse Layout</option>
+                            </optgroup>
+                            <option value="emapper-layout">EggNOG-mapper Layout</option>
+                            <option value="domain-layout">Domain Layout</option>
+                            <option value="alignment-layout">Alignment Layout</option>
                         </select>
-                    </div>
-                </div>
-
-                <!-- Alignment settings -->
-                <div id="alignmentSettings" class="form-group mt-3" style="display: none;">
-                    <label for="alignmentType">Alignment window:</label>
-                    <div class="row">
-                        <div class="col-md-4">
-                            <label for="alignment">Start</label>
-                            <input type="number" class="form-control" id="algStart" name="algStart"
-                                placeholder="Enter start pos">
+                        
+                        <div id="layoutSettings" class="form-group mt-3">
+                            <h5>General Settings</h5>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <!-- Add additional layout-specific settings here -->
+                                    <label for="columnWidth">Col Width</label>
+                                    <input type="number" id="columnWidth" name="columnWidth" class="form-control" placeholder="Enter column width" value="70">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="paddingX">Padding X</label>
+                                    <input type="number" class="form-control" id="paddingX" name="paddingX"
+                                        placeholder="Enter padding X" value="1">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="paddingY">Padding Y</label>
+                                    <input type="number" class="form-control" id="paddingY" name="paddingY"
+                                        placeholder="Enter padding Y" value="0">
+                                </div>
+                            </div>
+                            <!-- Numerical-Specific Settings -->
+                            <div id="internalNumerical" class="form-group mt-3" style="display: none;">
+                                <label for="internalNumRep">Internal Number Representation</label>
+                                <select class="form-control" id="internalNumRep" name="internalNumRep">
+                                    <option value="avg">Average</option>
+                                    <option value="sum">Sum</option>
+                                    <option value="max">Maximum</option>
+                                    <option value="min">Minimum</option>
+                                    <option value="std">Standard Deviation</option>
+                                    <option value="none">None</option>
+                                </select>
+                            </div>
+            
+                            <!-- Categorical Layout Settings -->
+                            <div id="categoricalSettings" class="form-group mt-3" style="display: none;">
+                                <label for="props">Color Scheme</label>
+                                <select class="form-control" id="categoricalColorscheme" name="categoricalColorscheme">
+                                    % for colormap in color_schemes:
+                                    <option value="{{ colormap }}">{{ colormap }}</option>
+                                    % end
+                                </select>
+                            </div>
+            
+                            <!-- Binary layout settings -->
+                            <div id="binarySettings" class="form-group mt-3" style="display: none;">
+                                <h5>Settings for Binary Layout</h5>
+            
+                                <!-- Unicolor Option -->
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="unicolor" id="unicolorOption"
+                                        name="unicolorOption">
+                                    <label class="form-check-label" for="unicolorOption">
+                                        Use Unicolor
+                                    </label>
+                                </div>
+            
+                                <!-- Unicolor Color Picker (Only visible when Unicolor is checked) -->
+                                <div id="unicolorPicker" class="form-group mt-2" style="display: none;">
+                                    <label for="unicolorColor">Select Unicolor:</label>
+                                    <input type="color" id="unicolorColor" name="unicolorColor" class="form-control"
+                                        value="#0000ff">
+                                </div>
+            
+                                <!-- Color Scheme Dropdown (Only visible when Unicolor is unchecked) -->
+                                <div id="binaryColorScheme" class="form-group mt-2" style="display: block;">
+                                    <label for="binaryColorSchemeSelect">Select Color Scheme:</label>
+                                    <select class="form-control" id="binaryColorSchemeSelect" name="binaryColorScheme">
+                                        % for colormap in color_schemes:
+                                        <option value="{{ colormap }}">{{ colormap }}</option>
+                                        % end
+                                    </select>
+                                </div>
+            
+                                <!-- Aggregate Option as Dropdown -->
+                                <div id="aggregateSettings" class="form-group mt-2">
+                                    <label for="aggregateOption">Summary for Collapsed Nodes: </label>
+                                    <select class="form-control" id="aggregateOption" name="aggregateOption">
+                                        <option value="gradient">Gradient</option>
+                                        <option value="aggregate">Aggregate</option>
+                                    </select>
+                                </div>
+                            </div>
+            
+                            <!-- Numerical Settings Section -->
+                            <div id="numericalSettings" class="form-group mt-3" style="display: none;">
+                                <label for="minVal">Minimum Value (Auto detected if it is empty):</label>
+                                <input type="number" class="form-control" id="minVal" name="min_val"
+                                    placeholder="Enter min value">
+            
+                                <label for="maxVal" class="mt-2">Maximum Value (Auto detected if it is empty):</label>
+                                <input type="number" class="form-control" id="maxVal" name="max_val"
+                                    placeholder="Enter max value">
+            
+                                <!-- Color Selection -->
+                                <div class="form-row mt-2">
+                                    <div class="col">
+                                        <label for="colorMin">Color Min:</label>
+                                        <input type="color" class="form-control" id="colorMin" name="color_min" value="#0000ff">
+                                    </div>
+                                    <div class="col">
+                                        <label for="colorMid">Color Mid:</label>
+                                        <input type="color" class="form-control" id="colorMid" name="color_mid" value="#ffffff">
+                                    </div>
+                                    <div class="col">
+                                        <label for="colorMax">Color Max:</label>
+                                        <input type="color" class="form-control" id="colorMax" name="color_max" value="#ff0000">
+                                    </div>
+                                </div>
+                            </div>
+            
+                            <!-- Barplot -->
+                            <div id="barplotOptions" class="form-group mt-3" style="display: none;">
+                                <label for="barplotWidth">Barplot Column Width (px):</label>
+                                <input type="number" class="form-control" id="barplotWidth" name="barplotWidth"
+                                    placeholder="Enter width" value="200">
+            
+            
+                                <label for="barplotScaleProperty" class="mt-2">Scale Based On Property:</label>
+                                <select class="form-control" id="barplotScaleProperty" name="barplotScaleProperty">
+                                </select>
+            
+                                <label for="barplotRange" class="mt-2">Custom Barplot Scale (Max Value):</label>
+                                <input type="number" class="form-control" id="barplotRange" name="barplotRange"
+                                    placeholder="Enter max value for the property">
+            
+                                <label for="barplotColorOption" class="mt-2">Barplot Color:</label>
+                                <select class="form-control" id="barplotColorOption" name="barplotColorOption">
+                                    <option value="same">Color Scheme</option>
+                                    <option value="colorby">Fill by Property</option>
+                                </select>
+            
+                                <!-- Conditional color selector or property selector -->
+                                <div id="barplotColorSettings" class="mt-2">
+                                    <!-- Color input for 'same' option -->
+                                    <div class="form-group mt-3">
+                                        <label for="barplotColor">Barplot Color</label>
+                                        <select class="form-control" id="barplotColorScheme" name="barplotColorScheme">
+                                            % for colormap in color_schemes:
+                                            <option value="{{ colormap }}">{{ colormap }}</option>
+                                            % end
+                                        </select>
+                                    </div>
+            
+                                    <!-- Property dropdown for 'colorby' option -->
+                                    <select class="form-control" id="barplotFillProperty" name="barplotFillProperty"
+                                        style="display: none;">
+                                        % for prop in tree_info['node_props']:
+                                        <option value="{{ prop }}">{{ prop }}</option>
+                                        % end
+                                    </select>
+                                </div>
+                            </div>
+            
+                            <!-- Alignment settings -->
+                            <div id="alignmentSettings" class="form-group mt-3" style="display: none;">
+                                <label for="alignmentType">Alignment window:</label>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <label for="alignment">Start</label>
+                                        <input type="number" class="form-control" id="algStart" name="algStart"
+                                            placeholder="Enter start pos">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="alignment">End</label>
+                                        <input type="number" class="form-control" id="algEnd" name="algEnd"
+                                            placeholder="Enter end pos">
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-4">
-                            <label for="alignment">End</label>
-                            <input type="number" class="form-control" id="algEnd" name="algEnd"
-                                placeholder="Enter end pos">
-                        </div>
+                        <button id="addLayerBtn" class="btn btn-success mt-3">Add Layout</button>
                     </div>
                 </div>
             </div>
-            <button id="addLayerBtn" class="btn btn-success mt-3">Add Layout</button>
         </div>
 
         <!-- Non-Properties-Based Layouts -->
-        <h5 class="mt-4">Activate Pre-Annotated Layouts</h5>
-        % if tree_info['taxonomic_annotation']:
-        <h6>Taxonomic Layouts</h6>
-        <select id="taxonomicLayoutSelect" class="form-control mb-2">
-            <option value="taxonclade-layout">Taxon Clade Layout</option>
-            <option value="taxonrectangle-layout">Taxon Rectangle Layout</option>
-            <option value="taxoncollapse-layout">Taxon Collapse Layout</option>
-        </select>
-        <button id="activateTaxonomicLayout" class="btn btn-success mb-3">Activate Taxonomic Layout</button>
-        % end
-
-        % if tree_info['alignment_annotation']:
-        <button id="activateAlignmentLayout" class="btn btn-success mb-3">Activate Alignment Layout</button>
-        % end
-
-        % if tree_info['domain_annotation']:
-        <button id="activateDomainLayout" class="btn btn-success mb-3">Activate Domain Layout</button>
-        % end
-
-        <!-- Refresh button -->
-        <div class="control-panel-footer mt-4">
-            <button class="btn btn-primary" onclick="window.location.reload();">Refresh</button>
-            <button class="btn btn-secondary" id="fullscreenBtn">Fullscreen</button>
+        <div class="card mt-3">
+            <div class="card-header">
+                <button class="btn d-flex align-items-center w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#preAnnotatedCard" aria-expanded="false" aria-controls="preAnnotatedCard">
+                    Activate Pre-Annotated Layouts
+                    <span id="preAnnotatedCardArrow" class="ms-auto">&#x25BC;</span>
+                </button>
+            </div>
+            <div id="preAnnotatedCard" class="collapse">
+                <div class="card-body">
+                    % if tree_info['taxonomic_annotation']:
+                    <h6>Taxonomic Layouts</h6>
+                    <select id="taxonomicLayoutSelect" class="form-control mb-2">
+                        <option value="taxonclade-layout">Taxon Clade Layout</option>
+                        <option value="taxonrectangle-layout">Taxon Rectangle Layout</option>
+                        <option value="taxoncollapse-layout">Taxon Collapse Layout</option>
+                    </select>
+                    <button id="activateTaxonomicLayout" class="btn btn-success mb-3">Activate Taxonomic Layout</button>
+                    % end
+        
+                    % if tree_info['alignment_annotation']:
+                    <button id="activateAlignmentLayout" class="btn btn-success mb-3">Activate Alignment Layout</button>
+                    % end
+        
+                    % if tree_info['domain_annotation']:
+                    <button id="activateDomainLayout" class="btn btn-success mb-3">Activate Domain Layout</button>
+                    % end
+                </div>
+            </div>
         </div>
     </div>
     
@@ -320,6 +338,7 @@
         </div>
     </div>
     <script>
+        // this is for the layout configuration section
         // Track selected properties
         let layers = [];
         const selectedProperties = [];
@@ -482,14 +501,8 @@
             });
         });
 
-        // Handle activation of taxonomic layouts
-        $('#activateTaxonomicLayout').click(() => {
-            const selectedTaxonomicLayout = $('#taxonomicLayoutSelect').val();
-            if (!selectedTaxonomicLayout) {
-                alert('Please select a taxonomic layout.');
-                return;
-            }
-            const layer = { layout: selectedTaxonomicLayout, props: [] }; // No properties for taxonomic layouts
+        function activateLayout(layoutName) {
+            const layer = { layout: layoutName, props: [] }; // No properties for these layouts
             layers.push(layer);
 
             const layersData = JSON.stringify(layers);
@@ -497,7 +510,7 @@
             const paddingX = document.getElementById("paddingX").value || null;
             const paddingY = document.getElementById("paddingY").value || null;
             let internalNumRep = null;
-            
+
             const formData = {
                 layers: layersData,
                 column_width: columnWidth,
@@ -505,82 +518,27 @@
                 padding_y: paddingY,
                 internal_num_rep: internalNumRep
             };
+
             $.post(
                 '/explore_tree/{{treename}}',
                 formData,
                 (response) => {
-                    console.log('Taxonomic layout activated:', response);
+                    console.log(`${layoutName} activated:`, response);
                     window.location.reload();
                 }
             ).fail((error) => {
-                console.error('Error activating taxonomic layout:', error);
-                alert('Failed to activate layout. Please try again.');
+                console.error(`Error activating ${layoutName}:`, error);
+                alert(`Failed to activate ${layoutName}. Please try again.`);
             });
-        });
+        }
 
-        // Handle activation of alignment layouts
-        $('#activateAlignmentLayout').click(() => {
-            const layer = { layout: 'alignment-layout', props: [] }; // No properties for alignment layouts
-            layers.push(layer);
-
-            const layersData = JSON.stringify(layers);
-            const columnWidth = $('#columnWidth').val();
-            const paddingX = document.getElementById("paddingX").value || null;
-            const paddingY = document.getElementById("paddingY").value || null;
-            let internalNumRep = null;
-            
-            const formData = {
-                layers: layersData,
-                column_width: columnWidth,
-                padding_x: paddingX,
-                padding_y: paddingY,
-                internal_num_rep: internalNumRep
-            };
-            $.post(
-                '/explore_tree/{{treename}}',
-                formData,
-                (response) => {
-                    console.log('Alignment layout activated:', response);
-                    window.location.reload();
-                }
-            ).fail((error) => {
-                console.error('Error activating alignment layout:', error);
-                alert('Failed to activate layout. Please try again.');
-            });
-        });
-
-        // Handle activation of domain layouts
-        $('#activateDomainLayout').click(() => {
-            const layer = { layout: 'domain-layout', props: [] }; // No properties for domain layouts
-            layers.push(layer);
-
-            const layersData = JSON.stringify(layers);
-            const columnWidth = $('#columnWidth').val();
-            const paddingX = document.getElementById("paddingX").value || null;
-            const paddingY = document.getElementById("paddingY").value || null;
-            let internalNumRep = null;
-            
-            const formData = {
-                layers: layersData,
-                column_width: columnWidth,
-                padding_x: paddingX,
-                padding_y: paddingY,
-                internal_num_rep: internalNumRep
-            };
-            $.post(
-                '/explore_tree/{{treename}}',
-                formData,
-                (response) => {
-                    console.log('Domain layout activated:', response);
-                    window.location.reload();
-                }
-            ).fail((error) => {
-                console.error('Error activating domain layout:', error);
-                alert('Failed to activate layout. Please try again.');
-            });
-        });
+        // Usage
+        $('#activateTaxonomicLayout').click(() => activateLayout($('#taxonomicLayoutSelect').val()));
+        $('#activateAlignmentLayout').click(() => activateLayout('alignment-layout'));
+        $('#activateDomainLayout').click(() => activateLayout('domain-layout'));
     </script>
     <script>
+        // this is for layout toggle settings
         $(document).ready(function (){
             setupEventListeners();
         });
@@ -688,7 +646,21 @@
         };
     </script>
     <script>
-        <!-- Fullscreen Button Script -->
+        // this is for control panel collapse settings
+        document.addEventListener('DOMContentLoaded', () => {
+            const propertiesCard = document.getElementById('propertiesCard');
+            const propertiesCardArrow = document.getElementById('propertiesCardArrow');
+    
+            propertiesCard.addEventListener('show.bs.collapse', () => {
+                propertiesCardArrow.innerHTML = '&#x25B2;'; // Upward arrow
+            });
+    
+            propertiesCard.addEventListener('hide.bs.collapse', () => {
+                propertiesCardArrow.innerHTML = '&#x25BC;'; // Downward arrow
+            });
+        });
+
+        // this is for fullscreen settings
         const togglebtn = document.getElementById("fullscreenBtn");
         const iframe = document.getElementById("treeIframe");
 

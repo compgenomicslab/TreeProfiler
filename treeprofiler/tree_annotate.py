@@ -1635,7 +1635,7 @@ def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field
         tree.set_species_naming_function(return_spcode_ncbi)
         ncbi.annotate_tree(tree, taxid_attr="species", ignore_unclassified=ignore_unclassified)
         for n in tree.traverse():
-            if n.props.get('lineage'):
+            if n.props.get('lineage') and n.props.get('lineage') != ['']:
                 lca_dict = {}
                 #for taxa in n.props.get("lineage"):
                 lineage2rank = ncbi.get_rank(n.props.get("lineage"))
