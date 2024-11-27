@@ -340,7 +340,10 @@ def process_upload_job(job_args):
         'node_props': node_props,
         'annotated_tree': annotated_newick,
         'prop2type': prop2type,
-        'layouts': []
+        'layouts': [],
+        'taxonomic_annotation': True if job_args.get("taxon_column") else False,
+        'alignment_annotation': True if alignment_file_path else False,
+        'domain_annotation': True if pfam_file_path else False,
     }
 
     # Cleanup temporary alignment file after usage

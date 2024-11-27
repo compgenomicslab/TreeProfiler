@@ -276,6 +276,27 @@
             </div>
             <button id="addLayerBtn" class="btn btn-primary mt-3">Add Layout</button>
         </div>
+
+        <!-- Non-Properties-Based Layouts -->
+        <h5 class="mt-4">Activate Pre-Annotated Layouts</h5>
+        % if tree_info['taxonomic_annotation']:
+        <h6>Taxonomic Layouts</h6>
+        <select id="taxonomicLayoutSelect" class="form-control mb-2">
+            <option value="taxonclade-layout">Taxon Clade Layout</option>
+            <option value="taxonrectangle-layout">Taxon Rectangle Layout</option>
+            <option value="taxoncollapse-layout">Taxon Collapse Layout</option>
+        </select>
+        <button id="activateTaxonomicLayout" class="btn btn-secondary mb-3">Activate Taxonomic Layout</button>
+        % end
+
+        % if tree_info['alignment_annotation']:
+        <button id="activateAlignmentLayout" class="btn btn-secondary mb-3">Activate Alignment Layout</button>
+        % end
+
+        % if tree_info['domain_annotation']:
+        <button id="activateDomainLayout" class="btn btn-secondary mb-3">Activate Domain Layout</button>
+        % end
+
     </div>
 
     <!-- Main Content -->
@@ -452,6 +473,104 @@
             ).fail((error) => {
                 console.error('Error adding layout:', error);
                 alert('Failed to add layout. Please try again.');
+            });
+        });
+
+        // Handle activation of taxonomic layouts
+        $('#activateTaxonomicLayout').click(() => {
+            const selectedTaxonomicLayout = $('#taxonomicLayoutSelect').val();
+            if (!selectedTaxonomicLayout) {
+                alert('Please select a taxonomic layout.');
+                return;
+            }
+            const layer = { layout: selectedTaxonomicLayout, props: [] }; // No properties for taxonomic layouts
+            layers.push(layer);
+
+            const layersData = JSON.stringify(layers);
+            const columnWidth = $('#columnWidth').val();
+            const paddingX = document.getElementById("paddingX").value || null;
+            const paddingY = document.getElementById("paddingY").value || null;
+            let internalNumRep = null;
+            
+            const formData = {
+                layers: layersData,
+                column_width: columnWidth,
+                padding_x: paddingX,
+                padding_y: paddingY,
+                internal_num_rep: internalNumRep
+            };
+            $.post(
+                '/explore_tree/{{treename}}',
+                formData,
+                (response) => {
+                    console.log('Taxonomic layout activated:', response);
+                    window.location.reload();
+                }
+            ).fail((error) => {
+                console.error('Error activating taxonomic layout:', error);
+                alert('Failed to activate layout. Please try again.');
+            });
+        });
+
+        // Handle activation of alignment layouts
+        $('#activateAlignmentLayout').click(() => {
+            const layer = { layout: 'alignment-layout', props: [] }; // No properties for alignment layouts
+            layers.push(layer);
+
+            const layersData = JSON.stringify(layers);
+            const columnWidth = $('#columnWidth').val();
+            const paddingX = document.getElementById("paddingX").value || null;
+            const paddingY = document.getElementById("paddingY").value || null;
+            let internalNumRep = null;
+            
+            const formData = {
+                layers: layersData,
+                column_width: columnWidth,
+                padding_x: paddingX,
+                padding_y: paddingY,
+                internal_num_rep: internalNumRep
+            };
+            $.post(
+                '/explore_tree/{{treename}}',
+                formData,
+                (response) => {
+                    console.log('Alignment layout activated:', response);
+                    window.location.reload();
+                }
+            ).fail((error) => {
+                console.error('Error activating alignment layout:', error);
+                alert('Failed to activate layout. Please try again.');
+            });
+        });
+
+        // Handle activation of domain layouts
+        $('#activateDomainLayout').click(() => {
+            const layer = { layout: 'domain-layout', props: [] }; // No properties for domain layouts
+            layers.push(layer);
+
+            const layersData = JSON.stringify(layers);
+            const columnWidth = $('#columnWidth').val();
+            const paddingX = document.getElementById("paddingX").value || null;
+            const paddingY = document.getElementById("paddingY").value || null;
+            let internalNumRep = null;
+            
+            const formData = {
+                layers: layersData,
+                column_width: columnWidth,
+                padding_x: paddingX,
+                padding_y: paddingY,
+                internal_num_rep: internalNumRep
+            };
+            $.post(
+                '/explore_tree/{{treename}}',
+                formData,
+                (response) => {
+                    console.log('Domain layout activated:', response);
+                    window.location.reload();
+                }
+            ).fail((error) => {
+                console.error('Error activating domain layout:', error);
+                alert('Failed to activate layout. Please try again.');
             });
         });
     </script>
