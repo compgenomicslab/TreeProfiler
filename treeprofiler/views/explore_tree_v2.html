@@ -41,7 +41,7 @@
         <div class="card mt-3">
             <div class="card-header">
                 <button class="btn d-flex align-items-center w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#propertiesCard" aria-expanded="false" aria-controls="propertiesCard">
-                    Layout settings
+                    Metadata-Based Layouts Settings
                     <span id="propertiesCardArrow" class="ms-auto">&#x25BC;</span> <!-- Downward arrow initially -->
                 </button>
             </div>
@@ -72,8 +72,9 @@
                         </tbody>
                     </table>
         
-                    <button id="applyLayoutBtn" class="btn btn-primary mt-3">Select Layout</button>
-        
+                    <div class="text-center mt-4">
+                        <button id="addLayerBtn" class="btn btn-success w-100 py-2">Add Layout</button>
+                    </div>
                     <!-- Layout Configuration Section -->
                     <div id="layoutConfigSection" class="layout-settings mt-3">
                         <h5>Configure Layout</h5>
@@ -119,21 +120,19 @@
                             <h5>General Settings</h5>
                             <div class="row">
                                 <div class="col-md-4">
-                                    <!-- Add additional layout-specific settings here -->
                                     <label for="columnWidth">Col Width</label>
-                                    <input type="number" id="columnWidth" name="columnWidth" class="form-control" placeholder="Enter column width" value="70">
+                                    <input type="number" id="columnWidth" name="columnWidth" class="form-control" value="70">
                                 </div>
                                 <div class="col-md-4">
                                     <label for="paddingX">Padding X</label>
-                                    <input type="number" class="form-control" id="paddingX" name="paddingX"
-                                        placeholder="Enter padding X" value="1">
+                                    <input type="number" class="form-control" id="paddingX" name="paddingX" value="1">
                                 </div>
                                 <div class="col-md-4">
                                     <label for="paddingY">Padding Y</label>
-                                    <input type="number" class="form-control" id="paddingY" name="paddingY"
-                                        placeholder="Enter padding Y" value="0">
+                                    <input type="number" class="form-control" id="paddingY" name="paddingY" value="0">
                                 </div>
                             </div>
+
                             <!-- Numerical-Specific Settings -->
                             <div id="internalNumerical" class="form-group mt-3" style="display: none;">
                                 <label for="internalNumRep">Internal Number Representation</label>
@@ -266,7 +265,52 @@
                                     </select>
                                 </div>
                             </div>
-            
+        
+                        </div>
+                        <div class="text-center mt-4">
+                            <button id="addLayerBtn" class="btn btn-success w-100 py-2">Add Layout</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Non-Properties-Based Layouts -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <button class="btn d-flex align-items-center w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#preAnnotatedCard" aria-expanded="false" aria-controls="preAnnotatedCard">
+                    Activate Predefined Layouts
+                    <span id="preAnnotatedCardArrow" class="ms-auto">&#x25BC;</span>
+                </button>
+            </div>
+            <div id="preAnnotatedCard" class="collapse">
+                <div class="card-body">
+        
+                    <!-- Taxonomic Layouts Subcard -->
+                    % if tree_info['taxonomic_annotation']:
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h6 class="mb-0">Taxonomic Layouts</h6>
+                        </div>
+                        <div class="card-body">
+                            <select id="taxonomicLayoutSelect" class="form-control mb-2">
+                                <option value="taxonclade-layout">Taxon Clade Layout</option>
+                                <option value="taxonrectangle-layout">Taxon Rectangle Layout</option>
+                                <option value="taxoncollapse-layout">Taxon Collapse Layout</option>
+                            </select>
+                            <button id="activateTaxonomicLayout" class="btn btn-success w-100">Activate Taxonomic Layout</button>
+                        </div>
+                    </div>
+                    % end
+        
+                    <!-- Alignment Layouts Subcard -->
+                    % if tree_info['alignment_annotation']:
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h6 class="mb-0">Alignment Layouts</h6>
+                        </div>
+                        
+                        <div class="card-body">
                             <!-- Alignment settings -->
                             <div id="alignmentSettings" class="form-group mt-3" style="display: none;">
                                 <label for="alignmentType">Alignment window:</label>
@@ -283,43 +327,27 @@
                                     </div>
                                 </div>
                             </div>
+                            <button id="activateAlignmentLayout" class="btn btn-success w-100">Activate Alignment Layout</button>
                         </div>
-                        <button id="addLayerBtn" class="btn btn-success mt-3">Add Layout</button>
                     </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Non-Properties-Based Layouts -->
-        <div class="card mt-3">
-            <div class="card-header">
-                <button class="btn d-flex align-items-center w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#preAnnotatedCard" aria-expanded="false" aria-controls="preAnnotatedCard">
-                    Activate Pre-Annotated Layouts
-                    <span id="preAnnotatedCardArrow" class="ms-auto">&#x25BC;</span>
-                </button>
-            </div>
-            <div id="preAnnotatedCard" class="collapse">
-                <div class="card-body">
-                    % if tree_info['taxonomic_annotation']:
-                    <h6>Taxonomic Layouts</h6>
-                    <select id="taxonomicLayoutSelect" class="form-control mb-2">
-                        <option value="taxonclade-layout">Taxon Clade Layout</option>
-                        <option value="taxonrectangle-layout">Taxon Rectangle Layout</option>
-                        <option value="taxoncollapse-layout">Taxon Collapse Layout</option>
-                    </select>
-                    <button id="activateTaxonomicLayout" class="btn btn-success mb-3">Activate Taxonomic Layout</button>
                     % end
         
-                    % if tree_info['alignment_annotation']:
-                    <button id="activateAlignmentLayout" class="btn btn-success mb-3">Activate Alignment Layout</button>
-                    % end
-        
+                    <!-- Domain Layouts Subcard -->
                     % if tree_info['domain_annotation']:
-                    <button id="activateDomainLayout" class="btn btn-success mb-3">Activate Domain Layout</button>
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h6 class="mb-0">Domain Layouts</h6>
+                        </div>
+                        <div class="card-body">
+                            <button id="activateDomainLayout" class="btn btn-success w-100">Activate Domain Layout</button>
+                        </div>
+                    </div>
                     % end
+        
                 </div>
             </div>
         </div>
+        
     </div>
     
 
