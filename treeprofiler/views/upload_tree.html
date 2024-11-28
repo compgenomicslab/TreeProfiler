@@ -327,8 +327,6 @@
 
         if (treeFile) {
             await uploadFileInChunks(treeFile, 'treeFile', treename);
-        } else if (treeTextarea) {
-            formData.append("tree", treeTextarea);
         } else {
             alert("Please provide tree data in Newick format or upload a file.");
             return;

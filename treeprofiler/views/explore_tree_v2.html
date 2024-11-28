@@ -73,7 +73,7 @@
                     </table>
         
                     <div class="text-center mt-4">
-                        <button id="addLayerBtn" class="btn btn-success w-100 py-2">Add Layout</button>
+                        <button id="selectLayoutBtn" class="btn btn-primary w-100 py-2">Select Layout</button>
                     </div>
                     <!-- Layout Configuration Section -->
                     <div id="layoutConfigSection" class="layout-settings mt-3">
@@ -305,29 +305,31 @@
         
                     <!-- Alignment Layouts Subcard -->
                     % if tree_info['alignment_annotation']:
-                    <div class="card mb-3">
-                        <div class="card-header">
-                            <h6 class="mb-0">Alignment Layouts</h6>
+                    <div class="card mb-3 shadow-sm">
+                        <div class="card-header d-flex align-items-center justify-content-between">
+                            <h6 class="mb-0 text-primary">Alignment Layouts</h6>
+                            <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#alignmentLayoutsBody" aria-expanded="true" aria-controls="alignmentLayoutsBody">
+                                &#x25BC; <!-- Down arrow -->
+                            </button>
                         </div>
-                        
-                        <div class="card-body">
-                            <!-- Alignment settings -->
-                            <div id="alignmentSettings" class="form-group mt-3" style="display: none;">
-                                <label for="alignmentType">Alignment window:</label>
-                                <div class="row">
-                                    <div class="col-md-4">
-                                        <label for="alignment">Start</label>
-                                        <input type="number" class="form-control" id="algStart" name="algStart"
-                                            placeholder="Enter start pos">
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label for="alignment">End</label>
-                                        <input type="number" class="form-control" id="algEnd" name="algEnd"
-                                            placeholder="Enter end pos">
+                        <div id="alignmentLayoutsBody" class="collapse show">
+                            <div class="card-body">
+                                <!-- Alignment settings -->
+                                <div id="alignmentSettings" class="form-group">
+                                    <label for="alignmentType" class="fw-bold mb-2">Alignment Window:</label>
+                                    <div class="row g-2">
+                                        <div class="col-md-6">
+                                            <label for="algStart" class="form-label small">Start</label>
+                                            <input type="number" class="form-control form-control-sm" id="algStart" name="algStart" placeholder="Start position">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="algEnd" class="form-label small">End</label>
+                                            <input type="number" class="form-control form-control-sm" id="algEnd" name="algEnd" placeholder="End position">
+                                        </div>
                                     </div>
                                 </div>
+                                <button id="activateAlignmentLayout" class="btn btn-success w-100 mt-3 fw-bold">Activate Alignment Layout</button>
                             </div>
-                            <button id="activateAlignmentLayout" class="btn btn-success w-100">Activate Alignment Layout</button>
                         </div>
                     </div>
                     % end
@@ -348,6 +350,10 @@
             </div>
         </div>
         
+        <div class="control-panel-footer mt-4">
+            <button class="btn btn-primary" onclick="window.location.reload();">Refresh</button>
+            <button class="btn btn-secondary" id="fullscreenBtn">Fullscreen</button>
+        </div>
     </div>
     
 
@@ -397,7 +403,7 @@
         });
     
         // Show Layout Config Section
-        $('#applyLayoutBtn').click(() => {
+        $('#selectLayoutBtn').click(() => {
             if (selectedProperties.length === 0) {
                 alert('Please select at least one property.');
                 return;
@@ -438,8 +444,8 @@
             const barplotFillProperty = document.getElementById('barplotFillProperty').value;
 
             // alignment layout settings
-            const algStart = document.getElementById('algStart').value;
-            const algEnd = document.getElementById('algEnd').value;
+            const algStart = document.getElementById('algStart')?.value || null;
+            const algEnd = document.getElementById('algEnd')?.value || null;
             const props = selectedProperties;
             const layout = $('#layout').val();
             if (!layout) {
@@ -530,8 +536,28 @@
         });
 
         function activateLayout(layoutName) {
-            const layer = { layout: layoutName, props: [] }; // No properties for these layouts
-            layers.push(layer);
+            if (layoutName === 'alignment-layout') {
+                const algStart = document.getElementById('algStart')?.value || null;
+                const algEnd = document.getElementById('algEnd')?.value || null;
+
+                // Add the layer only if both algStart and algEnd are not null
+                if (algStart !== null && algEnd !== null) {
+                    const layer = {
+                        layout: layoutName,
+                        props: [],
+                        algStart,
+                        algEnd
+                    };
+                    layers.push(layer);
+                } else {
+                    const layer = { layout: layoutName, props: [] };
+                    layers.push(layer);
+                }
+            } else {
+                const layer = { layout: layoutName, props: [] }; // No properties for these layouts
+                layers.push(layer);
+            };
+
 
             const layersData = JSON.stringify(layers);
             const columnWidth = $('#columnWidth').val();
