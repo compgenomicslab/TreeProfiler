@@ -350,6 +350,72 @@
             </div>
         </div>
         
+        <!-- Custom Query Card -->
+        <div class="card mt-3 shadow-sm">
+            <div class="card-header">
+                <button class="btn d-flex align-items-center w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#customQueryCardBody" aria-expanded="false" aria-controls="customQueryCardBody">
+                    Custom Query
+                    <span id="customQueryCardArrow" class="ms-auto">&#x25BC; <!-- Down arrow --></span>
+                    
+                </button>
+            </div>
+            <div id="customQueryCardBody" class="collapse">
+                <div class="card-body">
+                    <div class="form-group">
+                        <label for="customQueryType">Select Query Type:</label>
+                        <select class="form-control" id="customQueryType" name="customQueryType">
+                            <option value=""></option>
+                            <option value="highlight">Highlight</option>
+                            <option value="collapse">Collapse</option>
+                            <option value="prune">Prune</option>
+                            <option value="rank_limit">Rank Limit (for taxonomic trees only)</option>
+                        </select>
+                    </div>
+                    <div id="queryFields" class="form-group mt-3">
+                        <label for="queryProp">Property</label>
+                        <select class="form-control" id="queryProp" name="queryProp">
+                            % for prop in selected_props:
+                            <option value="{{ prop }}">{{ prop }}</option>
+                            % end
+                        </select>
+                        <label for="queryOperation" class="mt-2">Operation</label>
+                        <select class="form-control" id="queryOperation" name="queryOperation">
+                            <option value="=">Equals</option>
+                            <option value="!=">Not Equals</option>
+                            <option value="contains">Contains</option>
+                            <option value="&gt;">Greater Than</option>
+                            <option value="&lt;">Less Than</option>
+                        </select>
+                        <label for="queryValue" class="mt-2">Value</label>
+                        <input type="text" class="form-control" id="queryValue" name="queryValue" placeholder="Enter value">
+                        <div class="btn-group mt-3">
+                            <button type="button" class="btn btn-secondary" id="addQueryBtn">ADD</button>
+                            <button type="button" class="btn btn-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                                <span class="visually-hidden">Toggle Dropdown</span>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#" id="addWithAnd">Add with AND</a></li>
+                                <li><a class="dropdown-item" href="#" id="addWithOr">Add with OR</a></li>
+                            </ul>
+                        </div>
+                        <textarea class="form-control mt-3" id="queryBox" name="queryBox" rows="3" readonly></textarea>
+                        <small><a href="#" id="clearQueryBox" class="text-danger">Clear Query</a></small>
+                    </div>
+                    <div id="taxonomicOptions" class="form-group mt-3" style="display:none">
+                        <label for="rankSelection" class="form-label">Select Taxonomic Rank</label>
+                        <select id="rankSelection" name="taxonomicRanks" class="form-control">
+                            <option value="Kingdom">Kingdom</option>
+                            <option value="Phylum">Phylum</option>
+                            <option value="Class">Class</option>
+                            <option value="Order">Order</option>
+                            <option value="Family">Family</option>
+                            <option value="Genus">Genus</option>
+                            <option value="Species">Species</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="control-panel-footer mt-4">
             <button class="btn btn-primary" onclick="window.location.reload();">Refresh</button>
             <button class="btn btn-secondary" id="fullscreenBtn">Fullscreen</button>
@@ -697,7 +763,106 @@
                     $('#generalSettings').show();
                 }
             });
+            
+            document.getElementById('customQueryType').addEventListener('change', toggleQueryFields);
+            document.getElementById('clearQueryBox').addEventListener('click', clearQueryBox);
+            document.getElementById('addQueryBtn').addEventListener('click', addInitialQueryPart);
         };
+    </script>
+    <script>
+        // this is for custom query settings
+        /*********************
+         * Query Management Functions
+         *********************/
+        let queryParts = [];
+        document.getElementById('addWithAnd').addEventListener('click', function () {
+            document.getElementById('addQueryBtn').innerText = 'AND';
+        });
+
+        document.getElementById('addWithOr').addEventListener('click', function () {
+            document.getElementById('addQueryBtn').innerText = 'OR';
+        });
+
+        function resetQueryButton() {
+            document.getElementById('addQueryBtn').innerText = 'ADD';
+            queryParts = [];
+            document.getElementById('queryBox').value = '';
+        }
+
+        function addInitialQueryPart() {
+            // Check if the queryBox is empty
+            if (document.getElementById('queryBox').value === '') {
+                // Pass the operator to addQueryPart
+                addQueryPart();
+            } else{
+                // Get the operator from the Add Query button's inner text
+                const operator = document.getElementById('addQueryBtn').innerText.trim();
+                if (operator === 'AND' || operator === 'OR') {
+                    addQueryPart(operator);
+                } else {
+                    alert("Please select an operator before adding another query part.");
+                }
+            }
+        }
+
+        function addQueryPart(operator = '') {
+            const queryType = document.getElementById('customQueryType').value;
+            const prop = document.getElementById('queryProp').value.trim();
+            const operation = document.getElementById('queryOperation').value;
+            const value = document.getElementById('queryValue').value.trim();
+            const counterInputElement = document.querySelector('.counter-input');
+            const counterValue = counterInputElement ? counterInputElement.value : null;
+
+            if (!queryType) {
+                alert("Please select a query type.");
+                return;
+            }
+
+            if (!prop || !value) {
+                alert("Please fill in all query fields.");
+                //resetQueryButton();
+                return;
+            }
+
+            // Build the query part
+            const queryPart = counterValue ? `${prop}:${counterValue} > ${value}` : `${prop} ${operation} ${value}`;
+            
+            // Add the operator at the beginning if it's valid and there are existing query parts
+            const fullQueryPart = (operator && queryParts.length > 0 && (operator === 'AND' || operator === 'OR')) 
+                ? `${operator} ${queryPart}` 
+                : queryPart;
+
+            // Push the full query part to the queryParts array
+            queryParts.push(fullQueryPart);
+
+            // Update the query box with all query parts
+            document.getElementById('queryBox').value = queryParts.join(' ') + ';';
+
+            // Reset the input fields for the next query
+            document.getElementById('queryValue').value = '';
+        }
+
+        function clearQueryBox(event) {
+            event.preventDefault();
+            document.getElementById('queryBox').value = '';
+            queryParts = [];
+            resetQueryButton();
+        }
+        
+        function toggleQueryFields() {
+            const queryType = document.getElementById('customQueryType').value;
+            const queryFields = document.getElementById('queryFields');
+            const taxonomicOptions = document.getElementById('taxonomicOptions');
+
+            if (queryType === 'rank_limit') {
+                queryFields.style.display = 'none';
+                taxonomicOptions.style.display = 'block';
+            } else {
+                queryFields.style.display = 'block';
+                taxonomicOptions.style.display = 'none';
+            }
+            resetQueryButton();
+        }
     </script>
     <script>
         // this is for control panel collapse settings
