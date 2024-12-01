@@ -413,6 +413,9 @@
                             <option value="Species">Species</option>
                         </select>
                     </div>
+                    <div class="text-center mt-4">
+                        <button id="sendQuery" class="btn btn-success w-100 py-2">Send Query</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -863,6 +866,100 @@
             }
             resetQueryButton();
         }
+
+        /*********************
+         * Additional Input Handlers
+         *********************/
+         function handleDynamicCounterInput(e) {
+            var selectedProperty = e.params.data.id;
+            if (selectedProperty.endsWith('_counter')) {
+                const counterField = `
+                    <div class="form-group" id="input-${selectedProperty}">
+                        <label for="counterInput">Prop for ${selectedProperty}</label>
+                        <input type="text" class="form-control counter-input"
+                            id="counterInput"
+                            data-prop="${selectedProperty}"
+                            placeholder="Enter Counter prop">
+                    </div>`;
+                $('#dynamicCounterProps').append(counterField);
+            }
+        }
+
+        function removeCounterInputField(e) {
+            const unselectedProperty = e.params.data.id;
+            if (unselectedProperty.endsWith('_counter')) {
+                $(`#input-${unselectedProperty}`).remove();
+                $('#queryResult').val('');
+            }
+        }
+        
+        document.getElementById('sendQuery').addEventListener('click', () => {
+            // Retrieve query type and query value
+            const queryType = document.getElementById('customQueryType')?.value || null;
+            const query = document.getElementById('queryBox')?.value || null;
+
+            // Ensure both queryType and query are provided
+            if (!queryType || !query) {
+                alert('Please select a query type and enter a query before sending.');
+                return;
+            }
+
+            // Form the layer object
+            const layer = {
+                queryType,
+                query
+            };
+
+            // Add the layer to the layers array
+            layers.push(layer);
+
+            // Collect additional general settings
+            const layersData = JSON.stringify(layers);
+            const columnWidth = document.getElementById('columnWidth')?.value || null;
+            const paddingX = document.getElementById('paddingX')?.value || null;
+            const paddingY = document.getElementById('paddingY')?.value || null;
+
+            // Numerical-specific setting
+            let internalNumRep = null;
+            const numericalLayouts = [
+                "branchscore-layout",
+                "heatmap-layout",
+                "heatmap-mean-layout",
+                "heatmap-zscore-layout",
+                "barplot-layout",
+                "numerical-matrix-layout",
+                "numerical-bubble-layout",
+            ];
+            if (layers.some(layer => numericalLayouts.includes(layer.layout))) {
+                internalNumRep = document.getElementById('internalNumRep')?.value || null;
+            }
+
+            // Construct the form data object
+            const formData = {
+                layers: layersData,
+                column_width: columnWidth,
+                padding_x: paddingX,
+                padding_y: paddingY,
+                internal_num_rep: internalNumRep
+            };
+
+            // Send the form data to the backend
+            $.post(
+                '/explore_tree/{{treename}}',
+                formData,
+                (response) => {
+                    console.log('Query sent successfully:', response);
+                    alert('Query added successfully!');
+                    window.location.reload(); // Refresh the page after successful submission
+                }
+            ).fail((error) => {
+                console.error('Error sending query:', error);
+                alert('Failed to send query. Please try again.');
+            });
+        });
+
+        $('#queryProp').on('select2:select', handleDynamicCounterInput);
+        $('#queryProp').on('select2:unselect', removeCounterInputField);
     </script>
     <script>
         // this is for control panel collapse settings
