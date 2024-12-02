@@ -40,6 +40,28 @@
             text-align: center;
         }
 
+        /* Minimized Control Panel */
+        .control-panel-wrapper.minimized .control-panel {
+            display: none; /* Hide the full control panel */
+        }
+
+        .control-panel-wrapper.minimized #toggleControlPanel {
+            position: fixed;
+            z-index: 999;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Expanded Control Panel */
+        .control-panel-wrapper:not(.minimized) #toggleControlPanel {
+            position: absolute;
+            top: 0px;
+            right: 0px;
+        }
+
         .btn-small {
             font-size: 0.85rem;
             padding: 5px 10px;
@@ -51,433 +73,491 @@
     </style>
 </head>
 <body>
-    <button id="toggleControlPanel" class="btn btn-sm btn-outline-secondary control-panel-tab" type="button" data-bs-toggle="collapse" data-bs-target="#controlPanelBody" aria-expanded="true" aria-controls="controlPanelBody">
-        &#x25BC; <!-- Down arrow initially -->
-    </button>
-    <div class="control-panel border rounded shadow-lg position-fixed">
-        <!-- Control Panel Header with Minimize Button -->
-        <div class="d-flex align-items-center justify-content-between p-2 border-bottom bg-light">
-            <h6 class="mb-0 fw-bold text-primary">Control Panel</h6>
-        </div>
-
-        <!-- Control Panel Body -->
-        <div id="controlPanelBody" class="collapse show">
-            <div class="p-3">
-                <div class="card mt-3 shadow">
-                    <div class="card-header bg-light">
-                        <button class="btn d-flex align-items-center w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#propertiesCard" aria-expanded="false" aria-controls="propertiesCard">
-                            Metadata-Based Layouts Settings
-                            <span id="propertiesCardArrow" class="ms-auto">&#x25BC;</span> <!-- Downward arrow initially -->
+    <!-- Parent Wrapper for Control Panel -->
+    <div id="controlPanelWrapper" class="control-panel-wrapper">
+        <button id="toggleControlPanel" class="btn btn-sm btn-outline-secondary control-panel-tab" type="button" data-bs-toggle="collapse" data-bs-target="#controlPanelBody" aria-expanded="true" aria-controls="controlPanelBody">
+            &#x25BC; <!-- Down arrow initially -->
+        </button>
+        <div class="control-panel border rounded shadow-lg position-fixed">
+            <!-- Control Panel Header with Minimize Button -->
+            <div class="control-panel-tabs border-bottom bg-light">
+                <ul class="nav nav-tabs" id="controlPanelTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="controlPanelTab" data-bs-toggle="tab" data-bs-target="#controlPanelContent" type="button" role="tab" aria-controls="controlPanelContent" aria-selected="true">
+                            Control Panel
                         </button>
-                    </div>
-                    
-                    <div id="propertiesCard" class="collapse">
-                        <div class="card-body">
-                            <div class="mb-3 d-flex justify-content-between">
-                                <button id="selectAllProps" class="btn btn-sm btn-primary">Select All</button>
-                                <button id="deselectAllProps" class="btn btn-sm btn-secondary">Deselect All</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="loadedLayoutTab" data-bs-toggle="tab" data-bs-target="#loadedLayoutContent" type="button" role="tab" aria-controls="loadedLayoutContent" aria-selected="false">
+                            Loaded Layouts
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <div class="tab-content">
+                <!-- Control Panel Body -->
+                <div class="tab-pane fade show active" id="controlPanelContent" role="tabpanel" aria-labelledby="controlPanelTab">
+                    <div class="p-3">
+                        <div class="card mt-3 shadow">
+                            <div class="card-header bg-light">
+                                <button class="btn d-flex align-items-center w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#propertiesCard" aria-expanded="false" aria-controls="propertiesCard">
+                                    Metadata-Based Layouts Settings
+                                    <span id="propertiesCardArrow" class="ms-auto">&#x25BC;</span> <!-- Downward arrow initially -->
+                                </button>
                             </div>
-                
-                            <!-- Scrollable Properties Table -->
-                            <div style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; border-radius: 5px;">
-                                <table class="table table-striped table-hover mb-0">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>Select</th>
-                                            <th>Property Name</th>
-                                            <th>Type</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="propertiesTable">
-                                        % for prop in tree_info['node_props']:
-                                        <tr>
-                                            <td><input type="checkbox" class="selectProperty" value="{{prop}}"></td>
-                                            <td>{{prop}}</td>
-                                            <td class="propType">{{tree_info['prop2type'][prop]}}</td>
-                                        </tr>
-                                        % end
-                                    </tbody>
-                                </table>
-                            </div>
-                
-                            <div class="text-center mt-4">
-                                <button id="selectLayoutBtn" class="btn btn-primary w-100 py-2">Select Layout</button>
-                            </div>
-                
-                            <!-- Layout Configuration Section -->
-                            <div id="layoutConfigSection" class="layout-settings mt-3">
-                                <h5 class="text-center">Configure Layout</h5>
-                                <select class="form-control mb-3" id="layout" name="layout">
-                                    <optgroup label="Categorical">
-                                        <option value="colorbranch-layout">Color Branch Layout</option>
-                                        <option value="label-layout">Label Layout</option>
-                                        <option value="rectangle-layout">Rectangular Layout</option>
-                                        <option value="categorical-bubble-layout">Bubble Layout</option>
-                                        <option value="background-layout">Background Layout</option>
-                                        <option value="categorical-matrix-layout">Categorical Matrix Layout</option>
-                                        <option value="piechart-layout">Piechart Layout</option>
-                                        <option value="profiling-layout">Profiling Layout</option>
-                                    </optgroup>
-                                    <optgroup label="Binary">
-                                        <option value="binary-layout">Binary Layout</option>
-                                    </optgroup>
-                                    <optgroup label="Numerical">
-                                        <option value="branchscore-layout">Color Branch Layout</option>
-                                        <option value="heatmap-layout">Heatmap Layout</option>
-                                        <option value="heatmap-mean-layout">Heatmap Mean Layout</option>
-                                        <option value="heatmap-zscore-layout">Heatmap Z-Score Layout</option>
-                                        <option value="barplot-layout">Barplot Layout</option>
-                                        <option value="numerical-matrix-layout">Numerical Matrix Layout</option>
-                                        <option value="numerical-bubble-layout">Bubble Layout</option>
-                                    </optgroup>
-                                    <optgroup label="Analytic">
-                                        <option value="acr-discrete-layout">ACR Discrete Layout</option>
-                                        <option value="acr-continuous-layout">ACR Continuous Layout</option>
-                                        <option value="ls-layout">LS Layout</option>
-                                    </optgroup>
-                                </select>
-                
-                                <div class="card mt-4 shadow-sm border-primary">
-                                    <div class="card-header bg-primary text-white">
-                                        <h5 class="mb-0">Layout Settings</h5>
+                            
+                            <div id="propertiesCard" class="collapse">
+                                <div class="card-body">
+                                    <div class="mb-3 d-flex justify-content-between">
+                                        <button id="selectAllProps" class="btn btn-sm btn-primary">Select All</button>
+                                        <button id="deselectAllProps" class="btn btn-sm btn-secondary">Deselect All</button>
                                     </div>
-                                    <div class="card-body">
-                                        <div id="layoutSettings" class="form-group">
-                                            <h6 class="fw-bold mb-3 text-primary">General Settings</h6>
-                                            <div class="row g-3">
-                                                <div class="col-md-4">
-                                                    <label for="columnWidth" class="form-label small">Column Width</label>
-                                                    <input type="number" id="columnWidth" name="columnWidth" class="form-control" value="70">
-                                                </div>
-                                                <div class="col-md-4">
-                                                    <label for="paddingX" class="form-label small">Padding X</label>
-                                                    <input type="number" class="form-control" id="paddingX" name="paddingX" value="1">
-                                                </div>
-                                                <div class="col-md-4">
-                                                    <label for="paddingY" class="form-label small">Padding Y</label>
-                                                    <input type="number" class="form-control" id="paddingY" name="paddingY" value="0">
-                                                </div>
+                        
+                                    <!-- Scrollable Properties Table -->
+                                    <div style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; border-radius: 5px;">
+                                        <table class="table table-striped table-hover mb-0">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Select</th>
+                                                    <th>Property Name</th>
+                                                    <th>Type</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="propertiesTable">
+                                                % for prop in tree_info['node_props']:
+                                                <tr>
+                                                    <td><input type="checkbox" class="selectProperty" value="{{prop}}"></td>
+                                                    <td>{{prop}}</td>
+                                                    <td class="propType">{{tree_info['prop2type'][prop]}}</td>
+                                                </tr>
+                                                % end
+                                            </tbody>
+                                        </table>
+                                    </div>
+                        
+                                    <div class="text-center mt-4">
+                                        <button id="selectLayoutBtn" class="btn btn-primary w-100 py-2">Select Layout</button>
+                                    </div>
+                        
+                                    <!-- Layout Configuration Section -->
+                                    <div id="layoutConfigSection" class="layout-settings mt-3">
+                                        <h5 class="text-center">Configure Layout</h5>
+                                        <select class="form-control mb-3" id="layout" name="layout">
+                                            <optgroup label="Categorical">
+                                                <option value="colorbranch-layout">Color Branch Layout</option>
+                                                <option value="label-layout">Label Layout</option>
+                                                <option value="rectangle-layout">Rectangular Layout</option>
+                                                <option value="categorical-bubble-layout">Bubble Layout</option>
+                                                <option value="background-layout">Background Layout</option>
+                                                <option value="categorical-matrix-layout">Categorical Matrix Layout</option>
+                                                <option value="piechart-layout">Piechart Layout</option>
+                                                <option value="profiling-layout">Profiling Layout</option>
+                                            </optgroup>
+                                            <optgroup label="Binary">
+                                                <option value="binary-layout">Binary Layout</option>
+                                            </optgroup>
+                                            <optgroup label="Numerical">
+                                                <option value="branchscore-layout">Color Branch Layout</option>
+                                                <option value="heatmap-layout">Heatmap Layout</option>
+                                                <option value="heatmap-mean-layout">Heatmap Mean Layout</option>
+                                                <option value="heatmap-zscore-layout">Heatmap Z-Score Layout</option>
+                                                <option value="barplot-layout">Barplot Layout</option>
+                                                <option value="numerical-matrix-layout">Numerical Matrix Layout</option>
+                                                <option value="numerical-bubble-layout">Bubble Layout</option>
+                                            </optgroup>
+                                            <optgroup label="Analytic">
+                                                <option value="acr-discrete-layout">ACR Discrete Layout</option>
+                                                <option value="acr-continuous-layout">ACR Continuous Layout</option>
+                                                <option value="ls-layout">LS Layout</option>
+                                            </optgroup>
+                                        </select>
+                        
+                                        <div class="card mt-4 shadow-sm border-primary">
+                                            <div class="card-header bg-primary text-white">
+                                                <h5 class="mb-0">Layout Settings</h5>
                                             </div>
-                                
-                                            <!-- Numerical-Specific Settings -->
-                                            <div id="internalNumerical" class="form-group mt-4" style="display: none;">
-                                                <label for="internalNumRep" class="form-label small">Internal Number Representation</label>
-                                                <select class="form-control" id="internalNumRep" name="internalNumRep">
-                                                    <option value="avg">Average</option>
-                                                    <option value="sum">Sum</option>
-                                                    <option value="max">Maximum</option>
-                                                    <option value="min">Minimum</option>
-                                                    <option value="std">Standard Deviation</option>
-                                                    <option value="none">None</option>
-                                                </select>
-                                            </div>
-                                
-                                            <!-- Categorical Layout Settings -->
-                                            <div id="categoricalSettings" class="form-group mt-4" style="display: none;">
-                                                <label for="categoricalColorscheme" class="form-label small">Color Scheme</label>
-                                                <select class="form-control" id="categoricalColorscheme" name="categoricalColorscheme">
-                                                    % for colormap in color_schemes:
-                                                    <option value="{{ colormap }}">{{ colormap }}</option>
-                                                    % end
-                                                </select>
-                                            </div>
-                                
-                                            <!-- Binary Layout Settings -->
-                                            <div id="binarySettings" class="form-group mt-4" style="display: none;">
-                                                <h6 class="fw-bold text-primary">Binary Layout Settings</h6>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" value="unicolor" id="unicolorOption" name="unicolorOption">
-                                                    <label class="form-check-label small" for="unicolorOption">Use Unicolor</label>
-                                                </div>
-                                                <div id="unicolorPicker" class="form-group mt-3" style="display: none;">
-                                                    <label for="unicolorColor" class="form-label small">Select Unicolor:</label>
-                                                    <input type="color" id="unicolorColor" name="unicolorColor" class="form-control" value="#0000ff">
-                                                </div>
-                                                <div id="binaryColorScheme" class="form-group mt-3" style="display: block;">
-                                                    <label for="binaryColorSchemeSelect" class="form-label small">Select Color Scheme:</label>
-                                                    <select class="form-control" id="binaryColorSchemeSelect" name="binaryColorScheme">
-                                                        % for colormap in color_schemes:
-                                                        <option value="{{ colormap }}">{{ colormap }}</option>
-                                                        % end
-                                                    </select>
-                                                </div>
-                                                <div id="aggregateSettings" class="form-group mt-3">
-                                                    <label for="aggregateOption" class="form-label small">Summary for Collapsed Nodes:</label>
-                                                    <select class="form-control" id="aggregateOption" name="aggregateOption">
-                                                        <option value="gradient">Gradient</option>
-                                                        <option value="aggregate">Aggregate</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                
-                                            <!-- Numerical Settings -->
-                                            <div id="numericalSettings" class="form-group mt-4" style="display: none;">
-                                                <h6 class="fw-bold text-primary">Numerical Settings</h6>
-                                                <div class="row g-3">
-                                                    <div class="col-md-6">
-                                                        <label for="minVal" class="form-label small">Min Value (Auto-detected if empty):</label>
-                                                        <input type="number" class="form-control" id="minVal" name="min_val" placeholder="Enter min value">
+                                            <div class="card-body">
+                                                <div id="layoutSettings" class="form-group">
+                                                    <h6 class="fw-bold mb-3 text-primary">General Settings</h6>
+                                                    <div class="row g-3">
+                                                        <div class="col-md-4">
+                                                            <label for="columnWidth" class="form-label small">Column Width</label>
+                                                            <input type="number" id="columnWidth" name="columnWidth" class="form-control" value="70">
+                                                        </div>
+                                                        <div class="col-md-4">
+                                                            <label for="paddingX" class="form-label small">Padding X</label>
+                                                            <input type="number" class="form-control" id="paddingX" name="paddingX" value="1">
+                                                        </div>
+                                                        <div class="col-md-4">
+                                                            <label for="paddingY" class="form-label small">Padding Y</label>
+                                                            <input type="number" class="form-control" id="paddingY" name="paddingY" value="0">
+                                                        </div>
                                                     </div>
-                                                    <div class="col-md-6">
-                                                        <label for="maxVal" class="form-label small">Max Value (Auto-detected if empty):</label>
-                                                        <input type="number" class="form-control" id="maxVal" name="max_val" placeholder="Enter max value">
+                                        
+                                                    <!-- Numerical-Specific Settings -->
+                                                    <div id="internalNumerical" class="form-group mt-4" style="display: none;">
+                                                        <label for="internalNumRep" class="form-label small">Internal Number Representation</label>
+                                                        <select class="form-control" id="internalNumRep" name="internalNumRep">
+                                                            <option value="avg">Average</option>
+                                                            <option value="sum">Sum</option>
+                                                            <option value="max">Maximum</option>
+                                                            <option value="min">Minimum</option>
+                                                            <option value="std">Standard Deviation</option>
+                                                            <option value="none">None</option>
+                                                        </select>
                                                     </div>
-                                                </div>
-                                                <div class="row g-3 mt-3">
-                                                    <div class="col-md-4">
-                                                        <label for="colorMin" class="form-label small">Color Min:</label>
-                                                        <input type="color" class="form-control" id="colorMin" name="color_min" value="#0000ff">
-                                                    </div>
-                                                    <div class="col-md-4">
-                                                        <label for="colorMid" class="form-label small">Color Mid:</label>
-                                                        <input type="color" class="form-control" id="colorMid" name="color_mid" value="#ffffff">
-                                                    </div>
-                                                    <div class="col-md-4">
-                                                        <label for="colorMax" class="form-label small">Color Max:</label>
-                                                        <input type="color" class="form-control" id="colorMax" name="color_max" value="#ff0000">
-                                                    </div>
-                                                </div>
-                                            </div>
-                                
-                                            <!-- Barplot -->
-                                            <div id="barplotOptions" class="form-group mt-4" style="display: none;">
-                                                <h6 class="fw-bold text-primary">Barplot Settings</h6>
-                                                <label for="barplotWidth" class="form-label small">Barplot Column Width (px):</label>
-                                                <input type="number" class="form-control mb-2" id="barplotWidth" name="barplotWidth" placeholder="Enter width" value="200">
-                                
-                                                <label for="barplotScaleProperty" class="form-label small">Scale Based On Property:</label>
-                                                <select class="form-control mb-2" id="barplotScaleProperty" name="barplotScaleProperty"></select>
-                                
-                                                <label for="barplotRange" class="form-label small">Custom Barplot Scale (Max Value):</label>
-                                                <input type="number" class="form-control mb-2" id="barplotRange" name="barplotRange" placeholder="Enter max value for the property">
-                                
-                                                <label for="barplotColorOption" class="form-label small">Barplot Color:</label>
-                                                <select class="form-control mb-2" id="barplotColorOption" name="barplotColorOption">
-                                                    <option value="same">Color Scheme</option>
-                                                    <option value="colorby">Fill by Property</option>
-                                                </select>
-                                                <div id="barplotColorSettings" class="mt-3">
-                                                    <div class="form-group">
-                                                        <label for="barplotColorScheme" class="form-label small">Barplot Color</label>
-                                                        <select class="form-control" id="barplotColorScheme" name="barplotColorScheme">
+                                        
+                                                    <!-- Categorical Layout Settings -->
+                                                    <div id="categoricalSettings" class="form-group mt-4" style="display: none;">
+                                                        <label for="categoricalColorscheme" class="form-label small">Color Scheme</label>
+                                                        <select class="form-control" id="categoricalColorscheme" name="categoricalColorscheme">
                                                             % for colormap in color_schemes:
                                                             <option value="{{ colormap }}">{{ colormap }}</option>
                                                             % end
                                                         </select>
                                                     </div>
-                                                    <select class="form-control mt-2" id="barplotFillProperty" name="barplotFillProperty" style="display: none;">
-                                                        % for prop in tree_info['node_props']:
-                                                        <option value="{{ prop }}">{{ prop }}</option>
-                                                        % end
-                                                    </select>
+                                        
+                                                    <!-- Binary Layout Settings -->
+                                                    <div id="binarySettings" class="form-group mt-4" style="display: none;">
+                                                        <h6 class="fw-bold text-primary">Binary Layout Settings</h6>
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" value="unicolor" id="unicolorOption" name="unicolorOption">
+                                                            <label class="form-check-label small" for="unicolorOption">Use Unicolor</label>
+                                                        </div>
+                                                        <div id="unicolorPicker" class="form-group mt-3" style="display: none;">
+                                                            <label for="unicolorColor" class="form-label small">Select Unicolor:</label>
+                                                            <input type="color" id="unicolorColor" name="unicolorColor" class="form-control" value="#0000ff">
+                                                        </div>
+                                                        <div id="binaryColorScheme" class="form-group mt-3" style="display: block;">
+                                                            <label for="binaryColorSchemeSelect" class="form-label small">Select Color Scheme:</label>
+                                                            <select class="form-control" id="binaryColorSchemeSelect" name="binaryColorScheme">
+                                                                % for colormap in color_schemes:
+                                                                <option value="{{ colormap }}">{{ colormap }}</option>
+                                                                % end
+                                                            </select>
+                                                        </div>
+                                                        <div id="aggregateSettings" class="form-group mt-3">
+                                                            <label for="aggregateOption" class="form-label small">Summary for Collapsed Nodes:</label>
+                                                            <select class="form-control" id="aggregateOption" name="aggregateOption">
+                                                                <option value="gradient">Gradient</option>
+                                                                <option value="aggregate">Aggregate</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                        
+                                                    <!-- Numerical Settings -->
+                                                    <div id="numericalSettings" class="form-group mt-4" style="display: none;">
+                                                        <h6 class="fw-bold text-primary">Numerical Settings</h6>
+                                                        <div class="row g-3">
+                                                            <div class="col-md-6">
+                                                                <label for="minVal" class="form-label small">Min Value (Auto-detected if empty):</label>
+                                                                <input type="number" class="form-control" id="minVal" name="min_val" placeholder="Enter min value">
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <label for="maxVal" class="form-label small">Max Value (Auto-detected if empty):</label>
+                                                                <input type="number" class="form-control" id="maxVal" name="max_val" placeholder="Enter max value">
+                                                            </div>
+                                                        </div>
+                                                        <div class="row g-3 mt-3">
+                                                            <div class="col-md-4">
+                                                                <label for="colorMin" class="form-label small">Color Min:</label>
+                                                                <input type="color" class="form-control" id="colorMin" name="color_min" value="#0000ff">
+                                                            </div>
+                                                            <div class="col-md-4">
+                                                                <label for="colorMid" class="form-label small">Color Mid:</label>
+                                                                <input type="color" class="form-control" id="colorMid" name="color_mid" value="#ffffff">
+                                                            </div>
+                                                            <div class="col-md-4">
+                                                                <label for="colorMax" class="form-label small">Color Max:</label>
+                                                                <input type="color" class="form-control" id="colorMax" name="color_max" value="#ff0000">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                        
+                                                    <!-- Barplot -->
+                                                    <div id="barplotOptions" class="form-group mt-4" style="display: none;">
+                                                        <h6 class="fw-bold text-primary">Barplot Settings</h6>
+                                                        <label for="barplotWidth" class="form-label small">Barplot Column Width (px):</label>
+                                                        <input type="number" class="form-control mb-2" id="barplotWidth" name="barplotWidth" placeholder="Enter width" value="200">
+                                        
+                                                        <label for="barplotScaleProperty" class="form-label small">Scale Based On Property:</label>
+                                                        <select class="form-control mb-2" id="barplotScaleProperty" name="barplotScaleProperty"></select>
+                                        
+                                                        <label for="barplotRange" class="form-label small">Custom Barplot Scale (Max Value):</label>
+                                                        <input type="number" class="form-control mb-2" id="barplotRange" name="barplotRange" placeholder="Enter max value for the property">
+                                        
+                                                        <label for="barplotColorOption" class="form-label small">Barplot Color:</label>
+                                                        <select class="form-control mb-2" id="barplotColorOption" name="barplotColorOption">
+                                                            <option value="same">Color Scheme</option>
+                                                            <option value="colorby">Fill by Property</option>
+                                                        </select>
+                                                        <div id="barplotColorSettings" class="mt-3">
+                                                            <div class="form-group">
+                                                                <label for="barplotColorScheme" class="form-label small">Barplot Color</label>
+                                                                <select class="form-control" id="barplotColorScheme" name="barplotColorScheme">
+                                                                    % for colormap in color_schemes:
+                                                                    <option value="{{ colormap }}">{{ colormap }}</option>
+                                                                    % end
+                                                                </select>
+                                                            </div>
+                                                            <select class="form-control mt-2" id="barplotFillProperty" name="barplotFillProperty" style="display: none;">
+                                                                % for prop in tree_info['node_props']:
+                                                                <option value="{{ prop }}">{{ prop }}</option>
+                                                                % end
+                                                            </select>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </div>
-                                
-                
-                                <div class="text-center mt-4">
-                                    <button id="addLayerBtn" class="btn btn-success w-100 py-2">Add Layout</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Non-Properties-Based Layouts -->
-                <div class="card mt-3 shadow">
-                    <div class="card-header">
-                        <button class="btn d-flex align-items-center w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#preAnnotatedCard" aria-expanded="false" aria-controls="preAnnotatedCard">
-                            Activate Predefined Layouts
-                            <span id="preAnnotatedCardArrow" class="ms-auto">&#x25BC;</span>
-                        </button>
-                    </div>
-                    <div id="preAnnotatedCard" class="collapse">
-                        <div class="card-body">
-
-                            <!-- Taxonomic Layouts Subcard -->
-                            % if tree_info['taxonomic_annotation']:
-                            <div class="card mb-3 shadow-sm">
-                                <div class="card-header d-flex align-items-center justify-content-between">
-                                    <h6 class="mb-0 text-primary">Taxonomic Layouts</h6>
-                                </div>
-                                <div class="card-body">
-                                    <select id="taxonomicLayoutSelect" class="form-control mb-2">
-                                        <option value="taxonclade-layout">Taxon Clade Layout</option>
-                                        <option value="taxonrectangle-layout">Taxon Rectangle Layout</option>
-                                        <option value="taxoncollapse-layout">Taxon Collapse Layout</option>
-                                    </select>
-                                    <button id="activateTaxonomicLayout" class="btn btn-success w-100">Activate Taxonomic Layout</button>
-                                </div>
-                            </div>
-                            % else:
-                            <div class="card mb-3 shadow-sm">
-                                <div class="card-header d-flex align-items-center justify-content-between">
-                                    <h6 class="mb-0 text-danger">Taxonomic Layouts</h6>
-                                </div>
-                                <div class="card-body">
-                                    <p class="text-muted mb-0">The input tree does not contain taxonomic annotations.</p>
-                                </div>
-                            </div>
-                            % end
-
-                            <!-- Alignment Layouts Subcard -->
-                            % if tree_info['alignment_annotation']:
-                            <div class="card mb-3 shadow-sm">
-                                <div class="card-header d-flex align-items-center justify-content-between">
-                                    <h6 class="mb-0 text-primary">Alignment Layouts</h6>
-                                    <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#alignmentLayoutsBody" aria-expanded="true" aria-controls="alignmentLayoutsBody">
-                                        &#x25BC; <!-- Down arrow -->
-                                    </button>
-                                </div>
-                                <div id="alignmentLayoutsBody" class="collapse show">
-                                    <div class="card-body">
-                                        <div id="alignmentSettings" class="form-group">
-                                            <label for="alignmentType" class="fw-bold mb-2">Alignment Window:</label>
-                                            <div class="row g-2">
-                                                <div class="col-md-6">
-                                                    <label for="algStart" class="form-label small">Start</label>
-                                                    <input type="number" class="form-control form-control-sm" id="algStart" name="algStart" placeholder="Start position">
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <label for="algEnd" class="form-label small">End</label>
-                                                    <input type="number" class="form-control form-control-sm" id="algEnd" name="algEnd" placeholder="End position">
-                                                </div>
-                                            </div>
+                                        
+                        
+                                        <div class="text-center mt-4">
+                                            <button id="addLayerBtn" class="btn btn-success w-100 py-2">Add Layout</button>
                                         </div>
-                                        <button id="activateAlignmentLayout" class="btn btn-success w-100 mt-3 fw-bold">Activate Alignment Layout</button>
                                     </div>
                                 </div>
                             </div>
-                            % else:
-                            <div class="card mb-3 shadow-sm">
-                                <div class="card-header d-flex align-items-center justify-content-between">
-                                    <h6 class="mb-0 text-danger">Alignment Layouts</h6>
-                                </div>
-                                <div class="card-body">
-                                    <p class="text-muted mb-0">The input tree does not include alignment annotations.</p>
-                                </div>
-                            </div>
-                            % end
-
-                            <!-- Domain Layouts Subcard -->
-                            % if tree_info['domain_annotation']:
-                            <div class="card mb-3 shadow-sm">
-                                <div class="card-header d-flex align-items-center justify-content-between">
-                                    <h6 class="mb-0 text-primary">Domain Layouts</h6>
-                                </div>
-                                <div class="card-body">
-                                    <button id="activateDomainLayout" class="btn btn-success w-100">Activate Domain Layout</button>
-                                </div>
-                            </div>
-                            % else:
-                            <div class="card mb-3 shadow-sm">
-                                <div class="card-header d-flex align-items-center justify-content-between">
-                                    <h6 class="mb-0 text-danger">Domain Layouts</h6>
-                                </div>
-                                <div class="card-body">
-                                    <p class="text-muted mb-0">The input tree does not have domain annotations.</p>
-                                </div>
-                            </div>
-                            % end
-
                         </div>
-                    </div>
-                </div>
-
-                
-                <!-- Custom Query Card -->
-                <div class="card mt-3 shadow">
-                    <div class="card-header">
-                        <button class="btn d-flex align-items-center w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#customQueryCardBody" aria-expanded="false" aria-controls="customQueryCardBody">
-                            Conditional Actions (Highlight, Collapse, Prune)
-                            <span id="customQueryCardArrow" class="ms-auto">&#x25BC;</span>
-                        </button>
-                    </div>
-                    <div id="customQueryCardBody" class="collapse">
-                        <div class="card-body">
-                            <div class="form-group">
-                                <label for="customQueryType" class="fw-bold">Select Action:</label>
-                                <select class="form-control" id="customQueryType" name="customQueryType">
-                                    <option value="">-- Choose an action --</option>
-                                    <option value="highlight">Highlight</option>
-                                    <option value="collapse">Collapse</option>
-                                    <option value="prune">Prune</option>
-                                    <option value="rank_limit">Limit by Taxonomic Rank (taxonomic trees only)</option>
-                                </select>
+                        
+                        <!-- Non-Properties-Based Layouts -->
+                        <div class="card mt-3 shadow">
+                            <div class="card-header">
+                                <button class="btn d-flex align-items-center w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#preAnnotatedCard" aria-expanded="false" aria-controls="preAnnotatedCard">
+                                    Activate Predefined Layouts
+                                    <span id="preAnnotatedCardArrow" class="ms-auto">&#x25BC;</span>
+                                </button>
                             </div>
-                            <div id="queryFields" class="form-group mt-3">
-                                <label for="queryProp" class="fw-bold">Select Property:</label>
-                                <select class="form-control" id="queryProp" name="queryProp">
-                                    % for prop in selected_props:
-                                    <option value="{{ prop }}">{{ prop }}</option>
+                            <div id="preAnnotatedCard" class="collapse">
+                                <div class="card-body">
+
+                                    <!-- Taxonomic Layouts Subcard -->
+                                    % if tree_info['taxonomic_annotation']:
+                                    <div class="card mb-3 shadow-sm">
+                                        <div class="card-header d-flex align-items-center justify-content-between">
+                                            <h6 class="mb-0 text-primary">Taxonomic Layouts</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <select id="taxonomicLayoutSelect" class="form-control mb-2">
+                                                <option value="taxonclade-layout">Taxon Clade Layout</option>
+                                                <option value="taxonrectangle-layout">Taxon Rectangle Layout</option>
+                                                <option value="taxoncollapse-layout">Taxon Collapse Layout</option>
+                                            </select>
+                                            <button id="activateTaxonomicLayout" class="btn btn-success w-100">Activate Taxonomic Layout</button>
+                                        </div>
+                                    </div>
+                                    % else:
+                                    <div class="card mb-3 shadow-sm">
+                                        <div class="card-header d-flex align-items-center justify-content-between">
+                                            <h6 class="mb-0 text-danger">Taxonomic Layouts</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <p class="text-muted mb-0">The input tree does not contain taxonomic annotations.</p>
+                                        </div>
+                                    </div>
                                     % end
-                                </select>
 
-                                <!-- Dynamic Counter Input Container -->
-                                <div id="dynamicCounterProps"></div>
+                                    <!-- Alignment Layouts Subcard -->
+                                    % if tree_info['alignment_annotation']:
+                                    <div class="card mb-3 shadow-sm">
+                                        <div class="card-header d-flex align-items-center justify-content-between">
+                                            <h6 class="mb-0 text-primary">Alignment Layouts</h6>
+                                            <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#alignmentLayoutsBody" aria-expanded="true" aria-controls="alignmentLayoutsBody">
+                                                &#x25BC; <!-- Down arrow -->
+                                            </button>
+                                        </div>
+                                        <div id="alignmentLayoutsBody" class="collapse show">
+                                            <div class="card-body">
+                                                <div id="alignmentSettings" class="form-group">
+                                                    <label for="alignmentType" class="fw-bold mb-2">Alignment Window:</label>
+                                                    <div class="row g-2">
+                                                        <div class="col-md-6">
+                                                            <label for="algStart" class="form-label small">Start</label>
+                                                            <input type="number" class="form-control form-control-sm" id="algStart" name="algStart" placeholder="Start position">
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <label for="algEnd" class="form-label small">End</label>
+                                                            <input type="number" class="form-control form-control-sm" id="algEnd" name="algEnd" placeholder="End position">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <button id="activateAlignmentLayout" class="btn btn-success w-100 mt-3 fw-bold">Activate Alignment Layout</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    % else:
+                                    <div class="card mb-3 shadow-sm">
+                                        <div class="card-header d-flex align-items-center justify-content-between">
+                                            <h6 class="mb-0 text-danger">Alignment Layouts</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <p class="text-muted mb-0">The input tree does not include alignment annotations.</p>
+                                        </div>
+                                    </div>
+                                    % end
 
-                                <label for="queryOperation" class="fw-bold mt-2">Operation:</label>
-                                <select class="form-control" id="queryOperation" name="queryOperation">
-                                    <option value="=">Equals (=)</option>
-                                    <option value="!=">Not Equals (!=)</option>
-                                    <option value="contains">Contains</option>
-                                    <option value="&gt;">Greater Than (&gt;)</option>
-                                    <option value="&lt;">Less Than (&lt;)</option>
-                                </select>
+                                    <!-- Domain Layouts Subcard -->
+                                    % if tree_info['domain_annotation']:
+                                    <div class="card mb-3 shadow-sm">
+                                        <div class="card-header d-flex align-items-center justify-content-between">
+                                            <h6 class="mb-0 text-primary">Domain Layouts</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <button id="activateDomainLayout" class="btn btn-success w-100">Activate Domain Layout</button>
+                                        </div>
+                                    </div>
+                                    % else:
+                                    <div class="card mb-3 shadow-sm">
+                                        <div class="card-header d-flex align-items-center justify-content-between">
+                                            <h6 class="mb-0 text-danger">Domain Layouts</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <p class="text-muted mb-0">The input tree does not have domain annotations.</p>
+                                        </div>
+                                    </div>
+                                    % end
 
-                                <label for="queryValue" class="fw-bold mt-2">Enter Value:</label>
-                                <input type="text" class="form-control" id="queryValue" name="queryValue" placeholder="Enter value here">
-
-                                <div class="btn-group mt-3">
-                                    <button type="button" class="btn btn-secondary" id="addQueryBtn">Add</button>
-                                    <button type="button" class="btn btn-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
-                                        <span class="visually-hidden">Toggle Dropdown</span>
-                                    </button>
-                                    <ul class="dropdown-menu">
-                                        <li><a class="dropdown-item" href="#" id="addWithAnd">Add with AND</a></li>
-                                        <li><a class="dropdown-item" href="#" id="addWithOr">Add with OR</a></li>
-                                    </ul>
                                 </div>
-                                
-                                <div class="mt-3">
-                                    <label for="queryBox" class="fw-bold mt-2">Current Query:</label>
-                                    <textarea class="form-control" id="queryBox" name="queryBox" rows="3" readonly></textarea>
-                                    <small><a href="#" id="clearQueryBox" class="text-danger">Clear Query</a></small>
+                            </div>
+                        </div>
+
+                        
+                        <!-- Custom Query Card -->
+                        <div class="card mt-3 shadow">
+                            <div class="card-header">
+                                <button class="btn d-flex align-items-center w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#customQueryCardBody" aria-expanded="false" aria-controls="customQueryCardBody">
+                                    Conditional Actions (Highlight, Collapse, Prune)
+                                    <span id="customQueryCardArrow" class="ms-auto">&#x25BC;</span>
+                                </button>
+                            </div>
+                            <div id="customQueryCardBody" class="collapse">
+                                <div class="card-body">
+                                    <div class="form-group">
+                                        <label for="customQueryType" class="fw-bold">Select Action:</label>
+                                        <select class="form-control" id="customQueryType" name="customQueryType">
+                                            <option value="">-- Choose an action --</option>
+                                            <option value="highlight">Highlight</option>
+                                            <option value="collapse">Collapse</option>
+                                            <option value="prune">Prune</option>
+                                            <option value="rank_limit">Limit by Taxonomic Rank (taxonomic trees only)</option>
+                                        </select>
+                                    </div>
+                                    <div id="queryFields" class="form-group mt-3">
+                                        <label for="queryProp" class="fw-bold">Select Property:</label>
+                                        <select class="form-control" id="queryProp" name="queryProp">
+                                            % for prop in selected_props:
+                                            <option value="{{ prop }}">{{ prop }}</option>
+                                            % end
+                                        </select>
+
+                                        <!-- Dynamic Counter Input Container -->
+                                        <div id="dynamicCounterProps"></div>
+
+                                        <label for="queryOperation" class="fw-bold mt-2">Operation:</label>
+                                        <select class="form-control" id="queryOperation" name="queryOperation">
+                                            <option value="=">Equals (=)</option>
+                                            <option value="!=">Not Equals (!=)</option>
+                                            <option value="contains">Contains</option>
+                                            <option value="&gt;">Greater Than (&gt;)</option>
+                                            <option value="&lt;">Less Than (&lt;)</option>
+                                        </select>
+
+                                        <label for="queryValue" class="fw-bold mt-2">Enter Value:</label>
+                                        <input type="text" class="form-control" id="queryValue" name="queryValue" placeholder="Enter value here">
+
+                                        <div class="btn-group mt-3">
+                                            <button type="button" class="btn btn-secondary" id="addQueryBtn">Add</button>
+                                            <button type="button" class="btn btn-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                                                <span class="visually-hidden">Toggle Dropdown</span>
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="#" id="addWithAnd">Add with AND</a></li>
+                                                <li><a class="dropdown-item" href="#" id="addWithOr">Add with OR</a></li>
+                                            </ul>
+                                        </div>
+                                        
+                                        <div class="mt-3">
+                                            <label for="queryBox" class="fw-bold mt-2">Current Query:</label>
+                                            <textarea class="form-control" id="queryBox" name="queryBox" rows="3" readonly></textarea>
+                                            <small><a href="#" id="clearQueryBox" class="text-danger">Clear Query</a></small>
+                                        </div>
+                                        
+                                    </div>
+
+                                    <div id="taxonomicOptions" class="form-group mt-3" style="display:none">
+                                        <label for="rankSelection" class="form-label fw-bold">Select Taxonomic Rank:</label>
+                                        <select id="rankSelection" name="taxonomicRanks" class="form-control">
+                                            <option value="Kingdom">Kingdom</option>
+                                            <option value="Phylum">Phylum</option>
+                                            <option value="Class">Class</option>
+                                            <option value="Order">Order</option>
+                                            <option value="Family">Family</option>
+                                            <option value="Genus">Genus</option>
+                                            <option value="Species">Species</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="text-center mt-4">
+                                        <button id="sendQuery" class="btn btn-success w-100 py-2">Execute Action</button>
+                                    </div>
                                 </div>
-                                
                             </div>
-
-                            <div id="taxonomicOptions" class="form-group mt-3" style="display:none">
-                                <label for="rankSelection" class="form-label fw-bold">Select Taxonomic Rank:</label>
-                                <select id="rankSelection" name="taxonomicRanks" class="form-control">
-                                    <option value="Kingdom">Kingdom</option>
-                                    <option value="Phylum">Phylum</option>
-                                    <option value="Class">Class</option>
-                                    <option value="Order">Order</option>
-                                    <option value="Family">Family</option>
-                                    <option value="Genus">Genus</option>
-                                    <option value="Species">Species</option>
-                                </select>
-                            </div>
-
-                            <div class="text-center mt-4">
-                                <button id="sendQuery" class="btn btn-success w-100 py-2">Execute Action</button>
-                            </div>
+                        </div>
+                
+                        <div class="control-panel-footer mt-4">
+                            <button class="btn btn-primary" onclick="window.location.reload();">Refresh</button>
+                            <button class="btn btn-secondary" id="fullscreenBtn">Fullscreen</button>
                         </div>
                     </div>
                 </div>
-
-
-                <div class="control-panel-footer mt-4">
-                    <button class="btn btn-primary" onclick="window.location.reload();">Refresh</button>
-                    <button class="btn btn-secondary" id="fullscreenBtn">Fullscreen</button>
+        
+                <!-- Loaded Layouts Tab -->
+                <div class="tab-pane fade" id="loadedLayoutContent" role="tabpanel" aria-labelledby="loadedLayoutTab">
+                    
+                    <div class="card mt-3 shadow-sm">
+                        <div class="card-header">
+                            <h6 class="mb-0 fw-bold text-primary">Manage Loaded Layouts</h6>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Layout Name</th>
+                                        <th>Settings</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="activeLayoutsTable">
+                                    <tr>
+                                        <td>Heatmap Layout</td>
+                                        <td>
+                                            <div class="d-flex flex-column small">
+                                                <span><strong>Column Width:</strong> 70</span>
+                                                <span><strong>Padding X:</strong> 10</span>
+                                                <span><strong>Padding Y:</strong> 5</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group">
+                                                <button class="btn btn-sm btn-outline-primary">Edit</button>
+                                                <button class="btn btn-sm btn-outline-danger">Delete</button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <!-- Additional rows for other loaded layouts -->
+                                </tbody>
+                            </table>
+                            <div class="text-center mt-4">
+                                <button class="btn btn-success w-100 py-2">Apply Changes</button>
+                            </div>
+                        </div>
+                    </div>
+                    
                 </div>
+
             </div>
         </div>
     </div>
-    
 
     <!-- Main Content -->
     <div class="container-fluid mt-4">
@@ -1030,18 +1110,19 @@
         $('#queryProp').on('select2:unselect', removeCounterInputField);
     </script>
     <script>
-        // this is for control panel collapse settings
-        document.addEventListener('DOMContentLoaded', () => {
-            const propertiesCard = document.getElementById('propertiesCard');
-            const propertiesCardArrow = document.getElementById('propertiesCardArrow');
-    
-            propertiesCard.addEventListener('show.bs.collapse', () => {
-                propertiesCardArrow.innerHTML = '&#x25B2;'; // Upward arrow
-            });
-    
-            propertiesCard.addEventListener('hide.bs.collapse', () => {
-                propertiesCardArrow.innerHTML = '&#x25BC;'; // Downward arrow
-            });
+        // Get references to the toggle button and wrapper
+        const toggleControlPanelBtn = document.getElementById('toggleControlPanel');
+        const controlPanelWrapper = document.getElementById('controlPanelWrapper');
+
+        // Add click event to toggle the minimized state
+        toggleControlPanelBtn.addEventListener('click', () => {
+            controlPanelWrapper.classList.toggle('minimized');
+            // Update button icon
+            if (controlPanelWrapper.classList.contains('minimized')) {
+                toggleControlPanelBtn.innerHTML = '&#x25B2;'; // Up arrow for minimized state
+            } else {
+                toggleControlPanelBtn.innerHTML = '&#x25BC;'; // Down arrow for expanded state
+            }
         });
 
         // this is for fullscreen settings
