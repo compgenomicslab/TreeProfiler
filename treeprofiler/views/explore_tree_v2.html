@@ -378,6 +378,10 @@
                             <option value="{{ prop }}">{{ prop }}</option>
                             % end
                         </select>
+
+                        <!-- Dynamic Counter Input Container -->
+                        <div id="dynamicCounterProps"></div>
+    
                         <label for="queryOperation" class="mt-2">Operation</label>
                         <select class="form-control" id="queryOperation" name="queryOperation">
                             <option value="=">Equals</option>
@@ -870,20 +874,34 @@
         /*********************
          * Additional Input Handlers
          *********************/
-         function handleDynamicCounterInput(e) {
-            var selectedProperty = e.params.data.id;
+        // Function to handle dynamic counter input addition
+        function handleDynamicCounterInput() {
+            const selectedProperty = document.getElementById('queryProp').value;
+            const dynamicCounterPropsContainer = document.getElementById('dynamicCounterProps');
+
+            // Check if the selected property ends with '_counter'
             if (selectedProperty.endsWith('_counter')) {
-                const counterField = `
-                    <div class="form-group" id="input-${selectedProperty}">
-                        <label for="counterInput">Prop for ${selectedProperty}</label>
-                        <input type="text" class="form-control counter-input"
-                            id="counterInput"
-                            data-prop="${selectedProperty}"
-                            placeholder="Enter Counter prop">
-                    </div>`;
-                $('#dynamicCounterProps').append(counterField);
+                // Check if the input field for this property already exists
+                if (!document.getElementById(`input-${selectedProperty}`)) {
+                    // Create a new input field for the selected property
+                    const counterField = `
+                        <div class="form-group mt-3" id="input-${selectedProperty}">
+                            <label for="counterInput-${selectedProperty}">Prop for ${selectedProperty}</label>
+                            <input type="text" class="form-control counter-input"
+                                id="counterInput-${selectedProperty}"
+                                data-prop="${selectedProperty}"
+                                placeholder="Enter Counter value">
+                        </div>`;
+                    // Append the new field to the container
+                    dynamicCounterPropsContainer.innerHTML = counterField;
+                }
+            } else {
+                // Remove all counter input fields if the selected property doesn't end with '_counter'
+                dynamicCounterPropsContainer.innerHTML = '';
             }
         }
+
+
 
         function removeCounterInputField(e) {
             const unselectedProperty = e.params.data.id;
@@ -892,7 +910,7 @@
                 $('#queryResult').val('');
             }
         }
-        
+
         document.getElementById('sendQuery').addEventListener('click', () => {
             // Retrieve query type and query value
             const queryType = document.getElementById('customQueryType')?.value || null;
@@ -949,7 +967,7 @@
                 formData,
                 (response) => {
                     console.log('Query sent successfully:', response);
-                    alert('Query added successfully!');
+                    //alert('Query added successfully!');
                     window.location.reload(); // Refresh the page after successful submission
                 }
             ).fail((error) => {
@@ -958,7 +976,8 @@
             });
         });
 
-        $('#queryProp').on('select2:select', handleDynamicCounterInput);
+        // Attach the change event listener to the queryProp dropdown
+        document.getElementById('queryProp').addEventListener('change', handleDynamicCounterInput);
         $('#queryProp').on('select2:unselect', removeCounterInputField);
     </script>
     <script>
