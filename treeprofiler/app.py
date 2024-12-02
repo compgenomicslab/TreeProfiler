@@ -467,7 +467,7 @@ def explore_tree(treename):
     
     # Retrieve and initialize layouts, properties, and tree
     current_layouts = tree_info.get('layouts', [])
-    current_props = list(tree_info['prop2type'].keys())
+    current_props = sorted(list(tree_info['prop2type'].keys()))
     t = Tree(tree_info['annotated_tree'])
     
     default_configs = {
@@ -504,6 +504,7 @@ def explore_tree(treename):
                     t, layer, tree_info, current_layouts, current_props, level,
                     column_width, padding_x, padding_y, color_config, internal_num_rep, paired_color
                 )
+                
 
     # Start the ete exploration thread
     start_explore_thread(t, treename, current_layouts, current_props)

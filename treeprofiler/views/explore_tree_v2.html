@@ -14,7 +14,7 @@
             position: fixed;
             top: 20px;
             right: 20px;
-            width: 400px;
+            width: 450px;
             max-height: 90vh;
             overflow-y: auto;
             padding: 15px;
@@ -38,8 +38,8 @@
 <body>
     <div class="control-panel">
         
-        <div class="card mt-3">
-            <div class="card-header">
+        <div class="card mt-3 shadow">
+            <div class="card-header bg-light">
                 <button class="btn d-flex align-items-center w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#propertiesCard" aria-expanded="false" aria-controls="propertiesCard">
                     Metadata-Based Layouts Settings
                     <span id="propertiesCardArrow" class="ms-auto">&#x25BC;</span> <!-- Downward arrow initially -->
@@ -48,37 +48,41 @@
             
             <div id="propertiesCard" class="collapse">
                 <div class="card-body">
-                    <div class="mb-2">
-                        <button id="selectAllProps" class="btn btn-sm btn-primary me-2">Select All</button>
+                    <div class="mb-3 d-flex justify-content-between">
+                        <button id="selectAllProps" class="btn btn-sm btn-primary">Select All</button>
                         <button id="deselectAllProps" class="btn btn-sm btn-secondary">Deselect All</button>
                     </div>
-                    <!-- Properties Table -->
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>Select</th>
-                                <th>Property Name</th>
-                                <th>Type</th>
-                            </tr>
-                        </thead>
-                        <tbody id="propertiesTable">
-                            % for prop in tree_info['node_props']:
-                            <tr>
-                                <td><input type="checkbox" class="selectProperty" value="{{prop}}"></td>
-                                <td>{{prop}}</td>
-                                <td class="propType">{{tree_info['prop2type'][prop]}}</td>
-                            </tr>
-                            % end
-                        </tbody>
-                    </table>
+        
+                    <!-- Scrollable Properties Table -->
+                    <div style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; border-radius: 5px;">
+                        <table class="table table-striped table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Select</th>
+                                    <th>Property Name</th>
+                                    <th>Type</th>
+                                </tr>
+                            </thead>
+                            <tbody id="propertiesTable">
+                                % for prop in tree_info['node_props']:
+                                <tr>
+                                    <td><input type="checkbox" class="selectProperty" value="{{prop}}"></td>
+                                    <td>{{prop}}</td>
+                                    <td class="propType">{{tree_info['prop2type'][prop]}}</td>
+                                </tr>
+                                % end
+                            </tbody>
+                        </table>
+                    </div>
         
                     <div class="text-center mt-4">
                         <button id="selectLayoutBtn" class="btn btn-primary w-100 py-2">Select Layout</button>
                     </div>
+        
                     <!-- Layout Configuration Section -->
                     <div id="layoutConfigSection" class="layout-settings mt-3">
-                        <h5>Configure Layout</h5>
-                        <select class="form-control" id="layout" name="layout">
+                        <h5 class="text-center">Configure Layout</h5>
+                        <select class="form-control mb-3" id="layout" name="layout">
                             <optgroup label="Categorical">
                                 <option value="colorbranch-layout">Color Branch Layout</option>
                                 <option value="label-layout">Label Layout</option>
@@ -106,167 +110,148 @@
                                 <option value="acr-continuous-layout">ACR Continuous Layout</option>
                                 <option value="ls-layout">LS Layout</option>
                             </optgroup>
-                            <!-- <optgroup label="Taxonomy">
-                                <option value="taxonclade-layout">Taxon Clade Layout</option>
-                                <option value="taxonrectangle-layout">Taxon Rectangle Layout</option>
-                                <option value="taxoncollapse-layout">Taxon Collapse Layout</option>
-                            </optgroup>
-                            <option value="emapper-layout">EggNOG-mapper Layout</option>
-                            <option value="domain-layout">Domain Layout</option>
-                            <option value="alignment-layout">Alignment Layout</option> -->
                         </select>
+        
+                        <div class="card mt-4 shadow-sm border-primary">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="mb-0">Layout Settings</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="layoutSettings" class="form-group">
+                                    <h6 class="fw-bold mb-3 text-primary">General Settings</h6>
+                                    <div class="row g-3">
+                                        <div class="col-md-4">
+                                            <label for="columnWidth" class="form-label small">Column Width</label>
+                                            <input type="number" id="columnWidth" name="columnWidth" class="form-control" value="70">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="paddingX" class="form-label small">Padding X</label>
+                                            <input type="number" class="form-control" id="paddingX" name="paddingX" value="1">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="paddingY" class="form-label small">Padding Y</label>
+                                            <input type="number" class="form-control" id="paddingY" name="paddingY" value="0">
+                                        </div>
+                                    </div>
                         
-                        <div id="layoutSettings" class="form-group mt-3">
-                            <h5>General Settings</h5>
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <label for="columnWidth">Col Width</label>
-                                    <input type="number" id="columnWidth" name="columnWidth" class="form-control" value="70">
-                                </div>
-                                <div class="col-md-4">
-                                    <label for="paddingX">Padding X</label>
-                                    <input type="number" class="form-control" id="paddingX" name="paddingX" value="1">
-                                </div>
-                                <div class="col-md-4">
-                                    <label for="paddingY">Padding Y</label>
-                                    <input type="number" class="form-control" id="paddingY" name="paddingY" value="0">
-                                </div>
-                            </div>
-
-                            <!-- Numerical-Specific Settings -->
-                            <div id="internalNumerical" class="form-group mt-3" style="display: none;">
-                                <label for="internalNumRep">Internal Number Representation</label>
-                                <select class="form-control" id="internalNumRep" name="internalNumRep">
-                                    <option value="avg">Average</option>
-                                    <option value="sum">Sum</option>
-                                    <option value="max">Maximum</option>
-                                    <option value="min">Minimum</option>
-                                    <option value="std">Standard Deviation</option>
-                                    <option value="none">None</option>
-                                </select>
-                            </div>
-            
-                            <!-- Categorical Layout Settings -->
-                            <div id="categoricalSettings" class="form-group mt-3" style="display: none;">
-                                <label for="props">Color Scheme</label>
-                                <select class="form-control" id="categoricalColorscheme" name="categoricalColorscheme">
-                                    % for colormap in color_schemes:
-                                    <option value="{{ colormap }}">{{ colormap }}</option>
-                                    % end
-                                </select>
-                            </div>
-            
-                            <!-- Binary layout settings -->
-                            <div id="binarySettings" class="form-group mt-3" style="display: none;">
-                                <h5>Settings for Binary Layout</h5>
-            
-                                <!-- Unicolor Option -->
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" value="unicolor" id="unicolorOption"
-                                        name="unicolorOption">
-                                    <label class="form-check-label" for="unicolorOption">
-                                        Use Unicolor
-                                    </label>
-                                </div>
-            
-                                <!-- Unicolor Color Picker (Only visible when Unicolor is checked) -->
-                                <div id="unicolorPicker" class="form-group mt-2" style="display: none;">
-                                    <label for="unicolorColor">Select Unicolor:</label>
-                                    <input type="color" id="unicolorColor" name="unicolorColor" class="form-control"
-                                        value="#0000ff">
-                                </div>
-            
-                                <!-- Color Scheme Dropdown (Only visible when Unicolor is unchecked) -->
-                                <div id="binaryColorScheme" class="form-group mt-2" style="display: block;">
-                                    <label for="binaryColorSchemeSelect">Select Color Scheme:</label>
-                                    <select class="form-control" id="binaryColorSchemeSelect" name="binaryColorScheme">
-                                        % for colormap in color_schemes:
-                                        <option value="{{ colormap }}">{{ colormap }}</option>
-                                        % end
-                                    </select>
-                                </div>
-            
-                                <!-- Aggregate Option as Dropdown -->
-                                <div id="aggregateSettings" class="form-group mt-2">
-                                    <label for="aggregateOption">Summary for Collapsed Nodes: </label>
-                                    <select class="form-control" id="aggregateOption" name="aggregateOption">
-                                        <option value="gradient">Gradient</option>
-                                        <option value="aggregate">Aggregate</option>
-                                    </select>
-                                </div>
-                            </div>
-            
-                            <!-- Numerical Settings Section -->
-                            <div id="numericalSettings" class="form-group mt-3" style="display: none;">
-                                <label for="minVal">Minimum Value (Auto detected if it is empty):</label>
-                                <input type="number" class="form-control" id="minVal" name="min_val"
-                                    placeholder="Enter min value">
-            
-                                <label for="maxVal" class="mt-2">Maximum Value (Auto detected if it is empty):</label>
-                                <input type="number" class="form-control" id="maxVal" name="max_val"
-                                    placeholder="Enter max value">
-            
-                                <!-- Color Selection -->
-                                <div class="form-row mt-2">
-                                    <div class="col">
-                                        <label for="colorMin">Color Min:</label>
-                                        <input type="color" class="form-control" id="colorMin" name="color_min" value="#0000ff">
+                                    <!-- Numerical-Specific Settings -->
+                                    <div id="internalNumerical" class="form-group mt-4" style="display: none;">
+                                        <label for="internalNumRep" class="form-label small">Internal Number Representation</label>
+                                        <select class="form-control" id="internalNumRep" name="internalNumRep">
+                                            <option value="avg">Average</option>
+                                            <option value="sum">Sum</option>
+                                            <option value="max">Maximum</option>
+                                            <option value="min">Minimum</option>
+                                            <option value="std">Standard Deviation</option>
+                                            <option value="none">None</option>
+                                        </select>
                                     </div>
-                                    <div class="col">
-                                        <label for="colorMid">Color Mid:</label>
-                                        <input type="color" class="form-control" id="colorMid" name="color_mid" value="#ffffff">
-                                    </div>
-                                    <div class="col">
-                                        <label for="colorMax">Color Max:</label>
-                                        <input type="color" class="form-control" id="colorMax" name="color_max" value="#ff0000">
-                                    </div>
-                                </div>
-                            </div>
-            
-                            <!-- Barplot -->
-                            <div id="barplotOptions" class="form-group mt-3" style="display: none;">
-                                <label for="barplotWidth">Barplot Column Width (px):</label>
-                                <input type="number" class="form-control" id="barplotWidth" name="barplotWidth"
-                                    placeholder="Enter width" value="200">
-            
-            
-                                <label for="barplotScaleProperty" class="mt-2">Scale Based On Property:</label>
-                                <select class="form-control" id="barplotScaleProperty" name="barplotScaleProperty">
-                                </select>
-            
-                                <label for="barplotRange" class="mt-2">Custom Barplot Scale (Max Value):</label>
-                                <input type="number" class="form-control" id="barplotRange" name="barplotRange"
-                                    placeholder="Enter max value for the property">
-            
-                                <label for="barplotColorOption" class="mt-2">Barplot Color:</label>
-                                <select class="form-control" id="barplotColorOption" name="barplotColorOption">
-                                    <option value="same">Color Scheme</option>
-                                    <option value="colorby">Fill by Property</option>
-                                </select>
-            
-                                <!-- Conditional color selector or property selector -->
-                                <div id="barplotColorSettings" class="mt-2">
-                                    <!-- Color input for 'same' option -->
-                                    <div class="form-group mt-3">
-                                        <label for="barplotColor">Barplot Color</label>
-                                        <select class="form-control" id="barplotColorScheme" name="barplotColorScheme">
+                        
+                                    <!-- Categorical Layout Settings -->
+                                    <div id="categoricalSettings" class="form-group mt-4" style="display: none;">
+                                        <label for="categoricalColorscheme" class="form-label small">Color Scheme</label>
+                                        <select class="form-control" id="categoricalColorscheme" name="categoricalColorscheme">
                                             % for colormap in color_schemes:
                                             <option value="{{ colormap }}">{{ colormap }}</option>
                                             % end
                                         </select>
                                     </div>
-            
-                                    <!-- Property dropdown for 'colorby' option -->
-                                    <select class="form-control" id="barplotFillProperty" name="barplotFillProperty"
-                                        style="display: none;">
-                                        % for prop in tree_info['node_props']:
-                                        <option value="{{ prop }}">{{ prop }}</option>
-                                        % end
-                                    </select>
+                        
+                                    <!-- Binary Layout Settings -->
+                                    <div id="binarySettings" class="form-group mt-4" style="display: none;">
+                                        <h6 class="fw-bold text-primary">Binary Layout Settings</h6>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" value="unicolor" id="unicolorOption" name="unicolorOption">
+                                            <label class="form-check-label small" for="unicolorOption">Use Unicolor</label>
+                                        </div>
+                                        <div id="unicolorPicker" class="form-group mt-3" style="display: none;">
+                                            <label for="unicolorColor" class="form-label small">Select Unicolor:</label>
+                                            <input type="color" id="unicolorColor" name="unicolorColor" class="form-control" value="#0000ff">
+                                        </div>
+                                        <div id="binaryColorScheme" class="form-group mt-3" style="display: block;">
+                                            <label for="binaryColorSchemeSelect" class="form-label small">Select Color Scheme:</label>
+                                            <select class="form-control" id="binaryColorSchemeSelect" name="binaryColorScheme">
+                                                % for colormap in color_schemes:
+                                                <option value="{{ colormap }}">{{ colormap }}</option>
+                                                % end
+                                            </select>
+                                        </div>
+                                        <div id="aggregateSettings" class="form-group mt-3">
+                                            <label for="aggregateOption" class="form-label small">Summary for Collapsed Nodes:</label>
+                                            <select class="form-control" id="aggregateOption" name="aggregateOption">
+                                                <option value="gradient">Gradient</option>
+                                                <option value="aggregate">Aggregate</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                        
+                                    <!-- Numerical Settings -->
+                                    <div id="numericalSettings" class="form-group mt-4" style="display: none;">
+                                        <h6 class="fw-bold text-primary">Numerical Settings</h6>
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <label for="minVal" class="form-label small">Minimum Value (Auto-detected if empty):</label>
+                                                <input type="number" class="form-control" id="minVal" name="min_val" placeholder="Enter min value">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="maxVal" class="form-label small">Maximum Value (Auto-detected if empty):</label>
+                                                <input type="number" class="form-control" id="maxVal" name="max_val" placeholder="Enter max value">
+                                            </div>
+                                        </div>
+                                        <div class="row g-3 mt-3">
+                                            <div class="col-md-4">
+                                                <label for="colorMin" class="form-label small">Color Min:</label>
+                                                <input type="color" class="form-control" id="colorMin" name="color_min" value="#0000ff">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="colorMid" class="form-label small">Color Mid:</label>
+                                                <input type="color" class="form-control" id="colorMid" name="color_mid" value="#ffffff">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="colorMax" class="form-label small">Color Max:</label>
+                                                <input type="color" class="form-control" id="colorMax" name="color_max" value="#ff0000">
+                                            </div>
+                                        </div>
+                                    </div>
+                        
+                                    <!-- Barplot -->
+                                    <div id="barplotOptions" class="form-group mt-4" style="display: none;">
+                                        <h6 class="fw-bold text-primary">Barplot Settings</h6>
+                                        <label for="barplotWidth" class="form-label small">Barplot Column Width (px):</label>
+                                        <input type="number" class="form-control mb-2" id="barplotWidth" name="barplotWidth" placeholder="Enter width" value="200">
+                        
+                                        <label for="barplotScaleProperty" class="form-label small">Scale Based On Property:</label>
+                                        <select class="form-control mb-2" id="barplotScaleProperty" name="barplotScaleProperty"></select>
+                        
+                                        <label for="barplotRange" class="form-label small">Custom Barplot Scale (Max Value):</label>
+                                        <input type="number" class="form-control mb-2" id="barplotRange" name="barplotRange" placeholder="Enter max value for the property">
+                        
+                                        <label for="barplotColorOption" class="form-label small">Barplot Color:</label>
+                                        <select class="form-control mb-2" id="barplotColorOption" name="barplotColorOption">
+                                            <option value="same">Color Scheme</option>
+                                            <option value="colorby">Fill by Property</option>
+                                        </select>
+                                        <div id="barplotColorSettings" class="mt-3">
+                                            <div class="form-group">
+                                                <label for="barplotColorScheme" class="form-label small">Barplot Color</label>
+                                                <select class="form-control" id="barplotColorScheme" name="barplotColorScheme">
+                                                    % for colormap in color_schemes:
+                                                    <option value="{{ colormap }}">{{ colormap }}</option>
+                                                    % end
+                                                </select>
+                                            </div>
+                                            <select class="form-control mt-2" id="barplotFillProperty" name="barplotFillProperty" style="display: none;">
+                                                % for prop in tree_info['node_props']:
+                                                <option value="{{ prop }}">{{ prop }}</option>
+                                                % end
+                                            </select>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-        
                         </div>
+                        
+        
                         <div class="text-center mt-4">
                             <button id="addLayerBtn" class="btn btn-success w-100 py-2">Add Layout</button>
                         </div>
@@ -274,9 +259,9 @@
                 </div>
             </div>
         </div>
-
+        
         <!-- Non-Properties-Based Layouts -->
-        <div class="card mt-3">
+        <div class="card mt-3 shadow">
             <div class="card-header">
                 <button class="btn d-flex align-items-center w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#preAnnotatedCard" aria-expanded="false" aria-controls="preAnnotatedCard">
                     Activate Predefined Layouts
@@ -285,12 +270,12 @@
             </div>
             <div id="preAnnotatedCard" class="collapse">
                 <div class="card-body">
-        
+
                     <!-- Taxonomic Layouts Subcard -->
                     % if tree_info['taxonomic_annotation']:
-                    <div class="card mb-3">
-                        <div class="card-header">
-                            <h6 class="mb-0">Taxonomic Layouts</h6>
+                    <div class="card mb-3 shadow-sm">
+                        <div class="card-header d-flex align-items-center justify-content-between">
+                            <h6 class="mb-0 text-primary">Taxonomic Layouts</h6>
                         </div>
                         <div class="card-body">
                             <select id="taxonomicLayoutSelect" class="form-control mb-2">
@@ -301,8 +286,17 @@
                             <button id="activateTaxonomicLayout" class="btn btn-success w-100">Activate Taxonomic Layout</button>
                         </div>
                     </div>
+                    % else:
+                    <div class="card mb-3 shadow-sm">
+                        <div class="card-header d-flex align-items-center justify-content-between">
+                            <h6 class="mb-0 text-danger">Taxonomic Layouts</h6>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted mb-0">The input tree does not contain taxonomic annotations.</p>
+                        </div>
+                    </div>
                     % end
-        
+
                     <!-- Alignment Layouts Subcard -->
                     % if tree_info['alignment_annotation']:
                     <div class="card mb-3 shadow-sm">
@@ -314,7 +308,6 @@
                         </div>
                         <div id="alignmentLayoutsBody" class="collapse show">
                             <div class="card-body">
-                                <!-- Alignment settings -->
                                 <div id="alignmentSettings" class="form-group">
                                     <label for="alignmentType" class="fw-bold mb-2">Alignment Window:</label>
                                     <div class="row g-2">
@@ -332,47 +325,65 @@
                             </div>
                         </div>
                     </div>
+                    % else:
+                    <div class="card mb-3 shadow-sm">
+                        <div class="card-header d-flex align-items-center justify-content-between">
+                            <h6 class="mb-0 text-danger">Alignment Layouts</h6>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted mb-0">The input tree does not include alignment annotations.</p>
+                        </div>
+                    </div>
                     % end
-        
+
                     <!-- Domain Layouts Subcard -->
                     % if tree_info['domain_annotation']:
-                    <div class="card mb-3">
-                        <div class="card-header">
-                            <h6 class="mb-0">Domain Layouts</h6>
+                    <div class="card mb-3 shadow-sm">
+                        <div class="card-header d-flex align-items-center justify-content-between">
+                            <h6 class="mb-0 text-primary">Domain Layouts</h6>
                         </div>
                         <div class="card-body">
                             <button id="activateDomainLayout" class="btn btn-success w-100">Activate Domain Layout</button>
                         </div>
                     </div>
+                    % else:
+                    <div class="card mb-3 shadow-sm">
+                        <div class="card-header d-flex align-items-center justify-content-between">
+                            <h6 class="mb-0 text-danger">Domain Layouts</h6>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted mb-0">The input tree does not have domain annotations.</p>
+                        </div>
+                    </div>
                     % end
-        
+
                 </div>
             </div>
         </div>
+
         
         <!-- Custom Query Card -->
-        <div class="card mt-3 shadow-sm">
+        <div class="card mt-3 shadow">
             <div class="card-header">
                 <button class="btn d-flex align-items-center w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#customQueryCardBody" aria-expanded="false" aria-controls="customQueryCardBody">
-                    Conditional highlighting/collapsing/pruning
-                    <span id="customQueryCardArrow" class="ms-auto">&#x25BC; <!-- Down arrow --></span>
-                    
+                    Conditional Actions (Highlight, Collapse, Prune)
+                    <span id="customQueryCardArrow" class="ms-auto">&#x25BC;</span>
                 </button>
             </div>
             <div id="customQueryCardBody" class="collapse">
                 <div class="card-body">
                     <div class="form-group">
-                        <label for="customQueryType">Select Actions:</label>
+                        <label for="customQueryType" class="fw-bold">Select Action:</label>
                         <select class="form-control" id="customQueryType" name="customQueryType">
-                            <option value=""></option>
+                            <option value="">-- Choose an action --</option>
                             <option value="highlight">Highlight</option>
                             <option value="collapse">Collapse</option>
                             <option value="prune">Prune</option>
-                            <option value="rank_limit">Rank Limit (for taxonomic trees only)</option>
+                            <option value="rank_limit">Limit by Taxonomic Rank (taxonomic trees only)</option>
                         </select>
                     </div>
                     <div id="queryFields" class="form-group mt-3">
-                        <label for="queryProp">Property</label>
+                        <label for="queryProp" class="fw-bold">Select Property:</label>
                         <select class="form-control" id="queryProp" name="queryProp">
                             % for prop in selected_props:
                             <option value="{{ prop }}">{{ prop }}</option>
@@ -381,19 +392,21 @@
 
                         <!-- Dynamic Counter Input Container -->
                         <div id="dynamicCounterProps"></div>
-    
-                        <label for="queryOperation" class="mt-2">Operation</label>
+
+                        <label for="queryOperation" class="fw-bold mt-2">Operation:</label>
                         <select class="form-control" id="queryOperation" name="queryOperation">
-                            <option value="=">Equals</option>
-                            <option value="!=">Not Equals</option>
+                            <option value="=">Equals (=)</option>
+                            <option value="!=">Not Equals (!=)</option>
                             <option value="contains">Contains</option>
-                            <option value="&gt;">Greater Than</option>
-                            <option value="&lt;">Less Than</option>
+                            <option value="&gt;">Greater Than (&gt;)</option>
+                            <option value="&lt;">Less Than (&lt;)</option>
                         </select>
-                        <label for="queryValue" class="mt-2">Value</label>
-                        <input type="text" class="form-control" id="queryValue" name="queryValue" placeholder="Enter value">
+
+                        <label for="queryValue" class="fw-bold mt-2">Enter Value:</label>
+                        <input type="text" class="form-control" id="queryValue" name="queryValue" placeholder="Enter value here">
+
                         <div class="btn-group mt-3">
-                            <button type="button" class="btn btn-secondary" id="addQueryBtn">ADD</button>
+                            <button type="button" class="btn btn-secondary" id="addQueryBtn">Add</button>
                             <button type="button" class="btn btn-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
                                 <span class="visually-hidden">Toggle Dropdown</span>
                             </button>
@@ -402,11 +415,17 @@
                                 <li><a class="dropdown-item" href="#" id="addWithOr">Add with OR</a></li>
                             </ul>
                         </div>
-                        <textarea class="form-control mt-3" id="queryBox" name="queryBox" rows="3" readonly></textarea>
-                        <small><a href="#" id="clearQueryBox" class="text-danger">Clear Query</a></small>
+                        
+                        <div class="mt-3">
+                            <label for="queryBox" class="fw-bold mt-2">Current Query:</label>
+                            <textarea class="form-control" id="queryBox" name="queryBox" rows="3" readonly></textarea>
+                            <small><a href="#" id="clearQueryBox" class="text-danger">Clear Query</a></small>
+                        </div>
+                        
                     </div>
+
                     <div id="taxonomicOptions" class="form-group mt-3" style="display:none">
-                        <label for="rankSelection" class="form-label">Select Taxonomic Rank</label>
+                        <label for="rankSelection" class="form-label fw-bold">Select Taxonomic Rank:</label>
                         <select id="rankSelection" name="taxonomicRanks" class="form-control">
                             <option value="Kingdom">Kingdom</option>
                             <option value="Phylum">Phylum</option>
@@ -417,12 +436,15 @@
                             <option value="Species">Species</option>
                         </select>
                     </div>
+
                     <div class="text-center mt-4">
-                        <button id="sendQuery" class="btn btn-success w-100 py-2">Send Query</button>
+                        <button id="sendQuery" class="btn btn-success w-100 py-2">Execute Action</button>
                     </div>
                 </div>
             </div>
         </div>
+
+
         <div class="control-panel-footer mt-4">
             <button class="btn btn-primary" onclick="window.location.reload();">Refresh</button>
             <button class="btn btn-secondary" id="fullscreenBtn">Fullscreen</button>
