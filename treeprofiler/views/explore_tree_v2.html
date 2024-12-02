@@ -522,8 +522,8 @@
                             <table class="table table-striped table-hover">
                                 <thead class="table-light">
                                     <tr>
-                                        <th>Layout Name</th>
-                                        <th>Settings</th>
+                                        <th>Layout</th>
+                                        <th>Applied Properties</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -531,11 +531,26 @@
                                     <tr>
                                         <td>Heatmap Layout</td>
                                         <td>
-                                            <div class="d-flex flex-column small">
-                                                <span><strong>Column Width:</strong> 70</span>
-                                                <span><strong>Padding X:</strong> 10</span>
-                                                <span><strong>Padding Y:</strong> 5</span>
+                                            <ul class="small mb-0">
+                                                <li>Temperature</li>
+                                                <li>Humidity</li>
+                                                <li>Altitude</li>
+                                            </ul>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group">
+                                                <button class="btn btn-sm btn-outline-primary">Edit</button>
+                                                <button class="btn btn-sm btn-outline-danger">Delete</button>
                                             </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Barplot Layout</td>
+                                        <td>
+                                            <ul class="small mb-0">
+                                                <li>Age</li>
+                                                <li>Height</li>
+                                            </ul>
                                         </td>
                                         <td>
                                             <div class="btn-group">
@@ -552,7 +567,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                 </div>
 
             </div>
