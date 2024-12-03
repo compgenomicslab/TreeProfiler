@@ -470,6 +470,7 @@ def explore_tree(treename):
     current_props = sorted(list(tree_info['prop2type'].keys()))
     t = Tree(tree_info['annotated_tree'])
     
+    
     default_configs = {
         "level": 0,
         "column_width": 70,
@@ -480,6 +481,8 @@ def explore_tree(treename):
     }
     tree_info['default_configs'] = default_configs
     
+    
+
     # Default values for layout settings (can be passed from form in the future)
     level = default_configs.get('level', 0)
     column_width = default_configs.get('column_width', 70)
@@ -488,6 +491,22 @@ def explore_tree(treename):
     color_config = default_configs.get('color_config', {})
     internal_num_rep = default_configs.get('internal_num_rep', 'avg')
     
+    # Structure layout metadata for front-end display
+    layouts_metadata = []
+    # for layout in current_layouts:
+    #     layout_name = layout.name  # Name of the layout
+    #     applied_props = []  # Props used in the layout
+    #     layouts_metadata.append({
+    #         "layout_name": layout_name,
+    #         "applied_props": [],
+    #         "config": {
+    #             "column_width": column_width,
+    #             "padding_x": padding_x,
+    #             "padding_y": padding_y,
+    #             "internal_num_rep": internal_num_rep
+    #         } # Serialize all layout settings dynamically
+    #     })
+
     # Process POST request
     if request.method == 'POST':
         layers_data = request.forms.get('layers')
@@ -495,10 +514,23 @@ def explore_tree(treename):
         padding_x = int(request.forms.get('padding_x'))
         padding_y = int(request.forms.get('padding_y'))
         internal_num_rep = request.forms.get('internal_num_rep')
+        
+
         if layers_data:
             layers = json.loads(layers_data)
-            for layer in layers:
-                
+            print("layers_data: ", layers)
+            for layer in layers: # only have one layer now
+                single_layout_metadata = {}
+                single_layout_metadata['layout_name'] = layer.get('layout', '')
+                single_layout_metadata['applied_props'] = layer.get('props', [])
+                single_layout_metadata['config'] = {
+                    "column_width": column_width,
+                    "padding_x": padding_x,
+                    "padding_y": padding_y,
+                    "internal_num_rep": internal_num_rep
+                }
+                layouts_metadata.append(single_layout_metadata)
+
                 # Process each layer individually
                 current_layouts, current_props, level = process_layer(
                     t, layer, tree_info, current_layouts, current_props, level,
@@ -510,7 +542,13 @@ def explore_tree(treename):
     start_explore_thread(t, treename, current_layouts, current_props)
     
     # Render template
-    return template('explore_tree_v2', treename=treename, tree_info=tree_info, selected_props=current_props, color_schemes=continuous_colormaps)
+    print("checking!", layouts_metadata)
+    return template('explore_tree_v2', 
+    treename=treename, 
+    tree_info=tree_info,
+    selected_props=current_props, 
+    color_schemes=continuous_colormaps, 
+    layouts_metadata=layouts_metadata)
 
 def get_colormap_hex_colors(colormap_name, num_colors):
     if colormap_name == 'default':

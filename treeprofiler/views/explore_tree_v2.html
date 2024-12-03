@@ -528,6 +528,26 @@
                                     </tr>
                                 </thead>
                                 <tbody id="activeLayoutsTable">
+                                    % for layout in layouts_metadata:
+                                    <tr>
+                                        <td>{{ layout['layout_name'] }}</td>
+                                        <td>
+                                            <ul class="small mb-0">
+                                                % for prop in layout['applied_props']:
+                                                <li>{{ prop }}</li>
+                                                % end
+                                            </ul>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group">
+                                                <button class="btn btn-sm btn-outline-primary">Edit</button>
+                                                <button class="btn btn-sm btn-outline-danger">Delete</button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    % end
+                                </tbody>    
+                                <!-- <tbody id="activeLayoutsTable">
                                     <tr>
                                         <td>Heatmap Layout</td>
                                         <td>
@@ -559,8 +579,8 @@
                                             </div>
                                         </td>
                                     </tr>
-                                    <!-- Additional rows for other loaded layouts -->
-                                </tbody>
+                                </tbody> -->
+                                
                             </table>
                             <div class="text-center mt-4">
                                 <button class="btn btn-success w-100 py-2">Apply Changes</button>
