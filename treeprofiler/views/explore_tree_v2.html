@@ -446,7 +446,9 @@
                                             <option value="highlight">Highlight</option>
                                             <option value="collapse">Collapse</option>
                                             <option value="prune">Prune</option>
+                                            % if tree_info['taxonomic_annotation']:
                                             <option value="rank_limit">Limit by Taxonomic Rank (taxonomic trees only)</option>
+                                            % end
                                         </select>
                                     </div>
                                     <div id="queryFields" class="form-group mt-3">
@@ -494,13 +496,9 @@
                                     <div id="taxonomicOptions" class="form-group mt-3" style="display:none">
                                         <label for="rankSelection" class="form-label fw-bold">Select Taxonomic Rank:</label>
                                         <select id="rankSelection" name="taxonomicRanks" class="form-control">
-                                            <option value="Kingdom">Kingdom</option>
-                                            <option value="Phylum">Phylum</option>
-                                            <option value="Class">Class</option>
-                                            <option value="Order">Order</option>
-                                            <option value="Family">Family</option>
-                                            <option value="Genus">Genus</option>
-                                            <option value="Species">Species</option>
+                                            % for rank in tree_info['rank_list']:
+                                            <option value="{{ rank }}">{{ rank }}</option>
+                                            % end
                                         </select>
                                     </div>
 
@@ -1070,24 +1068,42 @@
             if (!queryType) {
                 alert('Please select a query type before sending.');
                 return;
-            }
+            } 
             
+            if (!query) {
+                if (queryType !== 'rank_limit') {
+                    alert('Please add a query before sending.');
+                    return;
+                }
+            };
+
             if (queryType === 'rank_limit'){
                 const rankSelection = document.getElementById('rankSelection').value;
                 if (!rankSelection) {
                     alert('Please select a taxonomic rank before sending.');
                     return;
                 }
-            }
+            } 
 
             // Form the layer object
-            const layer = {
-                queryType,
-                query
-            };
+            if (queryType === 'rank_limit') {
+                const layer = {
+                    queryType,
+                    rankSelection
+                };
+                // Add the layer to the layers array
+                layers.push(layer);
+            } else if (queryType === 'highlight' || queryType === 'collapse' || queryType === 'prune') {
+                const layer = {
+                    queryType,
+                    query
+                };
+                // Add the layer to the layers array
+                layers.push(layer);
+            }
+            
 
-            // Add the layer to the layers array
-            layers.push(layer);
+            
 
             // Collect additional general settings
             const layersData = JSON.stringify(layers);

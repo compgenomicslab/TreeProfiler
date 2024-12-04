@@ -342,6 +342,11 @@ def process_upload_job(job_args):
         threads=threads
     )
 
+    if job_args.get("taxon_column"):
+        rank_list = sorted(list(set(utils.tree_prop_array(annotated_tree, 'rank'))))
+    else:
+        rank_list = []
+
     # Post-processing of annotated tree properties
     list_keys = [key for key, value in prop2type.items() if value == list]
     for node in annotated_tree.leaves():
@@ -369,6 +374,7 @@ def process_upload_job(job_args):
         'prop2type': prop2type,
         'layouts': [],
         'taxonomic_annotation': True if job_args.get("taxon_column") else False,
+        'rank_list':rank_list,
         'alignment_annotation': True if alignment_file_path else False,
         'domain_annotation': True if pfam_file_path else False,
     }
@@ -602,6 +608,7 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
     selected_props = layer.get('props', [])
     selected_layout = layer.get('layout', '')
     query_type = layer.get('queryType', '')
+    rank_selection = layer.get('rankSelection', '')
     query_box = layer.get('query', '')
 
     prop2type = tree_info['prop2type']
@@ -832,6 +839,11 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
         
     # Process query actions for the current layer
     current_layouts = apply_queries(query_type, query_box, current_layouts, paired_color, tree_info, level)
+    
+    if query_type == 'rank_limit':
+        # do something
+        pass
+    
     current_props.extend(selected_props)
 
     return current_layouts, current_props, level
