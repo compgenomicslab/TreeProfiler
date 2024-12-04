@@ -91,7 +91,7 @@ taxonomic_layouts = [
 ]
 aln_layouts = [
     'alignment-layout',
-    'domain_layout'
+    'domain-layout'
 ]
 
 # Global control variable for restarting
@@ -533,26 +533,31 @@ def explore_tree(treename):
                     t, layer, tree_info, current_layouts, current_props, level,
                     column_width, padding_x, padding_y, color_config, internal_num_rep, paired_color
                 )
-
+                quest_layout = layer.get('layout', '')
                 # Update layouts_metadata after process_layer
                 layouts_metadata.clear()  # Reset to avoid duplicates or outdated data
                 for idx, layout in enumerate(current_layouts):
-                    applied_props = layer["props"][idx]
-                    # Assume layout has attributes `.name`, `.props`, and config-related attributes
-                    layouts_metadata.append({
-                        "layout_name": layout.name,  # Retrieve layout name from processed layouts
-                        "applied_props": [applied_props],  # Props linked to this layout
-                        "config": {
-                            "column_width": getattr(layout, 'column_width', default_configs['column_width']),
-                            "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
-                            "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
-                            "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
-                            "color_config": getattr(layout, 'color_config', {})
-                        }
-                    })
-
-
-        
+                    if quest_layout in taxonomic_layouts or quest_layout in aln_layouts:
+                        # Append with empty props and config
+                        layouts_metadata.append({
+                            "layout_name": layout.name,
+                            "applied_props": [],
+                            "config": {}
+                        })
+                    else:
+                        # Append with applied props and full config
+                        applied_props = layer["props"][idx]
+                        layouts_metadata.append({
+                            "layout_name": layout.name,  # Retrieve layout name from processed layouts
+                            "applied_props": [applied_props],  # Props linked to this layout
+                            "config": {
+                                "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
+                                "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
+                                "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
+                                "color_config": getattr(layout, 'color_config', {})
+                            }
+                        })
     # Start the ete exploration thread
     start_explore_thread(t, treename, current_layouts, current_props)
 

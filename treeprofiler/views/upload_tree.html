@@ -51,7 +51,7 @@
             </div>
             <div class="card-body">
                 <div class="form-group">
-                    <label for="metadata" class="col-sm-3 col-form-label">Metadata File</label>
+                    <label for="metadata" class="col-sm-3 col-form-label">Metadata File(s)</label>
                     <!-- <input type="file" class="form-control-file mt-2" id="metadataFile" name="metadataFile"> -->
                     <input type="file" class="form-control-file mt-2" id="metadataFiles" name="metadataFiles" multiple>
                 </div>
@@ -243,7 +243,7 @@
         <!-- Lineage specificity section -->
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5>Lineage specificity</h5>
+                <h5>Lineage specificity (Optional)</h5>
                 <button type="button" class="btn btn-secondary btn-sm" id="toggleLStn">Activate Lineage specificity analysis</button>
             </div>
             <div id="lsSection" class="card-body collapsed" style="display: none;">
@@ -302,7 +302,7 @@
         </div>
         
         <!-- Submit Button -->
-        <button type="button" class="btn btn-primary" onclick="submitForm()">Upload Tree and Metadata</button>
+        <button type="button" class="btn btn-primary" onclick="submitForm()">Annotate and Visualize Tree!</button>
     </form>
 </div>
 
@@ -533,9 +533,6 @@
 
             // Only update column options for the first file
             if (isFirstFile) {
-                updateTaxonomicIdOptions(headers);
-                updateAcrOptions(headers);
-                updateLsOptions(headers);
                 isFirstFile = false;
             }
         }
@@ -547,6 +544,9 @@
             return { column: header, type };
         });
 
+        updateTaxonomicIdOptions(combinedHeaders);
+        updateAcrOptions(combinedHeaders);
+        updateLsOptions(combinedHeaders);
         renderColumnTypeTable(columnTypes);
         document.getElementById('metadataAnalysis').style.display = 'block';
     }
@@ -568,6 +568,7 @@
             });
         });
 
+        console.log("Metadata headers:", headers);
         updateTaxonomicIdOptions(headers);  // Call the function to update options with metadata columns
         updateAcrOptions(headers);          // Update options for ACR columns
         updateLsOptions(headers);           // Update options for LS columns
@@ -674,25 +675,30 @@
 
     function updateAcrOptions(columns) {
         const acrColumnSelect = document.getElementById('acrColumn');
-        acrColumnSelect.innerHTML = ""; // Clear existing options
-
+        const existingOptions = new Set(Array.from(acrColumnSelect.options).map(option => option.value));
+        // Add only new columns
         columns.forEach(col => {
-            const option = document.createElement('option');
-            option.value = col;
-            option.textContent = col;
-            acrColumnSelect.appendChild(option);
+            if (!existingOptions.has(col)) {
+                const option = document.createElement('option');
+                option.value = col;
+                option.textContent = col;
+                acrColumnSelect.appendChild(option);
+            }
         });
     }
 
     function updateLsOptions(columns) {
         const lsColumnSelect = document.getElementById('lsColumn');
-        lsColumnSelect.innerHTML = ""; // Clear existing options
+        const existingOptions = new Set(Array.from(lsColumnSelect.options).map(option => option.value));
 
+        // Add only new columns
         columns.forEach(col => {
-            const option = document.createElement('option');
-            option.value = col;
-            option.textContent = col;
-            lsColumnSelect.appendChild(option);
+            if (!existingOptions.has(col)) {
+                const option = document.createElement('option');
+                option.value = col;
+                option.textContent = col;
+                lsColumnSelect.appendChild(option);
+            }
         });
     }
 
