@@ -840,10 +840,10 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
     # Process query actions for the current layer
     current_layouts = apply_queries(query_type, query_box, current_layouts, paired_color, tree_info, level)
     
-    if query_type == 'rank_limit':
+    if query_type == 'rank_limit' or query_type == 'prune':
         # do something
         pass
-    
+
     current_props.extend(selected_props)
 
     return current_layouts, current_props, level
