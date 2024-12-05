@@ -402,7 +402,7 @@ def run(args):
                 condition_list = condition.split(syntax_sep)
                 color2conditions  = {}
                 color2conditions[paired_color[idx]] = condition_list
-            c_layout = conditional_layouts.LayoutCollapse(name='Collapsed_by_'+condition, color2conditions=color2conditions, column=level, prop2type = prop2type)
+            c_layout = conditional_layouts.LayoutCollapse(name='Collapsed-by_'+condition, color2conditions=color2conditions, column=level, prop2type = prop2type)
             layouts.append(c_layout)
 
     # label node by condition
@@ -416,7 +416,7 @@ def run(args):
                 condition_list = condition.split(syntax_sep)
                 color2conditions  = {}
                 color2conditions[paired_color[idx]] = condition_list
-            s_layout = conditional_layouts.LayoutHighlight(name='Highlighted_by_'+condition, color2conditions=color2conditions, column=level, prop2type = prop2type)
+            s_layout = conditional_layouts.LayoutHighlight(name='Highlighted-by_'+condition, color2conditions=color2conditions, column=level, prop2type = prop2type)
             layouts.append(s_layout)
     
     #### Layouts settings ####
@@ -611,13 +611,13 @@ def run(args):
             else:
                 window = []
 
-            aln_layout = seq_layouts.LayoutAlignment(name='Alignment_layout', 
+            aln_layout = seq_layouts.LayoutAlignment(name='Alignment', 
                         alignment_prop='alignment', column=level, scale_range=lengh, 
                         window=window, summarize_inner_nodes=True)
             layouts.append(aln_layout)
 
         if layout == 'domain-layout':
-            domain_layout = seq_layouts.LayoutDomain(name="Domain_layout", prop='dom_arq')
+            domain_layout = seq_layouts.LayoutDomain(name="Domain", prop='dom_arq')
             layouts.append(domain_layout)
 
         # presence-absence profiling based on categorical data
@@ -637,7 +637,7 @@ def run(args):
 
             # drawing as array in matrix
             matrix, value2color = categorical2matrix(tree, categorical_props, color_config=color_config)
-            matrix_layout = profile_layouts.LayoutPropsMatrixOld(name=f"Categorical_matrix_{categorical_props}",
+            matrix_layout = profile_layouts.LayoutPropsMatrixOld(name=f"Categorical-matrix_{categorical_props}",
                 matrix=matrix, matrix_type='categorical', matrix_props=categorical_props,
                 value_color=value2color, column=level, poswidth=args.column_width)
             
@@ -666,7 +666,7 @@ def run(args):
                 sorted_list_props = sorted(list_props, key=lambda x: index_map[x])
                 for list_prop in sorted_list_props:
                     matrix, minval, maxval, value2color = results_list[list_prop]
-                    matrix_layout = profile_layouts.LayoutPropsMatrixOld(name=f"Numerical_matrix_{list_prop}", 
+                    matrix_layout = profile_layouts.LayoutPropsMatrixOld(name=f"Numerical-matrix_{list_prop}", 
                         matrix=matrix, matrix_type='numerical', matrix_props=[list_prop], is_list=True, 
                         value_color=value2color, value_range=[minval, maxval], column=level,
                         poswidth=args.column_width)
@@ -691,7 +691,7 @@ def run(args):
             matrix, value2color, is_list = binary2matrix(tree, binary_props, color_config=color_config)
             all_values = list(value2color.keys())
 
-            matrix_layout = profile_layouts.LayoutPropsMatrixBinary(name=f"Binary_matrix_{binary_props}",
+            matrix_layout = profile_layouts.LayoutPropsMatrixBinary(name=f"Binary-matrix_{binary_props}",
                 matrix=matrix, matrix_props=binary_props, value_range=[0,1],
                 value_color=value2color, column=level, poswidth=args.column_width)
 
@@ -820,8 +820,8 @@ def run(args):
             taxon_color_dict[rank] = color_dict
             
         #taxa_layouts.append(taxon_layouts.TaxaRectangular(name = "Last Common Ancester", color_dict=taxon_color_dict, column=level))
-        taxa_layouts.append(taxon_layouts.LayoutSciName(name = 'Taxa Scientific name', color_dict=taxon_color_dict))
-        taxa_layouts.append(taxon_layouts.LayoutEvolEvents(name='Taxa Evolutionary events', prop="evoltype",
+        taxa_layouts.append(taxon_layouts.LayoutSciName(name = 'Taxa_Scientific_name', color_dict=taxon_color_dict))
+        taxa_layouts.append(taxon_layouts.LayoutEvolEvents(name = 'Taxa_Evolutionary_events', prop="evoltype",
             speciation_color="blue", 
             duplication_color="red", node_size = 3,
             legend=True))
@@ -986,7 +986,7 @@ def get_acr_discrete_layouts(tree, props, level, prop2type, column_width=70, pad
             # normal text prop
             color_dict = utils.assign_color_to_values(prop_values, paired_color)
 
-        layout = phylosignal_layouts.LayoutACRDiscrete(name='acr_'+prop, column=level, \
+        layout = phylosignal_layouts.LayoutACRDiscrete(name='ACR_'+prop, column=level, \
             color_dict=color_dict, prop=prop, width=column_width, \
                 padding_x=padding_x, padding_y=padding_y)
         layouts.append(layout)
@@ -1010,7 +1010,7 @@ def get_acr_continuous_layouts(tree, props, level, prop2type, padding_x=1, paddi
         for search_value in all_values:
             index = np.abs(index_values - search_value).argmin()+1
             value2color[search_value] = gradientscolor[index]
-        layout = phylosignal_layouts.LayoutACRContinuous(name='acr_'+prop, column=level, \
+        layout = phylosignal_layouts.LayoutACRContinuous(name='ACR_'+prop, column=level, \
             color_dict=value2color, prop=prop, value_range=[minval, maxval], \
             color_range=[gradientscolor[20], gradientscolor[10], gradientscolor[1]])
         layouts.append(layout)
@@ -1054,12 +1054,12 @@ def get_ls_layouts(tree, props, level, prop2type, padding_x=1, padding_y=0, colo
             # value_range=[minval, maxval], \
             # color_range=[gradientscolor[20], gradientscolor[10], gradientscolor[1]])
             if suffix != "f1":
-                layout = staple_layouts.LayoutBranchScore(name='ls_'+ls_prop, \
+                layout = staple_layouts.LayoutBranchScore(name='LS_'+ls_prop, \
                     color_dict=value2color, prop=ls_prop, value_range=[minval, maxval], \
                     color_range=[gradientscolor[20], gradientscolor[10], gradientscolor[1]], 
                     show_score=True, active=False)
             else:
-                layout = staple_layouts.LayoutBranchScore(name='ls_'+ls_prop, \
+                layout = staple_layouts.LayoutBranchScore(name='LS_'+ls_prop, \
                     color_dict=value2color, prop=ls_prop, value_range=[minval, maxval], \
                     color_range=[gradientscolor[20], gradientscolor[10], gradientscolor[1]], 
                     show_score=True)
@@ -1068,7 +1068,7 @@ def get_ls_layouts(tree, props, level, prop2type, padding_x=1, padding_y=0, colo
             ls_props.append(ls_prop)
     
         ls_clade_prop = utils.add_suffix(prop, ls_clade_suffix)
-        ls_clade_layout = phylosignal_layouts.LayoutLineageSpecific(name=f'Linear Specific Clade {prop}', \
+        ls_clade_layout = phylosignal_layouts.LayoutLineageSpecific(name=f'LS_Linear Specific Clade {prop}', \
             prop=ls_clade_prop, color=lsprop2color[ls_clade_prop])
 
         layouts.append(ls_clade_layout)
@@ -1094,7 +1094,7 @@ def get_piechart_layouts(tree, props, prop2type, padding_x=1, padding_y=0, radiu
                 logger.error(f"Property {prop} is empty. Please check annotation.")
                 sys.exit(1)
             color_dict = utils.assign_color_to_values(prop_values, paired_color)
-        layout = text_layouts.LayoutPiechart(name='Piechart_'+prop, color_dict=color_dict, prop=prop, radius=radius)
+        layout = text_layouts.LayoutPiechart(name='PieChart_'+prop, color_dict=color_dict, prop=prop, radius=radius)
         layouts.append(layout)
     return layouts
 
@@ -1156,7 +1156,7 @@ def get_colorbranch_layouts(tree, props, level, prop2type, column_width=70, padd
             # normal text prop
             color_dict = utils.assign_color_to_values(prop_values, paired_color)
 
-        layout = text_layouts.LayoutColorbranch(name='Colorbranch_'+prop, column=level, \
+        layout = text_layouts.LayoutColorbranch(name='ColorBranch_'+prop, column=level, \
             color_dict=color_dict, prop=prop, width=column_width, \
                 padding_x=padding_x, padding_y=padding_y)
         layouts.append(layout)
@@ -1188,7 +1188,7 @@ def get_rectangle_layouts(tree, props, level, prop2type, column_width=70, paddin
             # normal text prop
             color_dict = utils.assign_color_to_values(prop_values, paired_color)
 
-        layout = text_layouts.LayoutRect(name='Rectangular_'+prop, column=level,
+        layout = text_layouts.LayoutRect(name='Rectangle_'+prop, column=level,
                     color_dict=color_dict, prop=prop,
                     width=column_width, padding_x=padding_x, padding_y=padding_y)
         layouts.append(layout)

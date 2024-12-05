@@ -76,20 +76,20 @@ numerical_layout_list = [
     'numerical-matrix-layout',
     'barplot-layout'
 ]
-binary_layouts  = [
+binary_layout_list  = [
     'binary-layout',
 ]
-analytic_layouts = [
+analytic_layout_list = [
     'acr-discrete-layout',
     'acr-continuous-layout',
     'ls-layout'
 ]
-taxonomic_layouts = [
+taxonomic_layout_list = [
     'taxoncollapse-layout',
     'taxonclade-layout',
     'taxonrectangle-layout'
 ]
-aln_layouts = [
+aln_layout_list = [
     'alignment-layout',
     'domain-layout'
 ]
@@ -541,59 +541,84 @@ def explore_tree(treename):
                 )
                 
                 # get quest layuot
-                quest_layout = layer.get('layout', '')
+                #quest_layout = layer.get('layout', '')
                 # query queryType
-                query_type = layer.get('queryType', '')
+                #query_type = layer.get('queryType', '')
 
                 # Update layouts_metadata after process_layer
                 layouts_metadata.clear()  # Reset to avoid duplicates or outdated data
-                for idx, layout in enumerate(current_layouts):
-                    if quest_layout:
-                        if quest_layout in taxonomic_layouts or quest_layout in aln_layouts:
-                            # Append with empty props and config
-                            layouts_metadata.append({
-                                "layout_name": layout.name,
-                                "applied_props": [],
-                                "config": {}
-                            })
-
-                        elif quest_layout in ['profiling-layout', 'categorical-matrix-layout', 'numerical-matrix-layout']:
-                            applied_props = layout.matrix_props
-                            layouts_metadata.append({
-                                "layout_name": layout.name,  # Retrieve layout name from processed layouts
-                                "applied_props": [applied_props],  # Props linked to this layout
-                                "config": {
-                                    "column_width": getattr(layout, 'column_width', default_configs['column_width']),
-                                    "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
-                                    "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
-                                    "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
-                                    "color_config": getattr(layout, 'color_config', {})
-                                }
-                            })
-                        else:
-                            print(quest_layout)
-                            # Append with applied props and full config
-                            applied_props = layout.prop
-                            layouts_metadata.append({
-                                "layout_name": layout.name,  # Retrieve layout name from processed layouts
-                                "applied_props": [applied_props],  # Props linked to this layout
-                                "config": {
-                                    "column_width": getattr(layout, 'column_width', default_configs['column_width']),
-                                    "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
-                                    "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
-                                    "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
-                                    "color_config": getattr(layout, 'color_config', {})
-                                }
-                            })
+                for layout in current_layouts:
+                    layout_prefix = layout.name.split('_')[0].lower() # get the layout prefix 
+                    if layout_prefix.startswith('taxa'):
+                        layouts_metadata.append({
+                            "layout_name": layout.name,
+                            "applied_props": [],
+                            "config": {
+                                "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
+                                "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
+                                "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
+                                "color_config": getattr(layout, 'color_config', {})
+                            }
+                        })
+                    elif layout_prefix in ['alignment', 'domain']:
+                        layouts_metadata.append({
+                            "layout_name": layout.name,
+                            "applied_props": [layout_prefix],
+                            "config": {
+                                "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
+                                "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
+                                "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
+                                "color_config": getattr(layout, 'color_config', {})
+                            }
+                        })
+                    elif layout_prefix in ['profiling', 'categorical-matrix', 'numerical-matrix', 'binary-matrix']:
+                        # Append with applied props and full config
+                        name = layout.name
+                        applied_props = layout.matrix_props
+                        layouts_metadata.append({
+                            "layout_name": name,  # Retrieve layout name from processed layouts
+                            "applied_props": applied_props,  # Props linked to this layout
+                            "config": {
+                                "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
+                                "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
+                                "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
+                                "color_config": getattr(layout, 'color_config', {})
+                            }
+                        })
+                    elif layout_prefix in ['collapsed-by', 'highlighted-by']:
+                        # Append with applied props and full config
+                        name = layout.name
+                        conditions = list(layout.color2conditions.values())
+                        layouts_metadata.append({
+                            "layout_name": name,  # Retrieve layout name from processed layouts
+                            "applied_props": conditions,  # Props linked to this layout
+                            "config": {
+                                "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
+                                "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
+                                "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
+                                "color_config": getattr(layout, 'color_config', {})
+                            }
+                        })
                     else:
-                        if query_type:
-                            query = layer.get('query', '')
-                            # Append with empty props and config
-                            layouts_metadata.append({
-                                "layout_name": layout.name,
-                                "applied_props": [query],
-                                "config": {}
-                            })
+                        # Append with applied props and full config
+                        name = layout.name
+                        applied_props = layout.prop
+                        layouts_metadata.append({
+                            "layout_name": name,  # Retrieve layout name from processed layouts
+                            "applied_props": [applied_props],  # Props linked to this layout
+                            "config": {
+                                "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
+                                "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
+                                "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
+                                "color_config": getattr(layout, 'color_config', {})
+                            }
+                        })
+
     # Start the ete exploration thread
     start_explore_thread(t, treename, current_layouts, current_props)
 
@@ -806,7 +831,7 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
             sorted_list_props = sorted(list_props, key=lambda x: index_map[x])
             for list_prop in sorted_list_props:
                 matrix, minval, maxval, value2color = results_list[list_prop]
-                matrix_layout = tree_plot.profile_layouts.LayoutPropsMatrixOld(name=f"Numerical_matrix_{list_prop}", 
+                matrix_layout = tree_plot.profile_layouts.LayoutPropsMatrixOld(name=f"Numerical-matrix_{list_prop}", 
                     matrix=matrix, matrix_type='numerical', matrix_props=[list_prop], is_list=True, 
                     value_color=value2color, value_range=[minval, maxval], column=level,
                     poswidth=column_width)
@@ -929,7 +954,7 @@ def apply_categorical_layouts(t, selected_layout, selected_props, tree_info, cur
             t, selected_props, color_config=color_config
         )
         matrix_layout = tree_plot.profile_layouts.LayoutPropsMatrixOld(
-            name=f"Categorical_matrix_{selected_props}", matrix=matrix, matrix_type='categorical',
+            name=f"Categorical-matrix_{selected_props}", matrix=matrix, matrix_type='categorical',
             matrix_props=selected_props, value_color=value2color, column=level, poswidth=column_width
         )
         current_layouts.append(matrix_layout)
@@ -1022,13 +1047,13 @@ def apply_taxonomic_layouts(t, selected_layout, selected_props, tree_info, curre
     # Add scientific name and evolutionary events layouts
     taxa_layouts.append(
         layouts.taxon_layouts.LayoutSciName(
-            name='Taxa Scientific name',
+            name='Taxa_Scientific name',
             color_dict=taxon_color_dict
         )
     )
     taxa_layouts.append(
         layouts.taxon_layouts.LayoutEvolEvents(
-            name='Taxa Evolutionary events',
+            name='Taxa_Evolutionary events',
             prop="evoltype",
             speciation_color="blue",
             duplication_color="red",
@@ -1069,7 +1094,7 @@ def apply_highlight_queries(query_strings, current_layouts, paired_color, tree_i
         color2conditions = {paired_color[idx]: condition_list}
         
         s_layout = layouts.conditional_layouts.LayoutHighlight(
-            name=f'Highlight_{condition}', color2conditions=color2conditions, 
+            name=f'Highlighted-by_{condition}', color2conditions=color2conditions, 
             column=level, prop2type=tree_info['prop2type']
         )
         current_layouts.append(s_layout)
@@ -1087,7 +1112,7 @@ def apply_collapse_queries(query_strings, current_layouts, paired_color, tree_in
         color2conditions = {paired_color[idx]: condition_list}
         
         c_layout = layouts.conditional_layouts.LayoutCollapse(
-            name=f'Collapse_{condition}', color2conditions=color2conditions, 
+            name=f'Collapsed-by_{condition}', color2conditions=color2conditions, 
             column=level, prop2type=tree_info['prop2type']
         )
         current_layouts.append(c_layout)
