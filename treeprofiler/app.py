@@ -534,17 +534,22 @@ def explore_tree(treename):
             layers = json.loads(layers_data)
             for layer in layers:
                 
+                # Query queryType
+                query_type = layer.get('queryType', '')
+                if query_type == 'rank_limit':
+                    pass
+                elif query_type == 'prune':
+                    pass
+                else:
+                    pass
+
                 # Process each layer individually without altering its structure
                 current_layouts, current_props, level = process_layer(
                     t, layer, tree_info, current_layouts, current_props, level,
                     column_width, padding_x, padding_y, color_config, internal_num_rep, paired_color
                 )
                 
-                # get quest layuot
-                #quest_layout = layer.get('layout', '')
-                # query queryType
-                #query_type = layer.get('queryType', '')
-
+                
                 # Update layouts_metadata after process_layer
                 layouts_metadata.clear()  # Reset to avoid duplicates or outdated data
                 for layout in current_layouts:
@@ -880,10 +885,6 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
     # Process query actions for the current layer
     current_layouts = apply_queries(query_type, query_box, current_layouts, paired_color, tree_info, level)
     
-    if query_type == 'rank_limit' or query_type == 'prune':
-        # do something
-        pass
-
     current_props.extend(selected_props)
 
     return current_layouts, current_props, level
