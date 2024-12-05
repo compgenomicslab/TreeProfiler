@@ -3,12 +3,12 @@ from ete4.smartview  import RectFace, CircleFace, SeqMotifFace, TextFace, Outlin
 from treeprofiler.layouts.general_layouts import get_piechartface, get_stackedbarface
 
 class LayoutACRDiscrete(TreeLayout):
-    def __init__(self, name, column, color_dict, acr_prop, legend=True, width=70, padding_x=1, padding_y=0):
+    def __init__(self, name, column, color_dict, prop, legend=True, width=70, padding_x=1, padding_y=0):
         super().__init__(name)
         self.aligned_faces = True
-        self.acr_prop = acr_prop
-        self.delta_prop = acr_prop+"_delta"
-        self.pval_prop = acr_prop+"_pval"
+        self.prop = prop
+        self.delta_prop = prop+"_delta"
+        self.pval_prop = prop+"_pval"
         self.column = column
         self.color_dict = color_dict
         self.legend = legend
@@ -20,7 +20,7 @@ class LayoutACRDiscrete(TreeLayout):
 
     def set_tree_style(self, tree, tree_style):
         super().set_tree_style(tree, tree_style)
-        text = TextFace(self.acr_prop, min_fsize=5, max_fsize=15, padding_x=self.padding_x, width=self.width, rotation=315)
+        text = TextFace(self.prop, min_fsize=5, max_fsize=15, padding_x=self.padding_x, width=self.width, rotation=315)
         #tree_style.aligned_panel_header.add_face(text, column=self.column)
         if self.legend:
             if self.color_dict:
@@ -42,8 +42,8 @@ class LayoutACRDiscrete(TreeLayout):
                 return f"P = {pval:.2f}"
 
     def set_node_style(self, node):
-        if node.props.get(self.acr_prop):
-            prop_text = node.props.get(self.acr_prop)
+        if node.props.get(self.prop):
+            prop_text = node.props.get(self.prop)
             if prop_text:
                 if type(prop_text) == list:
                     prop_text = ",".join(prop_text)
@@ -64,7 +64,7 @@ class LayoutACRDiscrete(TreeLayout):
         if node.props.get(self.delta_prop):
             prop_text = "%.2f" % float(node.props.get(self.delta_prop))
             if prop_text:
-                output = u"\u0394" + f"-{self.acr_prop}: " + prop_text
+                output = u"\u0394" + f"-{self.prop}: " + prop_text
                 node.add_face(TextFace(output, color = "red", 
                 padding_x=self.padding_x*5), column=0, position="branch_right")
             # p_value
@@ -111,9 +111,9 @@ class LayoutACRContinuous(TreeLayout):
                 node.sm_style["outline_color"] = self.color_dict.get(prop_score, self.absence_color)
 
 class LayoutLineageSpecific(TreeLayout):
-    def __init__(self, name, ls_prop, color, legend=True, active=True):
+    def __init__(self, name, prop, color, legend=True, active=True):
         super().__init__(name)
-        self.ls_prop = ls_prop
+        self.prop = prop
         self.color = color
         self.legend = legend
         self.active = active
@@ -123,11 +123,11 @@ class LayoutLineageSpecific(TreeLayout):
             tree_style.add_legend(title=self.name,
                                 variable='discrete',
                                 colormap={
-                                    self.ls_prop: self.color,
+                                    self.prop: self.color,
                                 }
                                 )
 
     def set_node_style(self, node):
-        if node.props.get(self.ls_prop):
+        if node.props.get(self.prop):
             node.sm_style["bgcolor"] = self.color # highligh clade
             node.sm_style["outline_color"] = self.color

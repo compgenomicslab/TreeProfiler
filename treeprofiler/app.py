@@ -556,9 +556,24 @@ def explore_tree(treename):
                                 "applied_props": [],
                                 "config": {}
                             })
+
+                        elif quest_layout in ['profiling-layout', 'categorical-matrix-layout', 'numerical-matrix-layout']:
+                            applied_props = layout.matrix_props
+                            layouts_metadata.append({
+                                "layout_name": layout.name,  # Retrieve layout name from processed layouts
+                                "applied_props": [applied_props],  # Props linked to this layout
+                                "config": {
+                                    "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                    "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
+                                    "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
+                                    "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
+                                    "color_config": getattr(layout, 'color_config', {})
+                                }
+                            })
                         else:
+                            print(quest_layout)
                             # Append with applied props and full config
-                            applied_props = layer["props"][idx]
+                            applied_props = layout.prop
                             layouts_metadata.append({
                                 "layout_name": layout.name,  # Retrieve layout name from processed layouts
                                 "applied_props": [applied_props],  # Props linked to this layout

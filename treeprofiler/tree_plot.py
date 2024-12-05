@@ -736,7 +736,7 @@ def run(args):
             'Description',
             'Preferred_name',
             ]
-        #label_layouts, level, _ = get_layouts(tree, text_props, 'rectangular', level, 'counter', prop2type=prop2type)
+        
         label_layouts, level, _ = get_rectangle_layouts(tree, text_props, level, prop2type=prop2type, column_width=args.column_width)
         layouts.extend(label_layouts)
         
@@ -744,7 +744,7 @@ def run(args):
             #'evalue',
             'score'
         ]
-        #barplot_layouts, level, _ = get_layouts(tree, num_props, 'barplot', level, internal_num_rep, prop2type=prop2type)
+        
         barplot_layouts, level, _ = get_barplot_layouts(tree, num_props, level, prop2type, column_width=args.barplot_width, internal_rep=internal_num_rep)   
         layouts.extend(barplot_layouts)
         
@@ -987,7 +987,7 @@ def get_acr_discrete_layouts(tree, props, level, prop2type, column_width=70, pad
             color_dict = utils.assign_color_to_values(prop_values, paired_color)
 
         layout = phylosignal_layouts.LayoutACRDiscrete(name='acr_'+prop, column=level, \
-            color_dict=color_dict, acr_prop=prop, width=column_width, \
+            color_dict=color_dict, prop=prop, width=column_width, \
                 padding_x=padding_x, padding_y=padding_y)
         layouts.append(layout)
         level += 1
@@ -1011,7 +1011,7 @@ def get_acr_continuous_layouts(tree, props, level, prop2type, padding_x=1, paddi
             index = np.abs(index_values - search_value).argmin()+1
             value2color[search_value] = gradientscolor[index]
         layout = phylosignal_layouts.LayoutACRContinuous(name='acr_'+prop, column=level, \
-            color_dict=value2color, score_prop=prop, value_range=[minval, maxval], \
+            color_dict=value2color, prop=prop, value_range=[minval, maxval], \
             color_range=[gradientscolor[20], gradientscolor[10], gradientscolor[1]])
         layouts.append(layout)
     return layouts
@@ -1050,17 +1050,17 @@ def get_ls_layouts(tree, props, level, prop2type, padding_x=1, padding_y=0, colo
                 logger.error(f"Property {ls_prop} is empty. Please check annotation.")
                 sys.exit(1)
             # layout = staple_layouts.LayoutBranchScore(name='BranchScore_'+prop, \
-            # color_dict=gradientscolor, score_prop=prop, internal_rep=internal_rep, \
+            # color_dict=gradientscolor, prop=prop, internal_rep=internal_rep, \
             # value_range=[minval, maxval], \
             # color_range=[gradientscolor[20], gradientscolor[10], gradientscolor[1]])
             if suffix != "f1":
                 layout = staple_layouts.LayoutBranchScore(name='ls_'+ls_prop, \
-                    color_dict=value2color, score_prop=ls_prop, value_range=[minval, maxval], \
+                    color_dict=value2color, prop=ls_prop, value_range=[minval, maxval], \
                     color_range=[gradientscolor[20], gradientscolor[10], gradientscolor[1]], 
                     show_score=True, active=False)
             else:
                 layout = staple_layouts.LayoutBranchScore(name='ls_'+ls_prop, \
-                    color_dict=value2color, score_prop=ls_prop, value_range=[minval, maxval], \
+                    color_dict=value2color, prop=ls_prop, value_range=[minval, maxval], \
                     color_range=[gradientscolor[20], gradientscolor[10], gradientscolor[1]], 
                     show_score=True)
             
@@ -1069,7 +1069,7 @@ def get_ls_layouts(tree, props, level, prop2type, padding_x=1, padding_y=0, colo
     
         ls_clade_prop = utils.add_suffix(prop, ls_clade_suffix)
         ls_clade_layout = phylosignal_layouts.LayoutLineageSpecific(name=f'Linear Specific Clade {prop}', \
-            ls_prop=ls_clade_prop, color=lsprop2color[ls_clade_prop])
+            prop=ls_clade_prop, color=lsprop2color[ls_clade_prop])
 
         layouts.append(ls_clade_layout)
         ls_props.append(ls_clade_prop)
@@ -1094,7 +1094,7 @@ def get_piechart_layouts(tree, props, prop2type, padding_x=1, padding_y=0, radiu
                 logger.error(f"Property {prop} is empty. Please check annotation.")
                 sys.exit(1)
             color_dict = utils.assign_color_to_values(prop_values, paired_color)
-        layout = text_layouts.LayoutPiechart(name='Piechart_'+prop, color_dict=color_dict, text_prop=prop, radius=radius)
+        layout = text_layouts.LayoutPiechart(name='Piechart_'+prop, color_dict=color_dict, prop=prop, radius=radius)
         layouts.append(layout)
     return layouts
 
@@ -1120,7 +1120,7 @@ def get_label_layouts(tree, props, level, prop2type, column_width=70, padding_x=
             color_dict = utils.assign_color_to_values(prop_values, paired_color)
 
         layout = text_layouts.LayoutText(name='Label_'+prop, column=level, 
-        color_dict=color_dict, text_prop=prop, width=column_width, padding_x=padding_x, padding_y=padding_y)
+        color_dict=color_dict, prop=prop, width=column_width, padding_x=padding_x, padding_y=padding_y)
         layouts.append(layout)
         level += 1
     return layouts, level, prop_color_dict
@@ -1157,7 +1157,7 @@ def get_colorbranch_layouts(tree, props, level, prop2type, column_width=70, padd
             color_dict = utils.assign_color_to_values(prop_values, paired_color)
 
         layout = text_layouts.LayoutColorbranch(name='Colorbranch_'+prop, column=level, \
-            color_dict=color_dict, text_prop=prop, width=column_width, \
+            color_dict=color_dict, prop=prop, width=column_width, \
                 padding_x=padding_x, padding_y=padding_y)
         layouts.append(layout)
         level += 1
@@ -1189,7 +1189,7 @@ def get_rectangle_layouts(tree, props, level, prop2type, column_width=70, paddin
             color_dict = utils.assign_color_to_values(prop_values, paired_color)
 
         layout = text_layouts.LayoutRect(name='Rectangular_'+prop, column=level,
-                    color_dict=color_dict, text_prop=prop,
+                    color_dict=color_dict, prop=prop,
                     width=column_width, padding_x=padding_x, padding_y=padding_y)
         layouts.append(layout)
         level += 1
@@ -1222,7 +1222,7 @@ def get_background_layouts(tree, props, level, prop2type, column_width=70, paddi
             
         layout = text_layouts.LayoutBackground(name='Background_'+prop, 
                     column=level, width=column_width,
-                    color_dict=color_dict, text_prop=prop,
+                    color_dict=color_dict, prop=prop,
                     padding_x=padding_x, padding_y=padding_y)
 
         layouts.append(layout)
@@ -1263,9 +1263,9 @@ def get_binary_layouts(tree, props, level, prop2type, column_width=70, reverse=F
                         color = paired_color[level]
 
             if not reverse:
-                layout = conditional_layouts.LayoutBinary('Binary_'+prop, level, bool_prop=prop, color=color, width=column_width, padding_x=padding_x, padding_y=padding_y, reverse=reverse, aggregate=aggregate, max_count=max_count)
+                layout = conditional_layouts.LayoutBinary('Binary_'+prop, level, prop=prop, color=color, width=column_width, padding_x=padding_x, padding_y=padding_y, reverse=reverse, aggregate=aggregate, max_count=max_count)
             else:
-                layout = conditional_layouts.LayoutBinary('ReverseBinary_'+prop, level, bool_prop=prop, width=column_width, padding_x=padding_x, padding_y=0, reverse=reverse, aggregate=aggregate, max_count=max_count)
+                layout = conditional_layouts.LayoutBinary('ReverseBinary_'+prop, level, prop=prop, width=column_width, padding_x=padding_x, padding_y=0, reverse=reverse, aggregate=aggregate, max_count=max_count)
             
             internal_prop = utils.add_suffix(prop, 'counter')
 
@@ -1347,7 +1347,7 @@ def get_branchscore_layouts(tree, props, prop2type, padding_x=1, padding_y=0, in
         layout = staple_layouts.LayoutBranchScore(
             name='BranchScore_' + prop,
             color_dict=value2color,
-            score_prop=prop,
+            prop=prop,
             internal_rep=internal_rep,
             value_range=[minval, maxval],
             color_range=[gradientscolor[20], gradientscolor[10], gradientscolor[1]]
@@ -1490,7 +1490,7 @@ def get_categorical_bubble_layouts(tree, props, level, prop2type, column_width=7
             color_dict = utils.assign_color_to_values(prop_values, paired_color)
 
         # layout = text_layouts.LayoutRect(name='Rectangular_'+prop, column=level,
-        #             color_dict=color_dict, text_prop=prop,
+        #             color_dict=color_dict, prop=prop,
         #             width=column_width, padding_x=padding_x, padding_y=padding_y)
         # Configure and add layout
         layout = text_layouts.LayoutBubbleCategorical(name=f'Bubble_{prop}', column=level, 
@@ -1691,7 +1691,7 @@ def get_heatmap_layouts(tree, props, level, column_width=70, padding_x=1, paddin
         layout = staple_layouts.LayoutHeatmap(
             name=f'Heatmap_{prop}_{norm_method}', column=level,
             width=column_width, padding_x=padding_x, padding_y=padding_y,
-            internal_rep=internal_rep, heatmap_prop=prop,
+            internal_rep=internal_rep, prop=prop,
             maxval=maxval, minval=minval, value_color=value2color,
             value_range=[minval, maxval], color_range=gradientscolor,
             absence_color=nan_color
