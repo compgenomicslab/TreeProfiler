@@ -537,11 +537,13 @@ def explore_tree(treename):
                 # Query queryType
                 query_type = layer.get('queryType', '')
                 if query_type == 'rank_limit':
-                    pass
+                    t = utils.taxatree_prune(t, rank_limit=rankSelection)
                 elif query_type == 'prune':
-                    pass
-                else:
-                    pass
+                    # prune tree by condition 
+                    query_box = layer.get('query', '')
+                    query_strings = convert_query_string(query_box)
+                    prop2type = tree_info['prop2type']
+                    t = utils.conditional_prune(t, query_strings, prop2type)
 
                 # Process each layer individually without altering its structure
                 current_layouts, current_props, level = process_layer(
