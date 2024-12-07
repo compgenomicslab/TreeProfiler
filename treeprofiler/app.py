@@ -13,7 +13,7 @@ from wsgiref.simple_server import WSGIServer, WSGIRequestHandler
 
 
 from ete4 import Tree
-from treeprofiler.tree_annotate import run_tree_annotate, parse_csv  # or other functions you need
+from treeprofiler.tree_annotate import run_tree_annotate, parse_csv, name_nodes  # or other functions you need
 from treeprofiler import tree_plot
 from treeprofiler.src import utils
 from treeprofiler import layouts
@@ -353,8 +353,13 @@ def process_upload_job(job_args):
         for key in list_keys:
             if node.props.get(key):
                 node.add_prop(key, '||'.join(node.props[key]))
+    
+    # Name the nodes
+    annotated_tree = name_nodes(annotated_tree)
 
-    avail_props = [key for key in prop2type.keys() if key not in ['name', 'dist', 'support']]
+    #avail_props = [key for key in prop2type.keys() if key not in ['name', 'dist', 'support']]
+    avail_props = list(prop2type.keys())
+
     annotated_newick = annotated_tree.write(props=avail_props, format_root_node=True)
 
     node_props = metadata_options.get('node_props', [])
@@ -538,12 +543,14 @@ def explore_tree(treename):
                 query_type = layer.get('queryType', '')
                 if query_type == 'rank_limit':
                     t = utils.taxatree_prune(t, rank_limit=rankSelection)
+                    tree_info['annotated_tree'] = t.write(props=current_props, format_root_node=True)
                 elif query_type == 'prune':
                     # prune tree by condition 
                     query_box = layer.get('query', '')
                     query_strings = convert_query_string(query_box)
                     prop2type = tree_info['prop2type']
                     t = utils.conditional_prune(t, query_strings, prop2type)
+                    tree_info['annotated_tree'] = t.write(props=current_props, format_root_node=True)
 
                 # Process each layer individually without altering its structure
                 current_layouts, current_props, level = process_layer(
