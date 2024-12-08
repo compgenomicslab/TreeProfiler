@@ -149,44 +149,53 @@
                         
                                     <!-- Layout Configuration Section -->
                                     <div id="layoutConfigSection" class="layout-settings mt-3">
-                                        <h5 class="text-center">Configure Layout</h5>
-                                        <select class="form-control mb-3" id="layout" name="layout">
-                                            <optgroup label="Categorical">
-                                                <option value="colorbranch-layout">Color Branch Layout</option>
-                                                <option value="label-layout">Label Layout</option>
-                                                <option value="rectangle-layout">Rectangular Layout</option>
-                                                <option value="categorical-bubble-layout">Bubble Layout</option>
-                                                <option value="background-layout">Background Layout</option>
-                                                <option value="categorical-matrix-layout">Categorical Matrix Layout</option>
-                                                <option value="piechart-layout">Piechart Layout</option>
-                                                <option value="profiling-layout">Profiling Layout</option>
-                                            </optgroup>
-                                            <optgroup label="Binary">
-                                                <option value="binary-layout">Binary Layout</option>
-                                            </optgroup>
-                                            <optgroup label="Numerical">
-                                                <option value="branchscore-layout">Color Branch Layout</option>
-                                                <option value="heatmap-layout">Heatmap Layout</option>
-                                                <option value="heatmap-mean-layout">Heatmap Mean Layout</option>
-                                                <option value="heatmap-zscore-layout">Heatmap Z-Score Layout</option>
-                                                <option value="barplot-layout">Barplot Layout</option>
-                                                <option value="numerical-matrix-layout">Numerical Matrix Layout</option>
-                                                <option value="numerical-bubble-layout">Bubble Layout</option>
-                                            </optgroup>
-                                            <optgroup label="Analytic">
-                                                <option value="acr-discrete-layout">ACR Discrete Layout</option>
-                                                <option value="acr-continuous-layout">ACR Continuous Layout</option>
-                                                <option value="ls-layout">LS Layout</option>
-                                            </optgroup>
-                                        </select>
-                        
-                                        <div class="card mt-4 shadow-sm border-primary">
-                                            <div class="card-header bg-primary text-white">
-                                                <h5 class="mb-0">Layout Settings</h5>
+                                        <div class="card shadow-sm">
+                                            <div class="card-header text-white bg-secondary d-flex align-items-center">
+                                                <h5 class="mb-0">Select Layout Type</h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <!-- Layout Selection -->
+                                                <select class="form-select mb-3" id="layout" name="layout">
+                                                    <optgroup label="Categorical">
+                                                        <option value="colorbranch-layout">Color Branch Layout</option>
+                                                        <option value="label-layout">Label Layout</option>
+                                                        <option value="rectangle-layout">Rectangular Layout</option>
+                                                        <option value="categorical-bubble-layout">Bubble Layout</option>
+                                                        <option value="background-layout">Background Layout</option>
+                                                        <option value="categorical-matrix-layout">Categorical Matrix Layout</option>
+                                                        <option value="piechart-layout">Piechart Layout</option>
+                                                        <option value="profiling-layout">Profiling Layout</option>
+                                                    </optgroup>
+                                                    <optgroup label="Binary">
+                                                        <option value="binary-layout">Binary Layout</option>
+                                                    </optgroup>
+                                                    <optgroup label="Numerical">
+                                                        <option value="branchscore-layout">Color Branch Layout</option>
+                                                        <option value="heatmap-layout">Heatmap Layout</option>
+                                                        <option value="heatmap-mean-layout">Heatmap Mean Layout</option>
+                                                        <option value="heatmap-zscore-layout">Heatmap Z-Score Layout</option>
+                                                        <option value="barplot-layout">Barplot Layout</option>
+                                                        <option value="numerical-matrix-layout">Numerical Matrix Layout</option>
+                                                        <option value="numerical-bubble-layout">Bubble Layout</option>
+                                                    </optgroup>
+                                                    <optgroup label="Analytic">
+                                                        <option value="acr-discrete-layout">ACR Discrete Layout</option>
+                                                        <option value="acr-continuous-layout">ACR Continuous Layout</option>
+                                                        <option value="ls-layout">LS Layout</option>
+                                                    </optgroup>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <!-- Layout Settings -->
+                                        <div class="card mt-4 shadow-sm">
+                                            <div class="card-header bg-light d-flex align-items-center">
+                                                <h5 class="mb-0 text-secondary">Layout Settings</h5>
                                             </div>
                                             <div class="card-body">
                                                 <div id="layoutSettings" class="form-group">
-                                                    <h6 class="fw-bold mb-3 text-primary">General Settings</h6>
+                                                    <!-- General Settings -->
+                                                    <h6 class="fw-bold mb-3 text-secondary">General Settings</h6>
                                                     <div class="row g-3">
                                                         <div class="col-md-4">
                                                             <label for="columnWidth" class="form-label small">Column Width</label>
@@ -201,11 +210,11 @@
                                                             <input type="number" class="form-control" id="paddingY" name="paddingY" value="0">
                                                         </div>
                                                     </div>
-                                        
+
                                                     <!-- Numerical-Specific Settings -->
                                                     <div id="internalNumerical" class="form-group mt-4" style="display: none;">
                                                         <label for="internalNumRep" class="form-label small">Internal Number Representation</label>
-                                                        <select class="form-control" id="internalNumRep" name="internalNumRep">
+                                                        <select class="form-select" id="internalNumRep" name="internalNumRep">
                                                             <option value="avg">Average</option>
                                                             <option value="sum">Sum</option>
                                                             <option value="max">Maximum</option>
@@ -214,20 +223,20 @@
                                                             <option value="none">None</option>
                                                         </select>
                                                     </div>
-                                        
+
                                                     <!-- Categorical Layout Settings -->
                                                     <div id="categoricalSettings" class="form-group mt-4" style="display: none;">
                                                         <label for="categoricalColorscheme" class="form-label small">Color Scheme</label>
-                                                        <select class="form-control" id="categoricalColorscheme" name="categoricalColorscheme">
+                                                        <select class="form-select" id="categoricalColorscheme" name="categoricalColorscheme">
                                                             % for colormap in color_schemes:
                                                             <option value="{{ colormap }}">{{ colormap }}</option>
                                                             % end
                                                         </select>
                                                     </div>
-                                        
+
                                                     <!-- Binary Layout Settings -->
                                                     <div id="binarySettings" class="form-group mt-4" style="display: none;">
-                                                        <h6 class="fw-bold text-primary">Binary Layout Settings</h6>
+                                                        <h6 class="fw-bold text-secondary">Binary Layout Settings</h6>
                                                         <div class="form-check">
                                                             <input class="form-check-input" type="checkbox" value="unicolor" id="unicolorOption" name="unicolorOption">
                                                             <label class="form-check-label small" for="unicolorOption">Use Unicolor</label>
@@ -236,14 +245,6 @@
                                                             <label for="unicolorColor" class="form-label small">Select Unicolor:</label>
                                                             <input type="color" id="unicolorColor" name="unicolorColor" class="form-control" value="#0000ff">
                                                         </div>
-                                                        <div id="binaryColorScheme" class="form-group mt-3" style="display: block;">
-                                                            <label for="binaryColorSchemeSelect" class="form-label small">Select Color Scheme:</label>
-                                                            <select class="form-control" id="binaryColorSchemeSelect" name="binaryColorScheme">
-                                                                % for colormap in color_schemes:
-                                                                <option value="{{ colormap }}">{{ colormap }}</option>
-                                                                % end
-                                                            </select>
-                                                        </div>
                                                         <div id="aggregateSettings" class="form-group mt-3">
                                                             <label for="aggregateOption" class="form-label small">Summary for Collapsed Nodes:</label>
                                                             <select class="form-control" id="aggregateOption" name="aggregateOption">
@@ -251,11 +252,19 @@
                                                                 <option value="aggregate">Aggregate</option>
                                                             </select>
                                                         </div>
+                                                        <div id="binaryColorScheme" class="form-group mt-3">
+                                                            <label for="binaryColorSchemeSelect" class="form-label small">Select Color Scheme:</label>
+                                                            <select class="form-select" id="binaryColorSchemeSelect" name="binaryColorScheme">
+                                                                % for colormap in color_schemes:
+                                                                <option value="{{ colormap }}">{{ colormap }}</option>
+                                                                % end
+                                                            </select>
+                                                        </div>
                                                     </div>
-                                        
+
                                                     <!-- Numerical Settings -->
                                                     <div id="numericalSettings" class="form-group mt-4" style="display: none;">
-                                                        <h6 class="fw-bold text-primary">Numerical Settings</h6>
+                                                        <h6 class="fw-bold text-secondary">Numerical Settings</h6>
                                                         <div class="row g-3">
                                                             <div class="col-md-6">
                                                                 <label for="minVal" class="form-label small">Min Value (Auto-detected if empty):</label>
@@ -281,7 +290,7 @@
                                                             </div>
                                                         </div>
                                                     </div>
-                                        
+
                                                     <!-- Barplot -->
                                                     <div id="barplotOptions" class="form-group mt-4" style="display: none;">
                                                         <h6 class="fw-bold text-primary">Barplot Settings</h6>
@@ -318,12 +327,13 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        
-                        
+
+                                        <!-- Add Layer Button -->
                                         <div class="text-center mt-4">
-                                            <button id="addLayerBtn" class="btn btn-success w-100 py-2">Add Layout</button>
+                                            <button id="addLayerBtn" class="btn btn-primary w-100 py-2">Add Layout</button>
                                         </div>
                                     </div>
+
                                 </div>
                             </div>
                         </div>
