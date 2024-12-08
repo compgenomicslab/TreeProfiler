@@ -98,6 +98,7 @@
                 <!-- Control Panel Body -->
                 <div class="tab-pane fade show active" id="controlPanelContent" role="tabpanel" aria-labelledby="controlPanelTab">
                     <div class="p-3">
+                        <!-- Properties Card -->
                         <div class="card mt-3 shadow">
                             <div class="card-header bg-light">
                                 <button class="btn d-flex align-items-center w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#propertiesCard" aria-expanded="false" aria-controls="propertiesCard">
@@ -622,13 +623,20 @@
             updateSelectedProperties();
         });
     
-        // Show Layout Config Section
+        // Toggle Layout Config Section
         $('#selectLayoutBtn').click(() => {
-            if (selectedProperties.length === 0) {
-                alert('Please select at least one property.');
-                return;
+            const layoutConfigSection = $('#layoutConfigSection');
+            if (layoutConfigSection.is(':visible')) {
+                layoutConfigSection.hide(); // Hide the section
+                $('#selectLayoutBtn').text('Show Layout Config'); // Update button text
+            } else {
+                if (selectedProperties.length === 0) {
+                    alert('Please select at least one property.');
+                    return;
+                }
+                layoutConfigSection.show(); // Show the section
+                $('#selectLayoutBtn').text('Hide Layout Config'); // Update button text
             }
-            $('#layoutConfigSection').show();
         });
         
         
