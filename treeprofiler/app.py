@@ -538,11 +538,11 @@ def explore_tree(treename):
         if layers_data:
             layers = json.loads(layers_data)
             for layer in layers:
-                
                 # Query queryType
                 query_type = layer.get('queryType', '')
                 if query_type == 'rank_limit':
-                    t = utils.taxatree_prune(t, rank_limit=rankSelection)
+                    rank_selection = layer.get('rankSelection')
+                    t = utils.taxatree_prune(t, rank_limit=rank_selection)
                     tree_info['annotated_tree'] = t.write(props=current_props, format_root_node=True)
                 elif query_type == 'prune':
                     # prune tree by condition 

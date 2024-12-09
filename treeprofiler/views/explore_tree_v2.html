@@ -655,6 +655,7 @@
             // // Custom query settings
             const queryType = null;
             const query = null;
+            const rankSelection = null;
             // const queryType = document.getElementById('customQueryType').value;
             // const query = document.getElementById('queryBox').value;
 
@@ -697,6 +698,7 @@
                 
                 queryType,
                 query,
+                rankSelection,
                 
                 categoricalColorscheme,
                 isUnicolor,
@@ -1105,16 +1107,22 @@
 
             // Form the layer object
             if (queryType === 'rank_limit') {
+                const query = null;
+                const rankSelection = document.getElementById('rankSelection').value;
+                console.log("checking rank selection", rankSelection);
                 const layer = {
                     queryType,
+                    query,
                     rankSelection
                 };
                 // Add the layer to the layers array
                 layers.push(layer);
             } else if (queryType === 'highlight' || queryType === 'collapse' || queryType === 'prune') {
+                const rankSelection = null;
                 const layer = {
                     queryType,
-                    query
+                    query,
+                    rankSelection
                 };
                 // Add the layer to the layers array
                 layers.push(layer);
