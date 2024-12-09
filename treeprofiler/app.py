@@ -375,6 +375,7 @@ def process_upload_job(job_args):
         'columns': columns,
         'metadata': job_args.get("metadata"),
         'node_props': node_props,
+        "updated_tree": "",
         'annotated_tree': annotated_newick,
         'prop2type': prop2type,
         'layouts': [],
@@ -534,7 +535,7 @@ def explore_tree(treename):
         padding_y = int(request.forms.get('padding_y', default_configs['padding_y']))
         internal_num_rep = request.forms.get('internal_num_rep', default_configs['internal_num_rep'])
         color_config = default_configs.get('color_config', {})
-        
+
         if layers_data:
             layers = json.loads(layers_data)
             for layer in layers:
