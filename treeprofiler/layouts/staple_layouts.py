@@ -182,13 +182,14 @@ class LayoutBarplot(LayoutPlot):
         if self.scale and self.size_range:
             self.scale_width = self.width
             self.scale_range = self.size_range
-            scale = ScaleFace(width=self.width, scale_range=self.size_range, 
+
+            scale = ScaleFace(width=self.width, scale_range=self.scale_range, 
                     formatter='%.2f',
                     padding_x=self.padding_x, padding_y=2)
             text = TextFace(self.prop, max_fsize=15, padding_x=self.padding_x, rotation=315)
             tree_style.aligned_panel_header.add_face(scale, column=self.column)
             tree_style.aligned_panel_header.add_face(text, column=self.column)
-        
+
         if self.legend:
             if self.color:
                 colormap = {self.prop: self.color
@@ -261,7 +262,7 @@ class LayoutBarplot(LayoutPlot):
 
 class LayoutHeatmap(TreeLayout):
     def __init__(self, name=None, column=0, width=70, height=None, 
-            padding_x=1, padding_y=0, heatmap_prop=None, internal_rep=None,
+            padding_x=1, padding_y=0, prop=None, internal_rep=None,
             value_color=None, value_range=[], color_range=None, minval=0, maxval=None, 
             absence_color="#EBEBEB",
             legend=True):
@@ -269,8 +270,8 @@ class LayoutHeatmap(TreeLayout):
         super().__init__(name)
         self.aligned_faces = True
 
-        self.heatmap_prop = heatmap_prop
-        self.internal_prop = add_suffix(heatmap_prop, internal_rep)
+        self.prop = prop
+        self.internal_prop = add_suffix(prop, internal_rep)
         self.column = column
         self.value_color = value_color
         self.value_range = value_range
@@ -287,11 +288,10 @@ class LayoutHeatmap(TreeLayout):
     def set_tree_style(self, tree, tree_style):
         super().set_tree_style(tree, tree_style)
 
-        text = TextFace(self.heatmap_prop,  padding_x=self.padding_x, width=self.width, rotation=315)
+        text = TextFace(self.prop,  padding_x=self.padding_x, width=self.width, rotation=315)
         tree_style.aligned_panel_header.add_face(text, column=self.column)
-
         if self.legend:
-            tree_style.add_legend(title=self.heatmap_prop,
+            tree_style.add_legend(title=self.prop,
                                     variable='continuous',
                                     value_range=self.value_range ,
                                     color_range=[
@@ -301,7 +301,7 @@ class LayoutHeatmap(TreeLayout):
                                     ]
                                     )
     def set_node_style(self, node):
-        heatmap_num = node.props.get(self.heatmap_prop)
+        heatmap_num = node.props.get(self.prop)
         if heatmap_num is not None and heatmap_num != 'NaN':
             heatmap_num = float(heatmap_num)
             if node.is_leaf:
@@ -309,11 +309,10 @@ class LayoutHeatmap(TreeLayout):
                 tooltip = ""
                 if node.name:
                     tooltip += f'<b>{node.name}</b><br>'
-                if self.heatmap_prop:
-                    tooltip += f'<br>{self.heatmap_prop}: {heatmap_num}<br>'
+                if self.prop:
+                    tooltip += f'<br>{self.prop}: {heatmap_num}<br>'
                 
                 gradient_color = self.value_color.get(heatmap_num)
-                
                 if gradient_color:
                     identF = RectFace(width=self.width, height=self.height, 
                     color=gradient_color, padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
@@ -326,8 +325,8 @@ class LayoutHeatmap(TreeLayout):
             tooltip = ""
             if node.name:
                 tooltip += f'<b>{node.name}</b><br>'
-            if self.heatmap_prop:
-                tooltip += f'<br>{self.heatmap_prop}: {heatmap_num}<br>'
+            if self.prop:
+                tooltip += f'<br>{self.prop}: {heatmap_num}<br>'
 
             gradient_color = self.value_color.get(heatmap_num)
 
@@ -343,8 +342,8 @@ class LayoutHeatmap(TreeLayout):
             tooltip = ""
             if node.name:
                 tooltip += f'<b>{node.name}</b><br>'
-            if self.heatmap_prop:
-                tooltip += f'<br>{self.heatmap_prop}: {heatmap_num}<br>'
+            if self.prop:
+                tooltip += f'<br>{self.prop}: {heatmap_num}<br>'
             
             gradient_color = self.value_color.get(heatmap_num)
 
@@ -358,11 +357,11 @@ class LayoutHeatmap(TreeLayout):
             tooltip = ""
             if node.name:
                 tooltip += f'<b>{node.name}</b><br>'
-            if self.heatmap_prop:
-                tooltip += f'<br>{self.heatmap_prop}: {heatmap_num}<br>'
+            if self.prop:
+                tooltip += f'<br>{self.prop}: {heatmap_num}<br>'
 
             identF = RectFace(width=self.width, height=self.height, text=heatmap_num, color=self.absence_color, padding_x=self.padding_x, padding_y=self.padding_y, tooltip=None)
-            node.add_face(identF, column = self.column,  position = 'aligned', collapsed_only=False)
+            node.add_face(identF, column = self.column,  position = 'aligned', collapsed_only=not node.is_leaf)
 
 class LayoutHeatmapOld(TreeLayout):
     def __init__(self, name=None, column=0, width=70, height=None, padding_x=1, padding_y=0, \
@@ -370,7 +369,7 @@ class LayoutHeatmapOld(TreeLayout):
             norm_method='min-max', color_dict=None, legend=True):
         super().__init__(name)
         self.aligned_faces = True
-        self.num_prop = prop
+        self.prop = prop
         self.column = column
         self.color_dict = color_dict
         self.maxval = maxval
@@ -389,11 +388,11 @@ class LayoutHeatmapOld(TreeLayout):
         
     def set_tree_style(self, tree, tree_style):
         super().set_tree_style(tree, tree_style)
-        text = TextFace(self.num_prop, min_fsize=self.min_fsize, max_fsize=self.max_fsize, padding_x=self.padding_x, width=self.width, rotation=315)
+        text = TextFace(self.prop, min_fsize=self.min_fsize, max_fsize=self.max_fsize, padding_x=self.padding_x, width=self.width, rotation=315)
         tree_style.aligned_panel_header.add_face(text, column=self.column)
 
         if self.legend:
-            tree_style.add_legend(title=self.num_prop,
+            tree_style.add_legend(title=self.prop,
                                     variable='continuous',
                                     value_range=[self.minval, self.maxval],
                                     color_range=[
@@ -431,18 +430,18 @@ class LayoutHeatmapOld(TreeLayout):
         return self.color_dict.get(index, "")
 
     def set_node_style(self, node):
-        if node.props.get(self.num_prop) is not None:
+        if node.props.get(self.prop) is not None:
             if node.is_leaf:
                 # heatmap
                 tooltip = ""
                 if node.name:
                     tooltip += f'<b>{node.name}</b><br>'
-                if self.num_prop:
-                    tooltip += f'<br>{self.num_prop}: {node.props.get(self.num_prop)}<br>'
+                if self.prop:
+                    tooltip += f'<br>{self.prop}: {node.props.get(self.prop)}<br>'
 
-                gradient_color = self._get_color(node.props.get(self.num_prop), norm_method=self.norm_method)
+                gradient_color = self._get_color(node.props.get(self.prop), norm_method=self.norm_method)
                 if gradient_color:
-                    identF = RectFace(width=self.width, height=self.height, text="%.2f" % (float(node.props.get(self.num_prop))), \
+                    identF = RectFace(width=self.width, height=self.height, text="%.2f" % (float(node.props.get(self.prop))), \
                     color=gradient_color, padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
                 else:   # for miss data
                     identF = RectFace(width=self.width, height=self.height, text="NA", 
@@ -456,7 +455,7 @@ class LayoutHeatmapOld(TreeLayout):
             tooltip = ""
             if node.name:
                 tooltip += f'<b>{node.name}</b><br>'
-            if self.num_prop:
+            if self.prop:
                 tooltip += f'<br>{self.internal_prop}: {node.props.get(self.internal_prop)}<br>'
             
             gradient_color = self._get_color(node.props.get(self.internal_prop), norm_method=self.norm_method)
@@ -474,7 +473,7 @@ class LayoutHeatmapOld(TreeLayout):
             tooltip = ""
             if node.name:
                 tooltip += f'<b>{node.name}</b><br>'
-            if self.num_prop:
+            if self.prop:
                 tooltip += f'<br>{self.internal_prop}: {node.props.get(self.internal_prop)}<br>'
             
             gradient_color = self._get_color(node.props.get(self.internal_prop), norm_method=self.norm_method)
@@ -488,13 +487,13 @@ class LayoutHeatmapOld(TreeLayout):
             node.add_face(identF, column = self.column,  position = 'aligned', collapsed_only=True)
 
 class LayoutBranchScore(TreeLayout):
-    def __init__(self, name, color_dict, score_prop, internal_rep=None, \
+    def __init__(self, name, color_dict, prop, internal_rep=None, \
     value_range=None, color_range=None, show_score=False, legend=True, active=True):
         super().__init__(name)
         self.aligned_faces = True
-        self.score_prop = score_prop
+        self.prop = prop
         if internal_rep:
-            self.internal_prop = add_suffix(score_prop, internal_rep)
+            self.internal_prop = add_suffix(prop, internal_rep)
         else:
             self.internal_prop = None
         self.color_dict = color_dict
@@ -522,7 +521,7 @@ class LayoutBranchScore(TreeLayout):
     #     return self.color_dict.get(index, self.absence_color)
 
     def set_node_style(self, node):
-        prop_score = node.props.get(self.score_prop)
+        prop_score = node.props.get(self.prop)
         if prop_score is not None:
             prop_score = float(prop_score)
             node.sm_style["hz_line_color"] = self.color_dict.get(prop_score)
@@ -566,26 +565,26 @@ class LayoutBranchScore(TreeLayout):
 
 class LayoutBubbleNumerical(TreeLayout):
     def __init__(self, name=None, prop=None, position="aligned", 
-            column=0, color=None, max_radius=10, abs_maxval=None,
-            padding_x=2, padding_y=0, 
-            scale=True, legend=True, active=True, 
-            internal_rep='avg'):
+            column=0, max_radius=10, abs_maxval=None,
+            padding_x=2, padding_y=0, value2color=None,
+            bubble_range=[], color_range=[], internal_rep='avg',
+            scale=True, legend=True, active=True):
 
-        name = name or f'Barplot_{size_prop}_{color_prop}'
+        name = name or f'Bubble_{prop}'
         super().__init__(name)
 
         self.aligned_faces = True
-        self.num_prop = prop
+        self.prop = prop
         self.internal_prop = add_suffix(prop, internal_rep)
         
         self.column = column
         self.position = position
-        self.color = color
-        self.positive_color = "#ff0000"
-        self.negative_color = "#0000ff"
         self.internal_rep = internal_rep
         self.max_radius = float(max_radius)
         self.abs_maxval = float(abs_maxval)
+        self.value2color = value2color
+        self.color_range = color_range
+        self.bubble_range = bubble_range
         self.fgopacity = 0.7
         self.padding_x = padding_x
         self.padding_y = padding_y
@@ -595,17 +594,15 @@ class LayoutBubbleNumerical(TreeLayout):
 
     def set_tree_style(self, tree, tree_style):
         super().set_tree_style(tree, tree_style)
-        text = TextFace(self.num_prop, min_fsize=5, max_fsize=15, padding_x=self.padding_x, rotation=315)
+        text = TextFace(self.prop, min_fsize=5, max_fsize=15, padding_x=self.padding_x, rotation=315)
         tree_style.aligned_panel_header.add_face(text, column=self.column)
-        colormap = {
-            "positive": self.positive_color,
-            "negative": self.negative_color
-            }
+
         if self.legend:
-            tree_style.add_legend(title=self.num_prop,
-                                    variable='discrete',
-                                    colormap=colormap
-                                    )
+            tree_style.add_legend(title=self.name,
+                                variable='continuous',
+                                value_range=self.bubble_range,
+                                color_range=self.color_range
+                                )
 
     def _get_bubble_size(self, search_value):
         search_value = abs(float(search_value))
@@ -614,14 +611,14 @@ class LayoutBubbleNumerical(TreeLayout):
 
 
     def set_node_style(self, node):
-        number = node.props.get(self.num_prop)
+        number = node.props.get(self.prop)
         if number is not None:
             # Ensure number is converted to float
             number = float(number)
             
             # Set bubble size and color based on the number's value
             bubble_size = self._get_bubble_size(number)
-            bubble_color = self.positive_color if number > 0 else self.negative_color
+            bubble_color = self.value2color.get(number)
             
             # Apply styles to the node
             node.sm_style["size"] = bubble_size
@@ -634,7 +631,7 @@ class LayoutBubbleNumerical(TreeLayout):
             
             # Set bubble size and color based on the number's value
             bubble_size = self._get_bubble_size(number)
-            bubble_color = self.positive_color if number > 0 else self.negative_color
+            bubble_color = self.value2color.get(number)
 
             # Apply styles to the node
             node.sm_style["size"] = bubble_size
@@ -644,10 +641,10 @@ class LayoutBubbleNumerical(TreeLayout):
         elif node.props.get(self.internal_prop):
             # Handle non-leaf nodes with internal properties
             number = float(node.props.get(self.internal_prop))
-            
+
             # Set bubble size and color based on the number's value
             bubble_size = self._get_bubble_size(number)
-            bubble_color = self.positive_color if number > 0 else self.negative_color
+            bubble_color = self.value2color.get(number)
 
             # Apply styles to the node
             node.sm_style["size"] = bubble_size

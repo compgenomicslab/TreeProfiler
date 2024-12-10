@@ -9,6 +9,7 @@ import csv
 import tarfile
 
 from collections import defaultdict, Counter
+from itertools import chain
 import numpy as np
 from scipy import stats
 import requests
@@ -37,6 +38,7 @@ TAXONOMICDICT = {# start with leaf name
                 'evoltype': str,
                 'dup_sp': str,
                 'dup_percent': float,
+                'lca': str,
                 }
 
 # Global Variable for emapper headers
@@ -48,7 +50,7 @@ EMAPPER_HEADERS = ["#query", "seed_ortholog", "evalue", "score", "eggNOG_OGs",
 # Available methods and models for ACR
 # Discrete traits
 DISCRETE_METHODS = ['MPPA', 'MAP', 'JOINT', 'DOWNPASS', 'ACCTRAN', 'DELTRAN', 'COPY', 'ALL', 'ML', 'MP']
-DISCRETE_MODELS = ['JC', 'F81', 'EFT', 'HKY', 'JTT']
+DISCRETE_MODELS = ['JC', 'F81', 'EFT']
 
 # Continuous traits
 CONTINUOUS_METHODS = ['ML', 'BAYESIAN']
@@ -131,7 +133,10 @@ def populate_annotate_args(parser):
         help="attach eggNOG-mapper smart output out.emapper.smart")
     add('--alignment',
         help="Sequence alignment, .fasta format")
-
+    add('--consensus-cutoff', 
+        type=float, 
+        default=0.7,
+        help='Consensus cutoff for alignment annotation. If cutoff is 0.0 means no consensus sequences in ancestor nodes. [default: 0.7]')
     annotation_group = parser.add_argument_group(title='Internal nodes annotation arguments',
         description="Annotation parameters")
     annotation_group.add_argument('--column-summary-method', 
@@ -199,7 +204,7 @@ def populate_annotate_args(parser):
         default=10000,
         type=int,
         required=False,
-        help="Number of iterations for delta statistic calculation. [default: 100]"
+        help="Number of iterations for delta statistic calculation. [default: 10000]"
     )
     delta_group.add_argument('--lambda0', 
         type=float, 
@@ -249,8 +254,9 @@ def populate_annotate_args(parser):
 def run_tree_annotate(tree, input_annotated_tree=False,
         metadata_dict={}, node_props=[], columns={}, prop2type={},
         text_prop=[], text_prop_idx=[], multiple_text_prop=[], num_prop=[], num_prop_idx=[],
-        bool_prop=[], bool_prop_idx=[], prop2type_file=None, alignment=None, emapper_mode=False, emapper_pfam=None,
-        emapper_smart=None, counter_stat='raw', num_stat='all', column2method={},
+        bool_prop=[], bool_prop_idx=[], prop2type_file=None, alignment=None, consensus_cutoff=0.7,
+        emapper_mode=False, emapper_pfam=None, emapper_smart=None, 
+        counter_stat='raw', num_stat='all', column2method={},
         taxadb='GTDB', gtdb_version=None, taxa_dump=None, taxon_column=None,
         taxon_delimiter='', taxa_field=0, ignore_unclassified=False,
         rank_limit=None, pruned_by=None, 
@@ -332,9 +338,12 @@ def run_tree_annotate(tree, input_annotated_tree=False,
                 prop2type[prop] = eval(value)
     else:
         # output datatype of each property of each tree node including internal nodes
+        # Flatten the lists into a single iterable for easy checking
+        all_props = text_prop + multiple_text_prop + num_prop + bool_prop
+
         if prop2type:
             for key, dtype in prop2type.items():
-                if key in text_prop+multiple_text_prop+num_prop+bool_prop:
+                if key in all_props:
                     pass
                 
                 # taxon prop wouldn be process as numerical/text/bool/list value
@@ -583,7 +592,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         for node in annotated_tree.traverse("postorder"):
             if not node.is_leaf:
                 nodes.append(node)
-                node_data = (node, node2leaves[node], text_prop, multiple_text_prop, bool_prop, num_prop, column2method, alignment if 'alignment' in locals() else None, name2seq if 'name2seq' in locals() else None, emapper_mode)
+                node_data = (node, node2leaves[node], text_prop, multiple_text_prop, bool_prop, num_prop, column2method, alignment if 'alignment' in locals() else None, name2seq if 'name2seq' in locals() else None, consensus_cutoff, emapper_mode)
                 nodes_data.append(node_data)
         
         # Process nodes in parallel if more than one thread is specified
@@ -710,8 +719,9 @@ def run(args):
 
     # Validation: Ensure at least one of --outdir or --stdout is selected
     if not args.outdir and not args.stdout:
-        parser.error("You must specify either --outdir or --stdout to output results.")
-    
+        logger.error("You must specify either --outdir or --stdout to output results.")
+        sys.exit(1)
+
     if args.outdir:
         if not os.path.exists(args.outdir):
             logger.error(f"Output directory {args.outdir} does not exist.") 
@@ -801,7 +811,7 @@ def run(args):
         "bool_prop_idx": args.bool_prop_idx,
         "prop2type_file": args.prop2type,
     }
-
+    
     # Group analysis-related arguments (ACR and Lineage Specificity options)
     analytic_options = {
         "acr_discrete_columns": args.acr_discrete_columns,
@@ -838,6 +848,12 @@ def run(args):
         "emapper_smart": args.emapper_smart,
     }
 
+    # Group alignment-related arguments
+    alignment_options = {
+        "alignment": args.alignment,
+        "consensus_cutoff": args.consensus_cutoff,
+    }
+
     # Group output and miscellaneous options
     output_options = {
         "rank_limit": args.rank_limit,
@@ -845,16 +861,16 @@ def run(args):
         "threads": args.threads,
         "outdir": args.outdir,
     }
-
+    
     # Simplified function call with grouped arguments
     annotated_tree, prop2type = run_tree_annotate(
         tree,
         input_annotated_tree=args.annotated_tree,
         **metadata_options,
-        alignment=args.alignment,
         counter_stat=args.counter_stat,
         num_stat=args.num_stat,
         column2method=column2method,
+        **alignment_options,
         **taxonomic_options,
         **analytic_options,
         **emapper_options,
@@ -864,7 +880,6 @@ def run(args):
     if args.data_matrix:
         annotated_tree = run_array_annotate(annotated_tree, array_dict, num_stat=args.num_stat, column2method=column2method)
 
-    
     if args.outdir:
         base=os.path.splitext(os.path.basename(args.tree))[0]
         out_newick = base + '_annotated.nw'
@@ -903,11 +918,17 @@ def run(args):
                 if node.props.get(key):
                     list2str = list_sep.join(node.props.get(key))
                     node.add_prop(key, list2str)
-        annotated_tree.write(outfile=os.path.join(args.outdir, out_newick), props=None, 
+        avail_props = list(prop2type.keys())
+        del avail_props[avail_props.index('name')]
+        del avail_props[avail_props.index('dist')]
+        if 'support' in avail_props:
+            del avail_props[avail_props.index('support')]
+        
+        annotated_tree.write(outfile=os.path.join(args.outdir, out_newick), props=avail_props, 
                     parser=utils.get_internal_parser(args.internal), format_root_node=True)
     
     if args.stdout:
-        print(annotated_tree.write(props=None, parser=utils.get_internal_parser(args.internal), format_root_node=True))
+        print(annotated_tree.write(props=avail_props, parser=utils.get_internal_parser(args.internal), format_root_node=True))
 
     # if args.outtsv:
     #     tree2table(annotated_tree, internal_node=True, outfile=args.outtsv)
@@ -1014,8 +1035,6 @@ def parse_csv(input_files, delimiter='\t', no_headers=False, duplicate=False):
                 # Read the first line to determine the number of fields
                 first_line = next(f)
                 fields_len = len(first_line.split(delimiter))
-
-                
 
                 # Reset the file pointer to the beginning
                 f.seek(0)
@@ -1309,7 +1328,7 @@ def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, 
     return tree
 
 def process_node(node_data):
-    node, node_leaves, text_prop, multiple_text_prop, bool_prop, num_prop, column2method, alignment, name2seq, emapper_mode = node_data
+    node, node_leaves, text_prop, multiple_text_prop, bool_prop, num_prop, column2method, alignment, name2seq, consensus_cutoff, emapper_mode = node_data
     internal_props = {}
 
     # Process text, multitext, bool, and num properties
@@ -1331,14 +1350,13 @@ def process_node(node_data):
             internal_props.update(internal_props_num)
 
     # Generate consensus sequence
-    
     consensus_seq = None
     if alignment and name2seq is not None:  # Check alignment and name2seq together
         aln_sum = column2method.get('alignment')
-        if aln_sum is None or aln_sum != 'none':
+        if aln_sum is None or aln_sum != 'none' or consensus_cutoff is not None:
             matrix_string = build_matrix_string(node, name2seq)  # Assuming 'name2seq' is accessible here
-            consensus_seq = utils.get_consensus_seq(matrix_string, threshold=0.7)
-        
+            consensus_seq = utils.get_consensus_seq(matrix_string, threshold=consensus_cutoff)
+
     return internal_props, consensus_seq
 
 def merge_text_annotations(nodes, target_props, column2method, emapper_mode=False):
@@ -1387,6 +1405,7 @@ def merge_text_annotations(nodes, target_props, column2method, emapper_mode=Fals
 
 def merge_multitext_annotations(nodes, target_props, column2method):
     # Seperator of multiple text 'GO:0000003,GO:0000902,GO:0000904'
+    
     multi_text_seperator = ','
     pair_seperator = "--"
     item_seperator = "||"
@@ -1397,7 +1416,6 @@ def merge_multitext_annotations(nodes, target_props, column2method):
     for target_prop in target_props:
         counter_stat = column2method.get(target_prop, "raw")
         prop_list = utils.children_prop_array(nodes, target_prop)
-        
         # Flatten the list of lists into a single list
         multi_prop_list = [item for sublist in prop_list for item in sublist]
         counter = dict(Counter(multi_prop_list))  # Store the counter
@@ -1617,7 +1635,7 @@ def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field
         tree.set_species_naming_function(return_spcode_ncbi)
         ncbi.annotate_tree(tree, taxid_attr="species", ignore_unclassified=ignore_unclassified)
         for n in tree.traverse():
-            if n.props.get('lineage'):
+            if n.props.get('lineage') and n.props.get('lineage') != ['']:
                 lca_dict = {}
                 #for taxa in n.props.get("lineage"):
                 lineage2rank = ncbi.get_rank(n.props.get("lineage"))
@@ -1744,9 +1762,10 @@ def annot_tree_pfam_table(post_tree, pfam_table, alg_fasta, domain_prop='dom_arq
         # get the most common domain
         if not n.is_leaf:
             prop_list = utils.children_prop_array(n, domain_prop)
-            counter = dict(Counter(prop_list))
-            most_common_key = max(counter, key=counter.get)
-            n.add_prop(domain_prop, most_common_key)
+            if prop_list:
+                counter = dict(Counter(prop_list))
+                most_common_key = max(counter, key=counter.get)
+                n.add_prop(domain_prop, most_common_key)
 
     # for n in post_tree.traverse():
     #     print(n.name, n.props.get('dom_arq'))
