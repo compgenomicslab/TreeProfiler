@@ -3,8 +3,6 @@
 import sys
 import argparse as ap
 
-from treeprofiler import tree_annotate
-from treeprofiler import tree_plot
 
 
 __author__ = 'DENG Ziqi'
@@ -56,23 +54,31 @@ def populate_main_args(main_args_p):
         type=str,
         help="TAXONOMIC_LEVEL prune annotate tree by rank limit")
     group.add_argument('--pruned-by',
-        type=tree_plot.string_or_file,
+        type=str,
         action='append',
         help='target tree pruned by customized conditions, such as --pruned_by "name contains FALPE"')
 
 def main():
+    from treeprofiler import tree_annotate
+    from treeprofiler import tree_plot
+
     desc = (f'treeprofiler.py (ver. {__version__} of {__date__}).'
             f'{__description__} Authors: {__author__} ({__email__})')
     main_args_p = ap.ArgumentParser(description=desc,
                                     formatter_class=ap.RawTextHelpFormatter,
                                     add_help=False)
 
+    
     populate_main_args(main_args_p)
 
     parser = ap.ArgumentParser(description="this is tree profiler ",
                                formatter_class=ap.RawDescriptionHelpFormatter)
     subparser = parser.add_subparsers(title="AVAILABLE PROGRAMS")
 
+    # Delayed import to avoid circular import issue
+    from treeprofiler import tree_annotate
+    from treeprofiler import tree_plot
+    
     ## - ANNOTATE -
     annotate_args_p = subparser.add_parser('annotate', parents=[main_args_p],
                                             description='annotate tree')

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Tree Processing Status</title>
+</head>
+<body>
+<div class="container">
+    <h1>Processing Tree: {{treename}}</h1>
+    <p id="statusMessage">Tree annotating ...</p>
+</div>
+
+<script>
+    const jobId = "{{job_id}}";
+
+    async function checkJobStatus() {
+        const response = await fetch(`/check_job_status?job_id=${jobId}`);
+        const status = await response.text();
+        document.getElementById('statusMessage').innerText = `Status: ${status}`;
+
+        if (status !== "complete" && status !== "failed") {
+            setTimeout(checkJobStatus, 1000);  // Re-check status every second
+        } else if (status === "complete") {
+            window.location.href = `/explore_tree/${jobId}`;  // Redirect to result page when done
+        }
+    }
+
+    checkJobStatus();  // Start checking job status immediately
+</script>
+</body>
+</html>
