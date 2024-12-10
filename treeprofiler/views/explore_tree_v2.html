@@ -523,7 +523,7 @@
                         <div class="control-panel-footer mt-4">
                             <button class="btn btn-primary" onclick="window.location.reload();">Refresh View</button>
                             <button class="btn btn-secondary" id="fullscreenBtn">Fullscreen</button>
-                            <button class="btn btn-third" id="resetBtn">Reset Tree</button>
+                            <button id="resetTreeBtn" class="btn btn-danger">Reset Tree</button>
                         </div>
                     </div>
                 </div>
@@ -831,6 +831,25 @@
         $('#activateTaxonomicLayout').click(() => activateLayout($('#taxonomicLayoutSelect').val()));
         $('#activateAlignmentLayout').click(() => activateLayout('alignment-layout'));
         $('#activateDomainLayout').click(() => activateLayout('domain-layout'));
+
+ 
+        document.getElementById('resetTreeBtn').addEventListener('click', () => {
+            if (!confirm('Are you sure you want to reset the tree?')) return;
+            fetch('/explore_tree/{{ treename }}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ reset_tree: true })
+            })
+            .then(response => {
+                window.location.reload();
+            })
+            .then(data => {
+                // Update the tree display dynamically
+                document.getElementById('treeContainer').innerHTML = data;
+            })
+            .catch(error => console.error('Error:', error));
+        });
+
     </script>
     <script>
         // this is for layout toggle settings

@@ -507,7 +507,11 @@ def explore_tree(treename):
     # Retrieve and initialize layouts, properties, and tree
     current_layouts = tree_info.get('layouts', [])
     current_props = sorted(list(tree_info['prop2type'].keys()))
-    t = Tree(tree_info['annotated_tree'])
+    
+    if tree_info['updated_tree']:
+        t = Tree(tree_info['updated_tree'])
+    else:
+        t = Tree(tree_info['annotated_tree'])
     
     # Default configuration settings
     default_configs = {
@@ -528,111 +532,121 @@ def explore_tree(treename):
 
     # Process POST request
     if request.method == 'POST':
-        layers_data = request.forms.get('layers')
-        level = int(request.forms.get('level', default_configs['level']))
-        column_width = int(request.forms.get('column_width', default_configs['column_width']))
-        padding_x = int(request.forms.get('padding_x', default_configs['padding_x']))
-        padding_y = int(request.forms.get('padding_y', default_configs['padding_y']))
-        internal_num_rep = request.forms.get('internal_num_rep', default_configs['internal_num_rep'])
-        color_config = default_configs.get('color_config', {})
+        # Check if the reset action is triggered
+        if request.forms.get('reset_tree'):
+            print("Resetting tree...")
+            # Reset the tree by assigning `annotated_tree` to `updated_tree`
+            tree_info['updated_tree'] = None
+            tree_info['layouts'] = []  # Clear applied layouts
+            current_layouts = []  # Clear layouts
+            layouts_metadata.clear()  # Clear metadata
+        
+        else:
+            layers_data = request.forms.get('layers')
+            level = int(request.forms.get('level', default_configs['level']))
+            column_width = int(request.forms.get('column_width', default_configs['column_width']))
+            padding_x = int(request.forms.get('padding_x', default_configs['padding_x']))
+            padding_y = int(request.forms.get('padding_y', default_configs['padding_y']))
+            internal_num_rep = request.forms.get('internal_num_rep', default_configs['internal_num_rep'])
+            color_config = default_configs.get('color_config', {})
 
-        if layers_data:
-            layers = json.loads(layers_data)
-            for layer in layers:
-                # Query queryType
-                query_type = layer.get('queryType', '')
-                if query_type == 'rank_limit':
-                    rank_selection = layer.get('rankSelection')
-                    t = utils.taxatree_prune(t, rank_limit=rank_selection)
-                    tree_info['annotated_tree'] = t.write(props=current_props, format_root_node=True)
-                elif query_type == 'prune':
-                    # prune tree by condition 
-                    query_box = layer.get('query', '')
-                    query_strings = convert_query_string(query_box)
-                    prop2type = tree_info['prop2type']
-                    t = utils.conditional_prune(t, query_strings, prop2type)
-                    tree_info['annotated_tree'] = t.write(props=current_props, format_root_node=True)
+            if layers_data:
+                layers = json.loads(layers_data)
+                for layer in layers:
+                    # Query queryType
+                    query_type = layer.get('queryType', '')
+                    if query_type == 'rank_limit':
+                        rank_selection = layer.get('rankSelection')
+                        t = utils.taxatree_prune(t, rank_limit=rank_selection)
+                        tree_info['updated_tree'] = t.write(props=current_props, format_root_node=True)
+                    elif query_type == 'prune':
+                        # prune tree by condition 
+                        query_box = layer.get('query', '')
+                        query_strings = convert_query_string(query_box)
+                        prop2type = tree_info['prop2type']
+                        t = utils.conditional_prune(t, query_strings, prop2type)
+                        tree_info['updated_tree'] = t.write(props=current_props, format_root_node=True)
 
-                # Process each layer individually without altering its structure
-                current_layouts, current_props, level = process_layer(
-                    t, layer, tree_info, current_layouts, current_props, level,
-                    column_width, padding_x, padding_y, color_config, internal_num_rep, paired_color
-                )
-                
-                
-                # Update layouts_metadata after process_layer
-                layouts_metadata.clear()  # Reset to avoid duplicates or outdated data
-                for layout in current_layouts:
-                    layout_prefix = layout.name.split('_')[0].lower() # get the layout prefix 
-                    if layout_prefix.startswith('taxa'):
-                        layouts_metadata.append({
-                            "layout_name": layout.name,
-                            "applied_props": [],
-                            "config": {
-                                "column_width": getattr(layout, 'column_width', default_configs['column_width']),
-                                "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
-                                "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
-                                "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
-                                "color_config": getattr(layout, 'color_config', {})
-                            }
-                        })
-                    elif layout_prefix in ['alignment', 'domain']:
-                        layouts_metadata.append({
-                            "layout_name": layout.name,
-                            "applied_props": [layout_prefix],
-                            "config": {
-                                "column_width": getattr(layout, 'column_width', default_configs['column_width']),
-                                "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
-                                "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
-                                "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
-                                "color_config": getattr(layout, 'color_config', {})
-                            }
-                        })
-                    elif layout_prefix in ['profiling', 'categorical-matrix', 'numerical-matrix', 'binary-matrix']:
-                        # Append with applied props and full config
-                        name = layout.name
-                        applied_props = layout.matrix_props
-                        layouts_metadata.append({
-                            "layout_name": name,  # Retrieve layout name from processed layouts
-                            "applied_props": applied_props,  # Props linked to this layout
-                            "config": {
-                                "column_width": getattr(layout, 'column_width', default_configs['column_width']),
-                                "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
-                                "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
-                                "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
-                                "color_config": getattr(layout, 'color_config', {})
-                            }
-                        })
-                    elif layout_prefix in ['collapsed-by', 'highlighted-by']:
-                        # Append with applied props and full config
-                        name = layout.name
-                        conditions = list(layout.color2conditions.values())
-                        layouts_metadata.append({
-                            "layout_name": name,  # Retrieve layout name from processed layouts
-                            "applied_props": conditions,  # Props linked to this layout
-                            "config": {
-                                "column_width": getattr(layout, 'column_width', default_configs['column_width']),
-                                "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
-                                "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
-                                "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
-                                "color_config": getattr(layout, 'color_config', {})
-                            }
-                        })
-                    else:
-                        # Append with applied props and full config
-                        name = layout.name
-                        applied_props = layout.prop
-                        layouts_metadata.append({
-                            "layout_name": name,  # Retrieve layout name from processed layouts
-                            "applied_props": [applied_props],  # Props linked to this layout
-                            "config": {
-                                "column_width": getattr(layout, 'column_width', default_configs['column_width']),
-                                "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
-                                "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
-                                "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
-                                "color_config": getattr(layout, 'color_config', {})
-                            }
-                        })
+                    # Process each layer individually without altering its structure
+                    current_layouts, current_props, level = process_layer(
+                        t, layer, tree_info, current_layouts, current_props, level,
+                        column_width, padding_x, padding_y, color_config, internal_num_rep, paired_color
+                    )
+                    
+                    
+                    # Update layouts_metadata after process_layer
+                    layouts_metadata.clear()  # Reset to avoid duplicates or outdated data
+                    for layout in current_layouts:
+                        layout_prefix = layout.name.split('_')[0].lower() # get the layout prefix 
+                        if layout_prefix.startswith('taxa'):
+                            layouts_metadata.append({
+                                "layout_name": layout.name,
+                                "applied_props": [],
+                                "config": {
+                                    "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                    "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
+                                    "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
+                                    "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
+                                    "color_config": getattr(layout, 'color_config', {})
+                                }
+                            })
+                        elif layout_prefix in ['alignment', 'domain']:
+                            layouts_metadata.append({
+                                "layout_name": layout.name,
+                                "applied_props": [layout_prefix],
+                                "config": {
+                                    "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                    "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
+                                    "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
+                                    "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
+                                    "color_config": getattr(layout, 'color_config', {})
+                                }
+                            })
+                        elif layout_prefix in ['profiling', 'categorical-matrix', 'numerical-matrix', 'binary-matrix']:
+                            # Append with applied props and full config
+                            name = layout.name
+                            applied_props = layout.matrix_props
+                            layouts_metadata.append({
+                                "layout_name": name,  # Retrieve layout name from processed layouts
+                                "applied_props": applied_props,  # Props linked to this layout
+                                "config": {
+                                    "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                    "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
+                                    "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
+                                    "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
+                                    "color_config": getattr(layout, 'color_config', {})
+                                }
+                            })
+                        elif layout_prefix in ['collapsed-by', 'highlighted-by']:
+                            # Append with applied props and full config
+                            name = layout.name
+                            conditions = list(layout.color2conditions.values())
+                            layouts_metadata.append({
+                                "layout_name": name,  # Retrieve layout name from processed layouts
+                                "applied_props": conditions,  # Props linked to this layout
+                                "config": {
+                                    "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                    "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
+                                    "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
+                                    "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
+                                    "color_config": getattr(layout, 'color_config', {})
+                                }
+                            })
+                        else:
+                            # Append with applied props and full config
+                            name = layout.name
+                            applied_props = layout.prop
+                            layouts_metadata.append({
+                                "layout_name": name,  # Retrieve layout name from processed layouts
+                                "applied_props": [applied_props],  # Props linked to this layout
+                                "config": {
+                                    "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                    "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
+                                    "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
+                                    "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
+                                    "color_config": getattr(layout, 'color_config', {})
+                                }
+                            })
 
     # Start the ete exploration thread
     start_explore_thread(t, treename, current_layouts, current_props)
