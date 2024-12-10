@@ -182,13 +182,14 @@ class LayoutBarplot(LayoutPlot):
         if self.scale and self.size_range:
             self.scale_width = self.width
             self.scale_range = self.size_range
-            scale = ScaleFace(width=self.width, scale_range=self.size_range, 
+
+            scale = ScaleFace(width=self.width, scale_range=self.scale_range, 
                     formatter='%.2f',
                     padding_x=self.padding_x, padding_y=2)
             text = TextFace(self.prop, max_fsize=15, padding_x=self.padding_x, rotation=315)
             tree_style.aligned_panel_header.add_face(scale, column=self.column)
             tree_style.aligned_panel_header.add_face(text, column=self.column)
-        
+
         if self.legend:
             if self.color:
                 colormap = {self.prop: self.color
