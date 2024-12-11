@@ -28,6 +28,9 @@ from treeprofiler.layouts import (
 import treeprofiler.src.utils as utils
 from treeprofiler.tree_annotate import can_convert_to_bool
 
+import sys
+sys.setrecursionlimit(10000)
+
 paired_color = [
     '#9a312f', '#9b57d0', '#f8ce9a', '#f16017', '#28fef9', '#53707a',
     '#213b07', '#b5e5ac', '#9640b2', '#a9bd10', '#69e42b', '#b44d67',
