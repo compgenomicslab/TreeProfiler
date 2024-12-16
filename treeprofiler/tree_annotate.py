@@ -971,15 +971,14 @@ def parse_csv(input_files, delimiter='\t', no_headers=False, duplicate=False):
     columns = defaultdict(list)
     prop2type = {}
     def update_metadata(reader, node_header):
+        # for tar.gz file
         for row in reader:
             nodename = row[node_header]
             del row[node_header]
+
+            # remove missing value
             #row = {k: 'NaN' if (not v or v.lower() == 'none') else v for k, v in row.items() } ## replace empty to NaN
-            for k, v in row.items(): # replace missing value
-                if check_missing(v):
-                    row[k] = 'NaN'
-                else:
-                    row[k] = v
+            row = {k: v for k, v in row.items() if not check_missing(v)}
 
             if nodename in metadata.keys():
                 for prop, value in row.items():
@@ -1055,14 +1054,10 @@ def parse_csv(input_files, delimiter='\t', no_headers=False, duplicate=False):
                     nodename = row[node_header]
                     del row[node_header]
 
+                    # remove missing value
                     #row = {k: 'NaN' if (not v or v.lower() == 'none') else v for k, v in row.items() } ## replace empty to NaN
+                    row = {k: v for k, v in row.items() if not check_missing(v)}
 
-                    for k, v in row.items(): # replace missing value
-                        if check_missing(v):
-                            row[k] = 'NaN'
-                        else:
-                            row[k] = v
-                    
                     if nodename in metadata.keys():
                         for prop, value in row.items():
                             if duplicate:
@@ -1083,7 +1078,7 @@ def parse_csv(input_files, delimiter='\t', no_headers=False, duplicate=False):
                             columns[prop].append(value) # append the value into the appropriate list
                                             # based on column name k
             update_prop2type(node_props)
-
+    
     return metadata, node_props, columns, prop2type
 
 def parse_tsv_to_array(input_files, delimiter='\t', no_headers=True):
@@ -1259,11 +1254,13 @@ def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, 
                         try:
                             flot_value = float(value)
                             if math.isnan(flot_value):
-                                target_node.add_prop(key, 'NaN')
+                                #target_node.add_prop(key, 'NaN')
+                                pass
                             else:
                                 target_node.add_prop(key, flot_value)
                         except (ValueError,TypeError):
-                            target_node.add_prop(key, 'NaN')
+                            #target_node.add_prop(key, 'NaN')
+                            pass
 
                     # categorical
                     # list
@@ -1292,12 +1289,11 @@ def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, 
                         try:
                             flot_value = float(value)
                             if math.isnan(flot_value):
-                                target_node.add_prop(key, 'NaN')
+                                pass
                             else:
                                 target_node.add_prop(key, flot_value)
                         except (ValueError,TypeError):
-                            target_node.add_prop(key, 'NaN')
-
+                            pass
                     # categorical
                     # list
                     elif key in prop2type and prop2type[key]==list:
@@ -1719,8 +1715,10 @@ def parse_emapper_annotations(input_file, delimiter='\t', no_headers=False):
             nodename = row[node_header]
             del row[node_header]
 
-            for k, v in row.items():  # Replace missing value
-                row[k] = 'NaN' if check_missing(v) else v
+            # remove missing value
+            #row = {k: 'NaN' if (not v or v.lower() == 'none') else v for k, v in row.items() } ## replace empty to NaN
+            row = {k: v for k, v in row.items() if not check_missing(v)}
+
             metadata[nodename] = dict(row)
             for k, v in row.items():  # Go over each column name and value
                 columns[k].append(v)  # Append the value into the appropriate list based on column name k
