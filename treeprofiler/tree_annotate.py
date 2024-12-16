@@ -1348,7 +1348,7 @@ def process_node(node_data):
         internal_props_num = merge_num_annotations(node_leaves, num_prop, column2method)
         if internal_props_num:
             internal_props.update(internal_props_num)
-
+        
     # Generate consensus sequence
     consensus_seq = None
     if alignment and name2seq is not None:  # Check alignment and name2seq together
@@ -1450,39 +1450,46 @@ def merge_num_annotations(nodes, target_props, column2method):
             if target_prop != 'dist' and target_prop != 'support':
                 prop_array = np.array(utils.children_prop_array(nodes, target_prop),dtype=np.float64)
                 prop_array = prop_array[~np.isnan(prop_array)] # remove nan data
-                
-                
-                if prop_array.any():
+
+                if prop_array is None or all(v is None for v in prop_array):
+                    # n, (smin, smax), sm, sv, ss, sk = None, (None, None), None, None, None, None
+                    continue
+                elif np.all(np.array(prop_array) == 0):
+                    # If prop_array is full of 0
+                    n, (smin, smax), sm, sv, ss, sk = 0, (0, 0), 0, 0, 0, 0
+                elif np.any(prop_array):  # Check if any element is non-zero/non-None
                     n, (smin, smax), sm, sv, ss, sk = stats.describe(prop_array)
-
-                    if num_stat == 'all':
-                        internal_props[utils.add_suffix(target_prop, 'avg')] = sm
-                        internal_props[utils.add_suffix(target_prop, 'sum')] = np.sum(prop_array)
-                        internal_props[utils.add_suffix(target_prop, 'max')] = smax
-                        internal_props[utils.add_suffix(target_prop, 'min')] = smin
-                        if math.isnan(sv) == False:
-                            internal_props[utils.add_suffix(target_prop, 'std')] = sv
-                        else:
-                            internal_props[utils.add_suffix(target_prop, 'std')] = 0
-
-                    elif num_stat == 'avg':
-                        internal_props[utils.add_suffix(target_prop, 'avg')] = sm
-                    elif num_stat == 'sum':
-                        internal_props[utils.add_suffix(target_prop, 'sum')] = np.sum(prop_array)
-                    elif num_stat == 'max':
-                        internal_props[utils.add_suffix(target_prop, 'max')] = smax
-                    elif num_stat == 'min':
-                        internal_props[utils.add_suffix(target_prop, 'min')] = smin
-                    elif num_stat == 'std':
-                        if math.isnan(sv) == False:
-                            internal_props[utils.add_suffix(target_prop, 'std')] = sv
-                        else:
-                            internal_props[utils.add_suffix(target_prop, 'std')] = 0
-                    else:
-                        #print('Invalid stat method')
-                        pass
                 else:
+                    # For all other cases, fallback to a default
+                    n, (smin, smax), sm, sv, ss, sk = 0, (0, 0), 0, 0, 0, 0
+                
+                if num_stat == 'all':
+                    internal_props[utils.add_suffix(target_prop, 'avg')] = sm
+                    internal_props[utils.add_suffix(target_prop, 'sum')] = np.sum(prop_array)
+                    internal_props[utils.add_suffix(target_prop, 'max')] = smax
+                    internal_props[utils.add_suffix(target_prop, 'min')] = smin
+                    if math.isnan(sv) == False:
+                        internal_props[utils.add_suffix(target_prop, 'std')] = sv
+                    else:
+                        internal_props[utils.add_suffix(target_prop, 'std')] = 0
+
+                elif num_stat == 'avg':
+                    internal_props[utils.add_suffix(target_prop, 'avg')] = sm
+                elif num_stat == 'sum':
+                    internal_props[utils.add_suffix(target_prop, 'sum')] = np.sum(prop_array)
+                elif num_stat == 'max':
+                    internal_props[utils.add_suffix(target_prop, 'max')] = smax
+                elif num_stat == 'min':
+                    internal_props[utils.add_suffix(target_prop, 'min')] = smin
+                elif num_stat == 'std':
+                    if math.isnan(sv) == False:
+                        internal_props[utils.add_suffix(target_prop, 'std')] = sv
+                    else:
+                        internal_props[utils.add_suffix(target_prop, 'std')] = 0
+                else:
+                    #print('Invalid stat method')
                     pass
+                
 
     if internal_props:
         return internal_props
