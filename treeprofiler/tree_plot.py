@@ -605,13 +605,15 @@ def run(args):
             layouts.extend(binary2_layouts)
             total_color_dict.append(color_dict)
             visualized_props.extend(args.binary_unicolor_layout)
-            visualized_props.extend([utils.add_suffix(prop, 'counter') for prop in args.binary_aggregate_layout])
+            visualized_props.extend([utils.add_suffix(prop, 'counter') for prop in args.binary_unicolor_layout])
 
         if layout == 'binary-unicolor-aggregate-layout':
             binary2_aggregate_layouts, level, color_dict = get_binary_layouts(tree, args.binary_unicolor_aggregate_layout, level, prop2type=prop2type, column_width=args.column_width, reverse=False, padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config, same_color=True, aggregate=True)
             layouts.extend(binary2_aggregate_layouts)
             total_color_dict.append(color_dict)
             visualized_props.extend(args.binary_unicolor_aggregate_layout)
+            visualized_props.extend([utils.add_suffix(prop, 'counter') for prop in args.binary_unicolor_aggregate_layout])
+
 
         if layout == 'barplot-layout':
             barplot_layouts, level, color_dict = get_barplot_layouts(tree, args.barplot_layout, level, 
