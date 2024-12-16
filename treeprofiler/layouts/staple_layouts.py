@@ -302,6 +302,7 @@ class LayoutHeatmap(TreeLayout):
                                     )
     def set_node_style(self, node):
         heatmap_num = node.props.get(self.prop)
+
         if heatmap_num is not None and heatmap_num != 'NaN':
             heatmap_num = float(heatmap_num)
             if node.is_leaf:
@@ -318,7 +319,7 @@ class LayoutHeatmap(TreeLayout):
                     color=gradient_color, padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
                     node.add_face(identF, column = self.column,  position = 'aligned')
             
-        elif node.is_leaf and node.props.get(self.internal_prop):
+        elif node.is_leaf and node.props.get(self.internal_prop) is not None:
             heatmap_num = node.props.get(self.internal_prop)
             heatmap_num = float(heatmap_num)
             # heatmap
@@ -335,7 +336,7 @@ class LayoutHeatmap(TreeLayout):
                 color=gradient_color, padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
                 node.add_face(identF, column = self.column,  position = 'aligned', collapsed_only=True)
         
-        elif node.props.get(self.internal_prop):
+        elif node.props.get(self.internal_prop) is not None:
             heatmap_num = node.props.get(self.internal_prop)
             heatmap_num = float(heatmap_num)
             # heatmap

@@ -971,15 +971,14 @@ def parse_csv(input_files, delimiter='\t', no_headers=False, duplicate=False):
     columns = defaultdict(list)
     prop2type = {}
     def update_metadata(reader, node_header):
+        # for tar.gz file
         for row in reader:
             nodename = row[node_header]
             del row[node_header]
+
+            # remove missing value
             #row = {k: 'NaN' if (not v or v.lower() == 'none') else v for k, v in row.items() } ## replace empty to NaN
-            for k, v in row.items(): # replace missing value
-                if check_missing(v):
-                    row[k] = 'NaN'
-                else:
-                    row[k] = v
+            row = {k: v for k, v in row.items() if not check_missing(v)}
 
             if nodename in metadata.keys():
                 for prop, value in row.items():
@@ -1055,14 +1054,10 @@ def parse_csv(input_files, delimiter='\t', no_headers=False, duplicate=False):
                     nodename = row[node_header]
                     del row[node_header]
 
+                    # remove missing value
                     #row = {k: 'NaN' if (not v or v.lower() == 'none') else v for k, v in row.items() } ## replace empty to NaN
+                    row = {k: v for k, v in row.items() if not check_missing(v)}
 
-                    for k, v in row.items(): # replace missing value
-                        if check_missing(v):
-                            row[k] = 'NaN'
-                        else:
-                            row[k] = v
-                    
                     if nodename in metadata.keys():
                         for prop, value in row.items():
                             if duplicate:
@@ -1083,7 +1078,7 @@ def parse_csv(input_files, delimiter='\t', no_headers=False, duplicate=False):
                             columns[prop].append(value) # append the value into the appropriate list
                                             # based on column name k
             update_prop2type(node_props)
-
+    
     return metadata, node_props, columns, prop2type
 
 def parse_tsv_to_array(input_files, delimiter='\t', no_headers=True):
@@ -1259,11 +1254,13 @@ def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, 
                         try:
                             flot_value = float(value)
                             if math.isnan(flot_value):
-                                target_node.add_prop(key, 'NaN')
+                                #target_node.add_prop(key, 'NaN')
+                                pass
                             else:
                                 target_node.add_prop(key, flot_value)
                         except (ValueError,TypeError):
-                            target_node.add_prop(key, 'NaN')
+                            #target_node.add_prop(key, 'NaN')
+                            pass
 
                     # categorical
                     # list
@@ -1292,12 +1289,11 @@ def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, 
                         try:
                             flot_value = float(value)
                             if math.isnan(flot_value):
-                                target_node.add_prop(key, 'NaN')
+                                pass
                             else:
                                 target_node.add_prop(key, flot_value)
                         except (ValueError,TypeError):
-                            target_node.add_prop(key, 'NaN')
-
+                            pass
                     # categorical
                     # list
                     elif key in prop2type and prop2type[key]==list:
@@ -1348,7 +1344,7 @@ def process_node(node_data):
         internal_props_num = merge_num_annotations(node_leaves, num_prop, column2method)
         if internal_props_num:
             internal_props.update(internal_props_num)
-
+        
     # Generate consensus sequence
     consensus_seq = None
     if alignment and name2seq is not None:  # Check alignment and name2seq together
@@ -1450,39 +1446,46 @@ def merge_num_annotations(nodes, target_props, column2method):
             if target_prop != 'dist' and target_prop != 'support':
                 prop_array = np.array(utils.children_prop_array(nodes, target_prop),dtype=np.float64)
                 prop_array = prop_array[~np.isnan(prop_array)] # remove nan data
-                
-                
-                if prop_array.any():
+
+                if prop_array is None or all(v is None for v in prop_array):
+                    # n, (smin, smax), sm, sv, ss, sk = None, (None, None), None, None, None, None
+                    continue
+                elif np.all(np.array(prop_array) == 0):
+                    # If prop_array is full of 0
+                    n, (smin, smax), sm, sv, ss, sk = 0, (0, 0), 0, 0, 0, 0
+                elif np.any(prop_array):  # Check if any element is non-zero/non-None
                     n, (smin, smax), sm, sv, ss, sk = stats.describe(prop_array)
-
-                    if num_stat == 'all':
-                        internal_props[utils.add_suffix(target_prop, 'avg')] = sm
-                        internal_props[utils.add_suffix(target_prop, 'sum')] = np.sum(prop_array)
-                        internal_props[utils.add_suffix(target_prop, 'max')] = smax
-                        internal_props[utils.add_suffix(target_prop, 'min')] = smin
-                        if math.isnan(sv) == False:
-                            internal_props[utils.add_suffix(target_prop, 'std')] = sv
-                        else:
-                            internal_props[utils.add_suffix(target_prop, 'std')] = 0
-
-                    elif num_stat == 'avg':
-                        internal_props[utils.add_suffix(target_prop, 'avg')] = sm
-                    elif num_stat == 'sum':
-                        internal_props[utils.add_suffix(target_prop, 'sum')] = np.sum(prop_array)
-                    elif num_stat == 'max':
-                        internal_props[utils.add_suffix(target_prop, 'max')] = smax
-                    elif num_stat == 'min':
-                        internal_props[utils.add_suffix(target_prop, 'min')] = smin
-                    elif num_stat == 'std':
-                        if math.isnan(sv) == False:
-                            internal_props[utils.add_suffix(target_prop, 'std')] = sv
-                        else:
-                            internal_props[utils.add_suffix(target_prop, 'std')] = 0
-                    else:
-                        #print('Invalid stat method')
-                        pass
                 else:
+                    # For all other cases, fallback to a default
+                    n, (smin, smax), sm, sv, ss, sk = 0, (0, 0), 0, 0, 0, 0
+                
+                if num_stat == 'all':
+                    internal_props[utils.add_suffix(target_prop, 'avg')] = sm
+                    internal_props[utils.add_suffix(target_prop, 'sum')] = np.sum(prop_array)
+                    internal_props[utils.add_suffix(target_prop, 'max')] = smax
+                    internal_props[utils.add_suffix(target_prop, 'min')] = smin
+                    if math.isnan(sv) == False:
+                        internal_props[utils.add_suffix(target_prop, 'std')] = sv
+                    else:
+                        internal_props[utils.add_suffix(target_prop, 'std')] = 0
+
+                elif num_stat == 'avg':
+                    internal_props[utils.add_suffix(target_prop, 'avg')] = sm
+                elif num_stat == 'sum':
+                    internal_props[utils.add_suffix(target_prop, 'sum')] = np.sum(prop_array)
+                elif num_stat == 'max':
+                    internal_props[utils.add_suffix(target_prop, 'max')] = smax
+                elif num_stat == 'min':
+                    internal_props[utils.add_suffix(target_prop, 'min')] = smin
+                elif num_stat == 'std':
+                    if math.isnan(sv) == False:
+                        internal_props[utils.add_suffix(target_prop, 'std')] = sv
+                    else:
+                        internal_props[utils.add_suffix(target_prop, 'std')] = 0
+                else:
+                    #print('Invalid stat method')
                     pass
+                
 
     if internal_props:
         return internal_props
@@ -1712,8 +1715,10 @@ def parse_emapper_annotations(input_file, delimiter='\t', no_headers=False):
             nodename = row[node_header]
             del row[node_header]
 
-            for k, v in row.items():  # Replace missing value
-                row[k] = 'NaN' if check_missing(v) else v
+            # remove missing value
+            #row = {k: 'NaN' if (not v or v.lower() == 'none') else v for k, v in row.items() } ## replace empty to NaN
+            row = {k: v for k, v in row.items() if not check_missing(v)}
+
             metadata[nodename] = dict(row)
             for k, v in row.items():  # Go over each column name and value
                 columns[k].append(v)  # Append the value into the appropriate list based on column name k

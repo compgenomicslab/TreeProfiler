@@ -483,23 +483,31 @@ def run(args):
         if layout == 'heatmap-layout':
             heatmap_layouts, level = get_heatmap_layouts(tree, args.heatmap_layout, level, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep, color_config=color_config, norm_method='min-max')
             layouts.extend(heatmap_layouts)
-            visualized_props.extend(args.heatmap_layout)
-
+            for prop in args.heatmap_layout:
+                visualized_props.append(prop)
+                visualized_props.append(utils.add_suffix(prop, internal_num_rep))
+            
         if layout == 'heatmap-mean-layout':
             heatmap_mean_layouts, level = get_heatmap_layouts(tree, args.heatmap_mean_layout, level, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep, color_config=color_config, norm_method='mean')
             layouts.extend(heatmap_mean_layouts)
-            visualized_props.extend(args.heatmap_mean_layout)
+            for prop in args.heatmap_mean_layout:
+                visualized_props.append(prop)
+                visualized_props.append(utils.add_suffix(prop, internal_num_rep))
 
         if layout == 'heatmap-zscore-layout':
             heatmap_zscore_layouts, level = get_heatmap_layouts(tree, args.heatmap_zscore_layout, level, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep, color_config=color_config, norm_method='zscore')
             layouts.extend(heatmap_zscore_layouts)
-            visualized_props.extend(args.heatmap_zscore_layout)
+            for prop in args.heatmap_zscore_layout:
+                visualized_props.append(prop)
+                visualized_props.append(utils.add_suffix(prop, internal_num_rep))
             
         if layout == 'label-layout':
             label_layouts, level, color_dict = get_label_layouts(tree, args.label_layout, level, prop2type=prop2type, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config)
             layouts.extend(label_layouts)
             total_color_dict.append(color_dict)
-            visualized_props.extend(args.label_layout)
+            for prop in args.label_layout:
+                visualized_props.append(prop)
+                visualized_props.append(utils.add_suffix(prop, 'counter'))
 
         if layout == 'colorbranch-layout':
             categorical_props = [prop for prop in args.colorbranch_layout if prop2type.get(prop) in [str, list, bool, None]]
@@ -507,8 +515,9 @@ def run(args):
                 colorbranch_layouts, level, color_dict = get_colorbranch_layouts(tree, categorical_props, level, prop2type=prop2type, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config)
                 layouts.extend(colorbranch_layouts)
                 total_color_dict.append(color_dict)
-                visualized_props.extend(categorical_props)
-                #visualized_props.extend([utils.add_suffix(prop, 'counter') for prop in args.piechart_layout])
+                for prop in categorical_props:
+                    visualized_props.append(prop)
+                    visualized_props.append(utils.add_suffix(prop, 'counter'))
 
             numerical_props = [prop for prop in args.colorbranch_layout if prop2type.get(prop) in [float, int]]
             if numerical_props:
@@ -516,7 +525,9 @@ def run(args):
                 prop2type, padding_x=args.padding_x, padding_y=args.padding_y, 
                 internal_rep=internal_num_rep, color_config=color_config)
                 layouts.extend(branchscore_layouts)
-                visualized_props.extend(numerical_props)
+                for prop in numerical_props:
+                    visualized_props.append(prop)
+                    visualized_props.append(utils.add_suffix(prop, internal_num_rep))
         
         if layout == 'bubble-layout':
             categorical_props = [prop for prop in args.bubble_layout if prop2type.get(prop) in [str, list, bool, None]]
@@ -527,7 +538,10 @@ def run(args):
                 color_config=color_config)
                 layouts.extend(bubble_layouts)
                 total_color_dict.append(color_dict)
-                visualized_props.extend(categorical_props)
+                for prop in categorical_props:
+                    visualized_props.append(prop)
+                    visualized_props.append(utils.add_suffix(prop, 'counter'))
+                #visualized_props.extend(categorical_props)
                 #visualized_props.extend([utils.add_suffix(prop, 'counter') for prop in args.piechart_layout
 
             numerical_props = [prop for prop in args.bubble_layout if prop2type.get(prop) in [float, int]]
@@ -538,7 +552,10 @@ def run(args):
                 internal_rep=internal_num_rep, bubble_range=args.bubble_range, 
                 color_config=color_config)
                 layouts.extend(bubble_layouts)
-                visualized_props.extend(numerical_props)
+                #visualized_props.extend(numerical_props)
+                for prop in numerical_props:
+                    visualized_props.append(prop)
+                    visualized_props.append(utils.add_suffix(prop, internal_num_rep))
 
         if layout == "piechart-layout":
             piechart_layouts = get_piechart_layouts(tree, args.piechart_layout, 
@@ -574,18 +591,21 @@ def run(args):
             layouts.extend(binary_layouts)
             total_color_dict.append(color_dict)
             visualized_props.extend(args.binary_layout)
+            visualized_props.extend([utils.add_suffix(prop, 'counter') for prop in args.binary_layout])
 
         if layout == 'binary-aggregate-layout':
             binary_aggregate_layouts, level, color_dict = get_binary_layouts(tree, args.binary_aggregate_layout, level, prop2type=prop2type, column_width=args.column_width, reverse=False, padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config, same_color=False, aggregate=True)
             layouts.extend(binary_aggregate_layouts)
             total_color_dict.append(color_dict)
             visualized_props.extend(args.binary_aggregate_layout)
+            visualized_props.extend([utils.add_suffix(prop, 'counter') for prop in args.binary_aggregate_layout])
 
         if layout == 'binary-unicolor-layout':
             binary2_layouts, level, color_dict = get_binary_layouts(tree, args.binary_unicolor_layout, level, prop2type=prop2type, column_width=args.column_width, reverse=False, padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config, same_color=True, aggregate=False)
             layouts.extend(binary2_layouts)
             total_color_dict.append(color_dict)
             visualized_props.extend(args.binary_unicolor_layout)
+            visualized_props.extend([utils.add_suffix(prop, 'counter') for prop in args.binary_aggregate_layout])
 
         if layout == 'binary-unicolor-aggregate-layout':
             binary2_aggregate_layouts, level, color_dict = get_binary_layouts(tree, args.binary_unicolor_aggregate_layout, level, prop2type=prop2type, column_width=args.column_width, reverse=False, padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config, same_color=True, aggregate=True)
@@ -600,12 +620,17 @@ def run(args):
             barplot_colorby=args.barplot_colorby, max_range=args.barplot_range)
             layouts.extend(barplot_layouts)
             total_color_dict.append(color_dict)
-            visualized_props.extend(args.barplot_layout)
+            for prop in args.barplot_layout:
+                visualized_props.append(prop)
+                visualized_props.append(utils.add_suffix(prop, internal_num_rep))
+            
 
         if layout == "branchscore-layout":
             branchscore_layouts = get_branchscore_layouts(tree, args.branchscore_layout, prop2type, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep='avg')
             layouts.extend(branchscore_layouts)
-            visualized_props.extend(args.branchscore_layout)
+            for prop in args.branchscore_layout:
+                visualized_props.append(prop)
+                visualized_props.append(utils.add_suffix(prop, internal_num_rep))
 
         if layout == 'alignment-layout':
             lengh = len(max(utils.tree_prop_array(tree, 'alignment'),key=len))
@@ -844,7 +869,7 @@ def run(args):
 
     #### Output #####
     popup_prop_keys.extend(list(set(visualized_props)))
-    popup_prop_keys = tuple(popup_prop_keys)
+    popup_prop_keys = sorted(tuple(popup_prop_keys))
     
     if args.out_colordict:
         wrtie_color(total_color_dict)
@@ -853,7 +878,7 @@ def run(args):
         get_image(tree, layouts, args.port, os.path.abspath(file_path))
     else:
         tree.explore(keep_server=True, compress=False, quiet=args.verbose, 
-        layouts=layouts, port=args.port, include_props=sorted(popup_prop_keys),
+        layouts=layouts, port=args.port, include_props=popup_prop_keys,
         show_leaf_name=args.hide_leaf_name, show_branch_support=args.hide_branch_support,
         show_branch_length=args.hide_branch_distance)
 
