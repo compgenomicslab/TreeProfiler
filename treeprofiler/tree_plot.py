@@ -844,7 +844,7 @@ def run(args):
 
     #### Output #####
     popup_prop_keys.extend(list(set(visualized_props)))
-    popup_prop_keys = tuple(popup_prop_keys)
+    popup_prop_keys = sorted(tuple(popup_prop_keys))
     
     if args.out_colordict:
         wrtie_color(total_color_dict)
@@ -853,7 +853,7 @@ def run(args):
         get_image(tree, layouts, args.port, os.path.abspath(file_path))
     else:
         tree.explore(keep_server=True, compress=False, quiet=args.verbose, 
-        layouts=layouts, port=args.port, include_props=sorted(popup_prop_keys),
+        layouts=layouts, port=args.port, include_props=popup_prop_keys,
         show_leaf_name=args.hide_leaf_name, show_branch_support=args.hide_branch_support,
         show_branch_length=args.hide_branch_distance)
 
