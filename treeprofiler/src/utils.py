@@ -128,7 +128,7 @@ def call(node, prop, datatype, operator_string, right_value):
 
 def to_code(condition_strings):
     conditional_output = []
-    operators = [ '<', '<=', '>', '>=', '=', '!=', 'in', 'contains'] 
+    operators = [ '<', '<=', '>', '>=', '=', '!=', 'contains'] 
     
     r = re.compile( '|'.join( '(?:{})'.format(re.escape(o)) for o in sorted(operators, reverse=True, key=len)) )
 

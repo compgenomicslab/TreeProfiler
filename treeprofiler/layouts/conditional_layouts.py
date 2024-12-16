@@ -191,17 +191,17 @@ def collapsed_by_layout(conditions, level, prop2type={}, color='red'):
 
 class LayoutBinary(TreeLayout):
     def __init__(self, name=None, level=1, color='#E60A0A', \
-            bool_prop=None, reverse=False, aggregate=False, \
+            prop=None, reverse=False, aggregate=False, \
             max_count=0, \
             radius=25, padding_x=1, padding_y=0, width=70, \
             legend=True):
         super().__init__(name)
         self.aligned_faces = True
-        self.bool_prop = bool_prop
+        self.prop = prop
         self.column = level
         self.color = color
         self.negative_color = '#EBEBEB'
-        self.internal_prop = bool_prop+'_counter'
+        self.internal_prop = prop+'_counter'
         self.reverse = reverse
         self.aggregate = aggregate
         self.max_count = max_count
@@ -224,12 +224,12 @@ class LayoutBinary(TreeLayout):
 
     def set_tree_style(self, tree, tree_style):
         super().set_tree_style(tree, tree_style)
-        text = TextFace(self.bool_prop, min_fsize=10, max_fsize=15, padding_x=self.padding_x, width=self.width, rotation=315)
+        text = TextFace(self.prop, min_fsize=10, max_fsize=15, padding_x=self.padding_x, width=self.width, rotation=315)
         tree_style.aligned_panel_header.add_face(text, column=self.column)
         if self.legend:
             
             if self.reverse:
-                title = 'ReverseBinary_' + self.bool_prop
+                title = 'ReverseBinary_' + self.prop
                 colormap = {
                     "False": self.color,
                     "True" : self.negative_color,
@@ -240,7 +240,7 @@ class LayoutBinary(TreeLayout):
                                     colormap=colormap,
                                     )
             else:
-                title = 'Binary_' + self.bool_prop
+                title = 'Binary_' + self.prop
                 colormap = {
                     "True": self.color,
                     "False" : self.negative_color,
@@ -254,17 +254,17 @@ class LayoutBinary(TreeLayout):
                 
     def set_node_style(self, node):
         # need to correct
-        if node.is_leaf and node.props.get(self.bool_prop):
-            #if node.props.get(self.bool_prop):
-            prop_bool = node.props.get(self.bool_prop)
+        if node.is_leaf and node.props.get(self.prop):
+            #if node.props.get(self.prop):
+            prop_bool = node.props.get(self.prop)
             
             if not check_nan(prop_bool):
                 str2bool = strtobool(prop_bool)
                 tooltip = ""
                 if node.name:
                     tooltip += f'<b>{node.name}</b><br>'
-                if self.bool_prop:
-                    tooltip += f'<br>{self.bool_prop}: {node.props.get(self.bool_prop)}<br>'
+                if self.prop:
+                    tooltip += f'<br>{self.prop}: {node.props.get(self.prop)}<br>'
 
                 if self.reverse:
                     if not bool(str2bool):
