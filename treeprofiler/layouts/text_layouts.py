@@ -363,7 +363,7 @@ class LayoutRect(TreeLayout):
                     tooltip += f'<br>{self.prop}: {prop_text}<br>'
                 
                 if self.color_dict:
-                    color = self.color_dict.get(str(prop_text),"")
+                    color = self.color_dict.get(prop_text,"")
                     prop_face = RectFace(width=self.width, height=self.height, color=color, \
                         padding_x=self.padding_x , padding_y=self.padding_y, tooltip=tooltip)
                     node.add_face(prop_face, column=self.column, position="aligned")
@@ -458,7 +458,7 @@ class LayoutBackground(TreeLayout):
                 tooltip += f'<br>{self.prop}: {prop_text}<br>'
             
             if self.color_dict:
-                color = self.color_dict.get(str(prop_text), self.absence_color)
+                color = self.color_dict.get(prop_text, self.absence_color)
                 align_link_face = AlignLinkFace(width=self.width*2, height=None,
                     stroke_color=color, stroke_width=2, line_type=0, opacity=0.7)
                 node.sm_style["bgcolor"] = color
