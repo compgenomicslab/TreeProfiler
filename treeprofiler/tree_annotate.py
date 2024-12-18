@@ -731,6 +731,14 @@ def run(args):
     # parsing tree
     try:
         tree, eteformat_flag = utils.validate_tree(args.tree, args.input_type, args.internal)
+        # get tree orignal properties
+        for path, node in tree.iter_prepostorder():
+            prop2type.update(utils.get_prop2type(node))
+        del prop2type['name']
+        del prop2type['dist']
+        if 'support' in prop2type:
+            del prop2type['support']
+
     except utils.TreeFormatError as e:
         logger.error(e)
         sys.exit(1)
@@ -750,8 +758,9 @@ def run(args):
     logger.info(f'start parsing...')
     # parsing metadata
     if args.metadata: # make a series of metadatas
-        metadata_dict, node_props, columns, prop2type = parse_csv(args.metadata, delimiter=args.metadata_sep, \
+        metadata_dict, node_props, columns, metadata_prop2type = parse_csv(args.metadata, delimiter=args.metadata_sep, \
         no_headers=args.no_headers, duplicate=args.duplicate)
+        prop2type.update(metadata_prop2type)
     else: # annotated_tree
         node_props=[]
         columns = {}
@@ -924,7 +933,7 @@ def run(args):
         del avail_props[avail_props.index('dist')]
         if 'support' in avail_props:
             del avail_props[avail_props.index('support')]
-        
+
         annotated_tree.write(outfile=os.path.join(args.outdir, out_newick), props=avail_props, 
                     parser=utils.get_internal_parser(args.internal), format_root_node=True)
     
@@ -934,7 +943,8 @@ def run(args):
         del avail_props[avail_props.index('dist')]
         if 'support' in avail_props:
             del avail_props[avail_props.index('support')]
-        print(annotated_tree.write(props=avail_props, parser=utils.get_internal_parser(args.internal), format_root_node=True))
+        print(annotated_tree.write(props=avail_props, parser=utils.get_internal_parser(args.internal), 
+        format_root_node=True))
 
     # if args.outtsv:
     #     tree2table(annotated_tree, internal_node=True, outfile=args.outtsv)
