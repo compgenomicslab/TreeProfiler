@@ -929,7 +929,7 @@ def run(args):
                     node.add_prop(key, list2str)
         avail_props = list(prop2type.keys())
 
-        del avail_props[avail_props.index('name')]
+        #del avail_props[avail_props.index('name')]
         del avail_props[avail_props.index('dist')]
         if 'support' in avail_props:
             del avail_props[avail_props.index('support')]
@@ -939,7 +939,7 @@ def run(args):
     
     if args.stdout:
         avail_props = list(prop2type.keys())
-        del avail_props[avail_props.index('name')]
+        #del avail_props[avail_props.index('name')]
         del avail_props[avail_props.index('dist')]
         if 'support' in avail_props:
             del avail_props[avail_props.index('support')]
