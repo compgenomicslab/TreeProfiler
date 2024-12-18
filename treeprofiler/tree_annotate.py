@@ -919,6 +919,7 @@ def run(args):
                     list2str = list_sep.join(node.props.get(key))
                     node.add_prop(key, list2str)
         avail_props = list(prop2type.keys())
+
         del avail_props[avail_props.index('name')]
         del avail_props[avail_props.index('dist')]
         if 'support' in avail_props:
@@ -928,6 +929,11 @@ def run(args):
                     parser=utils.get_internal_parser(args.internal), format_root_node=True)
     
     if args.stdout:
+        avail_props = list(prop2type.keys())
+        del avail_props[avail_props.index('name')]
+        del avail_props[avail_props.index('dist')]
+        if 'support' in avail_props:
+            del avail_props[avail_props.index('support')]
         print(annotated_tree.write(props=avail_props, parser=utils.get_internal_parser(args.internal), format_root_node=True))
 
     # if args.outtsv:
@@ -1656,10 +1662,11 @@ def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field
         if n.props.get('rank') and n.props.get('rank') != 'Unknown':
             rank2values[n.props.get('rank')].append(n.props.get('sci_name',''))
 
-        # if n.name:
-        #     pass
-        # else:
-        #     n.name = n.props.get("sci_name", "")
+        if db == 'GTDB':
+            if n.name:
+                pass
+            else:
+                n.name = n.props.get("sci_name", "")
         
     return tree, rank2values
 
