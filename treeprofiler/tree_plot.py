@@ -1549,7 +1549,6 @@ def get_numerical_bubble_layouts(tree, props, level, prop2type, padding_x=0, pad
 
         #minval, maxval = all_prop_values.min(), all_prop_values.max()
         if bubble_range:
-            print(bubble_range)
             abs_maxval = np.abs(bubble_range).max()
             max_val = bubble_range[1]
             min_val = bubble_range[0]

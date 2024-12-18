@@ -562,7 +562,7 @@
                                                     <button class="btn btn-sm btn-outline-primary">
                                                         <i class="bi bi-pencil-square me-1"></i>Edit
                                                     </button>
-                                                    <button class="btn btn-sm btn-outline-danger">
+                                                    <button class="btn btn-sm btn-outline-danger delete-layout-btn">
                                                         <i class="bi bi-trash-fill me-1"></i>Delete
                                                     </button>
                                                 </div>
@@ -571,10 +571,12 @@
                                         % end
                                     </tbody>
                                 </table>
+                                <!-- Hidden input to store the current layouts_metadata -->
+                                <input id="layoutsMetadataInput" value="{{ layouts_metadata }}">
                             </div>
                             <!-- Apply Changes Button -->
                             <div class="text-center mt-4">
-                                <button class="btn btn-success w-100 py-2 fw-bold">
+                                <button id="applyChangesBtn" class="btn btn-success w-100 py-2 fw-bold">
                                     <i class="bi bi-check-circle-fill me-2"></i>Apply Changes
                                 </button>
                             </div>
@@ -849,8 +851,106 @@
             })
             .catch(error => console.error('Error:', error));
         });
+        
+        // update changes
+        // document.addEventListener('DOMContentLoaded', () => {
+        //     // Event delegation for the delete button
+        //     document.getElementById('activeLayoutsTable').addEventListener('click', function(event) {
+        //         const deleteBtn = event.target.closest('.delete-layout-btn');
+        //         if (deleteBtn) {
+        //             const row = deleteBtn.closest('tr');
 
+        //             // Clear all cells' content except the row structure
+        //             row.querySelectorAll('td').forEach(cell => {
+        //                 cell.innerHTML = '';
+        //             });
+        //         }
+        //     });
+
+        //     // Handle Apply Changes
+        //     document.getElementById('applyChangesBtn').addEventListener('click', function() {
+        //         const remainingLayouts = [];
+        //         console.log('Applying changes...', remainingLayouts)
+        //         // Collect rows with content
+        //         document.querySelectorAll('#activeLayoutsTable tr').forEach(row => {
+        //             const layoutName = row.querySelector('td:nth-child(1)').innerText.trim();
+        //             const appliedProps = Array.from(row.querySelectorAll('td:nth-child(2) li'))
+        //                                     .map(prop => prop.innerText.trim());
+                    
+        //             if (layoutName) {  // Only include rows that are not cleared
+        //                 remainingLayouts.push({
+        //                     layout_name: layoutName,
+        //                     applied_props: appliedProps
+        //                 });
+        //             }
+        //         });
+
+        //         // Send the remaining layouts back to the backend
+        //         fetch('', {
+        //             method: 'POST',
+        //             headers: { 'Content-Type': 'application/json' },
+        //             body: JSON.stringify({ action: 'apply_changes', layouts: remainingLayouts })
+        //         })
+        //         .then(response => response.text())
+        //         .then(data => {
+        //             alert('Changes applied successfully!');
+        //             location.reload(); // Optionally reload the page
+        //         })
+        //         .catch(error => console.error('Error:', error));
+        //     });
+        // });
     </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const tableBody = document.getElementById('activeLayoutsTable');
+            const layoutsMetadata = document.getElementById('layoutsMetadataInput');
+            
+            // Function to update the hidden input field
+            function updateHiddenInput() {
+                layoutsMetadataInput.value = JSON.stringify(layoutsMetadata);
+            }
+    
+            // Function to find and remove layout metadata by name
+            function removeLayoutMetadata(layoutName) {
+                layoutsMetadata = layoutsMetadata.filter(layout => layout.layout_name !== layoutName);
+                updateHiddenInput();
+            }
+    
+            // Handle Delete Button Click
+            tableBody.addEventListener('click', function (e) {
+                if (e.target.closest('.delete-layout-btn')) {
+                    const row = e.target.closest('tr'); // Find the table row
+                    const layoutName = row.querySelector('td:nth-child(1)').innerText.trim(); // Get layout name
+                    
+                    // Remove the row from the table
+                    row.remove();
+    
+                    // Remove the corresponding layout from the metadata
+                    removeLayoutMetadata(layoutName);
+                }
+            });
+    
+            // Handle Apply Changes Button
+            document.getElementById('applyChangesBtn').addEventListener('click', function () {
+                // Send the updated layoutsMetadata back to the backend
+                fetch(window.location.pathname, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({
+                        updated_metadata: layoutsMetadataInput.value
+                    })
+                })
+                .then(response => response.text())
+                .then(data => {
+                    alert("Layouts updated successfully!");
+                    location.reload();
+                })
+                .catch(error => console.error('Error:', error));
+            });
+        });
+    </script>
+    
+    
     <script>
         // this is for layout toggle settings
         $(document).ready(function (){

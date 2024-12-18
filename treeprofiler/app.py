@@ -651,6 +651,10 @@ def explore_tree(treename):
     # Start the ete exploration thread
     start_explore_thread(t, treename, current_layouts, current_props)
 
+    # Before rendering the template, convert to JSON
+    #layouts_json = json.dumps(tree_info['layouts'])
+    #layouts_metadata_json = json.dumps(layouts_metadata)
+    
     # Render template
     return template(
         'explore_tree_v2',
@@ -658,7 +662,8 @@ def explore_tree(treename):
         tree_info=tree_info,
         selected_props=current_props,
         color_schemes=continuous_colormaps,
-        layouts_metadata=layouts_metadata
+        layouts_metadata=layouts_metadata,
+        #layouts_metadata_json = json.dumps(layouts_metadata)
     )
 
 def get_colormap_hex_colors(colormap_name, num_colors):
