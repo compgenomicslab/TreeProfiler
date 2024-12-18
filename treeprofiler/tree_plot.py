@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-import numbers
 import math
 import sys
 import os
@@ -393,7 +392,7 @@ def run(args):
 
         if eteformat_flag:
             for path, node in tree.iter_prepostorder():
-                prop2type.update(get_prop2type(node))
+                prop2type.update(utils.get_prop2type(node))
                 
     if args.collapsed_by: # need to be wrap with quotes
         condition_strings = args.collapsed_by
@@ -1549,7 +1548,6 @@ def get_numerical_bubble_layouts(tree, props, level, prop2type, padding_x=0, pad
 
         #minval, maxval = all_prop_values.min(), all_prop_values.max()
         if bubble_range:
-            print(bubble_range)
             abs_maxval = np.abs(bubble_range).max()
             max_val = bubble_range[1]
             min_val = bubble_range[0]
@@ -1770,22 +1768,6 @@ def get_heatmap_matrix_layouts(layout_name, numerical_props, norm_method, intern
             level += 1
             layouts.append(matrix_layout)
     return layouts, level
-
-def get_prop2type(node):
-    output = {}
-    prop2value = node.props
-    if '_speciesFunction' in prop2value:
-        del prop2value['_speciesFunction']
-    
-    for prop, value in prop2value.items():
-        if value != 'NaN':
-            if isinstance(value, numbers.Number):
-                output[prop] = float
-            elif type(value) == list:
-                output[prop] = list
-            else:
-                output[prop] = str    
-    return output
 
 def categorical2matrix(tree, profiling_props, dtype=str, color_config=None):
     """
