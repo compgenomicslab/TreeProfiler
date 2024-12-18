@@ -269,7 +269,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
     total_color_dict = []
     layouts = []
     level = 1 # level 1 is the leaf name
-    
+    taxa_props = ['rank', 'sci_name', 'taxid', 'lineage', 'named_lineage', 'lca', 'evoltype', 'common_name', 'species']
     if text_prop:
         text_prop = text_prop
     else:
@@ -354,7 +354,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
                     if dtype == list:
                         multiple_text_prop.append(key)
                     if dtype == str:
-                        if key not in multiple_text_prop:
+                        if key not in multiple_text_prop and key not in taxa_props:
                             text_prop.append(key)
                         else:
                             pass
@@ -558,7 +558,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
     # statistic method
     counter_stat = counter_stat #'raw' or 'relative'
     num_stat = num_stat
-
+    
     # merge annotations depends on the column datatype
     start = time.time()
     # choose summary method based on datatype
@@ -925,7 +925,7 @@ def run(args):
         for node in annotated_tree.leaves():
             for key in list_keys:
                 if node.props.get(key):
-                    list2str = list_sep.join(node.props.get(key))
+                    list2str = list_sep.join(str(node.props.get(key)))
                     node.add_prop(key, list2str)
         avail_props = list(prop2type.keys())
 
@@ -933,7 +933,7 @@ def run(args):
         del avail_props[avail_props.index('dist')]
         if 'support' in avail_props:
             del avail_props[avail_props.index('support')]
-
+    
         annotated_tree.write(outfile=os.path.join(args.outdir, out_newick), props=avail_props, 
                     parser=utils.get_internal_parser(args.internal), format_root_node=True)
     
@@ -1380,6 +1380,7 @@ def merge_text_annotations(nodes, target_props, column2method, emapper_mode=Fals
     for target_prop in target_props:
         counter_stat = column2method.get(target_prop, "raw")
         prop_list = utils.children_prop_array_missing(nodes, target_prop)
+        
         counter = dict(Counter(prop_list))  # Store the counter
         if 'NaN' in counter:
             del counter['NaN']
