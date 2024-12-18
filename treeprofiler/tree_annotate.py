@@ -39,6 +39,8 @@ TAXONOMICDICT = {# start with leaf name
                 'dup_sp': str,
                 'dup_percent': float,
                 'lca': str,
+                'common_name': str,
+                'species': str,
                 }
 
 # Global Variable for emapper headers
@@ -269,7 +271,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
     total_color_dict = []
     layouts = []
     level = 1 # level 1 is the leaf name
-    taxa_props = ['rank', 'sci_name', 'taxid', 'lineage', 'named_lineage', 'lca', 'evoltype', 'common_name', 'species']
+    
     if text_prop:
         text_prop = text_prop
     else:
@@ -352,12 +354,12 @@ def run_tree_annotate(tree, input_annotated_tree=False,
 
                 else:
                     if dtype == list:
-                        multiple_text_prop.append(key)
+                        if key not in TAXONOMICDICT.keys():
+                            multiple_text_prop.append(key)
                     if dtype == str:
-                        if key not in multiple_text_prop and key not in taxa_props:
+                        if key not in multiple_text_prop and key not in TAXONOMICDICT.keys():
                             text_prop.append(key)
-                        else:
-                            pass
+
                     if dtype == float:
                         num_prop.append(key)
                     if dtype == bool:
@@ -736,6 +738,8 @@ def run(args):
             prop2type.update(utils.get_prop2type(node))
         del prop2type['name']
         del prop2type['dist']
+        if '__id' in prop2type:
+            del prop2type['__id']
         if 'support' in prop2type:
             del prop2type['support']
 
@@ -1380,7 +1384,6 @@ def merge_text_annotations(nodes, target_props, column2method, emapper_mode=Fals
     for target_prop in target_props:
         counter_stat = column2method.get(target_prop, "raw")
         prop_list = utils.children_prop_array_missing(nodes, target_prop)
-        
         counter = dict(Counter(prop_list))  # Store the counter
         if 'NaN' in counter:
             del counter['NaN']
