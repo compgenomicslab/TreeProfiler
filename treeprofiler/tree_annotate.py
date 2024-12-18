@@ -1662,11 +1662,11 @@ def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field
         if n.props.get('rank') and n.props.get('rank') != 'Unknown':
             rank2values[n.props.get('rank')].append(n.props.get('sci_name',''))
 
-        if db == 'GTDB':
-            if n.name:
-                pass
-            else:
-                n.name = n.props.get("sci_name", "")
+        # TODO assign internal node as sci_name, ATTENTION of potential bug
+        if n.name:
+            pass
+        else:
+            n.name = n.props.get("sci_name", "")
         
     return tree, rank2values
 
