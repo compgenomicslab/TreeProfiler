@@ -572,7 +572,7 @@
                                     </tbody>
                                 </table>
                                 <!-- Hidden input to store the current layouts_metadata -->
-                                <input id="layoutsMetadataInput" value="{{ layouts_metadata }}">
+                                <input id="layoutsMetadataInput" value="{{ layouts_metadata_json }}">
                             </div>
                             <!-- Apply Changes Button -->
                             <div class="text-center mt-4">
@@ -852,70 +852,30 @@
             .catch(error => console.error('Error:', error));
         });
         
-        // update changes
-        // document.addEventListener('DOMContentLoaded', () => {
-        //     // Event delegation for the delete button
-        //     document.getElementById('activeLayoutsTable').addEventListener('click', function(event) {
-        //         const deleteBtn = event.target.closest('.delete-layout-btn');
-        //         if (deleteBtn) {
-        //             const row = deleteBtn.closest('tr');
+        
 
-        //             // Clear all cells' content except the row structure
-        //             row.querySelectorAll('td').forEach(cell => {
-        //                 cell.innerHTML = '';
-        //             });
-        //         }
-        //     });
-
-        //     // Handle Apply Changes
-        //     document.getElementById('applyChangesBtn').addEventListener('click', function() {
-        //         const remainingLayouts = [];
-        //         console.log('Applying changes...', remainingLayouts)
-        //         // Collect rows with content
-        //         document.querySelectorAll('#activeLayoutsTable tr').forEach(row => {
-        //             const layoutName = row.querySelector('td:nth-child(1)').innerText.trim();
-        //             const appliedProps = Array.from(row.querySelectorAll('td:nth-child(2) li'))
-        //                                     .map(prop => prop.innerText.trim());
-                    
-        //             if (layoutName) {  // Only include rows that are not cleared
-        //                 remainingLayouts.push({
-        //                     layout_name: layoutName,
-        //                     applied_props: appliedProps
-        //                 });
-        //             }
-        //         });
-
-        //         // Send the remaining layouts back to the backend
-        //         fetch('', {
-        //             method: 'POST',
-        //             headers: { 'Content-Type': 'application/json' },
-        //             body: JSON.stringify({ action: 'apply_changes', layouts: remainingLayouts })
-        //         })
-        //         .then(response => response.text())
-        //         .then(data => {
-        //             alert('Changes applied successfully!');
-        //             location.reload(); // Optionally reload the page
-        //         })
-        //         .catch(error => console.error('Error:', error));
-        //     });
-        // });
     </script>
     <script>
+        // update changes
         document.addEventListener('DOMContentLoaded', () => {
             const tableBody = document.getElementById('activeLayoutsTable');
-            const layoutsMetadata = document.getElementById('layoutsMetadataInput');
+            const layoutsMetadataInput = document.getElementById('layoutsMetadataInput');
             
+            
+            // Parse the initial metadata value into an array
+            let layoutsMetadata = JSON.parse(layoutsMetadataInput.value);
+
             // Function to update the hidden input field
             function updateHiddenInput() {
                 layoutsMetadataInput.value = JSON.stringify(layoutsMetadata);
             }
-    
+
             // Function to find and remove layout metadata by name
             function removeLayoutMetadata(layoutName) {
                 layoutsMetadata = layoutsMetadata.filter(layout => layout.layout_name !== layoutName);
                 updateHiddenInput();
             }
-    
+
             // Handle Delete Button Click
             tableBody.addEventListener('click', function (e) {
                 if (e.target.closest('.delete-layout-btn')) {
@@ -924,17 +884,16 @@
                     
                     // Remove the row from the table
                     row.remove();
-    
+
                     // Remove the corresponding layout from the metadata
                     removeLayoutMetadata(layoutName);
                 }
             });
-    
+
             // Handle Apply Changes Button
             document.getElementById('applyChangesBtn').addEventListener('click', function () {
-                // Send the updated layoutsMetadata back to the backend
-                fetch(window.location.pathname, {
-                    method: 'POST',
+                fetch('/explore_tree/{{ treename }}', {
+                    method: 'PUT',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: new URLSearchParams({
                         updated_metadata: layoutsMetadataInput.value
@@ -942,15 +901,15 @@
                 })
                 .then(response => response.text())
                 .then(data => {
-                    alert("Layouts updated successfully!");
+                    alert("Layouts metadata updated successfully!");
                     location.reload();
                 })
                 .catch(error => console.error('Error:', error));
             });
         });
+
     </script>
-    
-    
+
     <script>
         // this is for layout toggle settings
         $(document).ready(function (){

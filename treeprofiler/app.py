@@ -498,14 +498,18 @@ def check_job_status():
     status = job_status.get(job_id, "not_found")
     return status
 
-@app.route('/explore_tree/<treename>', method=['GET', 'POST'])
+@app.route('/explore_tree/<treename>', method=['GET', 'POST', 'PUT'])
 def explore_tree(treename):
     tree_info = trees.get(treename)
     if not tree_info:
         return f"Tree '{treename}' not found."
-    
+
     # Retrieve and initialize layouts, properties, and tree
     current_layouts = tree_info.get('layouts', [])
+
+    layout_manager = {}
+    if current_layouts:
+        layout_manager = {layout.name: layout for layout in current_layouts}
     current_props = sorted(list(tree_info['prop2type'].keys()))
     
     if tree_info['updated_tree']:
@@ -540,7 +544,6 @@ def explore_tree(treename):
             tree_info['layouts'] = []  # Clear applied layouts
             current_layouts = []  # Clear layouts
             layouts_metadata.clear()  # Clear metadata
-        
         else:
             layers_data = request.forms.get('layers')
             level = int(request.forms.get('level', default_configs['level']))
@@ -590,6 +593,7 @@ def explore_tree(treename):
                                     "color_config": getattr(layout, 'color_config', {})
                                 }
                             })
+                            layout_manager[layout.name] = layout
                         elif layout_prefix in ['alignment', 'domain']:
                             layouts_metadata.append({
                                 "layout_name": layout.name,
@@ -602,6 +606,7 @@ def explore_tree(treename):
                                     "color_config": getattr(layout, 'color_config', {})
                                 }
                             })
+                            layout_manager[layout.name] = layout
                         elif layout_prefix in ['profiling', 'categorical-matrix', 'numerical-matrix', 'binary-matrix']:
                             # Append with applied props and full config
                             name = layout.name
@@ -617,6 +622,7 @@ def explore_tree(treename):
                                     "color_config": getattr(layout, 'color_config', {})
                                 }
                             })
+                            layout_manager[layout.name] = layout
                         elif layout_prefix in ['collapsed-by', 'highlighted-by']:
                             # Append with applied props and full config
                             name = layout.name
@@ -632,6 +638,7 @@ def explore_tree(treename):
                                     "color_config": getattr(layout, 'color_config', {})
                                 }
                             })
+                            layout_manager[layout.name] = layout
                         else:
                             # Append with applied props and full config
                             name = layout.name
@@ -647,13 +654,35 @@ def explore_tree(treename):
                                     "color_config": getattr(layout, 'color_config', {})
                                 }
                             })
+                            layout_manager[layout.name] = layout
 
+    # Process PUT request for updating layouts 
+    if request.method == 'PUT':
+        if request.forms.get('updated_metadata'):
+            try:
+                # layouts_metadata.clear()
+                updated_metadata = json.loads(request.forms.get('updated_metadata'))
+                tree_info['layouts_metadata'] = updated_metadata
+                current_layouts = []
+
+                for layout in updated_metadata:
+                    layout = layout_manager.get(layout['layout_name'])
+                    if layout:
+                        current_layouts.append(layout)
+
+                tree_info['layouts'] = current_layouts
+                start_explore_thread(t, treename, current_layouts, current_props)
+                #return "Layouts metadata updated successfully."
+            except json.JSONDecodeError:
+                return "Invalid metadata format.", 400
     # Start the ete exploration thread
-    start_explore_thread(t, treename, current_layouts, current_props)
+
+    if request.method == 'GET':
+        start_explore_thread(t, treename, current_layouts, current_props)
 
     # Before rendering the template, convert to JSON
     #layouts_json = json.dumps(tree_info['layouts'])
-    #layouts_metadata_json = json.dumps(layouts_metadata)
+    layouts_metadata_json = json.dumps(layouts_metadata)
     
     # Render template
     return template(
@@ -663,7 +692,7 @@ def explore_tree(treename):
         selected_props=current_props,
         color_schemes=continuous_colormaps,
         layouts_metadata=layouts_metadata,
-        #layouts_metadata_json = json.dumps(layouts_metadata)
+        layouts_metadata_json = json.dumps(layouts_metadata)
     )
 
 def get_colormap_hex_colors(colormap_name, num_colors):
