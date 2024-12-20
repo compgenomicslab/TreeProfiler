@@ -487,7 +487,7 @@ class LayoutBubbleCategorical(TreeLayout):
             max_radius=1, padding_x=2, padding_y=0, 
             scale=True, legend=True, active=True):
 
-        name = name or f'Bubble_{prop}'
+        name = name or f'CategoricalBubble_{prop}'
         super().__init__(name)
 
         self.aligned_faces = True

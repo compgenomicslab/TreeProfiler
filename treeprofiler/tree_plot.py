@@ -1518,11 +1518,7 @@ def get_categorical_bubble_layouts(tree, props, level, prop2type, column_width=7
             # normal text prop
             color_dict = utils.assign_color_to_values(prop_values, paired_color)
 
-        # layout = text_layouts.LayoutRect(name='Rectangular_'+prop, column=level,
-        #             color_dict=color_dict, prop=prop,
-        #             width=column_width, padding_x=padding_x, padding_y=padding_y)
-        # Configure and add layout
-        layout = text_layouts.LayoutBubbleCategorical(name=f'Bubble_{prop}', column=level, 
+        layout = text_layouts.LayoutBubbleCategorical(name=f'Categorical-Bubble_{prop}', column=level, 
         prop=prop, color_dict=color_dict, 
         max_radius=max_radius, padding_x=padding_x, padding_y=padding_y)
 
@@ -1606,7 +1602,7 @@ def get_numerical_bubble_layouts(tree, props, level, prop2type, padding_x=0, pad
                 value2color[val] = gradientscolor[color_index+1]
 
         # Configure and add layout
-        layout = staple_layouts.LayoutBubbleNumerical(name=f'Bubble_{prop}', 
+        layout = staple_layouts.LayoutBubbleNumerical(name=f'Numerical-Bubble_{prop}', 
         column=level, prop=prop, max_radius=max_radius, abs_maxval=abs_maxval, 
         padding_x=padding_x, padding_y=padding_y, value2color=value2color, 
         bubble_range=bubble_range, 

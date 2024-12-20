@@ -571,7 +571,7 @@ class LayoutBubbleNumerical(TreeLayout):
             bubble_range=[], color_range=[], internal_rep='avg',
             scale=True, legend=True, active=True):
 
-        name = name or f'Bubble_{prop}'
+        name = name or f'NumericalBubble_{prop}'
         super().__init__(name)
 
         self.aligned_faces = True

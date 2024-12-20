@@ -22,7 +22,7 @@ from treeprofiler import layouts
 # In-memory storage for chunks and complete files
 trees = {}
 uploaded_chunks = {}
-paired_color = [
+default_paired_color = [
     '#9a312f', '#9b57d0', '#f8ce9a', '#f16017', '#28fef9', '#53707a',
     '#213b07', '#b5e5ac', '#9640b2', '#a9bd10', '#69e42b', '#b44d67',
     '#b110c1', '#0b08a3', '#d07671', '#29e23b', '#3f2bf4', '#9b2a08',
@@ -67,31 +67,29 @@ categorical_layout_list = [
     'categorical-matrix-layout',
     'profiling-layout'
 ]
-numerical_layout_list = [
-    'branchscore-layout',
-    'numerical-bubble-layout',
-    'heatmap-layout',
-    'heatmap-mean-layout',
-    'heatmap-zscore-layout',
-    'numerical-matrix-layout',
-    'barplot-layout'
+
+categorical_prefix = [
+    "rectangle",
+    "label",
+    "colorbranch",
+    "categoricalbubble",
+    "piechart",
+    "background",
+    "categorical-matrix",
+    "profiling"
 ]
-binary_layout_list  = [
-    'binary-layout',
+
+numerical_prefix = [
+    "heatmap",
+    "barplot",
+    "branchscore",
+    "numericalbubble",
+    "numerical-matrix"
 ]
-analytic_layout_list = [
-    'acr-discrete-layout',
-    'acr-continuous-layout',
-    'ls-layout'
-]
-taxonomic_layout_list = [
-    'taxoncollapse-layout',
-    'taxonclade-layout',
-    'taxonrectangle-layout'
-]
-aln_layout_list = [
-    'alignment-layout',
-    'domain-layout'
+
+binary_prefix = [
+    "binary",
+    "binary-matrix"
 ]
 
 # Global control variable for restarting
@@ -571,9 +569,9 @@ def explore_tree(treename):
                         tree_info['updated_tree'] = t.write(props=current_props, format_root_node=True)
 
                     # Process each layer individually without altering its structure
-                    current_layouts, current_props, level = process_layer(
+                    current_layouts, current_props, level, color_config = process_layer(
                         t, layer, tree_info, current_layouts, current_props, level,
-                        column_width, padding_x, padding_y, color_config, internal_num_rep, paired_color
+                        column_width, padding_x, padding_y, color_config, internal_num_rep, default_paired_color
                     )
                     
                     
@@ -590,8 +588,8 @@ def explore_tree(treename):
                                     "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
                                     "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
                                     "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
-                                    "color_config": getattr(layout, 'color_config', {})
-                                }
+                                },
+                                "layer": {}
                             })
                             layout_manager[layout.name] = layout
                         elif layout_prefix in ['alignment', 'domain']:
@@ -604,7 +602,8 @@ def explore_tree(treename):
                                     "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
                                     "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
                                     "color_config": getattr(layout, 'color_config', {})
-                                }
+                                },
+                                "layer": {}
                             })
                             layout_manager[layout.name] = layout
                         elif layout_prefix in ['profiling', 'categorical-matrix', 'numerical-matrix', 'binary-matrix']:
@@ -620,7 +619,8 @@ def explore_tree(treename):
                                     "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
                                     "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
                                     "color_config": getattr(layout, 'color_config', {})
-                                }
+                                },
+                                "layer": {}
                             })
                             layout_manager[layout.name] = layout
                         elif layout_prefix in ['collapsed-by', 'highlighted-by']:
@@ -636,14 +636,16 @@ def explore_tree(treename):
                                     "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
                                     "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
                                     "color_config": getattr(layout, 'color_config', {})
-                                }
+                                },
+                                "layer": {}
                             })
                             layout_manager[layout.name] = layout
                         else:
                             # Append with applied props and full config
                             name = layout.name
                             applied_props = layout.prop
-                            layouts_metadata.append({
+                            # basic 
+                            layout_config = {
                                 "layout_name": name,  # Retrieve layout name from processed layouts
                                 "applied_props": [applied_props],  # Props linked to this layout
                                 "config": {
@@ -651,11 +653,45 @@ def explore_tree(treename):
                                     "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
                                     "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
                                     "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
-                                    "color_config": getattr(layout, 'color_config', {})
-                                }
-                            })
-                            layout_manager[layout.name] = layout
+                                    #"color_config": color_config.get(applied_props, {})
+                                },
+                                "layer": {}
+                            }
+                            if layout_prefix in categorical_prefix:
+                                layout_config['layer']['categoricalColorscheme'] = layer.get('categoricalColorscheme', 'default')   
 
+                            elif layout_prefix in numerical_prefix:
+                                layout_config['layer']["maxVal"] = layer.get('maxVal', '')
+                                layout_config['layer']["minVal"] = layer.get('minVal', '')
+                                layout_config['layer']["colorMin"] = layer.get('colorMin', '#0000ff')
+                                layout_config['layer']["colorMid"] = layer.get('colorMid', '#ffffff')
+                                layout_config['layer']["colorMax"] = layer.get('colorMax', '#ff0000')
+
+                                if layout_prefix == 'barplot':
+                                    layout_config['layer']['barplotWidth'] = layer.get('barplotWidth', 200)
+                                    layout_config['layer']['barplotScaleProperty'] = layer.get('barplotScaleProperty', '')
+                                    layout_config['layer']['barplotRange'] = layer.get('barplotRange', '')
+                                    layout_config['layer']['barplotColorOption'] = layer.get('barplotColorOption', 'same')
+                                    layout_config['layer']['barplotColorscheme'] = layer.get('barplotColorscheme', 'default')
+                                    layout_config['layer']['barplotFillProperty'] = layer.get('barplotFillProperty', None)
+
+                            elif layout_prefix in binary_prefix:
+                                layout_config['layer']['isUnicolor'] = layer.get('isUnicolor', True)
+                                if not layout_config['layer']['isUnicolor']:
+                                    layout_config['layer']['binaryColorscheme'] = layer.get('binaryColorscheme', 'default')
+                                else:
+                                    layout_config['layer']['unicolorColor'] = layer.get('unicolorColor', '#ff0000')
+                                
+                                layout_config['layer']['aggregateOption'] = layer.get('aggregateOption', 'gradient')
+                                
+                            elif layout_prefix == "alignment":
+                                layout_config['layer']['algStart'] = layer.get('algStart', '')
+                                layout_config['layer']['algEnd'] = layer.get('algEnd', '')
+                            
+                            layouts_metadata.append(layout_config)
+                            layout_manager[layout.name] = layout
+    
+    
     # Process PUT request for updating layouts 
     if request.method == 'PUT':
         if request.forms.get('updated_metadata'):
@@ -664,12 +700,27 @@ def explore_tree(treename):
                 updated_metadata = json.loads(request.forms.get('updated_metadata'))
                 tree_info['layouts_metadata'] = updated_metadata
                 current_layouts = []
+                
+                for layout_meta in updated_metadata:
 
-                for layout in updated_metadata:
-                    layout = layout_manager.get(layout['layout_name'])
+                    layout = layout_manager.get(layout_meta['layout_name'])
+                    layout_prefix = layout_meta['layout_name'].split('_')[0].lower()
+                    prop = layout_meta['applied_props'][0]
                     if layout:
+                        layout.width = layout_meta['config']['column_width']
+                        layout.padding_x = layout_meta['config']['padding_x']
+                        layout.padding_y = layout_meta['config']['padding_y']
+                        layout.internal_num_rep = layout_meta['config']['internal_num_rep']
                         current_layouts.append(layout)
-
+                        if layout_prefix in categorical_prefix:
+                            categorical_color_scheme = layout_meta['layer'].get('categoricalColorscheme', 'default')
+                            prop_values = sorted(list(set(utils.tree_prop_array(t, prop))))
+                            paired_color = get_colormap_hex_colors(categorical_color_scheme, len(prop_values))
+                            color_config[prop] = {}
+                            color_config[prop]['value2color'] = utils.assign_color_to_values(prop_values, paired_color)
+                            color_config[prop]['detail2color'] = {}
+                            layout.color_config = color_config
+                            
                 tree_info['layouts'] = current_layouts
                 start_explore_thread(t, treename, current_layouts, current_props)
                 #return "Layouts metadata updated successfully."
@@ -697,7 +748,7 @@ def explore_tree(treename):
 
 def get_colormap_hex_colors(colormap_name, num_colors):
     if colormap_name == 'default':
-        return paired_color
+        return default_paired_color
     else:
         cmap = plt.get_cmap(colormap_name)
         colors = [mcolors.to_hex(cmap(i / (num_colors - 1))) for i in range(num_colors)]
@@ -707,7 +758,7 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
     """
     Processes a single layer, applying user selections and updating layouts, properties, and level.
     """
-
+    layout2colorconfg = {}
     selected_props = layer.get('props', [])
     selected_layout = layer.get('layout', '')
     query_type = layer.get('queryType', '')
@@ -756,13 +807,16 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
     
     # Apply selected layout based on type directly within this function
     if selected_layout in categorical_layout_list:
+        
         for index, prop in enumerate(selected_props):
             prop_values = sorted(list(set(utils.tree_prop_array(t, prop))))
             paired_color = get_colormap_hex_colors(categorical_color_scheme, len(prop_values))
             color_config[prop] = {}
             color_config[prop]['value2color'] = utils.assign_color_to_values(prop_values, paired_color)
             color_config[prop]['detail2color'] = {}
+        
         level, current_layouts = apply_categorical_layouts(t, selected_layout, selected_props, tree_info, current_layouts, level, column_width, padding_x, padding_y, color_config)
+        
     elif selected_layout == 'binary-layout':
         for index, prop in enumerate(selected_props):
             prop_values = utils.tree_prop_array(t, prop, leaf_only=True)
@@ -945,7 +999,7 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
     
     current_props.extend(selected_props)
 
-    return current_layouts, current_props, level
+    return current_layouts, current_props, level, color_config
 
 def apply_categorical_layouts(t, selected_layout, selected_props, tree_info, current_layouts, level, column_width, padding_x, padding_y, color_config):
     """
