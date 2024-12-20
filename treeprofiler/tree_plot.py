@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-import numbers
 import math
 import sys
 import os
@@ -393,7 +392,7 @@ def run(args):
 
         if eteformat_flag:
             for path, node in tree.iter_prepostorder():
-                prop2type.update(get_prop2type(node))
+                prop2type.update(utils.get_prop2type(node))
                 
     if args.collapsed_by: # need to be wrap with quotes
         condition_strings = args.collapsed_by
@@ -690,7 +689,7 @@ def run(args):
             matrix, minval, maxval, value2color, results_list, list_props, single_props = numerical2matrix(tree, 
                 numerical_props, count_negative=True, internal_num_rep=internal_num_rep, 
                 color_config=color_config, norm_method='min-max')
-            
+
             if list_props:
                 index_map = {value: idx for idx, value in enumerate(numerical_props)}
                 sorted_list_props = sorted(list_props, key=lambda x: index_map[x])
@@ -1770,22 +1769,6 @@ def get_heatmap_matrix_layouts(layout_name, numerical_props, norm_method, intern
             layouts.append(matrix_layout)
     return layouts, level
 
-def get_prop2type(node):
-    output = {}
-    prop2value = node.props
-    if '_speciesFunction' in prop2value:
-        del prop2value['_speciesFunction']
-    
-    for prop, value in prop2value.items():
-        if value != 'NaN':
-            if isinstance(value, numbers.Number):
-                output[prop] = float
-            elif type(value) == list:
-                output[prop] = list
-            else:
-                output[prop] = str    
-    return output
-
 def categorical2matrix(tree, profiling_props, dtype=str, color_config=None):
     """
     Input:
@@ -2007,23 +1990,17 @@ def numerical2matrix(tree, profiling_props, count_negative=True, internal_num_re
     for node in tree.traverse():
         node2matrix_single[node.name] = []
         for profiling_prop in profiling_props:
-            if node.is_leaf:
-                prop_value = node.props.get(profiling_prop)
-                if prop_value is not None:
-                    if isinstance(prop_value, list):
-                        list_props.add(profiling_prop)
-                        prop_value = list(map(float, prop_value))
-                        if node.name not in node2matrix_list[profiling_prop]:
-                            node2matrix_list[profiling_prop][node.name] = []
-                        node2matrix_list[profiling_prop][node.name] = prop_value
-                    else:
-                        single_props.add(profiling_prop)
-                        node2matrix_single[node.name].append(float(prop_value))
-                else:
-                    node2matrix_single[node.name].append(None)
+            prop_value = node.props.get(profiling_prop)
+            if prop_value is not None:
+                if isinstance(prop_value, list):
+                    list_props.add(profiling_prop)
+                    prop_value = list(map(float, prop_value))
                     if node.name not in node2matrix_list[profiling_prop]:
                         node2matrix_list[profiling_prop][node.name] = []
-                    node2matrix_list[profiling_prop][node.name].append(None)
+                    node2matrix_list[profiling_prop][node.name] = prop_value
+                else:
+                    single_props.add(profiling_prop)
+                    node2matrix_single[node.name].append(float(prop_value))
             else:
                 if internal_num_rep != 'none':
                     representative_prop = utils.add_suffix(profiling_prop, internal_num_rep)
