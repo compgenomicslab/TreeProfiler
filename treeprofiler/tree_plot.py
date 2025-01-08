@@ -480,21 +480,30 @@ def run(args):
         #     layouts.extend(heatmap_layouts)
 
         if layout == 'heatmap-layout':
-            heatmap_layouts, level = get_heatmap_layouts(tree, args.heatmap_layout, level, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep, color_config=color_config, norm_method='min-max')
+            heatmap_layouts, level = get_heatmap_layouts(tree, 
+            args.heatmap_layout, level, column_width=args.column_width, 
+            padding_x=args.padding_x, padding_y=args.padding_y, 
+            internal_rep=internal_num_rep, color_config=color_config, norm_method='min-max')
             layouts.extend(heatmap_layouts)
             for prop in args.heatmap_layout:
                 visualized_props.append(prop)
                 visualized_props.append(utils.add_suffix(prop, internal_num_rep))
             
         if layout == 'heatmap-mean-layout':
-            heatmap_mean_layouts, level = get_heatmap_layouts(tree, args.heatmap_mean_layout, level, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep, color_config=color_config, norm_method='mean')
+            heatmap_mean_layouts, level = get_heatmap_layouts(tree, 
+            args.heatmap_mean_layout, level, column_width=args.column_width, 
+            padding_x=args.padding_x, padding_y=args.padding_y, 
+            internal_rep=internal_num_rep, color_config=color_config, norm_method='mean')
             layouts.extend(heatmap_mean_layouts)
             for prop in args.heatmap_mean_layout:
                 visualized_props.append(prop)
                 visualized_props.append(utils.add_suffix(prop, internal_num_rep))
 
         if layout == 'heatmap-zscore-layout':
-            heatmap_zscore_layouts, level = get_heatmap_layouts(tree, args.heatmap_zscore_layout, level, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep, color_config=color_config, norm_method='zscore')
+            heatmap_zscore_layouts, level = get_heatmap_layouts(tree, 
+            args.heatmap_zscore_layout, level, column_width=args.column_width, 
+            padding_x=args.padding_x, padding_y=args.padding_y, 
+            internal_rep=internal_num_rep, color_config=color_config, norm_method='zscore')
             layouts.extend(heatmap_zscore_layouts)
             for prop in args.heatmap_zscore_layout:
                 visualized_props.append(prop)

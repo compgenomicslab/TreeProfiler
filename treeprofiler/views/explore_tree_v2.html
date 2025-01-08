@@ -237,14 +237,6 @@
                                                     <!-- Binary Layout Settings -->
                                                     <div id="binarySettings" class="form-group mt-4" style="display: none;">
                                                         <h6 class="fw-bold text-secondary">Binary Layout Settings</h6>
-                                                        <div class="form-check">
-                                                            <input class="form-check-input" type="checkbox" value="unicolor" id="unicolorOption" name="unicolorOption">
-                                                            <label class="form-check-label small" for="unicolorOption">Use Unicolor</label>
-                                                        </div>
-                                                        <div id="unicolorPicker" class="form-group mt-3" style="display: none;">
-                                                            <label for="unicolorColor" class="form-label small">Select Unicolor:</label>
-                                                            <input type="color" id="unicolorColor" name="unicolorColor" class="form-control" value="#0000ff">
-                                                        </div>
                                                         <div id="aggregateSettings" class="form-group mt-3">
                                                             <label for="aggregateOption" class="form-label small">Summary for Collapsed Nodes:</label>
                                                             <select class="form-control" id="aggregateOption" name="aggregateOption">
@@ -252,6 +244,16 @@
                                                                 <option value="aggregate">Aggregate</option>
                                                             </select>
                                                         </div>
+
+                                                        <div class="form-check form-group mt-3">
+                                                            <input class="form-check-input" type="checkbox" value="unicolor" id="unicolorOption" name="unicolorOption">
+                                                            <label class="form-check-label small" for="unicolorOption">Use Unicolor</label>
+                                                        </div>
+                                                        <div id="unicolorPicker" class="form-group mt-3" style="display: none;">
+                                                            <label for="unicolorColor" class="form-label small">Select Unicolor:</label>
+                                                            <input type="color" id="unicolorColor" name="unicolorColor" class="form-control" value="#ff0000">
+                                                        </div>
+                                                        
                                                         <div id="binaryColorScheme" class="form-group mt-3">
                                                             <label for="binaryColorSchemeSelect" class="form-label small">Select Color Scheme:</label>
                                                             <select class="form-select" id="binaryColorSchemeSelect" name="binaryColorScheme">
@@ -937,6 +939,7 @@
                 }
             });
         });
+
         function setupEventListeners(){
             document.getElementById('layout').addEventListener('change', function () {
                 const selectedLayout = this.value;
@@ -1020,7 +1023,24 @@
             document.getElementById('customQueryType').addEventListener('change', toggleQueryFields);
             document.getElementById('clearQueryBox').addEventListener('click', clearQueryBox);
             document.getElementById('addQueryBtn').addEventListener('click', addInitialQueryPart);
+            
+            // 
+            const unicolorOption = document.getElementById('unicolorOption');
+            const unicolorPicker = document.getElementById('unicolorPicker');
+            const binaryColorScheme = document.getElementById('binaryColorScheme');
+
+            unicolorOption.addEventListener('change', () => {
+                if (unicolorOption.checked) {
+                    unicolorPicker.style.display = 'block';
+                    binaryColorScheme.style.display = 'none';
+                } else {
+                    unicolorPicker.style.display = 'none';
+                    binaryColorScheme.style.display = 'block';
+                }
+            });
         };
+    
+        
     </script>
     <script>
         // this is for custom query settings
