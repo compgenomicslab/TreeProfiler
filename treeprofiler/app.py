@@ -72,7 +72,7 @@ categorical_prefix = [
     "rectangle",
     "label",
     "colorbranch",
-    "categoricalbubble",
+    "categorical-bubble",
     "piechart",
     "background",
     "categorical-matrix",
@@ -83,7 +83,7 @@ numerical_prefix = [
     "heatmap",
     "barplot",
     "branchscore",
-    "numericalbubble",
+    "numerical-bubble",
     "numerical-matrix"
 ]
 
@@ -504,8 +504,9 @@ def explore_tree(treename):
 
     # Retrieve and initialize layouts, properties, and tree
     current_layouts = tree_info.get('layouts', [])
-
+    color_config = {}
     layout_manager = {}
+
     if current_layouts:
         layout_manager = {layout.name: layout for layout in current_layouts}
     current_props = sorted(list(tree_info['prop2type'].keys()))
@@ -521,7 +522,7 @@ def explore_tree(treename):
         "column_width": 70,
         "padding_x": 1,
         "padding_y": 0,
-        "color_config": {},
+        "color_config": color_config,
         "internal_num_rep": 'avg'
     }
     tree_info['default_configs'] = default_configs
@@ -579,6 +580,7 @@ def explore_tree(treename):
                     layouts_metadata.clear()  # Reset to avoid duplicates or outdated data
                     for layout in current_layouts:
                         layout_prefix = layout.name.split('_')[0].lower() # get the layout prefix 
+                        
                         if layout_prefix.startswith('taxa'):
                             layouts_metadata.append({
                                 "layout_name": layout.name,
@@ -711,16 +713,20 @@ def explore_tree(treename):
                         layout.padding_x = layout_meta['config']['padding_x']
                         layout.padding_y = layout_meta['config']['padding_y']
                         layout.internal_num_rep = layout_meta['config']['internal_num_rep']
-                        current_layouts.append(layout)
+                        
                         if layout_prefix in categorical_prefix:
+                            # reset color config
                             categorical_color_scheme = layout_meta['layer'].get('categoricalColorscheme', 'default')
                             prop_values = sorted(list(set(utils.tree_prop_array(t, prop))))
                             paired_color = get_colormap_hex_colors(categorical_color_scheme, len(prop_values))
                             color_config[prop] = {}
                             color_config[prop]['value2color'] = utils.assign_color_to_values(prop_values, paired_color)
                             color_config[prop]['detail2color'] = {}
-                            layout.color_config = color_config
                             
+                            # change directly in layout
+                            layout.color_dict = color_config.get(prop).get('value2color')
+
+                        current_layouts.append(layout)
                 tree_info['layouts'] = current_layouts
                 start_explore_thread(t, treename, current_layouts, current_props)
                 #return "Layouts metadata updated successfully."
