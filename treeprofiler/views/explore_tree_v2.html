@@ -612,6 +612,50 @@
             <a href="/stop_explore" class="btn btn-primary">Back Home</a>
         </div>
     </div>
+
+    <!-- Modal for Editing Layout Config -->
+    <div class="modal fade" id="editLayoutModal" tabindex="-1" aria-labelledby="editLayoutModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editLayoutModalLabel">Edit Layout Configuration</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editLayoutForm">
+                        <input type="hidden" id="editLayoutName" name="layout_name">
+                        <div class="mb-3">
+                            <label for="editColumnWidth" class="form-label">Column Width</label>
+                            <input type="number" class="form-control" id="editColumnWidth" name="column_width">
+                        </div>
+                        <div class="mb-3">
+                            <label for="editPaddingX" class="form-label">Padding X</label>
+                            <input type="number" class="form-control" id="editPaddingX" name="padding_x">
+                        </div>
+                        <div class="mb-3">
+                            <label for="editPaddingY" class="form-label">Padding Y</label>
+                            <input type="number" class="form-control" id="editPaddingY" name="padding_y">
+                        </div>
+                        <div class="mb-3">
+                            <label for="editInternalNumRep" class="form-label">Internal Number Representation</label>
+                            <select class="form-control" id="editInternalNumRep" name="internal_num_rep">
+                                <option value="avg">Average</option>
+                                <option value="sum">Sum</option>
+                                <option value="max">Maximum</option>
+                                <option value="min">Minimum</option>
+                                <option value="std">Standard Deviation</option>
+                                <option value="none">None</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveLayoutChanges">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <script>
         // this is for the layout configuration section
         // Track selected properties
@@ -864,7 +908,7 @@
         
 
     </script>
-    <script>
+    <!-- <script>
         // update changes
         document.addEventListener('DOMContentLoaded', () => {
             const tableBody = document.getElementById('activeLayoutsTable');
@@ -917,8 +961,116 @@
             });
         });
 
-    </script>
+    </script> -->
+    <script>
+        // update changes
+        document.addEventListener('DOMContentLoaded', () => {
+            const tableBody = document.getElementById('activeLayoutsTable');
+            const layoutsMetadataInput = document.getElementById('layoutsMetadataInput');
+            
+            // Parse the initial metadata value into an array
+            let layoutsMetadata = JSON.parse(layoutsMetadataInput.value);
+    
+            // Function to update the hidden input field
+            function updateHiddenInput() {
+                layoutsMetadataInput.value = JSON.stringify(layoutsMetadata);
+            }
+    
+            // Function to find and remove layout metadata by name
+            function removeLayoutMetadata(layoutName) {
+                layoutsMetadata = layoutsMetadata.filter(layout => layout.layout_name !== layoutName);
+                updateHiddenInput();
+            }
+    
+            // Handle Delete Button Click
+            tableBody.addEventListener('click', function (e) {
+                if (e.target.closest('.delete-layout-btn')) {
+                    const row = e.target.closest('tr'); // Find the table row
+                    const layoutName = row.querySelector('td:nth-child(1)').innerText.trim(); // Get layout name
+                    
+                    // Remove the row from the table
+                    row.remove();
+    
+                    // Remove the corresponding layout from the metadata
+                    removeLayoutMetadata(layoutName);
+                }
+            });
+    
+            
+            // === Added for Edit Layout Functionality ===
+    
+            // Populate the modal with the layout's configuration
+            function populateEditForm(layoutName) {
+                const layout = layoutsMetadata.find(l => l.layout_name === layoutName);
+                console.log(layout);
 
+                if (layout) {
+                    document.getElementById('editLayoutName').value = layout.layout_name;
+                    document.getElementById('editColumnWidth').value = layout.config.column_width || '';
+                    document.getElementById('editPaddingX').value = layout.config.padding_x || '';
+                    document.getElementById('editPaddingY').value = layout.config.padding_y || 0;
+                    document.getElementById('editInternalNumRep').value = layout.config.internal_num_rep || 'none';
+                }
+            }  
+    
+            // Handle Edit Button Click
+            tableBody.addEventListener('click', function (e) {
+                if (e.target.closest('.btn-outline-primary')) {
+                    const layoutName = e.target.closest('tr').querySelector('td').innerText.trim();
+                    populateEditForm(layoutName);
+                    const editModal = new bootstrap.Modal(document.getElementById('editLayoutModal'));
+                    editModal.show();
+                }
+            });
+    
+            // Save changes and update layoutsMetadataInput
+            document.getElementById('saveLayoutChanges').addEventListener('click', () => {
+                const layoutName = document.getElementById('editLayoutName').value;
+                const layout = layoutsMetadata.find(l => l.layout_name === layoutName);
+
+                if (layout) {
+                    layout.config.column_width = parseInt(document.getElementById('editColumnWidth').value, 10) || 0;
+                    layout.config.padding_x = parseInt(document.getElementById('editPaddingX').value, 10) || 0;
+                    layout.config.padding_y = parseInt(document.getElementById('editPaddingY').value, 10) || 0;
+                    layout.config.internal_num_rep = document.getElementById('editInternalNumRep').value;
+
+                    // Update the hidden input with the new metadata
+                    updateHiddenInput();
+
+                    // Close the modal
+                    const editModal = bootstrap.Modal.getInstance(document.getElementById('editLayoutModal'));
+                    editModal.hide();
+
+                    // Optionally update the table row dynamically
+                    const tableRow = Array.from(document.querySelectorAll('#activeLayoutsTable tr'))
+                        .find(row => row.querySelector('td').innerText.trim() === layoutName);
+                    if (tableRow) {
+                        tableRow.querySelectorAll('td')[1].innerHTML = layout.applied_props.map(prop => `<li>${prop}</li>`).join('');
+                    }
+                }
+            });
+    
+            // === End of Edit Layout Functionality ===
+
+            // Handle Apply Changes Button
+            document.getElementById('applyChangesBtn').addEventListener('click', function () {
+                fetch('/explore_tree/{{ treename }}', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({
+                        updated_metadata: layoutsMetadataInput.value
+                    })
+                })
+                .then(response => response.text())
+                .then(data => {
+                    alert("Layouts metadata updated successfully!");
+                    location.reload();
+                })
+                .catch(error => console.error('Error:', error));
+            });
+    
+        });
+    </script>
     <script>
         // this is for layout toggle settings
         $(document).ready(function (){
