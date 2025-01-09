@@ -309,6 +309,7 @@
                                                         <select class="form-control mb-2" id="barplotColorOption" name="barplotColorOption">
                                                             <option value="same">Color Scheme</option>
                                                             <option value="colorby">Fill by Property</option>
+                                                            <option value="custom">Custom Color</option>
                                                         </select>
                                                         <div id="barplotColorSettings" class="mt-3">
                                                             <div class="form-group">
@@ -318,6 +319,10 @@
                                                                     <option value="{{ colormap }}">{{ colormap }}</option>
                                                                     % end
                                                                 </select>
+                                                            </div>
+                                                            <div class="form-group mt-2" id="customColorWrapper" style="display: none;"> <!-- Custom Color Picker -->
+                                                                <label for="barplotCustomColor" class="form-label small">Select Custom Color:</label>
+                                                                <input type="color" class="form-control" id="barplotCustomColor" name="barplotCustomColor" value="#0000ff">
                                                             </div>
                                                             <select class="form-control mt-2" id="barplotFillProperty" name="barplotFillProperty" style="display: none;">
                                                                 % for prop in tree_info['node_props']:
@@ -686,6 +691,7 @@
             const barplotColorOption = document.getElementById('barplotColorOption').value;
             const barplotColorScheme = document.getElementById('barplotColorScheme').value;
             const barplotFillProperty = document.getElementById('barplotFillProperty').value;
+            const barplotCustomColor = document.getElementById('barplotCustomColor').value;
 
             // alignment layout settings
             const algStart = document.getElementById('algStart')?.value || null;
@@ -721,6 +727,7 @@
                 barplotColorOption,
                 barplotColorScheme,
                 barplotFillProperty,
+                barplotCustomColor,
                 algStart,
                 algEnd
             };
@@ -993,10 +1000,16 @@
                     if ($(this).val() === 'same') {
                         $('#barplotColorScheme').show();
                         $('#barplotFillProperty').hide();
+                        $('#customColorWrapper').hide();
                     } else if ($(this).val() === 'colorby') {
                         $('#barplotColorScheme').hide();
                         $('#barplotFillProperty').show();
-                    }
+                        $('#customColorWrapper').hide();
+                    } else if ($(this).val() === 'custom') {
+                        $('#barplotColorScheme').hide();
+                        $('#barplotFillProperty').hide();
+                        $('#customColorWrapper').show();
+                    };
                 });
 
                 // Alignment layout settings

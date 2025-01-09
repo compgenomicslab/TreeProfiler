@@ -518,7 +518,7 @@ def explore_tree(treename):
     
     # Default configuration settings
     default_configs = {
-        "level": 0,
+        "level": 1,
         "column_width": 70,
         "padding_x": 1,
         "padding_y": 0,
@@ -674,12 +674,19 @@ def explore_tree(treename):
                                 layout_config['layer']["colorMax"] = layer.get('colorMax', '#ff0000')
 
                                 if layout_prefix == 'barplot':
-                                    layout_config['layer']['barplotWidth'] = layer.get('barplotWidth', 200)
+                                    layout_config['layer']['barplotWidth'] = int(layer.get('barplotWidth', 200))
                                     layout_config['layer']['barplotScaleProperty'] = layer.get('barplotScaleProperty', '')
                                     layout_config['layer']['barplotRange'] = layer.get('barplotRange', '')
-                                    layout_config['layer']['barplotColorOption'] = layer.get('barplotColorOption', 'same')
-                                    layout_config['layer']['barplotColorscheme'] = layer.get('barplotColorscheme', 'default')
+                                    # layout_config['layer']['barplotColorOption'] = layer.get('barplotColorOption', 'same')
+                                    # layout_config['layer']['barplotColorscheme'] = layer.get('barplotColorscheme', 'default')
+                                    # layout_config['layer']['barplotCustomColor'] = layer.get('barplotCustomColor', '#ff0000')
+
                                     layout_config['layer']['barplotFillProperty'] = layer.get('barplotFillProperty', None)
+
+                                    if layout.color is not None:
+                                        layout_config['layer']['barplotColor'] = layout.color
+                                    if layout.colors is not None:
+                                        layout_config['layer']['barplotColorDict'] = layout.colors
                                     
                             elif layout_prefix in binary_prefix:
                                 layout_config['layer']['aggregateOption'] = layer.get('aggregateOption', 'gradient')
@@ -723,7 +730,6 @@ def explore_tree(treename):
                             layout.padding_x = layout_meta['config']['padding_x']
                             layout.padding_y = layout_meta['config']['padding_y']
                             layout.internal_num_rep = layout_meta['config']['internal_num_rep']
-                        
                             layout.color_dict = color_config.get(prop).get('value2color')
 
                         # for binary
@@ -753,22 +759,36 @@ def explore_tree(treename):
                             color_min = layout_meta['layer'].get('colorMin', '#0000ff')
                             color_mid = layout_meta['layer'].get('colorMid', '#ffffff')
                             color_max = layout_meta['layer'].get('colorMax', '#ff0000')
-                            
-                            if layout_prefix == 'barplot':
-                                barplot_width = layout_meta['layer'].get('barplotWidth', 200)
-                                barplot_scale = layout_meta['layer'].get('barplotScaleProperty', '')
-                                barplot_range = layout_meta['layer'].get('barplotRange', '')
-                                barplotColorOption = layout_meta['layer'].get('barplotColorOption', 'same')
-                                barplot_color_scheme = layout_meta['layer'].get('barplotColorscheme', 'default')
-                                barplot_colorby = layout_meta['layer'].get('barplotFillProperty', None)
-
-
                             color_config[prop] = {}
                             color_config[prop]['value2color'] = {}
                             color_config[prop]['detail2color'] = {}
                             color_config[prop]['detail2color']['color_max'] = (color_max, maxval)
                             color_config[prop]['detail2color']['color_mid'] = (color_mid, '')
                             color_config[prop]['detail2color']['color_min'] = (color_min, minval)
+
+                            if layout_prefix == 'barplot':
+
+                                barplot_width = layout_meta['layer'].get('barplotWidth', 200)
+                                barplot_width = int(barplot_width)
+                                barplot_scale = layout_meta['layer'].get('barplotScaleProperty', '')
+                                barplot_range = layout_meta['layer'].get('barplotRange')
+                                
+                                if barplot_range == '':
+                                    barplot_range = layout.size_range[1]
+                                else:
+                                    barplot_range = float(barplot_range)
+                                    
+                                size_range = [0, barplot_range]
+                                # barplotColorOption = layout_meta['layer'].get('barplotColorOption', 'same')
+                                # barplot_color_scheme = layout_meta['layer'].get('barplotColorscheme', 'default')
+                                # barplot_custom_color = layout_meta['layer'].get('barplotCustomColor', '#ff0000')
+
+                                barplot_colorby = layout_meta['layer'].get('barplotFillProperty', None)
+                                layout.color = layout_meta['layer'].get('barplotColor', None)
+                                layout.colors = layout_meta['layer'].get('barplotColorDict', None)
+                                layout.color_prop = barplot_colorby
+                                layout.size_range = size_range
+                                layout.width = barplot_width
 
                             if layout_prefix.startswith('branchscore'):
                                 layouts = tree_plot.get_branchscore_layouts(
@@ -813,7 +833,6 @@ def explore_tree(treename):
                                 )
                                 layout = layouts[0]
                                 
-
                             if layout_meta['layout_name'].lower().startswith('heatmap') and layout_meta['layout_name'].lower().endswith('mean'):
                                 layouts, _ = tree_plot.get_heatmap_layouts(
                                     t, [prop], layout_meta['config']['level'],
@@ -834,8 +853,9 @@ def explore_tree(treename):
                                 )
                                 layout = layouts[0]
                                 
+                            if layout_prefix != 'barplot':
+                                layout.width = layout_meta['config']['column_width']
 
-                            layout.width = layout_meta['config']['column_width']
                             layout.padding_x = layout_meta['config']['padding_x']
                             layout.padding_y = layout_meta['config']['padding_y']
                             layout.internal_num_rep = layout_meta['config']['internal_num_rep']
@@ -956,6 +976,7 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
         column_width=column_width, reverse=False, padding_x=padding_x, padding_y=padding_y,
         color_config=color_config, same_color=same_color, aggregate=aggregate)
         current_layouts.extend(binary_layouts)
+
     elif selected_layout == 'branchscore-layout':
         for index, prop in enumerate(selected_props):
             color_config[prop] = {}
@@ -974,6 +995,12 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
         for index, prop in enumerate(selected_props):
             if barplotColorOption == 'colorby':
                 color_config = None
+            elif barplotColorOption == 'custom':
+                barplot_custom_color = layer.get('barplotCustomColor', '#ff0000')
+                color_config[prop] = {}
+                color_config[prop]['value2color'] = {}
+                color_config[prop]['detail2color'] = {}
+                color_config[prop]['detail2color']['barplot_color'] = (barplot_custom_color, '')
             else:
                 paired_color = get_colormap_hex_colors(barplot_color_scheme, len(selected_props))
                 color_config[prop] = {}
@@ -1084,7 +1111,7 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
         if single_props:
             index_map = {value: idx for idx, value in enumerate(selected_props)}
             sorted_single_props = sorted(single_props, key=lambda x: index_map[x])
-            matrix_layout = tree_plot.profile_layouts.LayoutPropsMatrixOld(name=f"Numerical_matrix_{sorted_single_props}", 
+            matrix_layout = tree_plot.profile_layouts.LayoutPropsMatrixOld(name=f"Numerical-matrix_{sorted_single_props}", 
                 matrix=matrix, matrix_type='numerical', matrix_props=sorted_single_props, is_list=False, 
                 value_color=value2color, value_range=[minval, maxval], column=level,
                 poswidth=column_width)
