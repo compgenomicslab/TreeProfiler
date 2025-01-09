@@ -624,29 +624,12 @@
                 <div class="modal-body">
                     <form id="editLayoutForm">
                         <input type="hidden" id="editLayoutName" name="layout_name">
-                        <div class="mb-3">
-                            <label for="editColumnWidth" class="form-label">Column Width</label>
-                            <input type="number" class="form-control" id="editColumnWidth" name="column_width">
-                        </div>
-                        <div class="mb-3">
-                            <label for="editPaddingX" class="form-label">Padding X</label>
-                            <input type="number" class="form-control" id="editPaddingX" name="padding_x">
-                        </div>
-                        <div class="mb-3">
-                            <label for="editPaddingY" class="form-label">Padding Y</label>
-                            <input type="number" class="form-control" id="editPaddingY" name="padding_y">
-                        </div>
-                        <div class="mb-3">
-                            <label for="editInternalNumRep" class="form-label">Internal Number Representation</label>
-                            <select class="form-control" id="editInternalNumRep" name="internal_num_rep">
-                                <option value="avg">Average</option>
-                                <option value="sum">Sum</option>
-                                <option value="max">Maximum</option>
-                                <option value="min">Minimum</option>
-                                <option value="std">Standard Deviation</option>
-                                <option value="none">None</option>
-                            </select>
-                        </div>
+    
+                        <!-- Placeholder for Config Fields -->
+                        <div id="configFieldsContainer"></div>
+    
+                        <!-- Placeholder for Layer Fields -->
+                        <div id="layerFieldsContainer"></div>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -656,6 +639,7 @@
             </div>
         </div>
     </div>
+    
     <script>
         // this is for the layout configuration section
         // Track selected properties
@@ -908,62 +892,7 @@
         
 
     </script>
-    <!-- <script>
-        // update changes
-        document.addEventListener('DOMContentLoaded', () => {
-            const tableBody = document.getElementById('activeLayoutsTable');
-            const layoutsMetadataInput = document.getElementById('layoutsMetadataInput');
-            
-            
-            // Parse the initial metadata value into an array
-            let layoutsMetadata = JSON.parse(layoutsMetadataInput.value);
-
-            // Function to update the hidden input field
-            function updateHiddenInput() {
-                layoutsMetadataInput.value = JSON.stringify(layoutsMetadata);
-            }
-
-            // Function to find and remove layout metadata by name
-            function removeLayoutMetadata(layoutName) {
-                layoutsMetadata = layoutsMetadata.filter(layout => layout.layout_name !== layoutName);
-                updateHiddenInput();
-            }
-
-            // Handle Delete Button Click
-            tableBody.addEventListener('click', function (e) {
-                if (e.target.closest('.delete-layout-btn')) {
-                    const row = e.target.closest('tr'); // Find the table row
-                    const layoutName = row.querySelector('td:nth-child(1)').innerText.trim(); // Get layout name
-                    
-                    // Remove the row from the table
-                    row.remove();
-
-                    // Remove the corresponding layout from the metadata
-                    removeLayoutMetadata(layoutName);
-                }
-            });
-
-            // Handle Apply Changes Button
-            document.getElementById('applyChangesBtn').addEventListener('click', function () {
-                fetch('/explore_tree/{{ treename }}', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: new URLSearchParams({
-                        updated_metadata: layoutsMetadataInput.value
-                    })
-                })
-                .then(response => response.text())
-                .then(data => {
-                    alert("Layouts metadata updated successfully!");
-                    location.reload();
-                })
-                .catch(error => console.error('Error:', error));
-            });
-        });
-
-    </script> -->
     <script>
-        // update changes
         document.addEventListener('DOMContentLoaded', () => {
             const tableBody = document.getElementById('activeLayoutsTable');
             const layoutsMetadataInput = document.getElementById('layoutsMetadataInput');
@@ -996,22 +925,66 @@
                 }
             });
     
-            
-            // === Added for Edit Layout Functionality ===
+            // === Edit Layout Functionality ===
     
-            // Populate the modal with the layout's configuration
+            // Populate the modal with the layout's configuration and layer fields
             function populateEditForm(layoutName) {
                 const layout = layoutsMetadata.find(l => l.layout_name === layoutName);
                 console.log(layout);
-
+    
                 if (layout) {
                     document.getElementById('editLayoutName').value = layout.layout_name;
-                    document.getElementById('editColumnWidth').value = layout.config.column_width || '';
-                    document.getElementById('editPaddingX').value = layout.config.padding_x || '';
-                    document.getElementById('editPaddingY').value = layout.config.padding_y || 0;
-                    document.getElementById('editInternalNumRep').value = layout.config.internal_num_rep || 'none';
+    
+                    // Generate Config Fields
+                    const configContainer = document.getElementById('configFieldsContainer');
+                    configContainer.innerHTML = ''; // Clear previous fields
+                    for (const [key, value] of Object.entries(layout.config)) {
+                        const field = generateInputField(key, value, 'config');
+                        configContainer.appendChild(field);
+                    }
+    
+                    // Generate Layer Fields
+                    const layerContainer = document.getElementById('layerFieldsContainer');
+                    layerContainer.innerHTML = ''; // Clear previous fields
+                    for (const [key, value] of Object.entries(layout.layer)) {
+                        const field = generateInputField(key, value, 'layer');
+                        layerContainer.appendChild(field);
+                    }
                 }
-            }  
+            }
+    
+            // Generate dynamic input fields based on key-value pairs
+            function generateInputField(key, value, type) {
+                const container = document.createElement('div');
+                container.classList.add('mb-3');
+    
+                const label = document.createElement('label');
+                label.setAttribute('for', `${type}-${key}`);
+                label.classList.add('form-label');
+                label.textContent = key;
+    
+                const input = document.createElement('input');
+                input.setAttribute('id', `${type}-${key}`);
+                input.setAttribute('name', `${type}-${key}`);
+                input.classList.add('form-control');
+    
+                // Adjust input type based on value
+                if (typeof value === 'number') {
+                    input.setAttribute('type', 'number');
+                    input.value = value;
+                } else if (typeof value === 'string' && value.startsWith('#')) {
+                    input.setAttribute('type', 'color');
+                    input.value = value;
+                } else {
+                    input.setAttribute('type', 'text');
+                    input.value = value || '';
+                }
+    
+                container.appendChild(label);
+                container.appendChild(input);
+    
+                return container;
+            }
     
             // Handle Edit Button Click
             tableBody.addEventListener('click', function (e) {
@@ -1027,31 +1000,37 @@
             document.getElementById('saveLayoutChanges').addEventListener('click', () => {
                 const layoutName = document.getElementById('editLayoutName').value;
                 const layout = layoutsMetadata.find(l => l.layout_name === layoutName);
-
+    
                 if (layout) {
-                    layout.config.column_width = parseInt(document.getElementById('editColumnWidth').value, 10) || 0;
-                    layout.config.padding_x = parseInt(document.getElementById('editPaddingX').value, 10) || 0;
-                    layout.config.padding_y = parseInt(document.getElementById('editPaddingY').value, 10) || 0;
-                    layout.config.internal_num_rep = document.getElementById('editInternalNumRep').value;
-
+                    // Update Config Fields
+                    const configContainer = document.getElementById('configFieldsContainer');
+                    layout.config = {};
+                    Array.from(configContainer.querySelectorAll('input')).forEach(input => {
+                        const key = input.name.split('-')[1];
+                        layout.config[key] = input.type === 'number' ? parseFloat(input.value) || 0 : input.value;
+                    });
+    
+                    // Update Layer Fields
+                    const layerContainer = document.getElementById('layerFieldsContainer');
+                    layout.layer = {};
+                    Array.from(layerContainer.querySelectorAll('input')).forEach(input => {
+                        const key = input.name.split('-')[1];
+                        layout.layer[key] = input.type === 'number' ? parseFloat(input.value) || 0 : input.value;
+                    });
+    
                     // Update the hidden input with the new metadata
                     updateHiddenInput();
-
+    
                     // Close the modal
                     const editModal = bootstrap.Modal.getInstance(document.getElementById('editLayoutModal'));
                     editModal.hide();
-
-                    // Optionally update the table row dynamically
-                    const tableRow = Array.from(document.querySelectorAll('#activeLayoutsTable tr'))
-                        .find(row => row.querySelector('td').innerText.trim() === layoutName);
-                    if (tableRow) {
-                        tableRow.querySelectorAll('td')[1].innerHTML = layout.applied_props.map(prop => `<li>${prop}</li>`).join('');
-                    }
+    
+                    console.log('Updated Layout:', layout);
                 }
             });
     
             // === End of Edit Layout Functionality ===
-
+    
             // Handle Apply Changes Button
             document.getElementById('applyChangesBtn').addEventListener('click', function () {
                 fetch('/explore_tree/{{ treename }}', {
@@ -1071,6 +1050,7 @@
     
         });
     </script>
+    
     <script>
         // this is for layout toggle settings
         $(document).ready(function (){
