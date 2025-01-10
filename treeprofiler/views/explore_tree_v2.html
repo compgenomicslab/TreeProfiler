@@ -237,14 +237,6 @@
                                                     <!-- Binary Layout Settings -->
                                                     <div id="binarySettings" class="form-group mt-4" style="display: none;">
                                                         <h6 class="fw-bold text-secondary">Binary Layout Settings</h6>
-                                                        <div class="form-check">
-                                                            <input class="form-check-input" type="checkbox" value="unicolor" id="unicolorOption" name="unicolorOption">
-                                                            <label class="form-check-label small" for="unicolorOption">Use Unicolor</label>
-                                                        </div>
-                                                        <div id="unicolorPicker" class="form-group mt-3" style="display: none;">
-                                                            <label for="unicolorColor" class="form-label small">Select Unicolor:</label>
-                                                            <input type="color" id="unicolorColor" name="unicolorColor" class="form-control" value="#0000ff">
-                                                        </div>
                                                         <div id="aggregateSettings" class="form-group mt-3">
                                                             <label for="aggregateOption" class="form-label small">Summary for Collapsed Nodes:</label>
                                                             <select class="form-control" id="aggregateOption" name="aggregateOption">
@@ -252,6 +244,16 @@
                                                                 <option value="aggregate">Aggregate</option>
                                                             </select>
                                                         </div>
+
+                                                        <div class="form-check form-group mt-3">
+                                                            <input class="form-check-input" type="checkbox" value="unicolor" id="unicolorOption" name="unicolorOption">
+                                                            <label class="form-check-label small" for="unicolorOption">Use Unicolor</label>
+                                                        </div>
+                                                        <div id="unicolorPicker" class="form-group mt-3" style="display: none;">
+                                                            <label for="unicolorColor" class="form-label small">Select Unicolor:</label>
+                                                            <input type="color" id="unicolorColor" name="unicolorColor" class="form-control" value="#ff0000">
+                                                        </div>
+                                                        
                                                         <div id="binaryColorScheme" class="form-group mt-3">
                                                             <label for="binaryColorSchemeSelect" class="form-label small">Select Color Scheme:</label>
                                                             <select class="form-select" id="binaryColorSchemeSelect" name="binaryColorScheme">
@@ -307,6 +309,7 @@
                                                         <select class="form-control mb-2" id="barplotColorOption" name="barplotColorOption">
                                                             <option value="same">Color Scheme</option>
                                                             <option value="colorby">Fill by Property</option>
+                                                            <option value="custom">Custom Color</option>
                                                         </select>
                                                         <div id="barplotColorSettings" class="mt-3">
                                                             <div class="form-group">
@@ -316,6 +319,10 @@
                                                                     <option value="{{ colormap }}">{{ colormap }}</option>
                                                                     % end
                                                                 </select>
+                                                            </div>
+                                                            <div class="form-group mt-2" id="customColorWrapper" style="display: none;"> <!-- Custom Color Picker -->
+                                                                <label for="barplotCustomColor" class="form-label small">Select Custom Color:</label>
+                                                                <input type="color" class="form-control" id="barplotCustomColor" name="barplotCustomColor" value="#0000ff">
                                                             </div>
                                                             <select class="form-control mt-2" id="barplotFillProperty" name="barplotFillProperty" style="display: none;">
                                                                 % for prop in tree_info['node_props']:
@@ -605,6 +612,34 @@
             <a href="/stop_explore" class="btn btn-primary">Back Home</a>
         </div>
     </div>
+
+    <!-- Modal for Editing Layout Config -->
+    <div class="modal fade" id="editLayoutModal" tabindex="-1" aria-labelledby="editLayoutModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editLayoutModalLabel">Edit Layout Configuration</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editLayoutForm">
+                        <input type="hidden" id="editLayoutName" name="layout_name">
+    
+                        <!-- Placeholder for Config Fields -->
+                        <div id="configFieldsContainer"></div>
+    
+                        <!-- Placeholder for Layer Fields -->
+                        <div id="layerFieldsContainer"></div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveLayoutChanges">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <script>
         // this is for the layout configuration section
         // Track selected properties
@@ -684,6 +719,7 @@
             const barplotColorOption = document.getElementById('barplotColorOption').value;
             const barplotColorScheme = document.getElementById('barplotColorScheme').value;
             const barplotFillProperty = document.getElementById('barplotFillProperty').value;
+            const barplotCustomColor = document.getElementById('barplotCustomColor').value;
 
             // alignment layout settings
             const algStart = document.getElementById('algStart')?.value || null;
@@ -719,6 +755,7 @@
                 barplotColorOption,
                 barplotColorScheme,
                 barplotFillProperty,
+                barplotCustomColor,
                 algStart,
                 algEnd
             };
@@ -856,26 +893,24 @@
 
     </script>
     <script>
-        // update changes
         document.addEventListener('DOMContentLoaded', () => {
             const tableBody = document.getElementById('activeLayoutsTable');
             const layoutsMetadataInput = document.getElementById('layoutsMetadataInput');
             
-            
             // Parse the initial metadata value into an array
             let layoutsMetadata = JSON.parse(layoutsMetadataInput.value);
-
+    
             // Function to update the hidden input field
             function updateHiddenInput() {
                 layoutsMetadataInput.value = JSON.stringify(layoutsMetadata);
             }
-
+    
             // Function to find and remove layout metadata by name
             function removeLayoutMetadata(layoutName) {
                 layoutsMetadata = layoutsMetadata.filter(layout => layout.layout_name !== layoutName);
                 updateHiddenInput();
             }
-
+    
             // Handle Delete Button Click
             tableBody.addEventListener('click', function (e) {
                 if (e.target.closest('.delete-layout-btn')) {
@@ -884,12 +919,118 @@
                     
                     // Remove the row from the table
                     row.remove();
-
+    
                     // Remove the corresponding layout from the metadata
                     removeLayoutMetadata(layoutName);
                 }
             });
-
+    
+            // === Edit Layout Functionality ===
+    
+            // Populate the modal with the layout's configuration and layer fields
+            function populateEditForm(layoutName) {
+                const layout = layoutsMetadata.find(l => l.layout_name === layoutName);
+                console.log(layout);
+    
+                if (layout) {
+                    document.getElementById('editLayoutName').value = layout.layout_name;
+    
+                    // Generate Config Fields
+                    const configContainer = document.getElementById('configFieldsContainer');
+                    configContainer.innerHTML = ''; // Clear previous fields
+                    for (const [key, value] of Object.entries(layout.config)) {
+                        const field = generateInputField(key, value, 'config');
+                        configContainer.appendChild(field);
+                    }
+    
+                    // Generate Layer Fields
+                    const layerContainer = document.getElementById('layerFieldsContainer');
+                    layerContainer.innerHTML = ''; // Clear previous fields
+                    for (const [key, value] of Object.entries(layout.layer)) {
+                        const field = generateInputField(key, value, 'layer');
+                        layerContainer.appendChild(field);
+                    }
+                }
+            }
+    
+            // Generate dynamic input fields based on key-value pairs
+            function generateInputField(key, value, type) {
+                const container = document.createElement('div');
+                container.classList.add('mb-3');
+    
+                const label = document.createElement('label');
+                label.setAttribute('for', `${type}-${key}`);
+                label.classList.add('form-label');
+                label.textContent = key;
+    
+                const input = document.createElement('input');
+                input.setAttribute('id', `${type}-${key}`);
+                input.setAttribute('name', `${type}-${key}`);
+                input.classList.add('form-control');
+    
+                // Adjust input type based on value
+                if (typeof value === 'number') {
+                    input.setAttribute('type', 'number');
+                    input.value = value;
+                } else if (typeof value === 'string' && value.startsWith('#')) {
+                    input.setAttribute('type', 'color');
+                    input.value = value;
+                } else {
+                    input.setAttribute('type', 'text');
+                    input.value = value || '';
+                }
+    
+                container.appendChild(label);
+                container.appendChild(input);
+    
+                return container;
+            }
+    
+            // Handle Edit Button Click
+            tableBody.addEventListener('click', function (e) {
+                if (e.target.closest('.btn-outline-primary')) {
+                    const layoutName = e.target.closest('tr').querySelector('td').innerText.trim();
+                    populateEditForm(layoutName);
+                    const editModal = new bootstrap.Modal(document.getElementById('editLayoutModal'));
+                    editModal.show();
+                }
+            });
+    
+            // Save changes and update layoutsMetadataInput
+            document.getElementById('saveLayoutChanges').addEventListener('click', () => {
+                const layoutName = document.getElementById('editLayoutName').value;
+                const layout = layoutsMetadata.find(l => l.layout_name === layoutName);
+    
+                if (layout) {
+                    // Update Config Fields
+                    const configContainer = document.getElementById('configFieldsContainer');
+                    layout.config = {};
+                    Array.from(configContainer.querySelectorAll('input')).forEach(input => {
+                        const key = input.name.split('-')[1];
+                        layout.config[key] = input.type === 'number' ? parseFloat(input.value) || 0 : input.value;
+                    });
+    
+                    // Update Layer Fields
+                    const layerContainer = document.getElementById('layerFieldsContainer');
+                    layout.layer = {};
+                    Array.from(layerContainer.querySelectorAll('input')).forEach(input => {
+                        const key = input.name.split('-')[1];
+                        layout.layer[key] = input.type === 'number' ? parseFloat(input.value) || 0 : input.value;
+                    });
+    
+                    // Update the hidden input with the new metadata
+                    updateHiddenInput();
+    
+                    // Close the modal
+                    const editModal = bootstrap.Modal.getInstance(document.getElementById('editLayoutModal'));
+                    editModal.hide();
+    
+                    console.log('Updated Layout:', layout);
+                }
+            });
+    
+            // === End of Edit Layout Functionality ===
+    
             // Handle Apply Changes Button
             document.getElementById('applyChangesBtn').addEventListener('click', function () {
                 fetch('/explore_tree/{{ treename }}', {
@@ -906,10 +1047,10 @@
                 })
                 .catch(error => console.error('Error:', error));
             });
+    
         });
-
     </script>
-
+    
     <script>
         // this is for layout toggle settings
         $(document).ready(function (){
@@ -937,6 +1078,7 @@
                 }
             });
         });
+
         function setupEventListeners(){
             document.getElementById('layout').addEventListener('change', function () {
                 const selectedLayout = this.value;
@@ -990,10 +1132,16 @@
                     if ($(this).val() === 'same') {
                         $('#barplotColorScheme').show();
                         $('#barplotFillProperty').hide();
+                        $('#customColorWrapper').hide();
                     } else if ($(this).val() === 'colorby') {
                         $('#barplotColorScheme').hide();
                         $('#barplotFillProperty').show();
-                    }
+                        $('#customColorWrapper').hide();
+                    } else if ($(this).val() === 'custom') {
+                        $('#barplotColorScheme').hide();
+                        $('#barplotFillProperty').hide();
+                        $('#customColorWrapper').show();
+                    };
                 });
 
                 // Alignment layout settings
@@ -1020,7 +1168,24 @@
             document.getElementById('customQueryType').addEventListener('change', toggleQueryFields);
             document.getElementById('clearQueryBox').addEventListener('click', clearQueryBox);
             document.getElementById('addQueryBtn').addEventListener('click', addInitialQueryPart);
+            
+            // 
+            const unicolorOption = document.getElementById('unicolorOption');
+            const unicolorPicker = document.getElementById('unicolorPicker');
+            const binaryColorScheme = document.getElementById('binaryColorScheme');
+
+            unicolorOption.addEventListener('change', () => {
+                if (unicolorOption.checked) {
+                    unicolorPicker.style.display = 'block';
+                    binaryColorScheme.style.display = 'none';
+                } else {
+                    unicolorPicker.style.display = 'none';
+                    binaryColorScheme.style.display = 'block';
+                }
+            });
         };
+    
+        
     </script>
     <script>
         // this is for custom query settings
