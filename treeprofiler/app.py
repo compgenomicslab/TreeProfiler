@@ -506,6 +506,7 @@ def explore_tree(treename):
     current_layouts = tree_info.get('layouts', [])
 
     layout_manager = {}
+    color_config = {}
     if current_layouts:
         layout_manager = {layout.name: layout for layout in current_layouts}
     current_props = sorted(list(tree_info['prop2type'].keys()))
@@ -515,13 +516,14 @@ def explore_tree(treename):
     else:
         t = Tree(tree_info['annotated_tree'])
     
+    
     # Default configuration settings
     default_configs = {
         "level": 0,
         "column_width": 70,
         "padding_x": 1,
         "padding_y": 0,
-        "color_config": {},
+        "color_config": color_config,
         "internal_num_rep": 'avg'
     }
     tree_info['default_configs'] = default_configs
@@ -702,7 +704,6 @@ def explore_tree(treename):
                 current_layouts = []
                 
                 for layout_meta in updated_metadata:
-
                     layout = layout_manager.get(layout_meta['layout_name'])
                     layout_prefix = layout_meta['layout_name'].split('_')[0].lower()
                     prop = layout_meta['applied_props'][0]
@@ -722,6 +723,7 @@ def explore_tree(treename):
                             layout.color_config = color_config
                             
                 tree_info['layouts'] = current_layouts
+
                 start_explore_thread(t, treename, current_layouts, current_props)
                 #return "Layouts metadata updated successfully."
             except json.JSONDecodeError:
@@ -771,8 +773,8 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
     # categorical settings
     categorical_color_scheme = layer.get('categoricalColorscheme', 'default')
 
-    # numerical settings
     
+    # numerical settings
     maxval = layer.get('maxVal', '') # this should be automatically calculated
     minval = layer.get('minVal', '') # this should be automatically calculated
     color_min = layer.get('colorMin', '#0000ff')
