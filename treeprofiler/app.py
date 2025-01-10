@@ -913,10 +913,6 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
     # categorical settings
     categorical_color_scheme = layer.get('categoricalColorscheme', 'default')
 
-<<<<<<< HEAD
-    
-=======
->>>>>>> f962ec442043e825d03b6d7ff076ff11acb93b5e
     # numerical settings
     maxval = layer.get('maxVal', '') # this should be automatically calculated
     minval = layer.get('minVal', '') # this should be automatically calculated
