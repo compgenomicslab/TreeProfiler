@@ -581,6 +581,7 @@ def explore_tree(treename):
                     for layout in current_layouts:
                         layout_prefix = layout.name.split('_')[0].lower() # get the layout prefix 
                         
+                        # taxonomic layout
                         if layout_prefix.startswith('taxa'):
                             layouts_metadata.append({
                                 "layout_name": layout.name,
@@ -595,6 +596,8 @@ def explore_tree(treename):
                                 "layer": {}
                             })
                             layout_manager[layout.name] = layout
+                        
+                        # alignment layout
                         elif layout_prefix in ['alignment', 'domain']:
                             layouts_metadata.append({
                                 "layout_name": layout.name,
@@ -610,6 +613,8 @@ def explore_tree(treename):
                                 "layer": {}
                             })
                             layout_manager[layout.name] = layout
+                        
+                        # profiling layout
                         elif layout_prefix in ['profiling', 'categorical-matrix', 'numerical-matrix', 'binary-matrix']:
                             # Append with applied props and full config
                             name = layout.name
@@ -622,12 +627,14 @@ def explore_tree(treename):
                                     "column_width": getattr(layout, 'column_width', default_configs['column_width']),
                                     "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
                                     "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
-                                    "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
+                                    # "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
                                     "color_config": getattr(layout, 'color_config', {})
                                 },
                                 "layer": {}
                             })
                             layout_manager[layout.name] = layout
+                        
+                        # auto query layout
                         elif layout_prefix in ['collapsed-by', 'highlighted-by']:
                             # Append with applied props and full config
                             name = layout.name
@@ -646,28 +653,46 @@ def explore_tree(treename):
                                 "layer": {}
                             })
                             layout_manager[layout.name] = layout
+
                         else:
                             # Append with applied props and full config
                             name = layout.name
                             applied_props = layout.prop
-                            # basic 
-                            layout_config = {
-                                "layout_name": name,  # Retrieve layout name from processed layouts
-                                "applied_props": [applied_props],  # Props linked to this layout
-                                "config": {
-                                    "level": getattr(layout, 'column', level),
-                                    "column_width": getattr(layout, 'column_width', default_configs['column_width']),
-                                    "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
-                                    "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
-                                    "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
-                                    #"color_config": color_config.get(applied_props, {})
-                                },
-                                "layer": {}
-                            }
+                            
+                            # categorical layout
                             if layout_prefix in categorical_prefix:
+                                # basic 
+                                color_config = color_config.get(applied_props, {})
+                                layout_config = {
+                                    "layout_name": name,  # Retrieve layout name from processed layouts
+                                    "applied_props": [applied_props],  # Props linked to this layout
+                                    "config": {
+                                        "level": getattr(layout, 'column', level),
+                                        "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                        "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
+                                        "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
+                                        "color_config": color_config
+                                    },
+                                    "layer": {}
+                                }
                                 layout_config['layer']['categoricalColorscheme'] = layer.get('categoricalColorscheme', 'default')   
 
+                            # numerical layout
                             elif layout_prefix in numerical_prefix:
+                                # basic 
+                                layout_config = {
+                                    "layout_name": name,  # Retrieve layout name from processed layouts
+                                    "applied_props": [applied_props],  # Props linked to this layout
+                                    "config": {
+                                        "level": getattr(layout, 'column', level),
+                                        "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                        "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
+                                        "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
+                                        "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
+                                        "color_config": color_config.get(applied_props, {})
+                                    },
+                                    "layer": {}
+                                }
                                 layout_config['layer']["maxVal"] = layer.get('maxVal', '')
                                 layout_config['layer']["minVal"] = layer.get('minVal', '')
                                 layout_config['layer']["colorMin"] = layer.get('colorMin', '#0000ff')
@@ -688,12 +713,37 @@ def explore_tree(treename):
                                         layout_config['layer']['barplotColor'] = layout.color
                                     if layout.colors is not None:
                                         layout_config['layer']['barplotColorDict'] = layout.colors
-                                    
+                            
+                            # binary layout
                             elif layout_prefix in binary_prefix:
+                                # basic 
+                                layout_config = {
+                                    "layout_name": name,  # Retrieve layout name from processed layouts
+                                    "applied_props": [applied_props],  # Props linked to this layout
+                                    "config": {
+                                        "level": getattr(layout, 'column', level),
+                                        "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                        "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
+                                        "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
+                                        "color_config": color_config.get(applied_props, {})
+                                    },
+                                    "layer": {}
+                                }
                                 layout_config['layer']['aggregateOption'] = layer.get('aggregateOption', 'gradient')
                                 layout_config['layer']['selectedColor'] = layout.color
                             
+                            # alignment
                             elif layout_prefix == "alignment":
+                                # basic 
+                                layout_config = {
+                                    "layout_name": name,  # Retrieve layout name from processed layouts
+                                    "applied_props": [applied_props],  # Props linked to this layout
+                                    "config": {
+                                        "level": getattr(layout, 'column', level),
+                                        "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                    },
+                                    "layer": {}
+                                }
                                 layout_config['layer']['algStart'] = layer.get('algStart', '')
                                 layout_config['layer']['algEnd'] = layer.get('algEnd', '')
                             
@@ -717,20 +767,38 @@ def explore_tree(treename):
                     if layout:
                         # for categorical
                         if layout_prefix in categorical_prefix:
-                            # reset color config
-                            categorical_color_scheme = layout_meta['layer'].get('categoricalColorscheme', 'default')
-                            prop_values = sorted(list(set(utils.tree_prop_array(t, prop))))
-                            paired_color = get_colormap_hex_colors(categorical_color_scheme, len(prop_values))
-                            color_config[prop] = {}
-                            color_config[prop]['value2color'] = utils.assign_color_to_values(prop_values, paired_color)
-                            color_config[prop]['detail2color'] = {}
                             
-                            # change directly in layout
-                            layout.width = layout_meta['config']['column_width']
-                            layout.padding_x = layout_meta['config']['padding_x']
-                            layout.padding_y = layout_meta['config']['padding_y']
-                            layout.internal_num_rep = layout_meta['config']['internal_num_rep']
-                            layout.color_dict = color_config.get(prop).get('value2color')
+                            # reset color config
+                            if layout_prefix  == 'piechart':
+                                original_prop = prop.split('_counter')[0] # get the original prop
+                                categorical_color_scheme = layout_meta['layer'].get('categoricalColorscheme', 'default')
+                                prop_values = sorted(list(set(utils.tree_prop_array(t, original_prop))))
+                                paired_color = get_colormap_hex_colors(categorical_color_scheme, len(prop_values))
+
+                                color_config[prop] = {}
+                                color_config[prop]['value2color'] = utils.assign_color_to_values(prop_values, paired_color)
+                                color_config[prop]['detail2color'] = {}
+                                
+                                # change directly in layout
+                                layout.column = layout_meta['config']['level']
+                                layout.width = layout_meta['config']['column_width']
+                                layout.padding_x = layout_meta['config']['padding_x']
+                                layout.padding_y = layout_meta['config']['padding_y']
+                                layout.color_dict = color_config.get(prop).get('value2color')
+                            else:
+                                categorical_color_scheme = layout_meta['layer'].get('categoricalColorscheme', 'default')
+                                prop_values = sorted(list(set(utils.tree_prop_array(t, prop))))
+                                paired_color = get_colormap_hex_colors(categorical_color_scheme, len(prop_values))
+                                color_config[prop] = {}
+                                color_config[prop]['value2color'] = utils.assign_color_to_values(prop_values, paired_color)
+                                color_config[prop]['detail2color'] = {}
+                                
+                                # change directly in layout
+                                layout.column = layout_meta['config']['level']
+                                layout.width = layout_meta['config']['column_width']
+                                layout.padding_x = layout_meta['config']['padding_x']
+                                layout.padding_y = layout_meta['config']['padding_y']
+                                layout.color_dict = color_config.get(prop).get('value2color')
 
                         # for binary
                         elif layout_prefix in binary_prefix:
