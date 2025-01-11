@@ -1508,6 +1508,7 @@ def get_categorical_bubble_layouts(tree, props, level, prop2type, column_width=7
     prop_color_dict = {}
     layouts = []
     max_radius = 15
+    level = level + 1 # add one more level for bubble layout because 0 is leaf name
     for prop in props:
         color_dict = {} # key = value, value = color id
         if color_config and color_config.get(prop):
