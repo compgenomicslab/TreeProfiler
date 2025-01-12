@@ -679,27 +679,21 @@ def explore_tree(treename):
 
                             # numerical layout
                             elif layout_prefix in numerical_prefix:
-                                # basic 
-                                layout_config = {
-                                    "layout_name": name,  # Retrieve layout name from processed layouts
-                                    "applied_props": [applied_props],  # Props linked to this layout
-                                    "config": {
-                                        "level": getattr(layout, 'column', level),
-                                        "column_width": getattr(layout, 'column_width', default_configs['column_width']),
-                                        "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
-                                        "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
-                                        "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
-                                        "color_config": color_config.get(applied_props, {})
-                                    },
-                                    "layer": {}
-                                }
-                                layout_config['layer']["maxVal"] = layer.get('maxVal', '')
-                                layout_config['layer']["minVal"] = layer.get('minVal', '')
-                                layout_config['layer']["colorMin"] = layer.get('colorMin', '#0000ff')
-                                layout_config['layer']["colorMid"] = layer.get('colorMid', '#ffffff')
-                                layout_config['layer']["colorMax"] = layer.get('colorMax', '#ff0000')
-
                                 if layout_prefix == 'barplot':
+                                    # basic 
+                                    layout_config = {
+                                        "layout_name": name,  # Retrieve layout name from processed layouts
+                                        "applied_props": [applied_props],  # Props linked to this layout
+                                        "config": {
+                                            "level": getattr(layout, 'column', level),
+                                            "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                            "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
+                                            "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
+                                            "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
+                                            "color_config": color_config.get(applied_props, {})
+                                        },
+                                        "layer": {}
+                                    }
                                     layout_config['layer']['barplotWidth'] = int(layer.get('barplotWidth', 200))
                                     layout_config['layer']['barplotScaleProperty'] = layer.get('barplotScaleProperty', '')
                                     layout_config['layer']['barplotRange'] = layer.get('barplotRange', '')
@@ -713,7 +707,91 @@ def explore_tree(treename):
                                         layout_config['layer']['barplotColor'] = layout.color
                                     if layout.colors is not None:
                                         layout_config['layer']['barplotColorDict'] = layout.colors
-                            
+                                
+                                elif layout_prefix == 'heatmap':
+                                    # basic 
+                                    layout_config = {
+                                        "layout_name": name,  # Retrieve layout name from processed layouts
+                                        "applied_props": [applied_props],  # Props linked to this layout
+                                        "config": {
+                                            "level": getattr(layout, 'column', level),
+                                            "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                            "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
+                                            "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
+                                            "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
+                                            "color_config": color_config.get(applied_props, {})
+                                        },
+                                        "layer": {}
+                                    }
+                                    minval, maxval = layout.value_range
+                                    layout_config['layer']['maxVal'] = maxval
+                                    layout_config['layer']['minVal'] = minval
+                                    layout_config['layer']['colorMin'] = layer.get('colorMin', '#0000ff')
+                                    layout_config['layer']['colorMid'] = layer.get('colorMid', '#ffffff')
+                                    layout_config['layer']['colorMax'] = layer.get('colorMax', '#ff0000')
+                                
+                                elif layout_prefix == 'branchscore':
+                                    # basic 
+                                    layout_config = {
+                                        "layout_name": name,  # Retrieve layout name from processed layouts
+                                        "applied_props": [applied_props],  # Props linked to this layout
+                                        "config": {
+                                            # "level": getattr(layout, 'column', level),
+                                            # "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                            # "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
+                                            # "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
+                                            "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
+                                            "color_config": color_config.get(applied_props, {})
+                                        },
+                                        "layer": {}
+                                    }
+                                    minval, maxval = layout.value_range
+                                    layout_config['layer']['maxVal'] = maxval
+                                    layout_config['layer']['minVal'] = minval
+                                    layout_config['layer']['colorMin'] = layer.get('colorMin', '#0000ff')
+                                    layout_config['layer']['colorMid'] = layer.get('colorMid', '#ffffff')
+                                    layout_config['layer']['colorMax'] = layer.get('colorMax', '#ff0000')
+                                elif layout_prefix == 'numerical-bubble':
+                                    # basic 
+                                    layout_config = {
+                                        "layout_name": name,  # Retrieve layout name from processed layouts
+                                        "applied_props": [applied_props],  # Props linked to this layout
+                                        "config": {
+                                            "level": getattr(layout, 'column', level),
+                                            # "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                            # "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
+                                            # "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
+                                            "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
+                                            "color_config": color_config.get(applied_props, {})
+                                        },
+                                        "layer": {}
+                                    }
+                                    minval, maxval = layout.bubble_rage
+                                    layout_config['layer']['maxVal'] = maxval
+                                    layout_config['layer']['minVal'] = minval
+                                    layout_config['layer']['colorMin'] = layer.get('colorMin', '#0000ff')
+                                    layout_config['layer']['colorMid'] = layer.get('colorMid', '#ffffff')
+                                    layout_config['layer']['colorMax'] = layer.get('colorMax', '#ff0000')
+                                else:
+                                    layout_config = {
+                                        "layout_name": name,  # Retrieve layout name from processed layouts
+                                        "applied_props": [applied_props],  # Props linked to this layout
+                                        "config": {
+                                            "level": getattr(layout, 'column', level),
+                                            "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                            "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
+                                            "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
+                                            "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
+                                            "color_config": color_config.get(applied_props, {})
+                                        },
+                                        "layer": {}
+                                    }
+                                    layout_config['layer']["maxVal"] = layer.get('maxVal', '')
+                                    layout_config['layer']["minVal"] = layer.get('minVal', '')
+                                    layout_config['layer']["colorMin"] = layer.get('colorMin', '#0000ff')
+                                    layout_config['layer']["colorMid"] = layer.get('colorMid', '#ffffff')
+                                    layout_config['layer']["colorMax"] = layer.get('colorMax', '#ff0000')
+
                             # binary layout
                             elif layout_prefix in binary_prefix:
                                 # basic 
@@ -856,15 +934,18 @@ def explore_tree(treename):
                                 layout.color_prop = barplot_colorby
                                 layout.size_range = size_range
                                 layout.width = barplot_width
+                                layout.padding_x = layout_meta['config']['padding_x']
+                                layout.padding_y = layout_meta['config']['padding_y']
+                                layout.internal_num_rep = layout_meta['config']['internal_num_rep']
 
                             if layout_prefix.startswith('branchscore'):
                                 layouts = tree_plot.get_branchscore_layouts(
-                                    t, [prop], prop2type=tree_info['prop2type'], 
-                                    padding_x=layout_meta['config']['padding_x'], padding_y=layout_meta['config']['padding_y'], 
+                                    t, [prop], prop2type=tree_info['prop2type'],  
                                     internal_rep=layout_meta['config']['internal_num_rep'],
                                     color_config=color_config
                                 )
                                 layout = layouts[0] 
+                                layout.internal_num_rep = layout_meta['config']['internal_num_rep']
                             
                             if layout_prefix == 'numerical-bubble':
                                 # Convert maxval and minval to floats if they exist
@@ -889,6 +970,10 @@ def explore_tree(treename):
                                     bubble_range=bubble_range, color_config=color_config
                                 )
                                 layout = bubble_layouts[0]
+                                layout.width = layout_meta['config']['column_width']
+                                layout.padding_x = layout_meta['config']['padding_x']
+                                layout.padding_y = layout_meta['config']['padding_y']
+                                layout.internal_num_rep = layout_meta['config']['internal_num_rep']
 
                             if layout_meta['layout_name'].lower().startswith('heatmap') and layout_meta['layout_name'].lower().endswith('min-max'):
                                 layouts, _ = tree_plot.get_heatmap_layouts(
@@ -899,6 +984,10 @@ def explore_tree(treename):
                                     color_config=color_config, norm_method='min-max'
                                 )
                                 layout = layouts[0]
+                                layout.width = layout_meta['config']['column_width']
+                                layout.padding_x = layout_meta['config']['padding_x']
+                                layout.padding_y = layout_meta['config']['padding_y']
+                                layout.internal_num_rep = layout_meta['config']['internal_num_rep']
                                 
                             if layout_meta['layout_name'].lower().startswith('heatmap') and layout_meta['layout_name'].lower().endswith('mean'):
                                 layouts, _ = tree_plot.get_heatmap_layouts(
@@ -909,6 +998,10 @@ def explore_tree(treename):
                                     color_config=color_config, norm_method='mean'
                                 )
                                 layout = layouts[0]
+                                layout.width = layout_meta['config']['column_width']
+                                layout.padding_x = layout_meta['config']['padding_x']
+                                layout.padding_y = layout_meta['config']['padding_y']
+                                layout.internal_num_rep = layout_meta['config']['internal_num_rep']
                                 
                             if layout_meta['layout_name'].lower().startswith('heatmap') and layout_meta['layout_name'].lower().endswith('zscore'):
                                 layouts, _ = tree_plot.get_heatmap_layouts(
@@ -919,14 +1012,11 @@ def explore_tree(treename):
                                     color_config=color_config, norm_method='zscore'
                                 )
                                 layout = layouts[0]
-                                
-                            if layout_prefix != 'barplot':
                                 layout.width = layout_meta['config']['column_width']
-
-                            layout.padding_x = layout_meta['config']['padding_x']
-                            layout.padding_y = layout_meta['config']['padding_y']
-                            layout.internal_num_rep = layout_meta['config']['internal_num_rep']
-                        
+                                layout.padding_x = layout_meta['config']['padding_x']
+                                layout.padding_y = layout_meta['config']['padding_y']
+                                layout.internal_num_rep = layout_meta['config']['internal_num_rep']
+                                
                         current_layouts.append(layout)
 
                 tree_info['layouts'] = current_layouts
@@ -943,7 +1033,7 @@ def explore_tree(treename):
     # Before rendering the template, convert to JSON
     #layouts_json = json.dumps(tree_info['layouts'])
     layouts_metadata_json = json.dumps(layouts_metadata)
-    
+
     # Render template
     return template(
         'explore_tree_v2',
