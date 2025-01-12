@@ -990,6 +990,21 @@
                         }
                         input.appendChild(option);
                     });
+                } else if (key === 'aggregateOption') {
+                    // Special handling for aggregateOption in binary-layout
+                    input = document.createElement('select');
+                    input.classList.add('form-control');
+                    input.setAttribute('id', `${type}-${key}`);
+                    input.setAttribute('name', `${type}-${key}`);
+                    ['gradient', 'aggregate'].forEach(optionValue => {
+                        const option = document.createElement('option');
+                        option.value = optionValue;
+                        option.textContent = optionValue;
+                        if (optionValue === value) {
+                            option.selected = true;
+                        }
+                        input.appendChild(option);
+                    });
                 } else {
                     // Handle general input types
                     input = document.createElement('input');

@@ -817,8 +817,7 @@ def explore_tree(treename):
                             layout.width = layout_meta['config']['column_width']
                             layout.padding_x = layout_meta['config']['padding_x']
                             layout.padding_y = layout_meta['config']['padding_y']
-                            layout.internal_num_rep = layout_meta['config']['internal_num_rep']
-                        
+                            
                         # for numerical
                         elif layout_prefix in numerical_prefix:
                             maxval = layout_meta['layer'].get('maxVal', '')                            
