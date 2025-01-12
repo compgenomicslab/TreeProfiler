@@ -960,6 +960,23 @@
                         const field = generateInputField(key, value, 'layer');
                         layerContainer.appendChild(field);
                     }
+
+                    // Handle Numerical-Matrix Specific Settings
+                    const layoutPrefix = layout.layout_name.split('_')[0].toLowerCase(); // Extract prefix and convert to lowercase
+                    if (layoutPrefix === 'numerical-matrix') {
+                        const minValInput = document.querySelector('input#layer-minVal');
+                        const maxValInput = document.querySelector('input#layer-maxVal');
+
+                        if (minValInput) {
+                            minValInput.disabled = true; // Disable minVal input
+                            minValInput.parentElement.style.opacity = '0.5'; // Optional: Indicate inactivity visually
+                        }
+
+                        if (maxValInput) {
+                            maxValInput.disabled = true; // Disable maxVal input
+                            maxValInput.parentElement.style.opacity = '0.5'; // Optional: Indicate inactivity visually
+                        }
+                    }
                 }
             }
 
@@ -1164,6 +1181,26 @@
                 } else {
                     $('#numericalSettings').hide();
                     $('#internalNumerical').hide();
+                }
+                
+                // numerical-matrix specific settings
+                // Target the specific row containing minVal and maxVal within numericalSettings
+                const numericalSettingsSection = document.getElementById('numericalSettings');
+                const minMaxRow = numericalSettingsSection.querySelector('.row.g-3');
+
+                // Disable minVal and maxVal inputs for numerical-matrix-layout
+                if (selectedLayout === 'numerical-matrix-layout') {
+                    // Disable inputs
+                    minMaxRow.querySelectorAll('input#minVal, input#maxVal').forEach(input => {
+                        input.disabled = true;
+                    });
+                    minMaxRow.style.opacity = '0.5'; // Optional: Indicate inactive state
+                } else {
+                    // Enable inputs for other layouts
+                    minMaxRow.querySelectorAll('input#minVal, input#maxVal').forEach(input => {
+                        input.disabled = false;
+                    });
+                    minMaxRow.style.opacity = '1'; // Reset opacity
                 }
 
                 // Barplot layout settings

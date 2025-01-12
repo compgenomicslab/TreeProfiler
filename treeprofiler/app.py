@@ -615,7 +615,35 @@ def explore_tree(treename):
                             layout_manager[layout.name] = layout
                         
                         # profiling layout
-                        elif layout_prefix in ['profiling', 'categorical-matrix', 'numerical-matrix', 'binary-matrix']:
+                        elif layout_prefix == 'numerical-matrix':
+                            # Append with applied props and full config
+                            name = layout.name
+                            applied_props = layout.matrix_props
+                            layout_config = {
+                                "layout_name": name,  # Retrieve layout name from processed layouts
+                                "applied_props": applied_props,  # Props linked to this layout
+                                "config": {
+                                    "level": getattr(layout, 'column', level),
+                                    "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                    "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
+                                    "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
+                                    "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
+                                    "color_config": getattr(layout, 'color_config', {})
+                                },
+                                "layer": {}
+                            }
+                            
+                            minval, maxval = layout.value_range
+                            layout_config['layer']['maxVal'] = maxval
+                            layout_config['layer']['minVal'] = minval
+                            layout_config['layer']["colorMin"] = layer.get('colorMin', '#0000ff')
+                            layout_config['layer']["colorMid"] = layer.get('colorMid', '#ffffff')
+                            layout_config['layer']["colorMax"] = layer.get('colorMax', '#ff0000')
+
+                            layouts_metadata.append(layout_config)
+                            layout_manager[layout.name] = layout
+
+                        elif layout_prefix in ['profiling', 'categorical-matrix', 'binary-matrix']:
                             # Append with applied props and full config
                             name = layout.name
                             applied_props = layout.matrix_props
@@ -632,6 +660,7 @@ def explore_tree(treename):
                                 },
                                 "layer": {}
                             })
+
                             layout_manager[layout.name] = layout
                         
                         # auto query layout
@@ -653,7 +682,7 @@ def explore_tree(treename):
                                 "layer": {}
                             })
                             layout_manager[layout.name] = layout
-
+                            
                         else:
                             # Append with applied props and full config
                             name = layout.name
@@ -898,19 +927,55 @@ def explore_tree(treename):
                             
                         # for numerical
                         elif layout_prefix in numerical_prefix:
-                            maxval = layout_meta['layer'].get('maxVal', '')                            
-                            minval = layout_meta['layer'].get('minVal', '')
+                            
 
-                            color_min = layout_meta['layer'].get('colorMin', '#0000ff')
-                            color_mid = layout_meta['layer'].get('colorMid', '#ffffff')
-                            color_max = layout_meta['layer'].get('colorMax', '#ff0000')
-                            color_config[prop] = {}
-                            color_config[prop]['value2color'] = {}
-                            color_config[prop]['detail2color'] = {}
-                            color_config[prop]['detail2color']['color_max'] = (color_max, maxval)
-                            color_config[prop]['detail2color']['color_mid'] = (color_mid, '')
-                            color_config[prop]['detail2color']['color_min'] = (color_min, minval)
+                            if layout_prefix == 'numerical-matrix':
+                                maxval = layout_meta['layer'].get('maxVal', '')                            
+                                minval = layout_meta['layer'].get('minVal', '')
+                                
+                                color_min = layout_meta['layer'].get('colorMin', '#0000ff')
+                                color_mid = layout_meta['layer'].get('colorMid', '#ffffff')
+                                color_max = layout_meta['layer'].get('colorMax', '#ff0000')
+                                selected_props = layout_meta['applied_props']
+                                for index, prop in enumerate(selected_props):
+                                    color_config[prop] = {}
+                                    color_config[prop]['value2color'] = {}
+                                    color_config[prop]['detail2color'] = {}
+                                    color_config[prop]['detail2color']['color_max'] = (color_max, maxval)
+                                    color_config[prop]['detail2color']['color_mid'] = (color_mid, '')
+                                    color_config[prop]['detail2color']['color_min'] = (color_min, minval)
+                                matrix, minval, maxval, value2color, results_list, list_props, single_props = tree_plot.numerical2matrix(t, 
+                                selected_props, count_negative=True, 
+                                internal_num_rep=layout_meta['config']['internal_num_rep'], 
+                                color_config=color_config, norm_method='min-max')
+                                
+                                # TODO add list_props at this moment
+                                if list_props:
+                                    pass
 
+                                if single_props:
+                                    index_map = {value: idx for idx, value in enumerate(selected_props)}
+                                    sorted_single_props = sorted(single_props, key=lambda x: index_map[x])
+                                    layout.matrix = matrix
+                                    layout.matrix_props = sorted_single_props
+                                    layout.value_color = value2color
+                                    layout.value_range = [minval, maxval]
+                                    layout.column = layout_meta['config']['level']
+                                    layout.poswidth = layout_meta['config']['column_width']
+                            else:
+                                maxval = layout_meta['layer'].get('maxVal', '')                            
+                                minval = layout_meta['layer'].get('minVal', '')
+                                
+                                color_min = layout_meta['layer'].get('colorMin', '#0000ff')
+                                color_mid = layout_meta['layer'].get('colorMid', '#ffffff')
+                                color_max = layout_meta['layer'].get('colorMax', '#ff0000')
+                                color_config[prop] = {}
+                                color_config[prop]['value2color'] = {}
+                                color_config[prop]['detail2color'] = {}
+                                color_config[prop]['detail2color']['color_max'] = (color_max, maxval)
+                                color_config[prop]['detail2color']['color_mid'] = (color_mid, '')
+                                color_config[prop]['detail2color']['color_min'] = (color_min, minval)
+                                
                             if layout_prefix == 'barplot':
 
                                 barplot_width = layout_meta['layer'].get('barplotWidth', 200)
@@ -1016,7 +1081,8 @@ def explore_tree(treename):
                                 layout.padding_x = layout_meta['config']['padding_x']
                                 layout.padding_y = layout_meta['config']['padding_y']
                                 layout.internal_num_rep = layout_meta['config']['internal_num_rep']
-                                
+                            
+                            
                         current_layouts.append(layout)
 
                 tree_info['layouts'] = current_layouts
