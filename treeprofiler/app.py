@@ -529,7 +529,7 @@ def check_job_status():
 @app.route('/explore_tree/<treename>', method=['GET', 'POST', 'PUT'])
 def explore_tree(treename):
     tree_info = trees.get(treename)
-    print(tree_info)
+    
     if not tree_info:
         return f"Tree '{treename}' not found."
 
