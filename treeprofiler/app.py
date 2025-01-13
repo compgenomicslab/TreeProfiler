@@ -634,7 +634,20 @@ def explore_tree(treename):
                                     },
                                     "layer": {}
                                 }
-                                
+                                if layout_prefix == "alignment":
+                                    # basic 
+                                    layout_config = {
+                                        "layout_name": name,  # Retrieve layout name from processed layouts
+                                        "applied_props": [applied_props],  # Props linked to this layout
+                                        "config": {
+                                            "level": getattr(layout, 'column', level),
+                                            #"column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                        },
+                                        "layer": {}
+                                    }
+                                    layout_config['layer']['algStart'] = layer.get('algStart', '')
+                                    layout_config['layer']['algEnd'] = layer.get('algEnd', '')
+
                                 updated_metadata.append(layout_config)
                                 layout_manager[layout.name] = layout
                             
@@ -869,20 +882,17 @@ def explore_tree(treename):
                                     layout_config['layer']['selectedColor'] = layout.color
                                 
                                 # alignment
-                                elif layout_prefix == "alignment":
+                                else:
                                     # basic 
                                     layout_config = {
                                         "layout_name": name,  # Retrieve layout name from processed layouts
                                         "applied_props": [applied_props],  # Props linked to this layout
                                         "config": {
-                                            "level": getattr(layout, 'column', level),
-                                            "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                            # "level": getattr(layout, 'column', level),
+                                            # "column_width": getattr(layout, 'column_width', default_configs['column_width']),
                                         },
                                         "layer": {}
                                     }
-                                    layout_config['layer']['algStart'] = layer.get('algStart', '')
-                                    layout_config['layer']['algEnd'] = layer.get('algEnd', '')
-                                
                                 updated_metadata.append(layout_config)
                             
                                 #layouts_metadata.append(layout_config)
