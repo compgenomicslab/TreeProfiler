@@ -158,23 +158,25 @@ def stop_explore():
 @app.route('/upload', method='POST')
 def do_upload():
     treename = request.forms.get('treename')
+
+    
     if not treename:
         response.status = 400
-        print({"error": "Tree name is required"})
         return {"error": "Tree name is required"}
 
     if treename in job_status:
         response.status = 400
-        print({"error": "A job with this tree name is already in progress"})
         return {"error": "A job with this tree name is already in progress"}
 
     job_status[treename] = "running"
 
     # Collect all form data
+    
     job_args = {
         "treename": treename,
         "tree_data": request.forms.get('tree'),
         "treeparser": request.forms.get('treeparser'),
+        "is_annotated_tree": request.forms.get('isAnnotatedTree') == 'true',
         "metadata": request.forms.get('metadata'),
         "separator": request.forms.get('separator'),
         "text_prop": request.forms.getlist('text_prop[]'),
@@ -222,6 +224,8 @@ def process_upload_job(job_args):
     separator = "\t" if job_args.get("separator") == "<tab>" else job_args.get("separator", ",")
     tree_data = job_args.get("tree_data")
     treeparser = job_args.get("treeparser")
+    is_annotated_tree = job_args.get("is_annotated_tree")
+
     summary_methods = job_args.get("summary_methods")
     
     # Parse summary methods JSON, if provided
@@ -244,151 +248,170 @@ def process_upload_job(job_args):
             tree = utils.ete4_parse(f.read(), internal_parser=treeparser)
         os.remove(tree_file_path)
 
-    # Process metadata
-    metadata_options = {}
-    columns = {}
-
-    if metadata_file_list:
-        metadata_dict, node_props, columns, prop2type = parse_csv(metadata_file_list, delimiter=separator)
+    if is_annotated_tree:
+        print("this way")
+        # Store the processed data
+        trees[treename] = {
+            'tree': tree_data,
+            'treeparser': treeparser,
+            #'columns': columns,
+            #'metadata': job_args.get("metadata"),
+            'node_props': 'node_props',
+            "updated_tree": '',
+            'annotated_tree': tree.write(format_root_node=True),
+            'prop2type': {},
+            'layouts': [],
+            'taxonomic_annotation': True if job_args.get("taxon_column") else False,
+            'rank_list':[],
+            'alignment_annotation': True if alignment_file_path else False,
+            'domain_annotation': True if pfam_file_path else False,
+        }
     else:
-        metadata_dict = {}
-        node_props = []
-        prop2type = {}
-    
-    node_props = list(prop2type.keys())
+        # Process metadata
+        metadata_options = {}
+        columns = {}
 
-    metadata_options = {
-        "metadata_dict": metadata_dict,
-        "node_props": node_props,
-        "columns": columns,
-        "prop2type": prop2type,
-        "text_prop": job_args.get("text_prop"),
-        "num_prop": job_args.get("num_prop"),
-        "bool_prop": job_args.get("bool_prop"),
-        "multiple_text_prop": job_args.get("multiple_text_prop")
-    }
-    
-    
-    # Taxonomic annotation options
-    taxonomic_options = {}
-    if job_args.get("taxon_column"):
-        taxonomic_options = {
-            "taxon_column": job_args.get("taxon_column"),
-            "taxadb": job_args.get("taxadb"),
-            "gtdb_version": job_args.get("version"),
-            "taxon_delimiter": job_args.get("species_delimiter"),
-            "taxa_field": job_args.get("species_index"),
-            "ignore_unclassified": job_args.get("ignore_unclassified")
+        if metadata_file_list:
+            metadata_dict, node_props, columns, prop2type = parse_csv(metadata_file_list, delimiter=separator)
+        else:
+            metadata_dict = {}
+            node_props = []
+            prop2type = {}
+        
+        node_props = list(prop2type.keys())
+
+        metadata_options = {
+            "metadata_dict": metadata_dict,
+            "node_props": node_props,
+            "columns": columns,
+            "prop2type": prop2type,
+            "text_prop": job_args.get("text_prop"),
+            "num_prop": job_args.get("num_prop"),
+            "bool_prop": job_args.get("bool_prop"),
+            "multiple_text_prop": job_args.get("multiple_text_prop")
+        }
+        
+        # Taxonomic annotation options
+        taxonomic_options = {}
+        if job_args.get("taxon_column"):
+            taxonomic_options = {
+                "taxon_column": job_args.get("taxon_column"),
+                "taxadb": job_args.get("taxadb"),
+                "gtdb_version": job_args.get("version"),
+                "taxon_delimiter": job_args.get("species_delimiter"),
+                "taxa_field": job_args.get("species_index"),
+                "ignore_unclassified": job_args.get("ignore_unclassified")
+            }
+
+        # for analytic methods
+        analytic_options = {}
+        acr_discrete_columns = []
+        acr_continuous_columns = []
+        if job_args.get("acr_columns"):
+            for acr_prop in job_args.get("acr_columns"):
+                if prop2type.get(acr_prop) == str:
+                    acr_discrete_columns.append(acr_prop)
+                elif prop2type.get(acr_prop) == float:
+                    acr_continuous_columns.append(acr_prop)
+            analytic_options = {
+                "acr_discrete_columns": acr_discrete_columns,
+                "acr_continuous_columns": acr_continuous_columns,
+                "prediction_method": job_args.get("prediction_method"),
+                "model": job_args.get("model")
+            }
+            if job_args.get("phylosignal") == 'delta':
+                analytic_options['delta_stats'] = True
+                analytic_options['ent_type'] = job_args.get("ent_type")
+                analytic_options['iteration'] = int(job_args.get("iteration"))
+                analytic_options['lambda0'] = float(job_args.get("lambda0"))
+                analytic_options['se'] = float(job_args.get("se"))
+                analytic_options['thin'] = int(job_args.get("thin"))
+                analytic_options['burn'] = int(job_args.get("burn"))
+
+        ls_columns = []
+        if job_args.get("ls_columns"):
+            ls_columns = job_args.get("ls_columns")
+            analytic_options['ls_columns'] = ls_columns
+            analytic_options['prec_cutoff'] = float(job_args.get("prec_cutoff"))
+            analytic_options['sens_cutoff'] = float(job_args.get("sens_cutoff"))
+
+        # Alignment options
+        alignment_options = {}
+        if alignment_file_path:
+            alignment_options = {
+                "alignment": alignment_file_path,
+                "consensus_cutoff": float(job_args.get("consensus_cutoff"))
+            }
+
+        # Emapper options
+        emapper_options = {
+            "emapper_mode": False,
+            "emapper_pfam": pfam_file_path if pfam_file_path else None
         }
 
-    # for analytic methods
-    analytic_options = {}
-    acr_discrete_columns = []
-    acr_continuous_columns = []
-    if job_args.get("acr_columns"):
-        for acr_prop in job_args.get("acr_columns"):
-            if prop2type.get(acr_prop) == str:
-                acr_discrete_columns.append(acr_prop)
-            elif prop2type.get(acr_prop) == float:
-                acr_continuous_columns.append(acr_prop)
-        analytic_options = {
-            "acr_discrete_columns": acr_discrete_columns,
-            "acr_continuous_columns": acr_continuous_columns,
-            "prediction_method": job_args.get("prediction_method"),
-            "model": job_args.get("model")
+        # Run annotation
+        threads = 6
+        annotated_tree, prop2type = run_tree_annotate(
+            tree,
+            **metadata_options,
+            **emapper_options,
+            **taxonomic_options,
+            **analytic_options,
+            **alignment_options,
+            column2method=column2method,
+            threads=threads
+        )
+
+        if job_args.get("taxon_column"):
+            rank_list = sorted(list(set(utils.tree_prop_array(annotated_tree, 'rank'))))
+        else:
+            rank_list = []
+
+        # Post-processing of annotated tree properties
+        list_keys = [key for key, value in prop2type.items() if value == list]
+        for node in annotated_tree.leaves():
+            for key in list_keys:
+                if node.props.get(key):
+                    node.add_prop(key, '||'.join(node.props[key]))
+        
+        # Name the nodes
+        annotated_tree = name_nodes(annotated_tree)
+
+        #avail_props = [key for key in prop2type.keys() if key not in ['name', 'dist', 'support']]
+        avail_props = list(prop2type.keys())
+
+        annotated_newick = annotated_tree.write(props=avail_props, format_root_node=True)
+
+        # Add node properties for display
+        node_props = metadata_options.get('node_props', [])
+
+        # check if tree has support values
+        sample_node = annotated_tree.children[0]
+        if 'support' in sample_node.props:
+            node_props.extend(['name', 'dist', 'support'])
+        else:
+            node_props.extend(['name', 'dist'])
+        if job_args.get("taxon_column"):
+            taxonomic_props = ['rank', 'sci_name', 'taxid', 'evoltype', 'dup_sp', 'dup_percent', 'lca']
+            node_props.extend(taxonomic_props)
+        
+        
+        # Store the processed data
+        trees[treename] = {
+            'tree': tree_data,
+            'treeparser': treeparser,
+            #'columns': columns,
+            #'metadata': job_args.get("metadata"),
+            'node_props': node_props,
+            "updated_tree": "",
+            'annotated_tree': annotated_newick,
+            'prop2type': prop2type,
+            'layouts': [],
+            'taxonomic_annotation': True if job_args.get("taxon_column") else False,
+            'rank_list':rank_list,
+            'alignment_annotation': True if alignment_file_path else False,
+            'domain_annotation': True if pfam_file_path else False,
         }
-        if job_args.get("phylosignal") == 'delta':
-            analytic_options['delta_stats'] = True
-            analytic_options['ent_type'] = job_args.get("ent_type")
-            analytic_options['iteration'] = int(job_args.get("iteration"))
-            analytic_options['lambda0'] = float(job_args.get("lambda0"))
-            analytic_options['se'] = float(job_args.get("se"))
-            analytic_options['thin'] = int(job_args.get("thin"))
-            analytic_options['burn'] = int(job_args.get("burn"))
-
-    ls_columns = []
-    if job_args.get("ls_columns"):
-        ls_columns = job_args.get("ls_columns")
-        analytic_options['ls_columns'] = ls_columns
-        analytic_options['prec_cutoff'] = float(job_args.get("prec_cutoff"))
-        analytic_options['sens_cutoff'] = float(job_args.get("sens_cutoff"))
-
-    # Alignment options
-    alignment_options = {}
-    if alignment_file_path:
-        alignment_options = {
-            "alignment": alignment_file_path,
-            "consensus_cutoff": float(job_args.get("consensus_cutoff"))
-        }
-
-    # Emapper options
-    emapper_options = {
-        "emapper_mode": False,
-        "emapper_pfam": pfam_file_path if pfam_file_path else None
-    }
-
-    # Run annotation
-    threads = 6
-    annotated_tree, prop2type = run_tree_annotate(
-        tree,
-        **metadata_options,
-        **emapper_options,
-        **taxonomic_options,
-        **analytic_options,
-        **alignment_options,
-        column2method=column2method,
-        threads=threads
-    )
-
-    if job_args.get("taxon_column"):
-        rank_list = sorted(list(set(utils.tree_prop_array(annotated_tree, 'rank'))))
-    else:
-        rank_list = []
-
-    # Post-processing of annotated tree properties
-    list_keys = [key for key, value in prop2type.items() if value == list]
-    for node in annotated_tree.leaves():
-        for key in list_keys:
-            if node.props.get(key):
-                node.add_prop(key, '||'.join(node.props[key]))
-    
-    # Name the nodes
-    annotated_tree = name_nodes(annotated_tree)
-
-    #avail_props = [key for key in prop2type.keys() if key not in ['name', 'dist', 'support']]
-    avail_props = list(prop2type.keys())
-
-    annotated_newick = annotated_tree.write(props=avail_props, format_root_node=True)
-
-    # Add node properties for display
-    node_props = metadata_options.get('node_props', [])
-
-    # check if tree has support values
-    sample_node = annotated_tree.children[0]
-    if 'support' in sample_node.props:
-        node_props.extend(['name', 'dist', 'support'])
-    else:
-        node_props.extend(['name', 'dist'])
-    if job_args.get("taxon_column"):
-        taxonomic_props = ['rank', 'sci_name', 'taxid', 'evoltype', 'dup_sp', 'dup_percent', 'lca']
-        node_props.extend(taxonomic_props)
-    
-    # Store the processed data
-    trees[treename] = {
-        'tree': tree_data,
-        'treeparser': treeparser,
-        'columns': columns,
-        'metadata': job_args.get("metadata"),
-        'node_props': node_props,
-        "updated_tree": "",
-        'annotated_tree': annotated_newick,
-        'prop2type': prop2type,
-        'layouts': [],
-        'taxonomic_annotation': True if job_args.get("taxon_column") else False,
-        'rank_list':rank_list,
-        'alignment_annotation': True if alignment_file_path else False,
-        'domain_annotation': True if pfam_file_path else False,
-    }
 
     # Cleanup temporary alignment file after usage
     if alignment_file_path and os.path.exists(alignment_file_path):
@@ -506,6 +529,7 @@ def check_job_status():
 @app.route('/explore_tree/<treename>', method=['GET', 'POST', 'PUT'])
 def explore_tree(treename):
     tree_info = trees.get(treename)
+    print(tree_info)
     if not tree_info:
         return f"Tree '{treename}' not found."
 
