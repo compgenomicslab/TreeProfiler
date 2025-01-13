@@ -355,7 +355,6 @@ def process_upload_job(job_args):
     # Name the nodes
     annotated_tree = name_nodes(annotated_tree)
 
-    
     #avail_props = [key for key in prop2type.keys() if key not in ['name', 'dist', 'support']]
     avail_props = list(prop2type.keys())
 
