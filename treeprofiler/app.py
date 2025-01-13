@@ -355,13 +355,21 @@ def process_upload_job(job_args):
     # Name the nodes
     annotated_tree = name_nodes(annotated_tree)
 
+    
     #avail_props = [key for key in prop2type.keys() if key not in ['name', 'dist', 'support']]
     avail_props = list(prop2type.keys())
 
     annotated_newick = annotated_tree.write(props=avail_props, format_root_node=True)
 
+    # Add node properties for display
     node_props = metadata_options.get('node_props', [])
-    node_props.extend(['name', 'dist', 'support'])
+
+    # check if tree has support values
+    sample_node = annotated_tree.children[0]
+    if 'support' in sample_node.props:
+        node_props.extend(['name', 'dist', 'support'])
+    else:
+        node_props.extend(['name', 'dist'])
     if job_args.get("taxon_column"):
         taxonomic_props = ['rank', 'sci_name', 'taxid', 'evoltype', 'dup_sp', 'dup_percent', 'lca']
         node_props.extend(taxonomic_props)
