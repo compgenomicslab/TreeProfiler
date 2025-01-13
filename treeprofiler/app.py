@@ -601,6 +601,7 @@ def explore_tree(treename):
                         else:
                             layout_prefix = layout.name.split('_')[0].lower() # get the layout prefix 
                             # taxonomic layout
+                            print(layout_prefix)
                             if layout_prefix.startswith('taxa'):
                                 layout_config = {
                                     "layout_name": layout.name,
@@ -609,11 +610,13 @@ def explore_tree(treename):
                                         "level": getattr(layout, 'column', level),
                                         "column_width": getattr(layout, 'column_width', default_configs['column_width']),
                                         "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
-                                        "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
-                                        "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
+                                        # "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
+                                        # "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
                                     },
                                     "layer": {}
                                 }
+                                
+                                updated_metadata.append(layout_config)
                                 layout_manager[layout.name] = layout
                             
                             # alignment layout
@@ -622,15 +625,17 @@ def explore_tree(treename):
                                     "layout_name": layout.name,
                                     "applied_props": [layout_prefix],
                                     "config": {
-                                        "level": getattr(layout, 'column', level),
-                                        "column_width": getattr(layout, 'column_width', default_configs['column_width']),
-                                        "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
-                                        "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
-                                        "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
-                                        #"color_config": getattr(layout, 'color_config', {})
+                                        # "level": getattr(layout, 'column', level),
+                                        # "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                        # "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
+                                        # "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
+                                        # "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
+                                        # "color_config": getattr(layout, 'color_config', {})
                                     },
                                     "layer": {}
                                 }
+                                print(layout_config)
+                                updated_metadata.append(layout_config)
                                 layout_manager[layout.name] = layout
                             
                             # profiling layout
@@ -691,11 +696,11 @@ def explore_tree(treename):
                                     "layout_name": name,  # Retrieve layout name from processed layouts
                                     "applied_props": conditions,  # Props linked to this layout
                                     "config": {
-                                        "level": getattr(layout, 'column', level),
-                                        "column_width": getattr(layout, 'column_width', default_configs['column_width']),
-                                        "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
-                                        "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
-                                        "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
+                                        # "level": getattr(layout, 'column', level),
+                                        # "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                        # "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
+                                        # "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
+                                        # "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
                                         #"color_config": getattr(layout, 'color_config', {})
                                     },
                                     "layer": {}
@@ -899,11 +904,11 @@ def explore_tree(treename):
                 for layout_meta in updated_metadata:
                     layout = layout_manager.get(layout_meta['layout_name'])
                     layout_prefix = layout_meta['layout_name'].split('_')[0].lower()
-                    prop = layout_meta['applied_props'][0]
+                    
                     if layout:
                         # for categorical
                         if layout_prefix in categorical_prefix:
-                            
+                            prop = layout_meta['applied_props'][0]
                             # reset color config
                             if layout_prefix  == 'piechart':
                                 original_prop = prop.split('_counter')[0] # get the original prop
@@ -938,7 +943,7 @@ def explore_tree(treename):
 
                         # for binary
                         elif layout_prefix in binary_prefix:
-
+                            prop = layout_meta['applied_props'][0]
                             selected_color = layout_meta['layer'].get('selectedColor', '#ff0000')
                             aggregate_option = layout_meta['layer'].get('aggregateOption', 'gradient')
                             
@@ -956,7 +961,7 @@ def explore_tree(treename):
                             
                         # for numerical
                         elif layout_prefix in numerical_prefix:
-                        
+                            prop = layout_meta['applied_props'][0]
                             if layout_prefix == 'numerical-matrix':
                                 maxval = layout_meta['layer'].get('maxVal', '')                            
                                 minval = layout_meta['layer'].get('minVal', '')
