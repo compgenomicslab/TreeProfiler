@@ -942,7 +942,7 @@
             function populateEditForm(layoutName) {
                 const layout = layoutsMetadata.find(l => l.layout_name === layoutName);
                 console.log(layout);
-
+                const selectedProps = {{!selected_props}}; 
                 if (layout) {
                     document.getElementById('editLayoutName').value = layout.layout_name;
 
@@ -978,6 +978,50 @@
                             maxValInput.parentElement.style.opacity = '0.5'; // Optional: Indicate inactivity visually
                         }
                     }
+
+                    // Handle Barplot-Specific Settings
+                    if (layoutPrefix === 'barplot') {
+                        const barplotColorOption = document.querySelector('select#layer-barplotColorOption');
+                        const barplotColor = document.querySelector('input#layer-barplotColor');
+                        const barplotFillProperty = document.querySelector('select#layer-barplotFillProperty');
+
+                        // Ensure options are generated
+                        if (barplotColorOption) {
+                            barplotColorOption.innerHTML = `
+                                <option value="same" ${layout.layer.barplotColorOption === 'same' ? 'selected' : ''}>Same</option>
+                                <option value="colorby" ${layout.layer.barplotColorOption === 'colorby' ? 'selected' : ''}>Color by Property</option>
+                            `;
+
+                            // Add change listener for the dropdown
+                            barplotColorOption.addEventListener('change', function () {
+                                if (this.value === 'same') {
+                                    barplotColor.disabled = false; // Enable barplotColor
+                                    barplotFillProperty.disabled = true; // Disable barplotFillProperty
+                                } else if (this.value === 'colorby') {
+                                    barplotColor.disabled = true; // Disable barplotColor
+                                    barplotFillProperty.disabled = false; // Enable barplotFillProperty
+                                }
+                            });
+
+                            // Trigger change event to set the initial state
+                            barplotColorOption.dispatchEvent(new Event('change'));
+                        }
+
+                        // Populate barplotFillProperty options with properties
+                        if (barplotFillProperty) {
+                            barplotFillProperty.innerHTML = '';
+                            selectedProps.forEach(prop => {
+                                const option = document.createElement('option');
+                                option.value = prop;
+                                option.textContent = prop;
+                                if (layout.layer.barplotFillProperty === prop) {
+                                    option.selected = true;
+                                }
+                                barplotFillProperty.appendChild(option);
+                            });
+                        }
+                    }
+
                 }
             }
 
@@ -1023,6 +1067,23 @@
                         }
                         input.appendChild(option);
                     });
+                } else if (key == "barplotColorOption") {
+                    input = document.createElement('select');
+                    input.classList.add('form-control');
+                    input.setAttribute('id', `${type}-${key}`);
+                    input.setAttribute('name', `${type}-${key}`);
+                } else if (key == "barplotFillProperty") {
+                    input = document.createElement('select');
+                    input.classList.add('form-control');
+                    input.setAttribute('id', `${type}-${key}`);
+                    input.setAttribute('name', `${type}-${key}`);
+                } else if (key === 'barplotColor') {
+                    input = document.createElement('input');
+                    input.setAttribute('type', 'color'); // Explicitly set type="color"
+                    input.setAttribute('id', `${type}-${key}`);
+                    input.setAttribute('name', `${type}-${key}`);
+                    input.classList.add('form-control');
+                    input.value = value || '#000000'; // Default color if no value provided
                 } else {
                     // Handle general input types
                     input = document.createElement('input');
