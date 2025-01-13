@@ -555,8 +555,10 @@ def explore_tree(treename):
 
             if layers_data:
                 layers = json.loads(layers_data)
+                existing_layouts = {layout['layout_name']: layout for layout in layouts_metadata}
+                updated_metadata = []
+                
                 for layer in layers:
-                    
                     # Query queryType
                     query_type = layer.get('queryType', '')
                     if query_type == 'rank_limit':
@@ -579,232 +581,138 @@ def explore_tree(treename):
                     
                     
                     # Update layouts_metadata after process_layer
-                    layouts_metadata.clear()  # Reset to avoid duplicates or outdated data
+                    #layouts_metadata.clear()  # Reset to avoid duplicates or outdated data
+                    # Update layouts_metadata without clearing it
                     for layout in current_layouts:
+                        layout_name = layout.name
                         
-                        layout_prefix = layout.name.split('_')[0].lower() # get the layout prefix 
-                        
-                        # taxonomic layout
-                        if layout_prefix.startswith('taxa'):
-                            layouts_metadata.append({
-                                "layout_name": layout.name,
-                                "applied_props": [],
-                                "config": {
-                                    "level": getattr(layout, 'column', level),
-                                    "column_width": getattr(layout, 'column_width', default_configs['column_width']),
-                                    "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
-                                    "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
-                                    "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
-                                },
-                                "layer": {}
+                        if layout_name in existing_layouts:
+                            # Update existing layout
+                            existing_layout = existing_layouts[layout_name]
+                            existing_layout['config'].update({
+                                "level": getattr(layout, 'column', level),
+                                "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
+                                "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
+                                "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
                             })
-                            layout_manager[layout.name] = layout
-                        
-                        # alignment layout
-                        elif layout_prefix in ['alignment', 'domain']:
-                            layouts_metadata.append({
-                                "layout_name": layout.name,
-                                "applied_props": [layout_prefix],
-                                "config": {
-                                    "level": getattr(layout, 'column', level),
-                                    "column_width": getattr(layout, 'column_width', default_configs['column_width']),
-                                    "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
-                                    "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
-                                    "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
-                                    #"color_config": getattr(layout, 'color_config', {})
-                                },
-                                "layer": {}
-                            })
-                            layout_manager[layout.name] = layout
-                        
-                        # profiling layout
-                        elif layout_prefix == 'numerical-matrix':
-                            # Append with applied props and full config
-                            name = layout.name
-                            applied_props = layout.matrix_props
-                            layout_config = {
-                                "layout_name": name,  # Retrieve layout name from processed layouts
-                                "applied_props": applied_props,  # Props linked to this layout
-                                "config": {
-                                    "level": getattr(layout, 'column', level),
-                                    "column_width": getattr(layout, 'column_width', default_configs['column_width']),
-                                    "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
-                                    "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
-                                    "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
-                                    #"color_config": getattr(layout, 'color_config', {})
-                                },
-                                "layer": {}
-                            }
-                            
-                            minval, maxval = layout.value_range
-                            layout_config['layer']['maxVal'] = maxval
-                            layout_config['layer']['minVal'] = minval
-                            layout_config['layer']["colorMin"] = layer.get('colorMin', '#0000ff')
-                            layout_config['layer']["colorMid"] = layer.get('colorMid', '#ffffff')
-                            layout_config['layer']["colorMax"] = layer.get('colorMax', '#ff0000')
-
-                            layouts_metadata.append(layout_config)
-                            layout_manager[layout.name] = layout
-
-                        elif layout_prefix in ['profiling', 'categorical-matrix', 'binary-matrix']:
-                            # Append with applied props and full config
-                            name = layout.name
-                            applied_props = layout.matrix_props
-                            layouts_metadata.append({
-                                "layout_name": name,  # Retrieve layout name from processed layouts
-                                "applied_props": applied_props,  # Props linked to this layout
-                                "config": {
-                                    "level": getattr(layout, 'column', level),
-                                    "column_width": getattr(layout, 'column_width', default_configs['column_width']),
-                                    "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
-                                    "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
-                                    # "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
-                                    #"color_config": getattr(layout, 'color_config', {})
-                                },
-                                "layer": {}
-                            })
-
-                            layout_manager[layout.name] = layout
-                        
-                        # auto query layout
-                        elif layout_prefix in ['collapsed-by', 'highlighted-by']:
-                            # Append with applied props and full config
-                            name = layout.name
-                            conditions = list(layout.color2conditions.values())
-                            layouts_metadata.append({
-                                "layout_name": name,  # Retrieve layout name from processed layouts
-                                "applied_props": conditions,  # Props linked to this layout
-                                "config": {
-                                    "level": getattr(layout, 'column', level),
-                                    "column_width": getattr(layout, 'column_width', default_configs['column_width']),
-                                    "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
-                                    "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
-                                    "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
-                                    #"color_config": getattr(layout, 'color_config', {})
-                                },
-                                "layer": {}
-                            })
-                            layout_manager[layout.name] = layout
-                            
+                            existing_layout['layer'].update(layer.get('layer', {}))
+                            updated_metadata.append(existing_layout)
                         else:
-                            # Append with applied props and full config
-                            name = layout.name
-                            applied_props = layout.prop
-                            
-                            # categorical layout
-                            if layout_prefix in categorical_prefix:
-                                # basic 
-                                color_config = color_config.get(applied_props, {})
+                            layout_prefix = layout.name.split('_')[0].lower() # get the layout prefix 
+                            # taxonomic layout
+                            if layout_prefix.startswith('taxa'):
                                 layout_config = {
-                                    "layout_name": name,  # Retrieve layout name from processed layouts
-                                    "applied_props": [applied_props],  # Props linked to this layout
+                                    "layout_name": layout.name,
+                                    "applied_props": [],
                                     "config": {
                                         "level": getattr(layout, 'column', level),
                                         "column_width": getattr(layout, 'column_width', default_configs['column_width']),
                                         "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
                                         "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
-                                        #"color_config": color_config
+                                        "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
                                     },
                                     "layer": {}
                                 }
-                                layout_config['layer']['categoricalColorscheme'] = layer.get('categoricalColorscheme', 'default')   
-
-                            # numerical layout
-                            elif layout_prefix in numerical_prefix:
-                                if layout_prefix == 'barplot':
-                                    # basic 
-                                    layout_config = {
-                                        "layout_name": name,  # Retrieve layout name from processed layouts
-                                        "applied_props": [applied_props],  # Props linked to this layout
-                                        "config": {
-                                            "level": getattr(layout, 'column', level),
-                                            #"column_width": getattr(layout, 'column_width', default_configs['column_width']),
-                                            "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
-                                            "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
-                                            "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
-                                            #"color_config": color_config.get(applied_props, {})
-                                        },
-                                        "layer": {}
-                                    }
-                                    layout_config['layer']['barplotWidth'] = int(layer.get('barplotWidth', 200))
-                                    layout_config['layer']['barplotRange'] = layout.size_range[-1]
-                                    layout_config['layer']['barplotColorOption'] = layer.get('barplotColorOption', 'same')
-                                    
-                                    # layout_config['layer']['barplotScaleProperty'] = layer.get('barplotScaleProperty', '')
-                                    # layout_config['layer']['barplotColorscheme'] = layer.get('barplotColorscheme', 'default')
-                                    # layout_config['layer']['barplotCustomColor'] = layer.get('barplotCustomColor', '#ff0000')
-
-                                    if layout.color is not None:
-                                        layout_config['layer']['barplotColor'] = layout.color
-                                    if layout.colors is not None:
-                                        layout_config['layer']['barplotFillProperty'] = layer.get('barplotFillProperty', None)
-                                        layout_config['layer']['barplotColorDict'] = layout.colors
-                                    
-                                elif layout_prefix == 'heatmap':
-                                    # basic 
-                                    layout_config = {
-                                        "layout_name": name,  # Retrieve layout name from processed layouts
-                                        "applied_props": [applied_props],  # Props linked to this layout
-                                        "config": {
-                                            "level": getattr(layout, 'column', level),
-                                            "column_width": getattr(layout, 'column_width', default_configs['column_width']),
-                                            "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
-                                            "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
-                                            "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
-                                            #"color_config": color_config.get(applied_props, {})
-                                        },
-                                        "layer": {}
-                                    }
-                                    minval, maxval = layout.value_range
-                                    layout_config['layer']['maxVal'] = maxval
-                                    layout_config['layer']['minVal'] = minval
-                                    layout_config['layer']['colorMin'] = layer.get('colorMin', '#0000ff')
-                                    layout_config['layer']['colorMid'] = layer.get('colorMid', '#ffffff')
-                                    layout_config['layer']['colorMax'] = layer.get('colorMax', '#ff0000')
+                                layout_manager[layout.name] = layout
+                            
+                            # alignment layout
+                            elif layout_prefix in ['alignment', 'domain']:
+                                layout_config = {
+                                    "layout_name": layout.name,
+                                    "applied_props": [layout_prefix],
+                                    "config": {
+                                        "level": getattr(layout, 'column', level),
+                                        "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                        "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
+                                        "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
+                                        "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
+                                        #"color_config": getattr(layout, 'color_config', {})
+                                    },
+                                    "layer": {}
+                                }
+                                layout_manager[layout.name] = layout
+                            
+                            # profiling layout
+                            elif layout_prefix == 'numerical-matrix':
+                                # Append with applied props and full config
+                                name = layout.name
+                                applied_props = layout.matrix_props
+                                layout_config = {
+                                    "layout_name": name,  # Retrieve layout name from processed layouts
+                                    "applied_props": applied_props,  # Props linked to this layout
+                                    "config": {
+                                        "level": getattr(layout, 'column', level),
+                                        "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                        "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
+                                        "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
+                                        "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
+                                        #"color_config": getattr(layout, 'color_config', {})
+                                    },
+                                    "layer": {}
+                                }
                                 
-                                elif layout_prefix == 'branchscore':
+                                minval, maxval = layout.value_range
+                                layout_config['layer']['maxVal'] = maxval
+                                layout_config['layer']['minVal'] = minval
+                                layout_config['layer']["colorMin"] = layer.get('colorMin', '#0000ff')
+                                layout_config['layer']["colorMid"] = layer.get('colorMid', '#ffffff')
+                                layout_config['layer']["colorMax"] = layer.get('colorMax', '#ff0000')
+
+                                updated_metadata.append(layout_config)
+                                layout_manager[layout.name] = layout
+
+                            elif layout_prefix in ['profiling', 'categorical-matrix', 'binary-matrix']:
+                                # Append with applied props and full config
+                                name = layout.name
+                                applied_props = layout.matrix_props
+                                layout_config = {
+                                    "layout_name": name,  # Retrieve layout name from processed layouts
+                                    "applied_props": applied_props,  # Props linked to this layout
+                                    "config": {
+                                        "level": getattr(layout, 'column', level),
+                                        "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                        "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
+                                        "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
+                                        # "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
+                                        #"color_config": getattr(layout, 'color_config', {})
+                                    },
+                                    "layer": {}
+                                }
+                                updated_metadata.append(layout_config)
+                                layout_manager[layout.name] = layout
+                            
+                            # auto query layout
+                            elif layout_prefix in ['collapsed-by', 'highlighted-by']:
+                                # Append with applied props and full config
+                                name = layout.name
+                                conditions = list(layout.color2conditions.values())
+                                layout_config = {
+                                    "layout_name": name,  # Retrieve layout name from processed layouts
+                                    "applied_props": conditions,  # Props linked to this layout
+                                    "config": {
+                                        "level": getattr(layout, 'column', level),
+                                        "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                        "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
+                                        "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
+                                        "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
+                                        #"color_config": getattr(layout, 'color_config', {})
+                                    },
+                                    "layer": {}
+                                }
+                                updated_metadata.append(layout_config)
+                                layout_manager[layout.name] = layout
+                                
+                            else:
+                                
+                                # Append with applied props and full config
+                                name = layout.name
+                                applied_props = layout.prop
+                                
+                                # categorical layout
+                                if layout_prefix in categorical_prefix:
                                     # basic 
-                                    layout_config = {
-                                        "layout_name": name,  # Retrieve layout name from processed layouts
-                                        "applied_props": [applied_props],  # Props linked to this layout
-                                        "config": {
-                                            # "level": getattr(layout, 'column', level),
-                                            # "column_width": getattr(layout, 'column_width', default_configs['column_width']),
-                                            # "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
-                                            # "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
-                                            "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
-                                            #"color_config": color_config.get(applied_props, {})
-                                        },
-                                        "layer": {}
-                                    }
-                                    minval, maxval = layout.value_range
-                                    layout_config['layer']['maxVal'] = maxval
-                                    layout_config['layer']['minVal'] = minval
-                                    layout_config['layer']['colorMin'] = layer.get('colorMin', '#0000ff')
-                                    layout_config['layer']['colorMid'] = layer.get('colorMid', '#ffffff')
-                                    layout_config['layer']['colorMax'] = layer.get('colorMax', '#ff0000')
-                                elif layout_prefix == 'numerical-bubble':
-                                    # basic 
-                                    layout_config = {
-                                        "layout_name": name,  # Retrieve layout name from processed layouts
-                                        "applied_props": [applied_props],  # Props linked to this layout
-                                        "config": {
-                                            "level": getattr(layout, 'column', level),
-                                            # "column_width": getattr(layout, 'column_width', default_configs['column_width']),
-                                            # "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
-                                            # "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
-                                            "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
-                                            #"color_config": color_config.get(applied_props, {})
-                                        },
-                                        "layer": {}
-                                    }
-                                    minval, maxval = layout.bubble_rage
-                                    layout_config['layer']['maxVal'] = maxval
-                                    layout_config['layer']['minVal'] = minval
-                                    layout_config['layer']['colorMin'] = layer.get('colorMin', '#0000ff')
-                                    layout_config['layer']['colorMid'] = layer.get('colorMid', '#ffffff')
-                                    layout_config['layer']['colorMax'] = layer.get('colorMax', '#ff0000')
-                                else:
+                                    color_config = color_config.get(applied_props, {})
                                     layout_config = {
                                         "layout_name": name,  # Retrieve layout name from processed layouts
                                         "applied_props": [applied_props],  # Props linked to this layout
@@ -813,53 +721,167 @@ def explore_tree(treename):
                                             "column_width": getattr(layout, 'column_width', default_configs['column_width']),
                                             "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
                                             "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
-                                            "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
+                                            #"color_config": color_config
+                                        },
+                                        "layer": {}
+                                    }
+                                    layout_config['layer']['categoricalColorscheme'] = layer.get('categoricalColorscheme', 'default')   
+
+                                # numerical layout
+                                elif layout_prefix in numerical_prefix:
+                                    if layout_prefix == 'barplot':
+                                        # basic 
+                                        layout_config = {
+                                            "layout_name": name,  # Retrieve layout name from processed layouts
+                                            "applied_props": [applied_props],  # Props linked to this layout
+                                            "config": {
+                                                "level": getattr(layout, 'column', level),
+                                                #"column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                                "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
+                                                "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
+                                                "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
+                                                #"color_config": color_config.get(applied_props, {})
+                                            },
+                                            "layer": {}
+                                        }
+                                        layout_config['layer']['barplotWidth'] = int(layer.get('barplotWidth', 200))
+                                        layout_config['layer']['barplotRange'] = layout.size_range[-1]
+                                        layout_config['layer']['barplotColorOption'] = layer.get('barplotColorOption', 'same')
+                                        
+                                        # layout_config['layer']['barplotScaleProperty'] = layer.get('barplotScaleProperty', '')
+                                        # layout_config['layer']['barplotColorscheme'] = layer.get('barplotColorscheme', 'default')
+                                        # layout_config['layer']['barplotCustomColor'] = layer.get('barplotCustomColor', '#ff0000')
+
+                                        if layout.color is not None:
+                                            layout_config['layer']['barplotColor'] = layout.color
+                                        if layout.colors is not None:
+                                            layout_config['layer']['barplotFillProperty'] = layer.get('barplotFillProperty', None)
+                                            layout_config['layer']['barplotColorDict'] = layout.colors
+                                        
+                                    elif layout_prefix == 'heatmap':
+                                        # basic 
+                                        layout_config = {
+                                            "layout_name": name,  # Retrieve layout name from processed layouts
+                                            "applied_props": [applied_props],  # Props linked to this layout
+                                            "config": {
+                                                "level": getattr(layout, 'column', level),
+                                                "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                                "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
+                                                "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
+                                                "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
+                                                #"color_config": color_config.get(applied_props, {})
+                                            },
+                                            "layer": {}
+                                        }
+                                        minval, maxval = layout.value_range
+                                        layout_config['layer']['maxVal'] = maxval
+                                        layout_config['layer']['minVal'] = minval
+                                        layout_config['layer']['colorMin'] = layer.get('colorMin', '#0000ff')
+                                        layout_config['layer']['colorMid'] = layer.get('colorMid', '#ffffff')
+                                        layout_config['layer']['colorMax'] = layer.get('colorMax', '#ff0000')
+                                    
+                                    elif layout_prefix == 'branchscore':
+                                        # basic 
+                                        layout_config = {
+                                            "layout_name": name,  # Retrieve layout name from processed layouts
+                                            "applied_props": [applied_props],  # Props linked to this layout
+                                            "config": {
+                                                # "level": getattr(layout, 'column', level),
+                                                # "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                                # "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
+                                                # "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
+                                                "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
+                                                #"color_config": color_config.get(applied_props, {})
+                                            },
+                                            "layer": {}
+                                        }
+                                        minval, maxval = layout.value_range
+                                        layout_config['layer']['maxVal'] = maxval
+                                        layout_config['layer']['minVal'] = minval
+                                        layout_config['layer']['colorMin'] = layer.get('colorMin', '#0000ff')
+                                        layout_config['layer']['colorMid'] = layer.get('colorMid', '#ffffff')
+                                        layout_config['layer']['colorMax'] = layer.get('colorMax', '#ff0000')
+                                    elif layout_prefix == 'numerical-bubble':
+                                        # basic 
+                                        layout_config = {
+                                            "layout_name": name,  # Retrieve layout name from processed layouts
+                                            "applied_props": [applied_props],  # Props linked to this layout
+                                            "config": {
+                                                "level": getattr(layout, 'column', level),
+                                                # "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                                # "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
+                                                # "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
+                                                "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
+                                                #"color_config": color_config.get(applied_props, {})
+                                            },
+                                            "layer": {}
+                                        }
+                                        minval, maxval = layout.bubble_rage
+                                        layout_config['layer']['maxVal'] = maxval
+                                        layout_config['layer']['minVal'] = minval
+                                        layout_config['layer']['colorMin'] = layer.get('colorMin', '#0000ff')
+                                        layout_config['layer']['colorMid'] = layer.get('colorMid', '#ffffff')
+                                        layout_config['layer']['colorMax'] = layer.get('colorMax', '#ff0000')
+                                    else:
+                                        layout_config = {
+                                            "layout_name": name,  # Retrieve layout name from processed layouts
+                                            "applied_props": [applied_props],  # Props linked to this layout
+                                            "config": {
+                                                "level": getattr(layout, 'column', level),
+                                                "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                                "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
+                                                "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
+                                                "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
+                                                #"color_config": color_config.get(applied_props, {})
+                                            },
+                                            "layer": {}
+                                        }
+                                        layout_config['layer']["maxVal"] = layer.get('maxVal', '')
+                                        layout_config['layer']["minVal"] = layer.get('minVal', '')
+                                        layout_config['layer']["colorMin"] = layer.get('colorMin', '#0000ff')
+                                        layout_config['layer']["colorMid"] = layer.get('colorMid', '#ffffff')
+                                        layout_config['layer']["colorMax"] = layer.get('colorMax', '#ff0000')
+
+                                # binary layout
+                                elif layout_prefix in binary_prefix:
+                                    # basic 
+                                    layout_config = {
+                                        "layout_name": name,  # Retrieve layout name from processed layouts
+                                        "applied_props": [applied_props],  # Props linked to this layout
+                                        "config": {
+                                            "level": getattr(layout, 'column', level),
+                                            "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                            "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
+                                            "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
                                             #"color_config": color_config.get(applied_props, {})
                                         },
                                         "layer": {}
                                     }
-                                    layout_config['layer']["maxVal"] = layer.get('maxVal', '')
-                                    layout_config['layer']["minVal"] = layer.get('minVal', '')
-                                    layout_config['layer']["colorMin"] = layer.get('colorMin', '#0000ff')
-                                    layout_config['layer']["colorMid"] = layer.get('colorMid', '#ffffff')
-                                    layout_config['layer']["colorMax"] = layer.get('colorMax', '#ff0000')
+                                    layout_config['layer']['aggregateOption'] = layer.get('aggregateOption', 'gradient')
+                                    layout_config['layer']['selectedColor'] = layout.color
+                                
+                                # alignment
+                                elif layout_prefix == "alignment":
+                                    # basic 
+                                    layout_config = {
+                                        "layout_name": name,  # Retrieve layout name from processed layouts
+                                        "applied_props": [applied_props],  # Props linked to this layout
+                                        "config": {
+                                            "level": getattr(layout, 'column', level),
+                                            "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                        },
+                                        "layer": {}
+                                    }
+                                    layout_config['layer']['algStart'] = layer.get('algStart', '')
+                                    layout_config['layer']['algEnd'] = layer.get('algEnd', '')
+                                
+                                updated_metadata.append(layout_config)
+                            
+                                #layouts_metadata.append(layout_config)
+                                layout_manager[layout.name] = layout
 
-                            # binary layout
-                            elif layout_prefix in binary_prefix:
-                                # basic 
-                                layout_config = {
-                                    "layout_name": name,  # Retrieve layout name from processed layouts
-                                    "applied_props": [applied_props],  # Props linked to this layout
-                                    "config": {
-                                        "level": getattr(layout, 'column', level),
-                                        "column_width": getattr(layout, 'column_width', default_configs['column_width']),
-                                        "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
-                                        "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
-                                        #"color_config": color_config.get(applied_props, {})
-                                    },
-                                    "layer": {}
-                                }
-                                layout_config['layer']['aggregateOption'] = layer.get('aggregateOption', 'gradient')
-                                layout_config['layer']['selectedColor'] = layout.color
-                            
-                            # alignment
-                            elif layout_prefix == "alignment":
-                                # basic 
-                                layout_config = {
-                                    "layout_name": name,  # Retrieve layout name from processed layouts
-                                    "applied_props": [applied_props],  # Props linked to this layout
-                                    "config": {
-                                        "level": getattr(layout, 'column', level),
-                                        "column_width": getattr(layout, 'column_width', default_configs['column_width']),
-                                    },
-                                    "layer": {}
-                                }
-                                layout_config['layer']['algStart'] = layer.get('algStart', '')
-                                layout_config['layer']['algEnd'] = layer.get('algEnd', '')
-                            
-                            layouts_metadata.append(layout_config)
-                            
-                            layout_manager[layout.name] = layout
+                        layouts_metadata.clear()
+                        layouts_metadata.extend(updated_metadata)
     
     
     # Process PUT request for updating layouts 
