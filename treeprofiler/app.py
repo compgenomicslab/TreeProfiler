@@ -556,6 +556,7 @@ def explore_tree(treename):
             if layers_data:
                 layers = json.loads(layers_data)
                 for layer in layers:
+                    
                     # Query queryType
                     query_type = layer.get('queryType', '')
                     if query_type == 'rank_limit':
@@ -576,9 +577,11 @@ def explore_tree(treename):
                         column_width, padding_x, padding_y, color_config, internal_num_rep, default_paired_color
                     )
                     
+                    
                     # Update layouts_metadata after process_layer
                     layouts_metadata.clear()  # Reset to avoid duplicates or outdated data
                     for layout in current_layouts:
+                        
                         layout_prefix = layout.name.split('_')[0].lower() # get the layout prefix 
                         
                         # taxonomic layout
@@ -608,7 +611,7 @@ def explore_tree(treename):
                                     "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
                                     "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
                                     "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
-                                    "color_config": getattr(layout, 'color_config', {})
+                                    #"color_config": getattr(layout, 'color_config', {})
                                 },
                                 "layer": {}
                             })
@@ -628,7 +631,7 @@ def explore_tree(treename):
                                     "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
                                     "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
                                     "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
-                                    "color_config": getattr(layout, 'color_config', {})
+                                    #"color_config": getattr(layout, 'color_config', {})
                                 },
                                 "layer": {}
                             }
@@ -656,7 +659,7 @@ def explore_tree(treename):
                                     "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
                                     "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
                                     # "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
-                                    "color_config": getattr(layout, 'color_config', {})
+                                    #"color_config": getattr(layout, 'color_config', {})
                                 },
                                 "layer": {}
                             })
@@ -677,7 +680,7 @@ def explore_tree(treename):
                                     "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
                                     "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
                                     "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
-                                    "color_config": getattr(layout, 'color_config', {})
+                                    #"color_config": getattr(layout, 'color_config', {})
                                 },
                                 "layer": {}
                             })
@@ -700,7 +703,7 @@ def explore_tree(treename):
                                         "column_width": getattr(layout, 'column_width', default_configs['column_width']),
                                         "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
                                         "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
-                                        "color_config": color_config
+                                        #"color_config": color_config
                                     },
                                     "layer": {}
                                 }
@@ -748,7 +751,7 @@ def explore_tree(treename):
                                             "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
                                             "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
                                             "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
-                                            "color_config": color_config.get(applied_props, {})
+                                            #"color_config": color_config.get(applied_props, {})
                                         },
                                         "layer": {}
                                     }
@@ -770,7 +773,7 @@ def explore_tree(treename):
                                             # "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
                                             # "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
                                             "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
-                                            "color_config": color_config.get(applied_props, {})
+                                            #"color_config": color_config.get(applied_props, {})
                                         },
                                         "layer": {}
                                     }
@@ -791,7 +794,7 @@ def explore_tree(treename):
                                             # "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
                                             # "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
                                             "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
-                                            "color_config": color_config.get(applied_props, {})
+                                            #"color_config": color_config.get(applied_props, {})
                                         },
                                         "layer": {}
                                     }
@@ -811,7 +814,7 @@ def explore_tree(treename):
                                             "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
                                             "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
                                             "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
-                                            "color_config": color_config.get(applied_props, {})
+                                            #"color_config": color_config.get(applied_props, {})
                                         },
                                         "layer": {}
                                     }
@@ -832,7 +835,7 @@ def explore_tree(treename):
                                         "column_width": getattr(layout, 'column_width', default_configs['column_width']),
                                         "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
                                         "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
-                                        "color_config": color_config.get(applied_props, {})
+                                        #"color_config": color_config.get(applied_props, {})
                                     },
                                     "layer": {}
                                 }
@@ -855,6 +858,7 @@ def explore_tree(treename):
                                 layout_config['layer']['algEnd'] = layer.get('algEnd', '')
                             
                             layouts_metadata.append(layout_config)
+                            
                             layout_manager[layout.name] = layout
     
     
@@ -927,8 +931,7 @@ def explore_tree(treename):
                             
                         # for numerical
                         elif layout_prefix in numerical_prefix:
-                            
-
+                        
                             if layout_prefix == 'numerical-matrix':
                                 maxval = layout_meta['layer'].get('maxVal', '')                            
                                 minval = layout_meta['layer'].get('minVal', '')
@@ -977,7 +980,6 @@ def explore_tree(treename):
                                 color_config[prop]['detail2color']['color_min'] = (color_min, minval)
                                 
                             if layout_prefix == 'barplot':
-
                                 barplot_width = layout_meta['layer'].get('barplotWidth', 200)
                                 barplot_width = int(barplot_width)
                                 barplot_scale = layout_meta['layer'].get('barplotScaleProperty', '')
@@ -993,15 +995,18 @@ def explore_tree(treename):
                                 # barplot_color_scheme = layout_meta['layer'].get('barplotColorscheme', 'default')
                                 # barplot_custom_color = layout_meta['layer'].get('barplotCustomColor', '#ff0000')
 
-                                barplot_colorby = layout_meta['layer'].get('barplotFillProperty', None)
+                                barplot_colorby = layout_meta['layer'].get('barplotFillProperty', '')
                                 layout.color = layout_meta['layer'].get('barplotColor', None)
-                                layout.colors = layout_meta['layer'].get('barplotColorDict', None)
-                                layout.color_prop = barplot_colorby
+                                #layout.colors = layout_meta['layer'].get('barplotColorDict', None)
+                                if barplot_colorby != '' or barplot_colorby is not None:
+                                    layout.color_prop = barplot_colorby
+
                                 layout.size_range = size_range
                                 layout.width = barplot_width
                                 layout.padding_x = layout_meta['config']['padding_x']
                                 layout.padding_y = layout_meta['config']['padding_y']
                                 layout.internal_rep = layout_meta['config']['internal_num_rep']
+                                layout.column = layout_meta['config']['level']
 
                             if layout_prefix.startswith('branchscore'):
                                 layouts = tree_plot.get_branchscore_layouts(
