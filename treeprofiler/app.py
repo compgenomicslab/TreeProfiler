@@ -640,7 +640,7 @@ def explore_tree(treename):
                                         "layout_name": name,  # Retrieve layout name from processed layouts
                                         "applied_props": [applied_props],  # Props linked to this layout
                                         "config": {
-                                            "level": getattr(layout, 'column', level),
+                                            # "level": getattr(layout, 'column', level),
                                             #"column_width": getattr(layout, 'column_width', default_configs['column_width']),
                                         },
                                         "layer": {}
