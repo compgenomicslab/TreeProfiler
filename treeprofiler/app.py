@@ -634,7 +634,7 @@ def explore_tree(treename):
                                     },
                                     "layer": {}
                                 }
-                                print(layout_config)
+                                
                                 updated_metadata.append(layout_config)
                                 layout_manager[layout.name] = layout
                             
