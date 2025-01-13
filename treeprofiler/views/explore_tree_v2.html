@@ -299,8 +299,8 @@
                                                         <label for="barplotWidth" class="form-label small">Barplot Column Width (px):</label>
                                                         <input type="number" class="form-control mb-2" id="barplotWidth" name="barplotWidth" placeholder="Enter width" value="200">
                                         
-                                                        <label for="barplotScaleProperty" class="form-label small">Scale Based On Property:</label>
-                                                        <select class="form-control mb-2" id="barplotScaleProperty" name="barplotScaleProperty"></select>
+                                                        <!-- <label for="barplotScaleProperty" class="form-label small">Scale Based On Property:</label>
+                                                        <select class="form-control mb-2" id="barplotScaleProperty" name="barplotScaleProperty"></select> -->
                                         
                                                         <label for="barplotRange" class="form-label small">Custom Barplot Scale (Max Value):</label>
                                                         <input type="number" class="form-control mb-2" id="barplotRange" name="barplotRange" placeholder="Enter max value for the property">
@@ -714,7 +714,7 @@
 
             // Barplot layout settings
             const barplotWidth = document.getElementById('barplotWidth').value;
-            const barplotScaleProperty = document.getElementById('barplotScaleProperty').value;
+            const barplotScaleProperty = document.getElementById('barplotScaleProperty')?.value || null;
             const barplotRange = document.getElementById('barplotRange').value;
             const barplotColorOption = document.getElementById('barplotColorOption').value;
             const barplotColorScheme = document.getElementById('barplotColorScheme').value;
@@ -794,6 +794,7 @@
                 padding_y: paddingY,
                 internal_num_rep: internalNumRep
             };
+            
             // Submit the data to the backend
             $.post(
                 '/explore_tree/{{treename}}',
