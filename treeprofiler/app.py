@@ -601,7 +601,7 @@ def explore_tree(treename):
                         else:
                             layout_prefix = layout.name.split('_')[0].lower() # get the layout prefix 
                             # taxonomic layout
-                            print(layout_prefix)
+                            
                             if layout_prefix.startswith('taxa'):
                                 layout_config = {
                                     "layout_name": layout.name,
