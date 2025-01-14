@@ -136,7 +136,7 @@ class CustomServerAdapter(ServerAdapter):
 def run_server():
     """Run the Bottle app."""
     global server_instance
-    server_instance = CustomServerAdapter(host='localhost', port=8081)
+    server_instance = CustomServerAdapter(host='138.4.138.153', port=8081)
     app.run(server=server_instance)
 
 
@@ -492,7 +492,7 @@ def server_static(filepath):
     return static_file(filepath, root='./static')
 
 explore_threads = {}  # Store threads and stop signals for exploration sessions
-@route('/')
+@app.route('/')
 def home():
     # Stop all exploration threads
     #print(explore_threads)
@@ -1772,7 +1772,7 @@ def start_explore_thread(t, treename, current_layouts, current_props):
     """
     stop_event = threading.Event()
     def explore():
-        t.explore(name=treename, layouts=current_layouts, host='138.4.138.153', port=5050, open_browser=False, include_props=current_props)
+        t.explore(name=treename, layouts=current_layouts, host='138.4.138.153', port=5051, open_browser=False, include_props=current_props)
         while not stop_event.is_set():
             time.sleep(0.1)  # Check periodically for the stop signal
     # Start the thread
@@ -1799,5 +1799,6 @@ def convert_query_string(query_string):
             result.append(query)
     return result
 
-run(host='138.4.138.153', port=8080)
-
+# run(host='138.4.138.153', port=8081)
+if __name__ == "__main__":
+    start_server()
