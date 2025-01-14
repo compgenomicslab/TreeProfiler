@@ -357,7 +357,6 @@ class LayoutPropsMatrixOld(TreeLayout):
 
     def set_node_style(self, node):
         array = self.get_array(node)
-        #array = self.get_array(node)
         if array:
             if not self.is_list:
                 if len(self.matrix_props) > 1:
