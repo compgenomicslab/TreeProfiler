@@ -1,0 +1,1604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explore Tree: {{treename}}</title>
+    <!-- Bootstrap CSS -->
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="/static/js/bootstrap.bundle.min.js"></script>
+
+    <style>
+        .control-panel {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+        }
+
+        /* Control panel tab */
+        .control-panel-tab {
+            position: fixed;
+            top: 0;
+            right: 20px;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border-radius: 0 0 5px 5px;
+            cursor: pointer;
+            font-weight: bold;
+            z-index: 1001;
+            text-align: center;
+        }
+
+        /* Minimized Control Panel */
+        .control-panel-wrapper.minimized .control-panel {
+            display: none; /* Hide the full control panel */
+        }
+
+        .control-panel-wrapper.minimized #toggleControlPanel {
+            position: fixed;
+            z-index: 999;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Expanded Control Panel */
+        .control-panel-wrapper:not(.minimized) #toggleControlPanel {
+            position: absolute;
+            top: 0px;
+            right: 0px;
+        }
+
+        .btn-small {
+            font-size: 0.85rem;
+            padding: 5px 10px;
+        }
+
+        .layout-settings {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Parent Wrapper for Control Panel -->
+    <div id="controlPanelWrapper" class="control-panel-wrapper">
+        <button id="toggleControlPanel" class="btn btn-sm btn-outline-secondary control-panel-tab" type="button" data-bs-toggle="collapse" data-bs-target="#controlPanelBody" aria-expanded="true" aria-controls="controlPanelBody">
+            &#x25BC; <!-- Down arrow initially -->
+        </button>
+        <div class="control-panel border rounded shadow-lg position-fixed">
+            <!-- Control Panel Header with Minimize Button -->
+            <div class="control-panel-tabs border-bottom bg-light">
+                <ul class="nav nav-tabs" id="controlPanelTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="controlPanelTab" data-bs-toggle="tab" data-bs-target="#controlPanelContent" type="button" role="tab" aria-controls="controlPanelContent" aria-selected="true">
+                            Control Panel
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="loadedLayoutTab" data-bs-toggle="tab" data-bs-target="#loadedLayoutContent" type="button" role="tab" aria-controls="loadedLayoutContent" aria-selected="false">
+                            Loaded Layouts
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <div class="tab-content">
+                <!-- Control Panel Body -->
+                <div class="tab-pane fade show active" id="controlPanelContent" role="tabpanel" aria-labelledby="controlPanelTab">
+                    <div class="p-3">
+                        <!-- Properties Card -->
+                        <div class="card mt-3 shadow">
+                            <div class="card-header bg-light">
+                                <button class="btn d-flex align-items-center w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#propertiesCard" aria-expanded="false" aria-controls="propertiesCard">
+                                    Metadata-Based Layouts Settings
+                                    <span id="propertiesCardArrow" class="ms-auto">&#x25BC;</span> <!-- Downward arrow initially -->
+                                </button>
+                            </div>
+                            
+                            <div id="propertiesCard" class="collapse">
+                                <div class="card-body">
+                                    <div class="mb-3 d-flex justify-content-between">
+                                        <button id="selectAllProps" class="btn btn-sm btn-primary">Select All</button>
+                                        <button id="deselectAllProps" class="btn btn-sm btn-secondary">Deselect All</button>
+                                    </div>
+                        
+                                    <!-- Scrollable Properties Table -->
+                                    <div class="card">
+                                        <div class="card-header bg-primary text-white">
+                                            <h5 class="mb-0">Node Properties</h5>
+                                        </div>
+                                        <div class="card-body p-0" style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; border-radius: 5px;">
+                                            <table class="table table-bordered table-hover table-sm mb-0">
+                                                <thead class="table-light sticky-top" style="z-index: 1; border-top: 1px solid #ddd;">
+                                                    <tr class="text-center">
+                                                        <th style="width: 10%;">Select</th>
+                                                        <th style="width: 60%;">Property Name</th>
+                                                        <th style="width: 30%;">Type</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="propertiesTable">
+                                                    % for prop in tree_info['node_props']:
+                                                    <tr class="text-center align-middle">
+                                                        <td>
+                                                            <input type="checkbox" class="form-check-input selectProperty" value="{{prop}}">
+                                                        </td>
+                                                        <td>{{prop}}</td>
+                                                        <td class="propType">{{tree_info['prop2type'][prop]}}</td>
+                                                    </tr>
+                                                    % end
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                        
+                                    <div class="text-center mt-4">
+                                        <button id="selectLayoutBtn" class="btn btn-primary w-100 py-2">Select Layout</button>
+                                    </div>
+                        
+                                    <!-- Layout Configuration Section -->
+                                    <div id="layoutConfigSection" class="layout-settings mt-3">
+                                        <div class="card shadow-sm">
+                                            <div class="card-header text-white bg-secondary d-flex align-items-center">
+                                                <h5 class="mb-0">Select Layout Type</h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <!-- Layout Selection -->
+                                                <select class="form-select mb-3" id="layout" name="layout">
+                                                    <optgroup label="Categorical">
+                                                        <option value="colorbranch-layout">Color Branch Layout</option>
+                                                        <option value="label-layout">Label Layout</option>
+                                                        <option value="rectangle-layout">Rectangular Layout</option>
+                                                        <option value="categorical-bubble-layout">Bubble Layout</option>
+                                                        <option value="background-layout">Background Layout</option>
+                                                        <option value="categorical-matrix-layout">Categorical Matrix Layout</option>
+                                                        <option value="piechart-layout">Piechart Layout</option>
+                                                        <option value="profiling-layout">Profiling Layout</option>
+                                                    </optgroup>
+                                                    <optgroup label="Binary">
+                                                        <option value="binary-layout">Binary Layout</option>
+                                                    </optgroup>
+                                                    <optgroup label="Numerical">
+                                                        <option value="branchscore-layout">Color Branch Layout</option>
+                                                        <option value="heatmap-layout">Heatmap Layout</option>
+                                                        <option value="heatmap-mean-layout">Heatmap Mean Layout</option>
+                                                        <option value="heatmap-zscore-layout">Heatmap Z-Score Layout</option>
+                                                        <option value="barplot-layout">Barplot Layout</option>
+                                                        <option value="numerical-matrix-layout">Numerical Matrix Layout</option>
+                                                        <option value="numerical-bubble-layout">Bubble Layout</option>
+                                                    </optgroup>
+                                                    <optgroup label="Analytic">
+                                                        <option value="acr-discrete-layout">ACR Discrete Layout</option>
+                                                        <option value="acr-continuous-layout">ACR Continuous Layout</option>
+                                                        <option value="ls-layout">LS Layout</option>
+                                                    </optgroup>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <!-- Layout Settings -->
+                                        <div class="card mt-4 shadow-sm">
+                                            <div class="card-header bg-light d-flex align-items-center">
+                                                <h5 class="mb-0 text-secondary">Layout Settings</h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <div id="layoutSettings" class="form-group">
+                                                    <!-- General Settings -->
+                                                    <h6 class="fw-bold mb-3 text-secondary">General Settings</h6>
+                                                    <div class="row g-3">
+                                                        <div class="col-md-4">
+                                                            <label for="columnWidth" class="form-label small">Column Width</label>
+                                                            <input type="number" id="columnWidth" name="columnWidth" class="form-control" value="70">
+                                                        </div>
+                                                        <div class="col-md-4">
+                                                            <label for="paddingX" class="form-label small">Padding X</label>
+                                                            <input type="number" class="form-control" id="paddingX" name="paddingX" value="1">
+                                                        </div>
+                                                        <div class="col-md-4">
+                                                            <label for="paddingY" class="form-label small">Padding Y</label>
+                                                            <input type="number" class="form-control" id="paddingY" name="paddingY" value="0">
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Numerical-Specific Settings -->
+                                                    <div id="internalNumerical" class="form-group mt-4" style="display: none;">
+                                                        <label for="internalNumRep" class="form-label small">Internal Number Representation</label>
+                                                        <select class="form-select" id="internalNumRep" name="internalNumRep">
+                                                            <option value="avg">Average</option>
+                                                            <option value="sum">Sum</option>
+                                                            <option value="max">Maximum</option>
+                                                            <option value="min">Minimum</option>
+                                                            <option value="std">Standard Deviation</option>
+                                                            <option value="none">None</option>
+                                                        </select>
+                                                    </div>
+
+                                                    <!-- Categorical Layout Settings -->
+                                                    <div id="categoricalSettings" class="form-group mt-4">
+                                                        <label for="categoricalColorscheme" class="form-label small">Color Scheme</label>
+                                                        <select class="form-select" id="categoricalColorscheme" name="categoricalColorscheme">
+                                                            % for colormap in color_schemes:
+                                                            <option value="{{ colormap }}">{{ colormap }}</option>
+                                                            % end
+                                                        </select>
+                                                    </div>
+
+                                                    <!-- Binary Layout Settings -->
+                                                    <div id="binarySettings" class="form-group mt-4" style="display: none;">
+                                                        <h6 class="fw-bold text-secondary">Binary Layout Settings</h6>
+                                                        <div id="aggregateSettings" class="form-group mt-3">
+                                                            <label for="aggregateOption" class="form-label small">Summary for Collapsed Nodes:</label>
+                                                            <select class="form-control" id="aggregateOption" name="aggregateOption">
+                                                                <option value="gradient">Gradient</option>
+                                                                <option value="aggregate">Aggregate</option>
+                                                            </select>
+                                                        </div>
+
+                                                        <div class="form-check form-group mt-3">
+                                                            <input class="form-check-input" type="checkbox" value="unicolor" id="unicolorOption" name="unicolorOption">
+                                                            <label class="form-check-label small" for="unicolorOption">Use Unicolor</label>
+                                                        </div>
+                                                        <div id="unicolorPicker" class="form-group mt-3" style="display: none;">
+                                                            <label for="unicolorColor" class="form-label small">Select Unicolor:</label>
+                                                            <input type="color" id="unicolorColor" name="unicolorColor" class="form-control" value="#ff0000">
+                                                        </div>
+                                                        
+                                                        <div id="binaryColorScheme" class="form-group mt-3">
+                                                            <label for="binaryColorSchemeSelect" class="form-label small">Select Color Scheme:</label>
+                                                            <select class="form-select" id="binaryColorSchemeSelect" name="binaryColorScheme">
+                                                                % for colormap in color_schemes:
+                                                                <option value="{{ colormap }}">{{ colormap }}</option>
+                                                                % end
+                                                            </select>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Numerical Settings -->
+                                                    <div id="numericalSettings" class="form-group mt-4" style="display: none;">
+                                                        <h6 class="fw-bold text-secondary">Numerical Settings</h6>
+                                                        <div class="row g-3">
+                                                            <div class="col-md-6">
+                                                                <label for="minVal" class="form-label small">Min Value (Auto-detected if empty):</label>
+                                                                <input type="number" class="form-control" id="minVal" name="min_val" placeholder="Enter min value">
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <label for="maxVal" class="form-label small">Max Value (Auto-detected if empty):</label>
+                                                                <input type="number" class="form-control" id="maxVal" name="max_val" placeholder="Enter max value">
+                                                            </div>
+                                                        </div>
+                                                        <div class="row g-3 mt-3">
+                                                            <div class="col-md-4">
+                                                                <label for="colorMin" class="form-label small">Color Min:</label>
+                                                                <input type="color" class="form-control" id="colorMin" name="color_min" value="#0000ff">
+                                                            </div>
+                                                            <div class="col-md-4">
+                                                                <label for="colorMid" class="form-label small">Color Mid:</label>
+                                                                <input type="color" class="form-control" id="colorMid" name="color_mid" value="#ffffff">
+                                                            </div>
+                                                            <div class="col-md-4">
+                                                                <label for="colorMax" class="form-label small">Color Max:</label>
+                                                                <input type="color" class="form-control" id="colorMax" name="color_max" value="#ff0000">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Barplot -->
+                                                    <div id="barplotOptions" class="form-group mt-4" style="display: none;">
+                                                        <h6 class="fw-bold text-primary">Barplot Settings</h6>
+                                                        <label for="barplotWidth" class="form-label small">Barplot Column Width (px):</label>
+                                                        <input type="number" class="form-control mb-2" id="barplotWidth" name="barplotWidth" placeholder="Enter width" value="200">
+                                        
+                                                        <!-- <label for="barplotScaleProperty" class="form-label small">Scale Based On Property:</label>
+                                                        <select class="form-control mb-2" id="barplotScaleProperty" name="barplotScaleProperty"></select> -->
+                                        
+                                                        <label for="barplotRange" class="form-label small">Custom Barplot Scale (Max Value):</label>
+                                                        <input type="number" class="form-control mb-2" id="barplotRange" name="barplotRange" placeholder="Enter max value for the property">
+                                        
+                                                        <label for="barplotColorOption" class="form-label small">Barplot Color:</label>
+                                                        <select class="form-control mb-2" id="barplotColorOption" name="barplotColorOption">
+                                                            <option value="same">Color Scheme</option>
+                                                            <option value="colorby">Fill by Property</option>
+                                                            <option value="custom">Custom Color</option>
+                                                        </select>
+                                                        <div id="barplotColorSettings" class="mt-3">
+                                                            <div class="form-group">
+                                                                <label for="barplotColorScheme" class="form-label small">Barplot Color</label>
+                                                                <select class="form-control" id="barplotColorScheme" name="barplotColorScheme">
+                                                                    % for colormap in color_schemes:
+                                                                    <option value="{{ colormap }}">{{ colormap }}</option>
+                                                                    % end
+                                                                </select>
+                                                            </div>
+                                                            <div class="form-group mt-2" id="customColorWrapper" style="display: none;"> <!-- Custom Color Picker -->
+                                                                <label for="barplotCustomColor" class="form-label small">Select Custom Color:</label>
+                                                                <input type="color" class="form-control" id="barplotCustomColor" name="barplotCustomColor" value="#0000ff">
+                                                            </div>
+                                                            <select class="form-control mt-2" id="barplotFillProperty" name="barplotFillProperty" style="display: none;">
+                                                                % for prop in tree_info['node_props']:
+                                                                <option value="{{ prop }}">{{ prop }}</option>
+                                                                % end
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Add Layer Button -->
+                                        <div class="text-center mt-4">
+                                            <button id="addLayerBtn" class="btn btn-primary w-100 py-2">Add Layout</button>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Non-Properties-Based Layouts -->
+                        <div class="card mt-3 shadow">
+                            <div class="card-header">
+                                <button class="btn d-flex align-items-center w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#preAnnotatedCard" aria-expanded="false" aria-controls="preAnnotatedCard">
+                                    Activate Predefined Layouts
+                                    <span id="preAnnotatedCardArrow" class="ms-auto">&#x25BC;</span>
+                                </button>
+                            </div>
+                            <div id="preAnnotatedCard" class="collapse">
+                                <div class="card-body">
+
+                                    <!-- Taxonomic Layouts Subcard -->
+                                    % if tree_info['taxonomic_annotation']:
+                                    <div class="card mb-3 shadow-sm">
+                                        <div class="card-header d-flex align-items-center justify-content-between">
+                                            <h6 class="mb-0 text-primary">Taxonomic Layouts</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <select id="taxonomicLayoutSelect" class="form-control mb-2">
+                                                <option value="taxonclade-layout">Taxon Clade Layout</option>
+                                                <option value="taxonrectangle-layout">Taxon Rectangle Layout</option>
+                                                <option value="taxoncollapse-layout">Taxon Collapse Layout</option>
+                                            </select>
+                                            <button id="activateTaxonomicLayout" class="btn btn-success w-100">Activate Taxonomic Layout</button>
+                                        </div>
+                                    </div>
+                                    % else:
+                                    <div class="card mb-3 shadow-sm">
+                                        <div class="card-header d-flex align-items-center justify-content-between">
+                                            <h6 class="mb-0 text-danger">Taxonomic Layouts</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <p class="text-muted mb-0">The input tree does not contain taxonomic annotations.</p>
+                                        </div>
+                                    </div>
+                                    % end
+
+                                    <!-- Alignment Layouts Subcard -->
+                                    % if tree_info['alignment_annotation']:
+                                    <div class="card mb-3 shadow-sm">
+                                        <div class="card-header d-flex align-items-center justify-content-between">
+                                            <h6 class="mb-0 text-primary">Alignment Layouts</h6>
+                                            <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#alignmentLayoutsBody" aria-expanded="true" aria-controls="alignmentLayoutsBody">
+                                                &#x25BC; <!-- Down arrow -->
+                                            </button>
+                                        </div>
+                                        <div id="alignmentLayoutsBody" class="collapse show">
+                                            <div class="card-body">
+                                                <div id="alignmentSettings" class="form-group">
+                                                    <label for="alignmentType" class="fw-bold mb-2">Alignment Window:</label>
+                                                    <div class="row g-2">
+                                                        <div class="col-md-6">
+                                                            <label for="algStart" class="form-label small">Start</label>
+                                                            <input type="number" class="form-control form-control-sm" id="algStart" name="algStart" placeholder="Start position">
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <label for="algEnd" class="form-label small">End</label>
+                                                            <input type="number" class="form-control form-control-sm" id="algEnd" name="algEnd" placeholder="End position">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <button id="activateAlignmentLayout" class="btn btn-success w-100 mt-3 fw-bold">Activate Alignment Layout</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    % else:
+                                    <div class="card mb-3 shadow-sm">
+                                        <div class="card-header d-flex align-items-center justify-content-between">
+                                            <h6 class="mb-0 text-danger">Alignment Layouts</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <p class="text-muted mb-0">The input tree does not include alignment annotations.</p>
+                                        </div>
+                                    </div>
+                                    % end
+
+                                    <!-- Domain Layouts Subcard -->
+                                    % if tree_info['domain_annotation']:
+                                    <div class="card mb-3 shadow-sm">
+                                        <div class="card-header d-flex align-items-center justify-content-between">
+                                            <h6 class="mb-0 text-primary">Domain Layouts</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <button id="activateDomainLayout" class="btn btn-success w-100">Activate Domain Layout</button>
+                                        </div>
+                                    </div>
+                                    % else:
+                                    <div class="card mb-3 shadow-sm">
+                                        <div class="card-header d-flex align-items-center justify-content-between">
+                                            <h6 class="mb-0 text-danger">Domain Layouts</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <p class="text-muted mb-0">The input tree does not have domain annotations.</p>
+                                        </div>
+                                    </div>
+                                    % end
+
+                                </div>
+                            </div>
+                        </div>
+
+                        
+                        <!-- Custom Query Card -->
+                        <div class="card mt-3 shadow">
+                            <div class="card-header">
+                                <button class="btn d-flex align-items-center w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#customQueryCardBody" aria-expanded="false" aria-controls="customQueryCardBody">
+                                    Conditional Actions (Highlight, Collapse, Prune)
+                                    <span id="customQueryCardArrow" class="ms-auto">&#x25BC;</span>
+                                </button>
+                            </div>
+                            <div id="customQueryCardBody" class="collapse">
+                                <div class="card-body">
+                                    <div class="form-group">
+                                        <label for="customQueryType" class="fw-bold">Select Action:</label>
+                                        <select class="form-control" id="customQueryType" name="customQueryType">
+                                            <option value="">-- Choose an action --</option>
+                                            <option value="highlight">Highlight</option>
+                                            <option value="collapse">Collapse</option>
+                                            <option value="prune">Prune</option>
+                                            % if tree_info['taxonomic_annotation']:
+                                            <option value="rank_limit">Limit by Taxonomic Rank (taxonomic trees only)</option>
+                                            % end
+                                        </select>
+                                    </div>
+                                    <div id="queryFields" class="form-group mt-3">
+                                        <label for="queryProp" class="fw-bold">Select Property:</label>
+                                        <select class="form-control" id="queryProp" name="queryProp">
+                                            % for prop in selected_props:
+                                            <option value="{{ prop }}">{{ prop }}</option>
+                                            % end
+                                        </select>
+
+                                        <!-- Dynamic Counter Input Container -->
+                                        <div id="dynamicCounterProps"></div>
+
+                                        <label for="queryOperation" class="fw-bold mt-2">Operation:</label>
+                                        <select class="form-control" id="queryOperation" name="queryOperation">
+                                            <option value="=">Equals (=)</option>
+                                            <option value="!=">Not Equals (!=)</option>
+                                            <option value="contains">Contains</option>
+                                            <option value="&gt;">Greater Than (&gt;)</option>
+                                            <option value="&lt;">Less Than (&lt;)</option>
+                                        </select>
+
+                                        <label for="queryValue" class="fw-bold mt-2">Enter Value:</label>
+                                        <input type="text" class="form-control" id="queryValue" name="queryValue" placeholder="Enter value here">
+
+                                        <div class="btn-group mt-3">
+                                            <button type="button" class="btn btn-secondary" id="addQueryBtn">Add</button>
+                                            <button type="button" class="btn btn-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                                                <span class="visually-hidden">Toggle Dropdown</span>
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="#" id="addWithAnd">Add with AND</a></li>
+                                                <li><a class="dropdown-item" href="#" id="addWithOr">Add with OR</a></li>
+                                            </ul>
+                                        </div>
+                                        
+                                        <div class="mt-3">
+                                            <label for="queryBox" class="fw-bold mt-2">Current Query:</label>
+                                            <textarea class="form-control" id="queryBox" name="queryBox" rows="3" readonly></textarea>
+                                            <small><a href="#" id="clearQueryBox" class="text-danger">Clear Query</a></small>
+                                        </div>
+                                        
+                                    </div>
+
+                                    <div id="taxonomicOptions" class="form-group mt-3" style="display:none">
+                                        <label for="rankSelection" class="form-label fw-bold">Select Taxonomic Rank:</label>
+                                        <select id="rankSelection" name="taxonomicRanks" class="form-control">
+                                            % for rank in tree_info['rank_list']:
+                                            <option value="{{ rank }}">{{ rank }}</option>
+                                            % end
+                                        </select>
+                                    </div>
+
+                                    <div class="text-center mt-4">
+                                        <button id="sendQuery" class="btn btn-success w-100 py-2">Execute Action</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                
+                        <div class="control-panel-footer mt-4">
+                            <button class="btn btn-primary" onclick="window.location.reload();">Refresh View</button>
+                            <button class="btn btn-secondary" id="fullscreenBtn">Fullscreen</button>
+                            <button id="resetTreeBtn" class="btn btn-danger">Reset Tree</button>
+                        </div>
+                    </div>
+                </div>
+        
+                <!-- Loaded Layouts Tab -->
+                <div class="tab-pane fade" id="loadedLayoutContent" role="tabpanel" aria-labelledby="loadedLayoutTab">
+                    <div class="card mt-3 shadow-lg">
+                        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0 fw-bold">Manage Loaded Layouts</h6>
+                            <i class="bi bi-gear-fill"></i>
+                        </div>
+                        <div class="card-body">
+                            <!-- Table Container with Scroll -->
+                            <div style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 5px;">
+                                <table class="table table-bordered table-hover table-sm mb-0">
+                                    <thead class="table-light sticky-top" style="z-index: 1;">
+                                        <tr class="text-center">
+                                            <th style="width: 30%;">Layout</th>
+                                            <th style="width: 40%;">Applied Properties</th>
+                                            <th style="width: 30%;">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="activeLayoutsTable">
+                                        % for layout in layouts_metadata:
+                                        <tr>
+                                            <td class="align-middle text-center">{{ layout['layout_name'] }}</td>
+                                            <td>
+                                                <ul class="list-unstyled mb-0 text-secondary">
+                                                    % for prop in layout['applied_props']:
+                                                    <li>{{ prop }}</li>
+                                                    % end
+                                                </ul>
+                                            </td>
+                                            <td class="text-center align-middle">
+                                                <div class="btn-group">
+                                                    <button class="btn btn-sm btn-outline-primary">
+                                                        <i class="bi bi-pencil-square me-1"></i>Edit
+                                                    </button>
+                                                    <button class="btn btn-sm btn-outline-danger delete-layout-btn">
+                                                        <i class="bi bi-trash-fill me-1"></i>Delete
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        % end
+                                    </tbody>
+                                </table>
+                                <!-- Hidden input to store the current layouts_metadata -->
+                                <input id="layoutsMetadataInput" type="hidden" value="{{ layouts_metadata_json }}">
+                            </div>
+                            <!-- Apply Changes Button -->
+                            <div class="text-center mt-4">
+                                <button id="applyChangesBtn" class="btn btn-success w-100 py-2 fw-bold">
+                                    <i class="bi bi-check-circle-fill me-2"></i>Apply Changes
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container-fluid mt-4">
+        <h1>Explore Tree: {{treename}}</h1>
+
+        <!-- Iframe container -->
+        <div class="position-relative mt-3">
+            <iframe src="http://localhost:5051" id="treeIframe" width="100%" height="800px" frameborder="0"
+                allowfullscreen></iframe>
+        </div>
+        <!-- Back Home Button -->
+        <div class="mt-3">
+            <a href="/stop_explore" class="btn btn-primary">Back Home</a>
+        </div>
+    </div>
+
+    <!-- Modal for Editing Layout Config -->
+    <div class="modal fade" id="editLayoutModal" tabindex="-1" aria-labelledby="editLayoutModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editLayoutModalLabel">Edit Layout Configuration</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editLayoutForm">
+                        <input type="hidden" id="editLayoutName" name="layout_name">
+    
+                        <!-- Placeholder for Config Fields -->
+                        <div id="configFieldsContainer"></div>
+    
+                        <!-- Placeholder for Layer Fields -->
+                        <div id="layerFieldsContainer"></div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveLayoutChanges">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // this is for the layout configuration section
+        // Track selected properties
+        let layers = [];
+        const selectedProperties = [];
+        
+        // Handle Select All button
+        $('#selectAllProps').click(() => {
+            $('.selectProperty').prop('checked', true);
+            updateSelectedProperties();
+        });
+    
+        // Handle Deselect All button
+        $('#deselectAllProps').click(() => {
+            $('.selectProperty').prop('checked', false);
+            updateSelectedProperties();
+        });
+    
+        // Update selected properties array
+        function updateSelectedProperties() {
+            selectedProperties.length = 0; // Clear current selections
+            $('.selectProperty:checked').each(function () {
+                selectedProperties.push($(this).val());
+            });
+        }
+    
+        // Handle individual property selection
+        $(document).on('change', '.selectProperty', function () {
+            updateSelectedProperties();
+        });
+    
+        // Toggle Layout Config Section
+        $('#selectLayoutBtn').click(() => {
+            const layoutConfigSection = $('#layoutConfigSection');
+            if (layoutConfigSection.is(':visible')) {
+                layoutConfigSection.hide(); // Hide the section
+                $('#selectLayoutBtn').text('Show Layout Config'); // Update button text
+            } else {
+                if (selectedProperties.length === 0) {
+                    alert('Please select at least one property.');
+                    return;
+                }
+                layoutConfigSection.show(); // Show the section
+                $('#selectLayoutBtn').text('Hide Layout Config'); // Update button text
+            }
+        });
+        
+        
+        // Handle Add Layout Button
+        $('#addLayerBtn').click(() => {
+            // // Custom query settings
+            const queryType = null;
+            const query = null;
+            const rankSelection = null;
+            // const queryType = document.getElementById('customQueryType').value;
+            // const query = document.getElementById('queryBox').value;
+
+            // Categorical layout settings
+            const categoricalColorscheme = document.getElementById('categoricalColorscheme').value;
+            // Binary layout settings
+            const isUnicolor = document.getElementById('unicolorOption').checked;
+            const binaryColorScheme = isUnicolor ? null : document.getElementById('binaryColorSchemeSelect').value;
+            const unicolorColor = isUnicolor ? document.getElementById('unicolorColor').value : null;
+            const aggregateOption = document.getElementById('aggregateOption').value;
+
+            // numerical layout settings
+            const minVal = document.getElementById('minVal').value;
+            const maxVal = document.getElementById('maxVal').value;
+            const colorMin = document.getElementById('colorMin').value;
+            const colorMid = document.getElementById('colorMid').value;
+            const colorMax = document.getElementById('colorMax').value;
+
+            // Barplot layout settings
+            const barplotWidth = document.getElementById('barplotWidth').value;
+            const barplotScaleProperty = document.getElementById('barplotScaleProperty')?.value || null;
+            const barplotRange = document.getElementById('barplotRange').value;
+            const barplotColorOption = document.getElementById('barplotColorOption').value;
+            const barplotColorScheme = document.getElementById('barplotColorScheme').value;
+            const barplotFillProperty = document.getElementById('barplotFillProperty').value;
+            const barplotCustomColor = document.getElementById('barplotCustomColor').value;
+
+            // alignment layout settings
+            const algStart = document.getElementById('algStart')?.value || null;
+            const algEnd = document.getElementById('algEnd')?.value || null;
+            const props = selectedProperties;
+            const layout = $('#layout').val();
+            if (!layout) {
+                alert('Please select a layout.');
+                return;
+            }
+            
+            const layer = {
+                layout,
+                props,
+                
+                queryType,
+                query,
+                rankSelection,
+                
+                categoricalColorscheme,
+                isUnicolor,
+                binaryColorScheme,
+                unicolorColor,
+                aggregateOption,
+                minVal,
+                maxVal,
+                colorMin,
+                colorMid,
+                colorMax,
+                barplotWidth,
+                barplotScaleProperty,
+                barplotRange,
+                barplotColorOption,
+                barplotColorScheme,
+                barplotFillProperty,
+                barplotCustomColor,
+                algStart,
+                algEnd
+            };
+            layers.push(layer);
+
+            const columnWidth = $('#columnWidth').val();
+            if (!selectedProperties.length) {
+                alert('Please select properties before adding a layout.');
+                return;
+            }
+            const paddingX = document.getElementById("paddingX").value || null;
+            const paddingY = document.getElementById("paddingY").value || null;
+            
+            // Numerical-specific setting (applies only if a numerical layout exists in layers)
+            let internalNumRep = null;
+            const numericalLayouts = [
+                "branchscore-layout",
+                "heatmap-layout",
+                "heatmap-mean-layout",
+                "heatmap-zscore-layout",
+                "barplot-layout",
+                "numerical-matrix-layout",
+                "numerical-bubble-layout",
+            ];
+            if (numericalLayouts.includes(layout)) {
+                internalNumRep = document.getElementById("internalNumRep").value || null;
+            }
+
+            const layersData = JSON.stringify(layers);
+
+            // Construct the form data to send to the backend
+            const formData = {
+                layers: layersData,
+                column_width: columnWidth,
+                padding_x: paddingX,
+                padding_y: paddingY,
+                internal_num_rep: internalNumRep
+            };
+            
+            // Submit the data to the backend
+            $.post(
+                '/explore_tree/{{treename}}',
+                formData,
+                (response) => {
+                    console.log('Layout added:', response);
+                    //alert('Layout added successfully!');
+                    // Optionally reset the UI after a successful submission
+                    $('.selectProperty').prop('checked', false);
+                    selectedProperties.length = 0;
+                    $('#layoutConfigSection').hide();
+
+                    // Refresh the window after successful submission
+                    window.location.reload();
+                }
+            ).fail((error) => {
+                console.error('Error adding layout:', error);
+                alert('Failed to add layout. Please try again.');
+            });
+        });
+
+        function activateLayout(layoutName) {
+            if (layoutName === 'alignment-layout') {
+                const algStart = document.getElementById('algStart')?.value || null;
+                const algEnd = document.getElementById('algEnd')?.value || null;
+
+                // Add the layer only if both algStart and algEnd are not null
+                if (algStart !== null && algEnd !== null) {
+                    const layer = {
+                        layout: layoutName,
+                        props: [],
+                        algStart,
+                        algEnd
+                    };
+                    layers.push(layer);
+                } else {
+                    const layer = { layout: layoutName, props: [] };
+                    layers.push(layer);
+                }
+            } else {
+                const layer = { layout: layoutName, props: [] }; // No properties for these layouts
+                layers.push(layer);
+            };
+
+
+            const layersData = JSON.stringify(layers);
+            const columnWidth = $('#columnWidth').val();
+            const paddingX = document.getElementById("paddingX").value || null;
+            const paddingY = document.getElementById("paddingY").value || null;
+            let internalNumRep = null;
+
+            const formData = {
+                layers: layersData,
+                column_width: columnWidth,
+                padding_x: paddingX,
+                padding_y: paddingY,
+                internal_num_rep: internalNumRep
+            };
+
+            $.post(
+                '/explore_tree/{{treename}}',
+                formData,
+                (response) => {
+                    console.log(`${layoutName} activated:`, response);
+                    window.location.reload();
+                }
+            ).fail((error) => {
+                console.error(`Error activating ${layoutName}:`, error);
+                alert(`Failed to activate ${layoutName}. Please try again.`);
+            });
+        }
+
+        // Usage
+        $('#activateTaxonomicLayout').click(() => activateLayout($('#taxonomicLayoutSelect').val()));
+        $('#activateAlignmentLayout').click(() => activateLayout('alignment-layout'));
+        $('#activateDomainLayout').click(() => activateLayout('domain-layout'));
+
+ 
+        document.getElementById('resetTreeBtn').addEventListener('click', () => {
+            if (!confirm('Are you sure you want to reset the tree?')) return;
+            fetch('/explore_tree/{{ treename }}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ reset_tree: true })
+            })
+            .then(response => {
+                window.location.reload();
+            })
+            .then(data => {
+                // Update the tree display dynamically
+                document.getElementById('treeContainer').innerHTML = data;
+            })
+            .catch(error => console.error('Error:', error));
+        });
+        
+        
+
+    </script>
+    <script>
+        // === Edit Layout Functionality ===
+        document.addEventListener('DOMContentLoaded', () => {
+            const tableBody = document.getElementById('activeLayoutsTable');
+            const layoutsMetadataInput = document.getElementById('layoutsMetadataInput');
+            
+            // Parse the initial metadata value into an array
+            let layoutsMetadata = JSON.parse(layoutsMetadataInput.value);
+
+            // Get color schemes passed from the backend
+            const colorSchemes = {{!color_schemes}}; // Rendered directly in template
+
+            // Function to update the hidden input field
+            function updateHiddenInput() {
+                layoutsMetadataInput.value = JSON.stringify(layoutsMetadata);
+            }
+
+            // Function to find and remove layout metadata by name
+            function removeLayoutMetadata(layoutName) {
+                const layoutIndex = layoutsMetadata.findIndex(layout => layout.layout_name === layoutName);
+
+                if (layoutIndex !== -1) {
+                    // Remove only the selected layout from the metadata array
+                    layoutsMetadata.splice(layoutIndex, 1);
+                    // Update the hidden input with the modified array
+                    updateHiddenInput();
+                }
+            }
+
+            // Handle Delete Button Click
+            tableBody.addEventListener('click', function (e) {
+                if (e.target.closest('.delete-layout-btn')) {
+                    const row = e.target.closest('tr'); // Find the table row
+                    const layoutName = row.querySelector('td:nth-child(1)').innerText.trim(); // Get layout name
+                    
+                    // Remove the row from the table
+                    row.remove();
+
+                    // Remove the corresponding layout from the metadata
+                    removeLayoutMetadata(layoutName);
+                }
+            });
+
+            
+
+            // Populate the modal with the layout's configuration and layer fields
+            function populateEditForm(layoutName) {
+                const layout = layoutsMetadata.find(l => l.layout_name === layoutName);
+                console.log(layout);
+                const selectedProps = {{!selected_props}}; 
+                if (layout) {
+                    document.getElementById('editLayoutName').value = layout.layout_name;
+
+                    // Generate Config Fields
+                    const configContainer = document.getElementById('configFieldsContainer');
+                    configContainer.innerHTML = ''; // Clear previous fields
+                    for (const [key, value] of Object.entries(layout.config)) {
+                        const field = generateInputField(key, value, 'config');
+                        configContainer.appendChild(field);
+                    }
+
+                    // Generate Layer Fields
+                    const layerContainer = document.getElementById('layerFieldsContainer');
+                    layerContainer.innerHTML = ''; // Clear previous fields
+                    for (const [key, value] of Object.entries(layout.layer)) {
+                        const field = generateInputField(key, value, 'layer');
+                        layerContainer.appendChild(field);
+                    }
+
+                    // Handle Numerical-Matrix Specific Settings
+                    const layoutPrefix = layout.layout_name.split('_')[0].toLowerCase(); // Extract prefix and convert to lowercase
+                    if (layoutPrefix === 'numerical-matrix') {
+                        const minValInput = document.querySelector('input#layer-minVal');
+                        const maxValInput = document.querySelector('input#layer-maxVal');
+
+                        if (minValInput) {
+                            minValInput.disabled = true; // Disable minVal input
+                            minValInput.parentElement.style.opacity = '0.5'; // Optional: Indicate inactivity visually
+                        }
+
+                        if (maxValInput) {
+                            maxValInput.disabled = true; // Disable maxVal input
+                            maxValInput.parentElement.style.opacity = '0.5'; // Optional: Indicate inactivity visually
+                        }
+                    }
+
+                    // Handle Barplot-Specific Settings
+                    if (layoutPrefix === 'barplot') {
+                        const barplotColorOption = document.querySelector('select#layer-barplotColorOption');
+                        const barplotColor = document.querySelector('input#layer-barplotColor');
+                        const barplotFillProperty = document.querySelector('select#layer-barplotFillProperty');
+
+                        // Ensure options are generated
+                        if (barplotColorOption) {
+                            barplotColorOption.innerHTML = `
+                                <option value="same" ${layout.layer.barplotColorOption === 'same' ? 'selected' : ''}>Same</option>
+                                <option value="colorby" ${layout.layer.barplotColorOption === 'colorby' ? 'selected' : ''}>Color by Property</option>
+                            `;
+
+                            // Add change listener for the dropdown
+                            barplotColorOption.addEventListener('change', function () {
+                                if (this.value === 'same') {
+                                    barplotColor.disabled = false; // Enable barplotColor
+                                    barplotFillProperty.disabled = true; // Disable barplotFillProperty
+                                } else if (this.value === 'colorby') {
+                                    barplotColor.disabled = true; // Disable barplotColor
+                                    barplotFillProperty.disabled = false; // Enable barplotFillProperty
+                                }
+                            });
+
+                            // Trigger change event to set the initial state
+                            barplotColorOption.dispatchEvent(new Event('change'));
+                        }
+
+                        // Populate barplotFillProperty options with properties
+                        if (barplotFillProperty) {
+                            barplotFillProperty.innerHTML = '';
+                            selectedProps.forEach(prop => {
+                                const option = document.createElement('option');
+                                option.value = prop;
+                                option.textContent = prop;
+                                if (layout.layer.barplotFillProperty === prop) {
+                                    option.selected = true;
+                                }
+                                barplotFillProperty.appendChild(option);
+                            });
+                        }
+                    }
+
+                }
+            }
+
+            // Generate dynamic input fields based on key-value pairs
+            function generateInputField(key, value, type) {
+                const container = document.createElement('div');
+                container.classList.add('mb-3');
+
+                const label = document.createElement('label');
+                label.setAttribute('for', `${type}-${key}`);
+                label.classList.add('form-label');
+                label.textContent = key;
+
+                let input;
+
+                // Special handling for categoricalColorscheme or similar dropdown fields
+                if (key === 'categoricalColorscheme') {
+                    input = document.createElement('select');
+                    input.classList.add('form-control');
+                    input.setAttribute('id', `${type}-${key}`);
+                    input.setAttribute('name', `${type}-${key}`);
+                    colorSchemes.forEach(color => {
+                        const option = document.createElement('option');
+                        option.value = color;
+                        option.textContent = color;
+                        if (color === value) {
+                            option.selected = true;
+                        }
+                        input.appendChild(option);
+                    });
+                } else if (key === 'aggregateOption') {
+                    // Special handling for aggregateOption in binary-layout
+                    input = document.createElement('select');
+                    input.classList.add('form-control');
+                    input.setAttribute('id', `${type}-${key}`);
+                    input.setAttribute('name', `${type}-${key}`);
+                    ['gradient', 'aggregate'].forEach(optionValue => {
+                        const option = document.createElement('option');
+                        option.value = optionValue;
+                        option.textContent = optionValue;
+                        if (optionValue === value) {
+                            option.selected = true;
+                        }
+                        input.appendChild(option);
+                    });
+                } else if (key == "barplotColorOption") {
+                    input = document.createElement('select');
+                    input.classList.add('form-control');
+                    input.setAttribute('id', `${type}-${key}`);
+                    input.setAttribute('name', `${type}-${key}`);
+                } else if (key == "barplotFillProperty") {
+                    input = document.createElement('select');
+                    input.classList.add('form-control');
+                    input.setAttribute('id', `${type}-${key}`);
+                    input.setAttribute('name', `${type}-${key}`);
+                } else if (key === 'barplotColor') {
+                    input = document.createElement('input');
+                    input.setAttribute('type', 'color'); // Explicitly set type="color"
+                    input.setAttribute('id', `${type}-${key}`);
+                    input.setAttribute('name', `${type}-${key}`);
+                    input.classList.add('form-control');
+                    input.value = value || '#000000'; // Default color if no value provided
+                } else {
+                    // Handle general input types
+                    input = document.createElement('input');
+                    input.setAttribute('id', `${type}-${key}`);
+                    input.setAttribute('name', `${type}-${key}`);
+                    input.classList.add('form-control');
+
+                    // Adjust input type based on value
+                    if (typeof value === 'number') {
+                        input.setAttribute('type', 'number');
+                        input.value = value;
+                    } else if (typeof value === 'string' && value.startsWith('#')) {
+                        input.setAttribute('type', 'color');
+                        input.value = value;
+                    } else {
+                        input.setAttribute('type', 'text');
+                        input.value = value || '';
+                    }
+                }
+
+                container.appendChild(label);
+                container.appendChild(input);
+
+                return container;
+            }
+
+            // Handle Edit Button Click
+            tableBody.addEventListener('click', function (e) {
+                if (e.target.closest('.btn-outline-primary')) {
+                    const layoutName = e.target.closest('tr').querySelector('td').innerText.trim();
+                    populateEditForm(layoutName);
+                    const editModal = new bootstrap.Modal(document.getElementById('editLayoutModal'));
+                    editModal.show();
+                }
+            });
+
+            // Save changes and update layoutsMetadataInput
+            document.getElementById('saveLayoutChanges').addEventListener('click', () => {
+                const layoutName = document.getElementById('editLayoutName').value;
+                const layout = layoutsMetadata.find(l => l.layout_name === layoutName);
+
+                if (layout) {
+                    // Update Config Fields
+                    const configContainer = document.getElementById('configFieldsContainer');
+                    layout.config = {};
+                    Array.from(configContainer.querySelectorAll('input, select')).forEach(input => {
+                        const key = input.name.split('-')[1];
+                        layout.config[key] = input.type === 'number' ? parseFloat(input.value) || 0 : input.value;
+                    });
+
+                    // Update Layer Fields
+                    const layerContainer = document.getElementById('layerFieldsContainer');
+                    layout.layer = {};
+                    Array.from(layerContainer.querySelectorAll('input, select')).forEach(input => {
+                        const key = input.name.split('-')[1];
+                        layout.layer[key] = input.type === 'number' ? parseFloat(input.value) || 0 : input.value;
+                    });
+
+                    // Update the hidden input with the new metadata
+                    updateHiddenInput();
+
+                    // Close the modal
+                    const editModal = bootstrap.Modal.getInstance(document.getElementById('editLayoutModal'));
+                    editModal.hide();
+
+                    console.log('Updated Layout:', layout);
+                }
+            });
+
+            // === End of Edit Layout Functionality ===
+
+            // Handle Apply Changes Button
+            document.getElementById('applyChangesBtn').addEventListener('click', function () {
+                fetch('/explore_tree/{{ treename }}', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({
+                        updated_metadata: layoutsMetadataInput.value
+                    })
+                })
+                .then(response => response.text())
+                .then(data => {
+                    alert("Layouts metadata updated successfully!");
+                    location.reload();
+                })
+                .catch(error => console.error('Error:', error));
+            });
+        });
+
+    </script>
+    
+    <script>
+        // this is for layout toggle settings
+        $(document).ready(function (){
+            setupEventListeners();
+        });
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            // Define a mapping for the Python class names to user-friendly types
+            const typeMapping = {
+                "float": "Numerical",
+                "int": "Numerical",
+                "str": "Categorical",
+                "list": "List",
+                "bool": "Binary"
+            };
+    
+            // Select all rows in the properties table
+            document.querySelectorAll('#propertiesTable .propType').forEach(cell => {
+                const rawType = cell.textContent.trim(); // e.g., "<class 'float'>"
+                const typeName = rawType.match(/<class '(\w+)'>/); // Extract the type name, e.g., "float"
+                if (typeName && typeName[1] in typeMapping) {
+                    cell.textContent = typeMapping[typeName[1]]; // Replace with user-friendly type
+                } else {
+                    cell.textContent = "Unknown"; // Default to "Unknown" if no mapping exists
+                }
+            });
+        });
+
+        function setupEventListeners(){
+            document.getElementById('layout').addEventListener('change', function () {
+                const selectedLayout = this.value;
+                // Check if the selected layout is one of the categorical layouts
+                const categoricalLayouts = [
+                    "colorbranch-layout",
+                    "label-layout",
+                    "rectangle-layout",
+                    "categorical-bubble-layout",
+                    "background-layout",
+                    "categorical-matrix-layout",
+                    "piechart-layout",
+                    "profiling-layout"
+                ];
+
+                if (categoricalLayouts.includes(selectedLayout)) {
+                    $('#categoricalSettings').show();
+                } else {
+                    $('#categoricalSettings').hide();
+                }
+
+                if (selectedLayout === "binary-layout") {
+                    $('#binarySettings').show();
+                } else {
+                    $('#binarySettings').hide();
+                }
+
+                // numerical layout settings
+                // Detect if a layout option is numerical
+                const numericalLayouts = [
+                    "branchscore-layout", "heatmap-layout", "heatmap-mean-layout",
+                    "heatmap-zscore-layout", "numerical-matrix-layout",
+                    "numerical-bubble-layout"
+                ];
+                if (numericalLayouts.includes(selectedLayout)) {
+                    $('#numericalSettings').show();
+                    $('#internalNumerical').show();
+                } else {
+                    $('#numericalSettings').hide();
+                    $('#internalNumerical').hide();
+                }
+                
+                // numerical-matrix specific settings
+                // Target the specific row containing minVal and maxVal within numericalSettings
+                const numericalSettingsSection = document.getElementById('numericalSettings');
+                const minMaxRow = numericalSettingsSection.querySelector('.row.g-3');
+
+                // Disable minVal and maxVal inputs for numerical-matrix-layout
+                if (selectedLayout === 'numerical-matrix-layout') {
+                    // Disable inputs
+                    minMaxRow.querySelectorAll('input#minVal, input#maxVal').forEach(input => {
+                        input.disabled = true;
+                    });
+                    minMaxRow.style.opacity = '0.5'; // Optional: Indicate inactive state
+                } else {
+                    // Enable inputs for other layouts
+                    minMaxRow.querySelectorAll('input#minVal, input#maxVal').forEach(input => {
+                        input.disabled = false;
+                    });
+                    minMaxRow.style.opacity = '1'; // Reset opacity
+                }
+
+                // Barplot layout settings
+                if (selectedLayout === "barplot-layout") {
+                    $('#barplotOptions').show();
+                } else {
+                    $('#barplotOptions').hide();
+                }
+                // Toggle color picker or property selector based on color option choice
+                $('#barplotColorOption').change(function () {
+                    if ($(this).val() === 'same') {
+                        $('#barplotColorScheme').show();
+                        $('#barplotFillProperty').hide();
+                        $('#customColorWrapper').hide();
+                    } else if ($(this).val() === 'colorby') {
+                        $('#barplotColorScheme').hide();
+                        $('#barplotFillProperty').show();
+                        $('#customColorWrapper').hide();
+                    } else if ($(this).val() === 'custom') {
+                        $('#barplotColorScheme').hide();
+                        $('#barplotFillProperty').hide();
+                        $('#customColorWrapper').show();
+                    };
+                });
+
+                // Alignment layout settings
+                if (selectedLayout === "alignment-layout") {
+                    $('#alignmentSettings').show();
+                    $('#propsSelection').hide();
+                    $('#generalSettings').hide();
+                } else {
+                    $('#alignmentSettings').hide();
+                    $('#propsSelection').show();
+                    $('#generalSettings').show();
+                }
+
+                // Domain layout settings
+                if (selectedLayout === "domain-layout") {
+                    $('#propsSelection').hide();
+                    $('#generalSettings').hide();
+                } else {
+                    $('#propsSelection').show();
+                    $('#generalSettings').show();
+                }
+            });
+            
+            document.getElementById('customQueryType').addEventListener('change', toggleQueryFields);
+            document.getElementById('clearQueryBox').addEventListener('click', clearQueryBox);
+            document.getElementById('addQueryBtn').addEventListener('click', addInitialQueryPart);
+            
+            // 
+            const unicolorOption = document.getElementById('unicolorOption');
+            const unicolorPicker = document.getElementById('unicolorPicker');
+            const binaryColorScheme = document.getElementById('binaryColorScheme');
+
+            unicolorOption.addEventListener('change', () => {
+                if (unicolorOption.checked) {
+                    unicolorPicker.style.display = 'block';
+                    binaryColorScheme.style.display = 'none';
+                } else {
+                    unicolorPicker.style.display = 'none';
+                    binaryColorScheme.style.display = 'block';
+                }
+            });
+        };
+    
+        
+    </script>
+    <script>
+        // this is for custom query settings
+        /*********************
+         * Query Management Functions
+         *********************/
+        let queryParts = [];
+        document.getElementById('addWithAnd').addEventListener('click', function () {
+            document.getElementById('addQueryBtn').innerText = 'AND';
+        });
+
+        document.getElementById('addWithOr').addEventListener('click', function () {
+            document.getElementById('addQueryBtn').innerText = 'OR';
+        });
+
+        function resetQueryButton() {
+            document.getElementById('addQueryBtn').innerText = 'ADD';
+            queryParts = [];
+            document.getElementById('queryBox').value = '';
+        }
+
+        function addInitialQueryPart() {
+            // Check if the queryBox is empty
+            if (document.getElementById('queryBox').value === '') {
+                // Pass the operator to addQueryPart
+                addQueryPart();
+            } else{
+                // Get the operator from the Add Query button's inner text
+                const operator = document.getElementById('addQueryBtn').innerText.trim();
+                if (operator === 'AND' || operator === 'OR') {
+                    addQueryPart(operator);
+                } else {
+                    alert("Please select an operator before adding another query part.");
+                }
+            }
+        }
+
+        function addQueryPart(operator = '') {
+            const queryType = document.getElementById('customQueryType').value;
+            const prop = document.getElementById('queryProp').value.trim();
+            const operation = document.getElementById('queryOperation').value;
+            const value = document.getElementById('queryValue').value.trim();
+            const counterInputElement = document.querySelector('.counter-input');
+            const counterValue = counterInputElement ? counterInputElement.value : null;
+
+            if (!queryType) {
+                alert("Please select a query type.");
+                return;
+            }
+
+            if (!prop || !value) {
+                alert("Please fill in all query fields.");
+                //resetQueryButton();
+                return;
+            }
+
+            // Build the query part
+            const queryPart = counterValue ? `${prop}:${counterValue} > ${value}` : `${prop} ${operation} ${value}`;
+            
+            // Add the operator at the beginning if it's valid and there are existing query parts
+            const fullQueryPart = (operator && queryParts.length > 0 && (operator === 'AND' || operator === 'OR')) 
+                ? `${operator} ${queryPart}` 
+                : queryPart;
+
+            // Push the full query part to the queryParts array
+            queryParts.push(fullQueryPart);
+
+            // Update the query box with all query parts
+            document.getElementById('queryBox').value = queryParts.join(' ') + ';';
+
+            // Reset the input fields for the next query
+            document.getElementById('queryValue').value = '';
+        }
+
+        function clearQueryBox(event) {
+            event.preventDefault();
+            document.getElementById('queryBox').value = '';
+            queryParts = [];
+            resetQueryButton();
+        }
+        
+        function toggleQueryFields() {
+            const queryType = document.getElementById('customQueryType').value;
+            const queryFields = document.getElementById('queryFields');
+            const taxonomicOptions = document.getElementById('taxonomicOptions');
+
+            if (queryType === 'rank_limit') {
+                queryFields.style.display = 'none';
+                taxonomicOptions.style.display = 'block';
+            } else {
+                queryFields.style.display = 'block';
+                taxonomicOptions.style.display = 'none';
+            }
+            resetQueryButton();
+        }
+
+        /*********************
+         * Additional Input Handlers
+         *********************/
+        // Function to handle dynamic counter input addition
+        function handleDynamicCounterInput() {
+            const selectedProperty = document.getElementById('queryProp').value;
+            const dynamicCounterPropsContainer = document.getElementById('dynamicCounterProps');
+
+            // Check if the selected property ends with '_counter'
+            if (selectedProperty.endsWith('_counter')) {
+                // Check if the input field for this property already exists
+                if (!document.getElementById(`input-${selectedProperty}`)) {
+                    // Create a new input field for the selected property
+                    const counterField = `
+                        <div class="form-group mt-3" id="input-${selectedProperty}">
+                            <label for="counterInput-${selectedProperty}">Prop for ${selectedProperty}</label>
+                            <input type="text" class="form-control counter-input"
+                                id="counterInput-${selectedProperty}"
+                                data-prop="${selectedProperty}"
+                                placeholder="Enter Counter value">
+                        </div>`;
+                    // Append the new field to the container
+                    dynamicCounterPropsContainer.innerHTML = counterField;
+                }
+            } else {
+                // Remove all counter input fields if the selected property doesn't end with '_counter'
+                dynamicCounterPropsContainer.innerHTML = '';
+            }
+        }
+
+
+
+        function removeCounterInputField(e) {
+            const unselectedProperty = e.params.data.id;
+            if (unselectedProperty.endsWith('_counter')) {
+                $(`#input-${unselectedProperty}`).remove();
+                $('#queryResult').val('');
+            }
+        }
+
+        document.getElementById('sendQuery').addEventListener('click', () => {
+            // Retrieve query type and query value
+            const queryType = document.getElementById('customQueryType')?.value || null;
+            const query = document.getElementById('queryBox')?.value || null;
+            console.log("Query Type:", queryType, "Query:", query);
+            
+            // Ensure a valid queryType is selected
+            if (!queryType) {
+                alert('Please select a query type before sending.');
+                return;
+            } 
+            
+            if (!query) {
+                if (queryType !== 'rank_limit') {
+                    alert('Please add a query before sending.');
+                    return;
+                }
+            };
+
+            if (queryType === 'rank_limit'){
+                const rankSelection = document.getElementById('rankSelection').value;
+                if (!rankSelection) {
+                    alert('Please select a taxonomic rank before sending.');
+                    return;
+                }
+            } 
+
+            // Form the layer object
+            if (queryType === 'rank_limit') {
+                const query = null;
+                const rankSelection = document.getElementById('rankSelection').value;
+                console.log("checking rank selection", rankSelection);
+                const layer = {
+                    queryType,
+                    query,
+                    rankSelection
+                };
+                // Add the layer to the layers array
+                layers.push(layer);
+            } else if (queryType === 'highlight' || queryType === 'collapse' || queryType === 'prune') {
+                const rankSelection = null;
+                const layer = {
+                    queryType,
+                    query,
+                    rankSelection
+                };
+                // Add the layer to the layers array
+                layers.push(layer);
+            }
+            
+
+            
+
+            // Collect additional general settings
+            const layersData = JSON.stringify(layers);
+            const columnWidth = document.getElementById('columnWidth')?.value || null;
+            const paddingX = document.getElementById('paddingX')?.value || null;
+            const paddingY = document.getElementById('paddingY')?.value || null;
+
+            // Numerical-specific setting
+            let internalNumRep = null;
+            const numericalLayouts = [
+                "branchscore-layout",
+                "heatmap-layout",
+                "heatmap-mean-layout",
+                "heatmap-zscore-layout",
+                "barplot-layout",
+                "numerical-matrix-layout",
+                "numerical-bubble-layout",
+            ];
+            if (layers.some(layer => numericalLayouts.includes(layer.layout))) {
+                internalNumRep = document.getElementById('internalNumRep')?.value || null;
+            }
+
+            // Construct the form data object
+            const formData = {
+                layers: layersData,
+                column_width: columnWidth,
+                padding_x: paddingX,
+                padding_y: paddingY,
+                internal_num_rep: internalNumRep
+            };
+
+            // Send the form data to the backend
+            $.post(
+                '/explore_tree/{{treename}}',
+                formData,
+                (response) => {
+                    console.log('Query sent successfully:', response);
+                    //alert('Query added successfully!');
+                    window.location.reload(); // Refresh the page after successful submission
+                }
+            ).fail((error) => {
+                console.error('Error sending query:', error);
+                alert('Failed to send query. Please try again.');
+            });
+        });
+
+        // Attach the change event listener to the queryProp dropdown
+        document.getElementById('queryProp').addEventListener('change', handleDynamicCounterInput);
+        $('#queryProp').on('select2:unselect', removeCounterInputField);
+    </script>
+    <script>
+        // Get references to the toggle button and wrapper
+        const toggleControlPanelBtn = document.getElementById('toggleControlPanel');
+        const controlPanelWrapper = document.getElementById('controlPanelWrapper');
+
+        // Add click event to toggle the minimized state
+        toggleControlPanelBtn.addEventListener('click', () => {
+            controlPanelWrapper.classList.toggle('minimized');
+            // Update button icon
+            if (controlPanelWrapper.classList.contains('minimized')) {
+                toggleControlPanelBtn.innerHTML = '&#x25B2;'; // Up arrow for minimized state
+            } else {
+                toggleControlPanelBtn.innerHTML = '&#x25BC;'; // Down arrow for expanded state
+            }
+        });
+
+        // this is for fullscreen settings
+        const togglebtn = document.getElementById("fullscreenBtn");
+        const iframe = document.getElementById("treeIframe");
+
+        togglebtn.addEventListener("click", function () {
+            if (iframe.requestFullscreen) {
+                iframe.requestFullscreen();
+            } else if (iframe.mozRequestFullScreen) { // Firefox
+                iframe.mozRequestFullScreen();
+            } else if (iframe.webkitRequestFullscreen) { // Chrome,Safari,Opera
+                iframe.webkitRequestFullscreen();
+            } else if (iframe.msRequestFullscreen) { // I.E, Edge
+                iframe.msRequestFullscreen();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -193,13 +193,13 @@ class AlignLinkFace(Face):
 
 
 class LayoutText(TreeLayout):
-    def __init__(self, name, column, color_dict, text_prop, width=70, min_fsize=5, max_fsize=15, padding_x=1, padding_y=0, legend=True, aligned_faces=True):
+    def __init__(self, name, column, color_dict, prop, width=70, min_fsize=5, max_fsize=15, padding_x=1, padding_y=0, legend=True, aligned_faces=True):
         super().__init__(name, aligned_faces=aligned_faces)
         self.aligned_faces = True
-        self.text_prop = text_prop
+        self.prop = prop
         self.column = column
         self.color_dict = color_dict
-        self.internal_prop = text_prop+'_counter'
+        self.internal_prop = prop+'_counter'
         self.legend = legend
         self.width = width
         self.height = None
@@ -211,19 +211,19 @@ class LayoutText(TreeLayout):
 
     def set_tree_style(self, tree, tree_style):
         super().set_tree_style(tree, tree_style)
-        text = TextFace(self.text_prop, min_fsize=self.min_fsize, max_fsize=self.max_fsize, padding_x=self.padding_x, width=self.width, rotation=315)
+        text = TextFace(self.prop, min_fsize=self.min_fsize, max_fsize=self.max_fsize, padding_x=self.padding_x, width=self.width, rotation=315)
         tree_style.aligned_panel_header.add_face(text, column=self.column)
 
         if self.legend:
             if self.color_dict:
-                tree_style.add_legend(title=self.text_prop,
+                tree_style.add_legend(title=self.prop,
                                     variable='discrete',
                                     colormap=self.color_dict
                                     )
 
     def set_node_style(self, node):
-        if node.is_leaf and node.props.get(self.text_prop):
-            prop_text = node.props.get(self.text_prop)
+        if node.is_leaf and node.props.get(self.prop):
+            prop_text = node.props.get(self.prop)
             if prop_text:
                 if type(prop_text) == list:
                     prop_text = ",".join(prop_text)
@@ -252,13 +252,13 @@ class LayoutText(TreeLayout):
             node.add_face(prop_face, column=self.column, position="aligned", collapsed_only=True)
 
 class LayoutColorbranch(TreeLayout):
-    def __init__(self, name, column, color_dict, text_prop, legend=True, width=70, padding_x=1, padding_y=0):
+    def __init__(self, name, column, color_dict, prop, legend=True, width=70, padding_x=1, padding_y=0):
         super().__init__(name)
         self.aligned_faces = True
-        self.text_prop = text_prop
+        self.prop = prop
         self.column = column
         self.color_dict = color_dict
-        self.internal_prop = text_prop+'_counter'
+        self.internal_prop = prop+'_counter'
         self.legend = legend
         self.height = None
         self.absence_color = "#EBEBEB"
@@ -268,17 +268,17 @@ class LayoutColorbranch(TreeLayout):
 
     def set_tree_style(self, tree, tree_style):
         super().set_tree_style(tree, tree_style)
-        text = TextFace(self.text_prop, min_fsize=5, max_fsize=15, padding_x=self.padding_x, width=self.width, rotation=315)
+        text = TextFace(self.prop, min_fsize=5, max_fsize=15, padding_x=self.padding_x, width=self.width, rotation=315)
         tree_style.aligned_panel_header.add_face(text, column=self.column)
         if self.legend:
             if self.color_dict:
-                tree_style.add_legend(title=self.text_prop,
+                tree_style.add_legend(title=self.prop,
                                     variable='discrete',
                                     colormap=self.color_dict
                                     )
 
     def set_node_style(self, node):
-        prop_text = node.props.get(self.text_prop)
+        prop_text = node.props.get(self.prop)
         if prop_text is not None:
             if type(prop_text) == list:
                 prop_text = ",".join(prop_text)
@@ -315,14 +315,14 @@ class LayoutColorbranch(TreeLayout):
             node.add_face(prop_face, column=self.column, position="aligned", collapsed_only=True)
 
 class LayoutRect(TreeLayout):
-    def __init__(self, name, column, color_dict, text_prop, width=70, height=None, padding_x=1, padding_y=0, legend=True):
+    def __init__(self, name, column, color_dict, prop, width=70, height=None, padding_x=1, padding_y=0, legend=True):
         super().__init__(name)
         self.aligned_faces = True
-        self.text_prop = text_prop
+        self.prop = prop
         self.column = column
         self.color_dict = color_dict
         self.absence_color = "#EBEBEB"
-        self.internal_prop = add_suffix(text_prop, 'counter')
+        self.internal_prop = add_suffix(prop, 'counter')
         self.legend = legend
         self.width = width
         self.height = height
@@ -333,24 +333,24 @@ class LayoutRect(TreeLayout):
     
     def set_tree_style(self, tree, tree_style):
         super().set_tree_style(tree, tree_style)
-        text = TextFace(self.text_prop, min_fsize=self.min_fsize, max_fsize=self.max_fsize, padding_x=self.padding_x, width=self.width, rotation=315)
+        text = TextFace(self.prop, min_fsize=self.min_fsize, max_fsize=self.max_fsize, padding_x=self.padding_x, width=self.width, rotation=315)
         tree_style.aligned_panel_header.add_face(text, column=self.column)
 
         if self.legend:
             if self.color_dict:
                 self.color_dict['NA'] = self.absence_color
-                tree_style.add_legend(title=self.text_prop,
+                tree_style.add_legend(title=self.prop,
                                     variable='discrete',
                                     colormap=self.color_dict
                                     )
             else:
-                tree_style.add_legend(title=self.text_prop,
+                tree_style.add_legend(title=self.prop,
                                     variable='discrete',
                                     colormap={'NA':self.absence_color}
                                     )
     def set_node_style(self, node):
         if node.is_leaf:
-            prop_text = node.props.get(self.text_prop)
+            prop_text = node.props.get(self.prop)
             if prop_text:
                 if type(prop_text) == list:
                     prop_text = ",".join(prop_text)
@@ -359,11 +359,11 @@ class LayoutRect(TreeLayout):
                 tooltip = ""
                 if node.name:
                     tooltip += f'<b>{node.name}</b><br>'
-                if self.text_prop:
-                    tooltip += f'<br>{self.text_prop}: {prop_text}<br>'
+                if self.prop:
+                    tooltip += f'<br>{self.prop}: {prop_text}<br>'
                 
                 if self.color_dict:
-                    color = self.color_dict.get(str(prop_text),"")
+                    color = self.color_dict.get(prop_text,"")
                     prop_face = RectFace(width=self.width, height=self.height, color=color, \
                         padding_x=self.padding_x , padding_y=self.padding_y, tooltip=tooltip)
                     node.add_face(prop_face, column=self.column, position="aligned")
@@ -388,12 +388,12 @@ class LayoutRect(TreeLayout):
             node.add_face(prop_face, column=self.column, position="aligned", collapsed_only=True)
 
 class LayoutPiechart(TreeLayout):
-    def __init__(self, name, color_dict, text_prop, radius=20, padding_x=1, padding_y=0, legend=True, aligned_faces=True):
+    def __init__(self, name, color_dict, prop, radius=20, padding_x=1, padding_y=0, legend=True, aligned_faces=True):
         super().__init__(name, aligned_faces=aligned_faces)
         self.aligned_faces = True
 
-        self.text_prop = text_prop+"_counter"
-        self.internal_prop = text_prop+'_counter'
+        self.prop = prop+"_counter"
+        self.internal_prop = prop+'_counter'
         self.color_dict = color_dict
         self.radius = radius
         self.padding_x = padding_x
@@ -404,7 +404,7 @@ class LayoutPiechart(TreeLayout):
         super().set_tree_style(tree, tree_style)
         if self.legend:
             if self.color_dict:
-                tree_style.add_legend(title=self.text_prop,
+                tree_style.add_legend(title=self.prop,
                                     variable='discrete',
                                     colormap=self.color_dict
                                     )
@@ -417,14 +417,14 @@ class LayoutPiechart(TreeLayout):
                 node.add_face(piechart_face, column = 1, position = "branch_right", collapsed_only=True)
 
 class LayoutBackground(TreeLayout):
-    def __init__(self, name, color_dict, text_prop, width=70, column=0, 
+    def __init__(self, name, color_dict, prop, width=70, column=0, 
         padding_x=1, padding_y=0, legend=True, aligned_faces=True):
         super().__init__(name, aligned_faces=aligned_faces)
 
         self.aligned_faces = True
 
-        self.text_prop = text_prop
-        self.internal_prop = text_prop+'_counter'
+        self.prop = prop
+        self.internal_prop = prop+'_counter'
         self.color_dict = color_dict
         self.width = width
         self.column = column
@@ -438,13 +438,13 @@ class LayoutBackground(TreeLayout):
         if self.legend:
             if self.color_dict:
                 self.color_dict['NA'] = self.absence_color
-                tree_style.add_legend(title=self.text_prop,
+                tree_style.add_legend(title=self.prop,
                                     variable='discrete',
                                     colormap=self.color_dict
                                     )
 
     def set_node_style(self, node):
-        prop_text = node.props.get(self.text_prop)
+        prop_text = node.props.get(self.prop)
         if prop_text:
             
             if type(prop_text) == list:
@@ -454,11 +454,11 @@ class LayoutBackground(TreeLayout):
             tooltip = ""
             if node.name:
                 tooltip += f'<b>{node.name}</b><br>'
-            if self.text_prop:
-                tooltip += f'<br>{self.text_prop}: {prop_text}<br>'
+            if self.prop:
+                tooltip += f'<br>{self.prop}: {prop_text}<br>'
             
             if self.color_dict:
-                color = self.color_dict.get(str(prop_text), self.absence_color)
+                color = self.color_dict.get(prop_text, self.absence_color)
                 align_link_face = AlignLinkFace(width=self.width*2, height=None,
                     stroke_color=color, stroke_width=2, line_type=0, opacity=0.7)
                 node.sm_style["bgcolor"] = color
@@ -487,7 +487,7 @@ class LayoutBubbleCategorical(TreeLayout):
             max_radius=1, padding_x=2, padding_y=0, 
             scale=True, legend=True, active=True):
 
-        name = name or f'Barplot_{size_prop}_{color_prop}'
+        name = name or f'CategoricalBubble_{prop}'
         super().__init__(name)
 
         self.aligned_faces = True
@@ -537,7 +537,7 @@ class LayoutBubbleCategorical(TreeLayout):
                 # node.sm_style["fgopacity"] = self.fgopacity
                 prop_face = CircleFace(radius=bubble_size, color=bubble_color, 
                 padding_x=self.padding_x, padding_y=self.padding_y)
-                node.add_face(prop_face, column=0, 
+                node.add_face(prop_face, column=self.column, 
                 position="branch_right", collapsed_only=False)
 
         

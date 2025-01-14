@@ -41,6 +41,13 @@
                         </select>
                     </div>
                 </div>
+                <div class="form-group row mt-3">
+                    <label for="isAnnotatedTree" class="col-sm-3 col-form-label">Is uploaded tree annotated</label>
+                    <div class="col-sm-3">
+                        <input type="checkbox" class="form-check-input" id="isAnnotatedTree" name="isAnnotatedTree" style="width: 25px; height: 25px;">
+                    </div>
+                </div>
+                
             </div>
         </div>
         
@@ -51,8 +58,9 @@
             </div>
             <div class="card-body">
                 <div class="form-group">
-                    <label for="metadata" class="col-sm-3 col-form-label">Metadata File</label>
-                    <input type="file" class="form-control-file mt-2" id="metadataFile" name="metadataFile">
+                    <label for="metadata" class="col-sm-3 col-form-label">Metadata File(s)</label>
+                    <!-- <input type="file" class="form-control-file mt-2" id="metadataFile" name="metadataFile"> -->
+                    <input type="file" class="form-control-file mt-2" id="metadataFiles" name="metadataFiles" multiple>
                 </div>
                 <div class="form-group row mt-3">
                     <label for="separator" class="col-sm-3 col-form-label">Metadata Separator</label>
@@ -242,7 +250,7 @@
         <!-- Lineage specificity section -->
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5>Lineage specificity</h5>
+                <h5>Lineage specificity (Optional)</h5>
                 <button type="button" class="btn btn-secondary btn-sm" id="toggleLStn">Activate Lineage specificity analysis</button>
             </div>
             <div id="lsSection" class="card-body collapsed" style="display: none;">
@@ -301,18 +309,18 @@
         </div>
         
         <!-- Submit Button -->
-        <button type="button" class="btn btn-primary" onclick="submitForm()">Upload Tree and Metadata</button>
+        <button type="button" class="btn btn-primary" onclick="submitForm()">Annotate and Visualize Tree!</button>
     </form>
 </div>
 
 <script>
-    const CHUNK_SIZE = 1024 * 1024; // 1MB
-
     async function submitForm() {
         const treename = document.getElementById('treename').value;
         const treeparser = document.getElementById('treeparser').value;
         const treeFile = document.getElementById('treeFile').files[0];
-        const metadataFile = document.getElementById('metadataFile').files[0];
+        const isAnnotatedTree = document.getElementById('isAnnotatedTree').checked;
+        // const metadataFile = document.getElementById('metadataFile').files[0];
+        const metadataFiles = document.getElementById('metadataFiles').files;
         const alignmentFile = document.getElementById('alignmentFile').files[0];
         const pfamFile = document.getElementById('pfamFile').files[0];
         const separator = document.getElementById('separator').value;
@@ -327,18 +335,25 @@
 
         if (treeFile) {
             await uploadFileInChunks(treeFile, 'treeFile', treename);
-        } else if (treeTextarea) {
-            formData.append("tree", treeTextarea);
         } else {
             alert("Please provide tree data in Newick format or upload a file.");
             return;
         }
 
         formData.append("treeparser", treeparser);
+        formData.append("isAnnotatedTree", isAnnotatedTree);
 
-        if (metadataFile) {
-            await uploadFileInChunks(metadataFile, 'metadataFile', treename);
+        // Process metadata files as chunks
+        if (metadataFiles.length > 0) {
+            const metadataFilesList = [];
+            for (const [index, file] of Array.from(metadataFiles).entries()) {
+                const fileId = `metadata_${index}`;
+                await uploadFileInChunks(file, 'metadataFile', treename, fileId);
+                metadataFilesList.push(fileId);
+            }
+            formData.append("metadataFiles", JSON.stringify(metadataFilesList));
         }
+
         if (separator) {
             formData.append("separator", separator);
         }
@@ -438,7 +453,7 @@
         let response = await fetch(`/job_status/${jobId}`);
         let data = await response.json();
         if (data.status === "complete") {
-            window.location.href = `/show_tree/${jobId}`;
+            window.location.href = `/explore_tree/${jobId}`;
         } else if (data.status === "failed") {
             document.getElementById('status').innerText = "Job failed.";
         } else {
@@ -465,16 +480,103 @@
         return summarySelections;
     }
 
-    document.getElementById('parseMetadataBtn').addEventListener('click', async () => {
-        const file = document.getElementById('metadataFile').files[0];
-        if (file) {
-            const separator = document.getElementById('separator').value === "<tab>" ? "\t" : document.getElementById('separator').value;
-            const text = await file.text();
-            parseMetadata(text, separator);
-        } else {
-            alert("Please select a metadata file first.");
+    // document.getElementById('parseMetadataBtn').addEventListener('click', async () => {
+    //     const file = document.getElementById('metadataFile').files[0];
+    //     if (file) {
+    //         const separator = document.getElementById('separator').value === "<tab>" ? "\t" : document.getElementById('separator').value;
+    //         const text = await file.text();
+    //         parseMetadata(text, separator);
+    //     } else {
+    //         alert("Please select a metadata file first.");
+    //     }
+    // });
+    
+    // event listener for treefile
+    document.getElementById('treeFile').addEventListener('change', (event) => {
+        const treeFileInput = event.target;
+        const treenameInput = document.getElementById('treename');
+
+        if (treeFileInput.files.length > 0) {
+            // Get the selected file name
+            const fileName = treeFileInput.files[0].name;
+
+            // Remove the file extension
+            const fileNameWithoutExtension = fileName.replace(/\.[^/.]+$/, '');
+
+            // Update the tree name input field
+            treenameInput.value = fileNameWithoutExtension;
         }
     });
+    
+    // event listener for parsing multiple metadata files
+    document.getElementById('parseMetadataBtn').addEventListener('click', async () => {
+        const files = document.getElementById('metadataFiles').files; // Get all selected files
+        if (files.length > 0) {
+            const separator = document.getElementById('separator').value === "<tab>" ? "\t" : document.getElementById('separator').value;
+
+            // Call the function to parse multiple metadata files
+            await parseMultipleMetadata(files, separator);
+
+            console.log("Metadata parsing completed.");
+        } else {
+            alert("Please select one or more metadata files first.");
+        }
+    });
+
+    async function parseMultipleMetadata(files, separator) {
+        const combinedHeaders = new Set(); // Use a Set to track unique headers
+        const combinedData = {}; // Store data keyed by header
+        let isFirstFile = true; // Track if the file is the first for Node ID column
+
+        for (const file of files) {
+            const text = await file.text();
+            const rows = text.trim().split('\n');
+
+            if (rows.length < 2) {
+                alert(`File "${file.name}" is too short to analyze.`);
+                continue;
+            }
+
+            const headers = rows[0].split(separator);
+            const columnData = headers.map(() => []);
+
+            rows.slice(1).forEach(row => {
+                const cells = row.split(separator);
+                cells.forEach((cell, index) => {
+                    columnData[index].push(cell.trim());
+                });
+            });
+
+            // Update global combined data
+            headers.forEach((header, index) => {
+                if (!combinedData[header]) {
+                    combinedData[header] = [];
+                }
+                combinedData[header] = combinedData[header].concat(columnData[index]);
+            });
+
+            // Add headers to the combined set
+            headers.forEach(header => combinedHeaders.add(header));
+
+            // Only update column options for the first file
+            if (isFirstFile) {
+                isFirstFile = false;
+            }
+        }
+
+        // Detect column types and render results
+        const columnTypes = Array.from(combinedHeaders).map((header, index) => {
+            const columnValues = combinedData[header] || [];
+            const type = index === 0 ? "Node ID Column" : detectColumnType(columnValues);
+            return { column: header, type };
+        });
+
+        updateTaxonomicIdOptions(combinedHeaders);
+        updateAcrOptions(combinedHeaders);
+        updateLsOptions(combinedHeaders);
+        renderColumnTypeTable(columnTypes);
+        document.getElementById('metadataAnalysis').style.display = 'block';
+    }
 
     function parseMetadata(text, separator) {
         const rows = text.trim().split('\n');
@@ -493,6 +595,7 @@
             });
         });
 
+        console.log("Metadata headers:", headers);
         updateTaxonomicIdOptions(headers);  // Call the function to update options with metadata columns
         updateAcrOptions(headers);          // Update options for ACR columns
         updateLsOptions(headers);           // Update options for LS columns
@@ -545,6 +648,46 @@
         document.getElementById('metadataAnalysis').style.display = 'block';
     }
 
+    function renderColumnTypeTable(columnTypes) {
+        const columnTypeList = document.getElementById('columnTypeList');
+        columnTypeList.innerHTML = ""; // Clear the table
+
+        columnTypes.forEach((col, index) => {
+            const row = document.createElement('tr');
+            const columnCell = document.createElement('td');
+            columnCell.textContent = col.column;
+            row.appendChild(columnCell);
+
+            const typeCell = document.createElement('td');
+            if (col.type === "Node ID Column" && index === 0) {
+                typeCell.textContent = "Node ID Column";
+            } else {
+                typeCell.innerHTML = `
+                    <select class="form-control-sm" data-column="${col.column}" onchange="updateSummaryOptions(this)">
+                        <option value="Categorical" ${col.type === 'Categorical' ? 'selected' : ''}>Categorical</option>
+                        <option value="List" ${col.type === 'List' ? 'selected' : ''}>List</option>
+                        <option value="Numerical" ${col.type === 'Numerical' ? 'selected' : ''}>Numerical</option>
+                        <option value="Binary" ${col.type === 'Binary' ? 'selected' : ''}>Binary</option>
+                    </select>
+                `;
+            }
+            row.appendChild(typeCell);
+
+            const summaryCell = document.createElement('td');
+            if (col.type === "Node ID Column" && index === 0) {
+                summaryCell.textContent = "-";
+            } else {
+                summaryCell.innerHTML = `
+                    <select class="form-control-sm summary-method" data-summary="${col.column}">
+                        ${generateSummaryOptions(col.type)}
+                    </select>
+                `;
+            }
+            row.appendChild(summaryCell);
+
+            columnTypeList.appendChild(row);
+        });
+    }
     function updateTaxonomicIdOptions(columns) {
         const taxonomicIdColumn = document.getElementById('taxonomicIdColumn');
         taxonomicIdColumn.innerHTML = "";  // Clear existing options
@@ -559,25 +702,30 @@
 
     function updateAcrOptions(columns) {
         const acrColumnSelect = document.getElementById('acrColumn');
-        acrColumnSelect.innerHTML = ""; // Clear existing options
-
+        const existingOptions = new Set(Array.from(acrColumnSelect.options).map(option => option.value));
+        // Add only new columns
         columns.forEach(col => {
-            const option = document.createElement('option');
-            option.value = col;
-            option.textContent = col;
-            acrColumnSelect.appendChild(option);
+            if (!existingOptions.has(col)) {
+                const option = document.createElement('option');
+                option.value = col;
+                option.textContent = col;
+                acrColumnSelect.appendChild(option);
+            }
         });
     }
 
     function updateLsOptions(columns) {
         const lsColumnSelect = document.getElementById('lsColumn');
-        lsColumnSelect.innerHTML = ""; // Clear existing options
+        const existingOptions = new Set(Array.from(lsColumnSelect.options).map(option => option.value));
 
+        // Add only new columns
         columns.forEach(col => {
-            const option = document.createElement('option');
-            option.value = col;
-            option.textContent = col;
-            lsColumnSelect.appendChild(option);
+            if (!existingOptions.has(col)) {
+                const option = document.createElement('option');
+                option.value = col;
+                option.textContent = col;
+                lsColumnSelect.appendChild(option);
+            }
         });
     }
 
@@ -665,8 +813,10 @@
         return { text_prop, num_prop, bool_prop, multiple_text_prop};
     }
 
-    async function uploadFileInChunks(file, fieldName, treename) {
+    async function uploadFileInChunks(file, fieldName, treename, fileId = null) {
+        const CHUNK_SIZE = 1024 * 1024; // 1MB
         const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+        fileId = fileId || `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`; // Generate unique ID if not provided
 
         for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
             const start = chunkIndex * CHUNK_SIZE;
@@ -678,6 +828,7 @@
             chunkFormData.append(fieldName, chunk);
             chunkFormData.append("chunkIndex", chunkIndex);
             chunkFormData.append("totalChunks", totalChunks);
+            chunkFormData.append("fileId", fileId);
 
             await fetch('/upload_chunk', {
                 method: 'POST',

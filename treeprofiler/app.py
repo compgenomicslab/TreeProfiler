@@ -1,4 +1,6 @@
-from bottle import route, run, request, redirect, template, static_file, response 
+from bottle import route, run, request, redirect, template, static_file, response, ServerAdapter
+from bottle import Bottle
+import requests
 import threading
 from tempfile import NamedTemporaryFile
 from collections import defaultdict
@@ -7,18 +9,24 @@ import matplotlib.colors as mcolors
 import os
 import json
 import time
+from wsgiref.simple_server import WSGIServer, WSGIRequestHandler
+
 
 from ete4 import Tree
-from treeprofiler.tree_annotate import run_tree_annotate, parse_csv  # or other functions you need
+from treeprofiler.tree_annotate import run_tree_annotate, parse_csv, name_nodes  # or other functions you need
 from treeprofiler import tree_plot
 from treeprofiler.src import utils
 from treeprofiler import layouts
 
+from bottle import TEMPLATE_PATH
+
+# Set the template directory
+TEMPLATE_PATH.append(os.path.join(os.path.dirname(__file__), 'views'))
 
 # In-memory storage for chunks and complete files
 trees = {}
 uploaded_chunks = {}
-paired_color = [
+default_paired_color = [
     '#9a312f', '#9b57d0', '#f8ce9a', '#f16017', '#28fef9', '#53707a',
     '#213b07', '#b5e5ac', '#9640b2', '#a9bd10', '#69e42b', '#b44d67',
     '#b110c1', '#0b08a3', '#d07671', '#29e23b', '#3f2bf4', '#9b2a08',
@@ -64,10 +72,98 @@ categorical_layout_list = [
     'profiling-layout'
 ]
 
+categorical_prefix = [
+    "rectangle",
+    "label",
+    "colorbranch",
+    "categorical-bubble",
+    "piechart",
+    "background",
+    "categorical-matrix",
+    "profiling"
+]
+
+numerical_prefix = [
+    "heatmap",
+    "barplot",
+    "branchscore",
+    "numerical-bubble",
+    "numerical-matrix"
+]
+
+binary_prefix = [
+    "binary",
+    "binary-matrix"
+]
+
+# Global control variable for restarting
 job_status = {}  # Dictionary to store job statuses
-@route('/upload', method='POST')
+# Global variables
+app = Bottle()
+server_thread = None
+server_instance = None
+stop_event = threading.Event()
+
+class CustomWSGIServer(WSGIServer):
+    """Custom WSGI server to enable graceful shutdown."""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.running = True
+
+    def serve_forever(self):
+        """Serve requests until `running` is set to False."""
+        while self.running:
+            self.handle_request()
+
+    def shutdown(self):
+        """Stop the server."""
+        self.running = False
+
+
+class CustomServerAdapter(ServerAdapter):
+    """Custom server adapter for Bottle to use CustomWSGIServer."""
+    def run(self, handler):
+        self.options['handler_class'] = WSGIRequestHandler
+        self.server = CustomWSGIServer((self.host, self.port), self.options.get('handler_class', WSGIRequestHandler))
+        self.server.set_app(handler)  # Set the Bottle app
+        self.server.serve_forever()
+
+    def stop(self):
+        if hasattr(self, 'server'):
+            self.server.shutdown()
+
+
+def run_server():
+    """Run the Bottle app."""
+    global server_instance
+    server_instance = CustomServerAdapter(host='localhost', port=8081)
+    app.run(server=server_instance)
+
+
+def start_server():
+    """Start the Bottle app in a separate thread."""
+    global server_thread, stop_event
+    stop_event.clear()
+    server_thread = threading.Thread(target=run_server)
+    server_thread.start()
+
+
+@app.route('/stop_explore')
+def stop_explore():
+    """Stop and restart the server."""
+    global server_thread, stop_event, job_status
+    job_status = {} # clean up the job status
+    print("Stopping server for restart...")
+
+    # Signal the server thread to stop
+    stop_event.set()
+    return redirect('/')
+
+@app.route('/upload', method='POST')
 def do_upload():
     treename = request.forms.get('treename')
+
+    
     if not treename:
         response.status = 400
         return {"error": "Tree name is required"}
@@ -79,10 +175,12 @@ def do_upload():
     job_status[treename] = "running"
 
     # Collect all form data
+    
     job_args = {
         "treename": treename,
         "tree_data": request.forms.get('tree'),
         "treeparser": request.forms.get('treeparser'),
+        "is_annotated_tree": request.forms.get('isAnnotatedTree') == 'true',
         "metadata": request.forms.get('metadata'),
         "separator": request.forms.get('separator'),
         "text_prop": request.forms.getlist('text_prop[]'),
@@ -125,11 +223,15 @@ def do_upload():
 
 def process_upload_job(job_args):
     """Function to handle the actual processing of the uploaded data."""
+    eteformat_flag = False
+    
     treename = job_args['treename']
     # Initialize variables and parse arguments
     separator = "\t" if job_args.get("separator") == "<tab>" else job_args.get("separator", ",")
     tree_data = job_args.get("tree_data")
     treeparser = job_args.get("treeparser")
+    is_annotated_tree = job_args.get("is_annotated_tree")
+    
     summary_methods = job_args.get("summary_methods")
     
     # Parse summary methods JSON, if provided
@@ -138,7 +240,9 @@ def process_upload_job(job_args):
     
     # Retrieve paths for uploaded files
     tree_file_path = uploaded_chunks.get(treename, {}).get("tree")
-    metadata_file_path = uploaded_chunks.get(treename, {}).get("metadata")
+    metadata_file_paths = uploaded_chunks.get(treename, {}).get("metadata")
+    metadata_file_list = list(metadata_file_paths.values())
+    
     alignment_file_path = uploaded_chunks.get(treename, {}).get("alignment")
     pfam_file_path = uploaded_chunks.get(treename, {}).get("pfam")
     
@@ -146,25 +250,94 @@ def process_upload_job(job_args):
     if tree_data:
         tree = utils.ete4_parse(tree_data, internal_parser=treeparser)
     elif tree_file_path and os.path.exists(tree_file_path):
-        with open(tree_file_path, 'r') as f:
-            tree = utils.ete4_parse(f.read(), internal_parser=treeparser)
+        
+        # # load tree with newick
+        # with open(tree_file_path, 'r') as f:
+        #     tree = utils.ete4_parse(f.read(), internal_parser=treeparser)
+        
+        # Remove the temporary file after usage
+        
+        tree, eteformat_flag = utils.validate_tree(tree_file_path, 'auto', treeparser)
         os.remove(tree_file_path)
 
-    # Prepare metadata processing if available
-    metadata_bytes = job_args.get("metadata").encode('utf-8') if job_args.get("metadata") else None
-    if metadata_file_path and os.path.exists(metadata_file_path):
-        with open(metadata_file_path, 'rb') as f:
-            metadata_bytes = f.read()
-        os.remove(metadata_file_path)
+    if is_annotated_tree:
+        prop2type = {}
+        node_props = []
+        for path, node in tree.iter_prepostorder():
+            prop2type.update(utils.get_prop2type(node))
 
-    # Process metadata
-    metadata_options = {}
-    columns = {}
-    if metadata_bytes:
-        with NamedTemporaryFile(suffix='.tsv') as f_annotation:
-            f_annotation.write(metadata_bytes)
-            f_annotation.flush()
-            metadata_dict, node_props, columns, prop2type = parse_csv([f_annotation.name], delimiter=separator)
+        avail_props = list(prop2type.keys())
+        node_props.extend(avail_props)
+        del avail_props[avail_props.index('name')]
+        del avail_props[avail_props.index('dist')]
+        if 'support' in avail_props:
+            del avail_props[avail_props.index('support')]
+
+        # convert list data to string
+        list_keys = [key for key, value in prop2type.items() if value == list]
+        
+        # Replace all commas in the tree with '||'
+        list_sep = '||'
+        for node in tree.leaves():
+            for key in list_keys:
+                if node.props.get(key):
+                    
+                    list2str = list_sep.join(map(str, node.props.get(key)))
+                    node.add_prop(key, list2str)
+
+        annotated_newick = tree.write(props=avail_props, 
+        parser=utils.get_internal_parser(treeparser),format_root_node=True)
+        
+        # check if alignment pro is there
+        if 'alignment' in prop2type.keys():
+            alignment_annotation = True
+        else:
+            alignment_annotation = False
+
+        # check if domain pro is there
+        if 'dom_arq' in prop2type.keys():
+            domain_annotation = True
+        else:
+            domain_annotation = False
+
+        # check taxonomic annotation
+        taxonomic_props = ['rank', 'sci_name', 'taxid', 'named_lineage']
+        
+        all_present = all(prop in prop2type.keys() for prop in taxonomic_props)
+        if all_present:
+            taxonomic_annotation = True
+        else:
+            taxonomic_annotation = False
+        
+        # Store the processed data
+        trees[treename] = {
+            'tree': tree_data,
+            'treeparser': treeparser,
+            #'columns': columns,
+            #'metadata': job_args.get("metadata"),
+            'node_props': node_props,
+            "updated_tree": '',
+            'annotated_tree': annotated_newick,
+            'prop2type': prop2type,
+            'layouts': [],
+            'taxonomic_annotation': taxonomic_annotation,
+            'rank_list':[],
+            'alignment_annotation': alignment_annotation,
+            'domain_annotation': domain_annotation,
+        }
+    else:
+        # Process metadata
+        metadata_options = {}
+        columns = {}
+
+        if metadata_file_list:
+            metadata_dict, node_props, columns, prop2type = parse_csv(metadata_file_list, delimiter=separator)
+        else:
+            metadata_dict = {}
+            node_props = []
+            prop2type = {}
+        
+        node_props = list(prop2type.keys())
 
         metadata_options = {
             "metadata_dict": metadata_dict,
@@ -176,103 +349,127 @@ def process_upload_job(job_args):
             "bool_prop": job_args.get("bool_prop"),
             "multiple_text_prop": job_args.get("multiple_text_prop")
         }
+        
+        # Taxonomic annotation options
+        taxonomic_options = {}
+        if job_args.get("taxon_column"):
+            taxonomic_options = {
+                "taxon_column": job_args.get("taxon_column"),
+                "taxadb": job_args.get("taxadb"),
+                "gtdb_version": job_args.get("version"),
+                "taxon_delimiter": job_args.get("species_delimiter"),
+                "taxa_field": job_args.get("species_index"),
+                "ignore_unclassified": job_args.get("ignore_unclassified")
+            }
 
-    # Taxonomic annotation options
-    taxonomic_options = {}
-    if job_args.get("taxon_column"):
-        taxonomic_options = {
-            "taxon_column": job_args.get("taxon_column"),
-            "taxadb": job_args.get("taxadb"),
-            "gtdb_version": job_args.get("version"),
-            "taxon_delimiter": job_args.get("species_delimiter"),
-            "taxa_field": job_args.get("species_index"),
-            "ignore_unclassified": job_args.get("ignore_unclassified")
+        # for analytic methods
+        analytic_options = {}
+        acr_discrete_columns = []
+        acr_continuous_columns = []
+        if job_args.get("acr_columns"):
+            for acr_prop in job_args.get("acr_columns"):
+                if prop2type.get(acr_prop) == str:
+                    acr_discrete_columns.append(acr_prop)
+                elif prop2type.get(acr_prop) == float:
+                    acr_continuous_columns.append(acr_prop)
+            analytic_options = {
+                "acr_discrete_columns": acr_discrete_columns,
+                "acr_continuous_columns": acr_continuous_columns,
+                "prediction_method": job_args.get("prediction_method"),
+                "model": job_args.get("model")
+            }
+            if job_args.get("phylosignal") == 'delta':
+                analytic_options['delta_stats'] = True
+                analytic_options['ent_type'] = job_args.get("ent_type")
+                analytic_options['iteration'] = int(job_args.get("iteration"))
+                analytic_options['lambda0'] = float(job_args.get("lambda0"))
+                analytic_options['se'] = float(job_args.get("se"))
+                analytic_options['thin'] = int(job_args.get("thin"))
+                analytic_options['burn'] = int(job_args.get("burn"))
+
+        ls_columns = []
+        if job_args.get("ls_columns"):
+            ls_columns = job_args.get("ls_columns")
+            analytic_options['ls_columns'] = ls_columns
+            analytic_options['prec_cutoff'] = float(job_args.get("prec_cutoff"))
+            analytic_options['sens_cutoff'] = float(job_args.get("sens_cutoff"))
+
+        # Alignment options
+        alignment_options = {}
+        if alignment_file_path:
+            alignment_options = {
+                "alignment": alignment_file_path,
+                "consensus_cutoff": float(job_args.get("consensus_cutoff"))
+            }
+
+        # Emapper options
+        emapper_options = {
+            "emapper_mode": False,
+            "emapper_pfam": pfam_file_path if pfam_file_path else None
         }
 
-    # for analytic methods
-    analytic_options = {}
-    acr_discrete_columns = []
-    acr_continuous_columns = []
-    if job_args.get("acr_columns"):
-        for acr_prop in job_args.get("acr_columns"):
-            if prop2type.get(acr_prop) == str:
-                acr_discrete_columns.append(acr_prop)
-            elif prop2type.get(acr_prop) == float:
-                acr_continuous_columns.append(acr_prop)
-        analytic_options = {
-            "acr_discrete_columns": acr_discrete_columns,
-            "acr_continuous_columns": acr_continuous_columns,
-            "prediction_method": job_args.get("prediction_method"),
-            "model": job_args.get("model")
+        # Run annotation
+        threads = 6
+        annotated_tree, prop2type = run_tree_annotate(
+            tree,
+            **metadata_options,
+            **emapper_options,
+            **taxonomic_options,
+            **analytic_options,
+            **alignment_options,
+            column2method=column2method,
+            threads=threads
+        )
+
+        if job_args.get("taxon_column"):
+            rank_list = sorted(list(set(utils.tree_prop_array(annotated_tree, 'rank'))))
+        else:
+            rank_list = []
+
+        # Post-processing of annotated tree properties
+        list_keys = [key for key, value in prop2type.items() if value == list]
+        for node in annotated_tree.leaves():
+            for key in list_keys:
+                if node.props.get(key):
+                    node.add_prop(key, '||'.join(node.props[key]))
+        
+        # Name the nodes
+        annotated_tree = name_nodes(annotated_tree)
+
+        #avail_props = [key for key in prop2type.keys() if key not in ['name', 'dist', 'support']]
+        avail_props = list(prop2type.keys())
+
+        annotated_newick = annotated_tree.write(props=avail_props, format_root_node=True)
+
+        # Add node properties for display
+        node_props = metadata_options.get('node_props', [])
+
+        # check if tree has support values
+        sample_node = annotated_tree.children[0]
+        if 'support' in sample_node.props:
+            node_props.extend(['name', 'dist', 'support'])
+        else:
+            node_props.extend(['name', 'dist'])
+        if job_args.get("taxon_column"):
+            taxonomic_props = ['rank', 'sci_name', 'taxid', 'evoltype', 'dup_sp', 'dup_percent', 'lca']
+            node_props.extend(taxonomic_props)
+        
+        # Store the processed data
+        trees[treename] = {
+            'tree': tree_data,
+            'treeparser': treeparser,
+            #'columns': columns,
+            #'metadata': job_args.get("metadata"),
+            'node_props': node_props,
+            "updated_tree": "",
+            'annotated_tree': annotated_newick,
+            'prop2type': prop2type,
+            'layouts': [],
+            'taxonomic_annotation': True if job_args.get("taxon_column") else False,
+            'rank_list':rank_list,
+            'alignment_annotation': True if alignment_file_path else False,
+            'domain_annotation': True if pfam_file_path else False,
         }
-        if job_args.get("phylosignal") == 'delta':
-            analytic_options['delta_stats'] = True
-            analytic_options['ent_type'] = job_args.get("ent_type")
-            analytic_options['iteration'] = int(job_args.get("iteration"))
-            analytic_options['lambda0'] = float(job_args.get("lambda0"))
-            analytic_options['se'] = float(job_args.get("se"))
-            analytic_options['thin'] = int(job_args.get("thin"))
-            analytic_options['burn'] = int(job_args.get("burn"))
-
-    ls_columns = []
-    if job_args.get("ls_columns"):
-        ls_columns = job_args.get("ls_columns")
-        analytic_options['ls_columns'] = ls_columns
-        analytic_options['prec_cutoff'] = float(job_args.get("prec_cutoff"))
-        analytic_options['sens_cutoff'] = float(job_args.get("sens_cutoff"))
-
-    # Alignment options
-    alignment_options = {}
-    if alignment_file_path:
-        alignment_options = {
-            "alignment": alignment_file_path,
-            "consensus_cutoff": float(job_args.get("consensus_cutoff"))
-        }
-
-    # Emapper options
-    emapper_options = {
-        "emapper_mode": False,
-        "emapper_pfam": pfam_file_path if pfam_file_path else None
-    }
-
-    # Run annotation
-    annotated_tree, prop2type = run_tree_annotate(
-        tree,
-        **metadata_options,
-        **emapper_options,
-        **taxonomic_options,
-        **analytic_options,
-        **alignment_options,
-        column2method=column2method
-    )
-
-    # Post-processing of annotated tree properties
-    list_keys = [key for key, value in prop2type.items() if value == list]
-    for node in annotated_tree.leaves():
-        for key in list_keys:
-            if node.props.get(key):
-                node.add_prop(key, '||'.join(node.props[key]))
-
-    avail_props = [key for key in prop2type.keys() if key not in ['name', 'dist', 'support']]
-    annotated_newick = annotated_tree.write(props=avail_props, format_root_node=True)
-
-    node_props = metadata_options.get('node_props', [])
-    node_props.extend(['name', 'dist', 'support'])
-    if job_args.get("taxon_column"):
-        taxonomic_props = ['rank', 'sci_name', 'taxid', 'evoltype', 'dup_sp', 'dup_percent', 'lca']
-        node_props.extend(taxonomic_props)
-    
-    # Store the processed data
-    trees[treename] = {
-        'tree': tree_data,
-        'treeparser': treeparser,
-        'columns': columns,
-        'metadata': job_args.get("metadata"),
-        'node_props': node_props,
-        'annotated_tree': annotated_newick,
-        'prop2type': prop2type,
-        'layouts': []
-    }
 
     # Cleanup temporary alignment file after usage
     if alignment_file_path and os.path.exists(alignment_file_path):
@@ -282,15 +479,15 @@ def process_upload_job(job_args):
     job_status[treename] = "complete"
         
 
-    # if job_status[treename] = "failed"
-    #     print(f"Error processing job {treename}: {e}")
+    if job_status[treename] == "failed":
+        print(f"Error processing job {treename}: {e}")
     
     # Remove stored chunks for the completed job
     if treename in uploaded_chunks:
         del uploaded_chunks[treename]
 
 # Route to serve static files like CSS and JS
-@route('/static/<filepath:path>')
+@app.route('/static/<filepath:path>')
 def server_static(filepath):
     return static_file(filepath, root='./static')
 
@@ -298,7 +495,7 @@ explore_threads = {}  # Store threads and stop signals for exploration sessions
 @route('/')
 def home():
     # Stop all exploration threads
-    print(explore_threads)
+    #print(explore_threads)
     if explore_threads:
         for treename, (thread, stop_event) in list(explore_threads.items()):
             stop_event.set()  # Signal the thread to stop
@@ -307,13 +504,14 @@ def home():
 
     return template('upload_tree')  # Render the home page
 
-@route('/upload_chunk', method='POST')
+@app.route('/upload_chunk', method='POST')
 def upload_chunk():
     # Determine the file type based on the request
     chunk = request.files.get('treeFile') or request.files.get('metadataFile') or request.files.get('alignmentFile') or request.files.get('pfamFile')
     chunk_index = int(request.forms.get("chunkIndex"))
     total_chunks = int(request.forms.get("totalChunks"))
     treename = request.forms.get("treename")
+    file_id = request.forms.get("fileId", None)  # Use provided fileId or generate one
 
     # Identify the file type
     if 'treeFile' in request.files:
@@ -327,45 +525,54 @@ def upload_chunk():
     else:
         return "Unknown file type", 400
 
-    # Initialize chunk storage for each file type if it doesn't exist
+    # Initialize storage
     if treename not in uploaded_chunks:
-        uploaded_chunks[treename] = {
-            "tree": [], 
-            "metadata": [], 
-            "alignment": [], 
-            "pfam": []
-        }
-    
-    # Append the chunk to the corresponding file list
-    uploaded_chunks[treename][file_type].append((chunk_index, chunk.file.read()))
+        uploaded_chunks[treename] = {"tree": {}, "metadata": {}, "alignment": {}, "pfam": {}}
 
-    # Assemble the file when all chunks are received
-    if len(uploaded_chunks[treename][file_type]) == total_chunks:
-        uploaded_chunks[treename][file_type].sort()  # Ensure chunks are in order
-        with NamedTemporaryFile(delete=False) as assembled_file:
-            for _, part in uploaded_chunks[treename][file_type]:
-                assembled_file.write(part)
-            assembled_file_path = assembled_file.name
-        uploaded_chunks[treename][file_type] = assembled_file_path  # Save assembled file path
+    # Handle metadata specifically for multiple files
+    if file_type == "metadata":
+        if file_id not in uploaded_chunks[treename][file_type]:
+            uploaded_chunks[treename][file_type][file_id] = []
+        uploaded_chunks[treename][file_type][file_id].append((chunk_index, chunk.file.read()))
+
+        # Assemble the file when all chunks are received
+        if len(uploaded_chunks[treename][file_type][file_id]) == total_chunks:
+            uploaded_chunks[treename][file_type][file_id].sort()
+            with NamedTemporaryFile(delete=False) as assembled_file:
+                for _, part in uploaded_chunks[treename][file_type][file_id]:
+                    assembled_file.write(part)
+                uploaded_chunks[treename][file_type][file_id] = assembled_file.name
+    else:
+        # Handle other file types
+        if "chunks" not in uploaded_chunks[treename][file_type]:
+            uploaded_chunks[treename][file_type]["chunks"] = []
+        uploaded_chunks[treename][file_type]["chunks"].append((chunk_index, chunk.file.read()))
+
+        if len(uploaded_chunks[treename][file_type]["chunks"]) == total_chunks:
+            uploaded_chunks[treename][file_type]["chunks"].sort()
+            with NamedTemporaryFile(delete=False) as assembled_file:
+                for _, part in uploaded_chunks[treename][file_type]["chunks"]:
+                    assembled_file.write(part)
+                uploaded_chunks[treename][file_type] = assembled_file.name
 
     return "Chunk received"
 
-@route('/job_status/<job_id>')
+@app.route('/job_status/<job_id>')
 def job_status_check(job_id):
     status = job_status.get(job_id, "not_found")
     response.content_type = 'application/json'
     return {"status": status}
 
 
-@route('/show_tree/<treename>')
-def show_tree(treename):
-    # Fetch and display the processed tree, if available
-    tree_info = trees.get(treename)
-    if tree_info:
-        return f"Tree '{treename}' processed successfully! Displaying results."
-    return "Processing still in progress or failed."
+# @app.route('/show_tree/<treename>')
+# def show_tree(treename):
+#     # Fetch and display the processed tree, if available
+#     tree_info = trees.get(treename)
+#     if tree_info:
+#         return f"Tree '{treename}' processed successfully! Displaying results."
+#     return "Processing still in progress or failed."
 
-@route('/tree/<treename>/result')
+@app.route('/tree/<treename>/result')
 def show_tree(treename):
     # Fetch the tree data by its name
     tree_info = trees.get(treename)
@@ -374,72 +581,693 @@ def show_tree(treename):
     else:
         return f"Tree '{treename}' not found."
 
-@route('/tree/<treename>')
+@app.route('/tree/<treename>')
 def tree_status(treename):
     """Serves the job_running.html template to show job status."""
     return template('job_running', treename=treename, job_id=treename)
 
-@route('/check_job_status')
+@app.route('/check_job_status')
 def check_job_status():
     """API endpoint to check the status of a given job."""
     job_id = request.query.get('job_id')
     status = job_status.get(job_id, "not_found")
     return status
 
-@route('/explore_tree/<treename>', method=['GET', 'POST'])
+@app.route('/explore_tree/<treename>', method=['GET', 'POST', 'PUT'])
 def explore_tree(treename):
     tree_info = trees.get(treename)
+    
     if not tree_info:
         return f"Tree '{treename}' not found."
-    
+
     # Retrieve and initialize layouts, properties, and tree
     current_layouts = tree_info.get('layouts', [])
-    current_props = list(tree_info['prop2type'].keys())
-    t = Tree(tree_info['annotated_tree'])
+    color_config = {}
+    layout_manager = {}
+
+    if current_layouts:
+        layout_manager = {layout.name: layout for layout in current_layouts}
+    current_props = sorted(list(tree_info['prop2type'].keys()))
     
+    if tree_info['updated_tree']:
+        t = Tree(tree_info['updated_tree'])
+    else:
+        t = Tree(tree_info['annotated_tree'])
+    
+    
+    
+    # Default configuration settings
     default_configs = {
-        "level": 0,
+        "level": 1,
         "column_width": 70,
         "padding_x": 1,
         "padding_y": 0,
-        "color_config": {},
+        "color_config": color_config,
         "internal_num_rep": 'avg'
     }
     tree_info['default_configs'] = default_configs
-    
-    # Default values for layout settings (can be passed from form in the future)
-    level = default_configs.get('level', 0)
-    column_width = default_configs.get('column_width', 70)
-    padding_x = default_configs.get('padding_x', 1)
-    padding_y = default_configs.get('padding_y', 0) 
-    color_config = default_configs.get('color_config', {})
-    internal_num_rep = default_configs.get('internal_num_rep', 'avg')
+
+    # Retrieve or initialize layouts_metadata in tree_info
+    if 'layouts_metadata' not in tree_info:
+        tree_info['layouts_metadata'] = []
+
+    layouts_metadata = tree_info['layouts_metadata']  # Reference to the persisted metadata
 
     # Process POST request
     if request.method == 'POST':
-        layers_data = request.forms.get('layers')
-        column_width = int(request.forms.get('column_width'))
-        padding_x = int(request.forms.get('padding_x'))
-        padding_y = int(request.forms.get('padding_y'))
-        internal_num_rep = request.forms.get('internal_num_rep')
-        if layers_data:
-            layers = json.loads(layers_data)
-            for layer in layers:
-                # Process each layer individually
-                current_layouts, current_props, level = process_layer(
-                    t, layer, tree_info, current_layouts, current_props, level,
-                    column_width, padding_x, padding_y, color_config, internal_num_rep, paired_color
-                )
+        # Check if the reset action is triggered
+        if request.forms.get('reset_tree'):
+            print("Resetting tree...")
+            # Reset the tree by assigning `annotated_tree` to `updated_tree`
+            tree_info['updated_tree'] = None
+            tree_info['layouts'] = []  # Clear applied layouts
+            current_layouts = []  # Clear layouts
+            layouts_metadata.clear()  # Clear metadata
+        else:
+            layers_data = request.forms.get('layers')
+            level = int(request.forms.get('level', default_configs['level']))
+            column_width = int(request.forms.get('column_width', default_configs['column_width']))
+            padding_x = int(request.forms.get('padding_x', default_configs['padding_x']))
+            padding_y = int(request.forms.get('padding_y', default_configs['padding_y']))
+            internal_num_rep = request.forms.get('internal_num_rep', default_configs['internal_num_rep'])
+            color_config = default_configs.get('color_config', {})
 
-    # Start the ete exploration thread
-    start_explore_thread(t, treename, current_layouts, current_props)
+            if layers_data:
+                layers = json.loads(layers_data)
+                existing_layouts = {layout['layout_name']: layout for layout in layouts_metadata}
+                updated_metadata = []
+                
+                for layer in layers:
+                    # Query queryType
+                    query_type = layer.get('queryType', '')
+                    if query_type == 'rank_limit':
+                        rank_selection = layer.get('rankSelection')
+                        t = utils.taxatree_prune(t, rank_limit=rank_selection)
+                        tree_info['updated_tree'] = t.write(props=current_props, format_root_node=True)
+                    elif query_type == 'prune':
+                        # prune tree by condition 
+                        query_box = layer.get('query', '')
+                        query_strings = convert_query_string(query_box)
+                        prop2type = tree_info['prop2type']
+                        t = utils.conditional_prune(t, query_strings, prop2type)
+                        tree_info['updated_tree'] = t.write(props=current_props, format_root_node=True)
+                    
+                    # Process each layer individually without altering its structure
+                    current_layouts, current_props, level, color_config = process_layer(
+                        t, layer, tree_info, current_layouts, current_props, level,
+                        column_width, padding_x, padding_y, color_config, internal_num_rep, default_paired_color
+                    )
+                    
+                    
+                    # Update layouts_metadata after process_layer
+                    #layouts_metadata.clear()  # Reset to avoid duplicates or outdated data
+                    # Update layouts_metadata without clearing it
+                    for layout in current_layouts:
+                        layout_name = layout.name
+                        
+                        if layout_name in existing_layouts:
+                            # Update existing layout
+                            existing_layout = existing_layouts[layout_name]
+                            existing_layout['config'].update({
+                                "level": getattr(layout, 'column', level),
+                                "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
+                                "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
+                                "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
+                            })
+                            existing_layout['layer'].update(layer.get('layer', {}))
+                            updated_metadata.append(existing_layout)
+                        else:
+                            layout_prefix = layout.name.split('_')[0].lower() # get the layout prefix 
+                            # taxonomic layout
+                            
+                            if layout_prefix.startswith('taxa'):
+                                layout_config = {
+                                    "layout_name": layout.name,
+                                    "applied_props": [],
+                                    "config": {
+                                        "level": getattr(layout, 'column', level),
+                                        "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                        "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
+                                        # "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
+                                        # "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
+                                    },
+                                    "layer": {}
+                                }
+                                
+                                updated_metadata.append(layout_config)
+                                layout_manager[layout.name] = layout
+                            
+                            # alignment layout
+                            elif layout_prefix in ['alignment', 'domain']:
+                                layout_config = {
+                                    "layout_name": layout.name,
+                                    "applied_props": [layout_prefix],
+                                    "config": {
+                                        # "level": getattr(layout, 'column', level),
+                                        # "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                        # "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
+                                        # "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
+                                        # "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
+                                        # "color_config": getattr(layout, 'color_config', {})
+                                    },
+                                    "layer": {}
+                                }
+                                if layout_prefix == "alignment":
+                                    # basic 
+                                    layout_config = {
+                                        "layout_name": layout.name,  # Retrieve layout name from processed layouts
+                                        "applied_props": [layout_prefix],  # Props linked to this layout
+                                        "config": {
+                                            # "level": getattr(layout, 'column', level),
+                                            #"column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                        },
+                                        "layer": {}
+                                    }
+                                    layout_config['layer']['algStart'] = layer.get('algStart', '')
+                                    layout_config['layer']['algEnd'] = layer.get('algEnd', '')
+
+                                updated_metadata.append(layout_config)
+                                layout_manager[layout.name] = layout
+                            
+                            # profiling layout
+                            elif layout_prefix == 'numerical-matrix':
+                                # Append with applied props and full config
+                                name = layout.name
+                                applied_props = layout.matrix_props
+                                layout_config = {
+                                    "layout_name": name,  # Retrieve layout name from processed layouts
+                                    "applied_props": applied_props,  # Props linked to this layout
+                                    "config": {
+                                        "level": getattr(layout, 'column', level),
+                                        "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                        "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
+                                        "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
+                                        "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
+                                        #"color_config": getattr(layout, 'color_config', {})
+                                    },
+                                    "layer": {}
+                                }
+                                
+                                minval, maxval = layout.value_range
+                                layout_config['layer']['maxVal'] = maxval
+                                layout_config['layer']['minVal'] = minval
+                                layout_config['layer']["colorMin"] = layer.get('colorMin', '#0000ff')
+                                layout_config['layer']["colorMid"] = layer.get('colorMid', '#ffffff')
+                                layout_config['layer']["colorMax"] = layer.get('colorMax', '#ff0000')
+
+                                updated_metadata.append(layout_config)
+                                layout_manager[layout.name] = layout
+
+                            elif layout_prefix in ['profiling', 'categorical-matrix', 'binary-matrix']:
+                                # Append with applied props and full config
+                                name = layout.name
+                                applied_props = layout.matrix_props
+                                layout_config = {
+                                    "layout_name": name,  # Retrieve layout name from processed layouts
+                                    "applied_props": applied_props,  # Props linked to this layout
+                                    "config": {
+                                        "level": getattr(layout, 'column', level),
+                                        "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                        "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
+                                        "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
+                                        # "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
+                                        #"color_config": getattr(layout, 'color_config', {})
+                                    },
+                                    "layer": {}
+                                }
+                                updated_metadata.append(layout_config)
+                                layout_manager[layout.name] = layout
+                            
+                            # auto query layout
+                            elif layout_prefix in ['collapsed-by', 'highlighted-by']:
+                                # Append with applied props and full config
+                                name = layout.name
+                                conditions = list(layout.color2conditions.values())
+                                layout_config = {
+                                    "layout_name": name,  # Retrieve layout name from processed layouts
+                                    "applied_props": conditions,  # Props linked to this layout
+                                    "config": {
+                                        # "level": getattr(layout, 'column', level),
+                                        # "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                        # "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
+                                        # "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
+                                        # "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
+                                        #"color_config": getattr(layout, 'color_config', {})
+                                    },
+                                    "layer": {}
+                                }
+                                updated_metadata.append(layout_config)
+                                layout_manager[layout.name] = layout
+                                
+                            else:
+                                
+                                # Append with applied props and full config
+                                name = layout.name
+                                applied_props = layout.prop
+                                
+                                # categorical layout
+                                if layout_prefix in categorical_prefix:
+                                    # basic 
+                                    color_config = color_config.get(applied_props, {})
+                                    layout_config = {
+                                        "layout_name": name,  # Retrieve layout name from processed layouts
+                                        "applied_props": [applied_props],  # Props linked to this layout
+                                        "config": {
+                                            "level": getattr(layout, 'column', level),
+                                            "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                            "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
+                                            "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
+                                            #"color_config": color_config
+                                        },
+                                        "layer": {}
+                                    }
+                                    layout_config['layer']['categoricalColorscheme'] = layer.get('categoricalColorscheme', 'default')   
+
+                                # numerical layout
+                                elif layout_prefix in numerical_prefix:
+                                    if layout_prefix == 'barplot':
+                                        # basic 
+                                        layout_config = {
+                                            "layout_name": name,  # Retrieve layout name from processed layouts
+                                            "applied_props": [applied_props],  # Props linked to this layout
+                                            "config": {
+                                                "level": getattr(layout, 'column', level),
+                                                #"column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                                "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
+                                                "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
+                                                "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
+                                                #"color_config": color_config.get(applied_props, {})
+                                            },
+                                            "layer": {}
+                                        }
+                                        layout_config['layer']['barplotWidth'] = int(layer.get('barplotWidth', 200))
+                                        layout_config['layer']['barplotRange'] = layout.size_range[-1]
+                                        layout_config['layer']['barplotColorOption'] = layer.get('barplotColorOption', 'same')
+                                        
+                                        # layout_config['layer']['barplotScaleProperty'] = layer.get('barplotScaleProperty', '')
+                                        # layout_config['layer']['barplotColorScheme'] = layer.get('barplotColorScheme', 'default')
+                                        # layout_config['layer']['barplotCustomColor'] = layer.get('barplotCustomColor', '#ff0000')
+
+                                        if layout.color is not None:
+                                            layout_config['layer']['barplotColor'] = layout.color
+                                            layout_config['layer']['barplotFillProperty'] = None
+
+                                        if layout.colors is not None:
+                                            layout_config['layer']['barplotFillProperty'] = layer.get('barplotFillProperty', None)
+                                            #layout_config['layer']['barplotColorDict'] = layout.colors
+                                            layout_config['layer']['barplotColor'] = None
+                                        
+                                    elif layout_prefix == 'heatmap':
+                                        # basic 
+                                        layout_config = {
+                                            "layout_name": name,  # Retrieve layout name from processed layouts
+                                            "applied_props": [applied_props],  # Props linked to this layout
+                                            "config": {
+                                                "level": getattr(layout, 'column', level),
+                                                "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                                "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
+                                                "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
+                                                "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
+                                                #"color_config": color_config.get(applied_props, {})
+                                            },
+                                            "layer": {}
+                                        }
+                                        minval, maxval = layout.value_range
+                                        layout_config['layer']['maxVal'] = maxval
+                                        layout_config['layer']['minVal'] = minval
+                                        layout_config['layer']['colorMin'] = layer.get('colorMin', '#0000ff')
+                                        layout_config['layer']['colorMid'] = layer.get('colorMid', '#ffffff')
+                                        layout_config['layer']['colorMax'] = layer.get('colorMax', '#ff0000')
+                                    
+                                    elif layout_prefix == 'branchscore':
+                                        # basic 
+                                        layout_config = {
+                                            "layout_name": name,  # Retrieve layout name from processed layouts
+                                            "applied_props": [applied_props],  # Props linked to this layout
+                                            "config": {
+                                                # "level": getattr(layout, 'column', level),
+                                                # "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                                # "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
+                                                # "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
+                                                "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
+                                                #"color_config": color_config.get(applied_props, {})
+                                            },
+                                            "layer": {}
+                                        }
+                                        minval, maxval = layout.value_range
+                                        layout_config['layer']['maxVal'] = maxval
+                                        layout_config['layer']['minVal'] = minval
+                                        layout_config['layer']['colorMin'] = layer.get('colorMin', '#0000ff')
+                                        layout_config['layer']['colorMid'] = layer.get('colorMid', '#ffffff')
+                                        layout_config['layer']['colorMax'] = layer.get('colorMax', '#ff0000')
+                                    elif layout_prefix == 'numerical-bubble':
+                                        # basic 
+                                        layout_config = {
+                                            "layout_name": name,  # Retrieve layout name from processed layouts
+                                            "applied_props": [applied_props],  # Props linked to this layout
+                                            "config": {
+                                                "level": getattr(layout, 'column', level),
+                                                # "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                                # "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
+                                                # "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
+                                                "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
+                                                #"color_config": color_config.get(applied_props, {})
+                                            },
+                                            "layer": {}
+                                        }
+                                        minval, maxval = layout.bubble_rage
+                                        layout_config['layer']['maxVal'] = maxval
+                                        layout_config['layer']['minVal'] = minval
+                                        layout_config['layer']['colorMin'] = layer.get('colorMin', '#0000ff')
+                                        layout_config['layer']['colorMid'] = layer.get('colorMid', '#ffffff')
+                                        layout_config['layer']['colorMax'] = layer.get('colorMax', '#ff0000')
+                                    else:
+                                        layout_config = {
+                                            "layout_name": name,  # Retrieve layout name from processed layouts
+                                            "applied_props": [applied_props],  # Props linked to this layout
+                                            "config": {
+                                                "level": getattr(layout, 'column', level),
+                                                "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                                "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
+                                                "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
+                                                "internal_num_rep": getattr(layout, 'internal_num_rep', default_configs['internal_num_rep']),
+                                                #"color_config": color_config.get(applied_props, {})
+                                            },
+                                            "layer": {}
+                                        }
+                                        layout_config['layer']["maxVal"] = layer.get('maxVal', '')
+                                        layout_config['layer']["minVal"] = layer.get('minVal', '')
+                                        layout_config['layer']["colorMin"] = layer.get('colorMin', '#0000ff')
+                                        layout_config['layer']["colorMid"] = layer.get('colorMid', '#ffffff')
+                                        layout_config['layer']["colorMax"] = layer.get('colorMax', '#ff0000')
+
+                                # binary layout
+                                elif layout_prefix in binary_prefix:
+                                    # basic 
+                                    layout_config = {
+                                        "layout_name": name,  # Retrieve layout name from processed layouts
+                                        "applied_props": [applied_props],  # Props linked to this layout
+                                        "config": {
+                                            "level": getattr(layout, 'column', level),
+                                            "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                            "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
+                                            "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
+                                            #"color_config": color_config.get(applied_props, {})
+                                        },
+                                        "layer": {}
+                                    }
+                                    layout_config['layer']['aggregateOption'] = layer.get('aggregateOption', 'gradient')
+                                    layout_config['layer']['selectedColor'] = layout.color
+                                
+                                # alignment
+                                else:
+                                    # basic 
+                                    layout_config = {
+                                        "layout_name": name,  # Retrieve layout name from processed layouts
+                                        "applied_props": [applied_props],  # Props linked to this layout
+                                        "config": {
+                                            # "level": getattr(layout, 'column', level),
+                                            # "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                        },
+                                        "layer": {}
+                                    }
+                                updated_metadata.append(layout_config)
+                            
+                                #layouts_metadata.append(layout_config)
+                                layout_manager[layout.name] = layout
+
+                        layouts_metadata.clear()
+                        layouts_metadata.extend(updated_metadata)
     
+    
+    # Process PUT request for updating layouts 
+    if request.method == 'PUT':
+        if request.forms.get('updated_metadata'):
+            try:
+                # layouts_metadata.clear()
+                updated_metadata = json.loads(request.forms.get('updated_metadata'))
+                tree_info['layouts_metadata'] = updated_metadata
+                current_layouts = []
+                
+                for layout_meta in updated_metadata:
+                    layout = layout_manager.get(layout_meta['layout_name'])
+                    layout_prefix = layout_meta['layout_name'].split('_')[0].lower()
+                    
+                    if layout:
+                        # for categorical
+                        if layout_prefix in categorical_prefix:
+                            prop = layout_meta['applied_props'][0]
+                            # reset color config
+                            if layout_prefix  == 'piechart':
+                                original_prop = prop.split('_counter')[0] # get the original prop
+                                categorical_color_scheme = layout_meta['layer'].get('categoricalColorscheme', 'default')
+                                prop_values = sorted(list(set(utils.tree_prop_array(t, original_prop))))
+                                paired_color = get_colormap_hex_colors(categorical_color_scheme, len(prop_values))
+
+                                color_config[prop] = {}
+                                color_config[prop]['value2color'] = utils.assign_color_to_values(prop_values, paired_color)
+                                color_config[prop]['detail2color'] = {}
+                                
+                                # change directly in layout
+                                layout.column = layout_meta['config']['level']
+                                layout.width = layout_meta['config']['column_width']
+                                layout.padding_x = layout_meta['config']['padding_x']
+                                layout.padding_y = layout_meta['config']['padding_y']
+                                layout.color_dict = color_config.get(prop).get('value2color')
+                            else:
+                                categorical_color_scheme = layout_meta['layer'].get('categoricalColorscheme', 'default')
+                                prop_values = sorted(list(set(utils.tree_prop_array(t, prop))))
+                                paired_color = get_colormap_hex_colors(categorical_color_scheme, len(prop_values))
+                                color_config[prop] = {}
+                                color_config[prop]['value2color'] = utils.assign_color_to_values(prop_values, paired_color)
+                                color_config[prop]['detail2color'] = {}
+                                
+                                # change directly in layout
+                                layout.column = layout_meta['config']['level']
+                                layout.width = layout_meta['config']['column_width']
+                                layout.padding_x = layout_meta['config']['padding_x']
+                                layout.padding_y = layout_meta['config']['padding_y']
+                                layout.color_dict = color_config.get(prop).get('value2color')
+
+                        # for binary
+                        elif layout_prefix in binary_prefix:
+                            prop = layout_meta['applied_props'][0]
+                            selected_color = layout_meta['layer'].get('selectedColor', '#ff0000')
+                            aggregate_option = layout_meta['layer'].get('aggregateOption', 'gradient')
+                            
+                            if aggregate_option == 'gradient':
+                                aggregate = False
+                            else:
+                                aggregate = True
+                            
+                            # change directly in layout
+                            layout.aggregate = aggregate
+                            layout.color = selected_color
+                            layout.width = layout_meta['config']['column_width']
+                            layout.padding_x = layout_meta['config']['padding_x']
+                            layout.padding_y = layout_meta['config']['padding_y']
+                            
+                        # for numerical
+                        elif layout_prefix in numerical_prefix:
+                            prop = layout_meta['applied_props'][0]
+                            if layout_prefix == 'numerical-matrix':
+                                maxval = layout_meta['layer'].get('maxVal', '')                            
+                                minval = layout_meta['layer'].get('minVal', '')
+                                
+                                color_min = layout_meta['layer'].get('colorMin', '#0000ff')
+                                color_mid = layout_meta['layer'].get('colorMid', '#ffffff')
+                                color_max = layout_meta['layer'].get('colorMax', '#ff0000')
+                                selected_props = layout_meta['applied_props']
+                                for index, prop in enumerate(selected_props):
+                                    color_config[prop] = {}
+                                    color_config[prop]['value2color'] = {}
+                                    color_config[prop]['detail2color'] = {}
+                                    color_config[prop]['detail2color']['color_max'] = (color_max, maxval)
+                                    color_config[prop]['detail2color']['color_mid'] = (color_mid, '')
+                                    color_config[prop]['detail2color']['color_min'] = (color_min, minval)
+                                matrix, minval, maxval, value2color, results_list, list_props, single_props = tree_plot.numerical2matrix(t, 
+                                selected_props, count_negative=True, 
+                                internal_num_rep=layout_meta['config']['internal_num_rep'], 
+                                color_config=color_config, norm_method='min-max')
+                                
+                                # TODO add list_props at this moment
+                                if list_props:
+                                    pass
+
+                                if single_props:
+                                    index_map = {value: idx for idx, value in enumerate(selected_props)}
+                                    sorted_single_props = sorted(single_props, key=lambda x: index_map[x])
+                                    layout.matrix = matrix
+                                    layout.matrix_props = sorted_single_props
+                                    layout.value_color = value2color
+                                    layout.value_range = [minval, maxval]
+                                    layout.column = layout_meta['config']['level']
+                                    layout.poswidth = layout_meta['config']['column_width']
+                            else:
+                                maxval = layout_meta['layer'].get('maxVal', '')                            
+                                minval = layout_meta['layer'].get('minVal', '')
+                                
+                                color_min = layout_meta['layer'].get('colorMin', '#0000ff')
+                                color_mid = layout_meta['layer'].get('colorMid', '#ffffff')
+                                color_max = layout_meta['layer'].get('colorMax', '#ff0000')
+                                color_config[prop] = {}
+                                color_config[prop]['value2color'] = {}
+                                color_config[prop]['detail2color'] = {}
+                                color_config[prop]['detail2color']['color_max'] = (color_max, maxval)
+                                color_config[prop]['detail2color']['color_mid'] = (color_mid, '')
+                                color_config[prop]['detail2color']['color_min'] = (color_min, minval)
+                                
+                            if layout_prefix == 'barplot':
+                                barplot_width = layout_meta['layer'].get('barplotWidth', 200)
+                                barplot_width = int(barplot_width)
+                                barplot_scale = layout_meta['layer'].get('barplotScaleProperty', '')
+                                barplot_range = layout_meta['layer'].get('barplotRange')
+                                
+                                if barplot_range == '':
+                                    barplot_range = layout.size_range[1]
+                                else:
+                                    barplot_range = float(barplot_range)
+                                    
+                                size_range = [0, barplot_range]
+                                barplot_color_option = layout_meta['layer'].get('barplotColorOption', 'same')
+                                
+                                # barplot_custom_color = layout_meta['layer'].get('barplotCustomColor', '#ff0000')
+                                
+                                if barplot_color_option == 'same':
+                                    layout.colors = None
+                                    layout.color_prop = None
+                                    layout.color = layout_meta['layer'].get('barplotColor', None)
+
+
+                                if barplot_color_option == 'colorby':
+                                    layout.color = None
+                                    barplot_colorby = layout_meta['layer'].get('barplotFillProperty', '')
+                                    if barplot_colorby != '' or barplot_colorby is not None:
+                                        prop_values = sorted(list(set(utils.tree_prop_array(t, barplot_colorby))))
+                                        color_dict = utils.assign_color_to_values(prop_values, default_paired_color)
+
+                                    layout.colors = color_dict
+                                    layout.color_prop = barplot_colorby
+
+                                layout.size_range = size_range
+                                layout.width = barplot_width
+                                layout.padding_x = layout_meta['config']['padding_x']
+                                layout.padding_y = layout_meta['config']['padding_y']
+                                layout.internal_rep = layout_meta['config']['internal_num_rep']
+                                layout.column = layout_meta['config']['level']
+
+                            if layout_prefix.startswith('branchscore'):
+                                layouts = tree_plot.get_branchscore_layouts(
+                                    t, [prop], prop2type=tree_info['prop2type'],  
+                                    internal_rep=layout_meta['config']['internal_num_rep'],
+                                    color_config=color_config
+                                )
+                                layout = layouts[0] 
+                                layout.internal_num_rep = layout_meta['config']['internal_num_rep']
+                            
+                            if layout_prefix == 'numerical-bubble':
+                                # Convert maxval and minval to floats if they exist
+                                if maxval is not None and maxval != '':
+                                    maxval = float(maxval)
+                                else:
+                                    maxval = None  # Reset to None if invalid
+                                if minval is not None and minval != '':
+                                    minval = float(minval)
+                                else:
+                                    minval = None  # Reset to None if invalid
+
+                                # Ensure bubble_range includes 0 if valid
+                                if minval is not None and maxval is not None:
+                                    bubble_range = [minval, maxval]
+                                else:
+                                    bubble_range = []
+
+                                bubble_layouts, level, _ = tree_plot.get_numerical_bubble_layouts(
+                                    t, [prop], layout_meta['config']['level'], 
+                                    tree_info['prop2type'], internal_rep=layout_meta['config']['internal_num_rep'],
+                                    bubble_range=bubble_range, color_config=color_config
+                                )
+                                layout = bubble_layouts[0]
+                                layout.width = layout_meta['config']['column_width']
+                                layout.padding_x = layout_meta['config']['padding_x']
+                                layout.padding_y = layout_meta['config']['padding_y']
+                                layout.internal_num_rep = layout_meta['config']['internal_num_rep']
+
+                            if layout_meta['layout_name'].lower().startswith('heatmap') and layout_meta['layout_name'].lower().endswith('min-max'):
+                                layouts, _ = tree_plot.get_heatmap_layouts(
+                                    t, [prop], layout_meta['config']['level'], 
+                                    column_width=layout_meta['config']['column_width'],
+                                    padding_x=layout_meta['config']['padding_x'], padding_y=layout_meta['config']['padding_y'], 
+                                    internal_rep=layout_meta['config']['internal_num_rep'],
+                                    color_config=color_config, norm_method='min-max'
+                                )
+                                layout = layouts[0]
+                                layout.width = layout_meta['config']['column_width']
+                                layout.padding_x = layout_meta['config']['padding_x']
+                                layout.padding_y = layout_meta['config']['padding_y']
+                                layout.internal_num_rep = layout_meta['config']['internal_num_rep']
+                                
+                            if layout_meta['layout_name'].lower().startswith('heatmap') and layout_meta['layout_name'].lower().endswith('mean'):
+                                layouts, _ = tree_plot.get_heatmap_layouts(
+                                    t, [prop], layout_meta['config']['level'],
+                                    column_width=layout_meta['config']['column_width'],
+                                    padding_x=layout_meta['config']['padding_x'], padding_y=layout_meta['config']['padding_y'], 
+                                    internal_rep=layout_meta['config']['internal_num_rep'],
+                                    color_config=color_config, norm_method='mean'
+                                )
+                                layout = layouts[0]
+                                layout.width = layout_meta['config']['column_width']
+                                layout.padding_x = layout_meta['config']['padding_x']
+                                layout.padding_y = layout_meta['config']['padding_y']
+                                layout.internal_num_rep = layout_meta['config']['internal_num_rep']
+                                
+                            if layout_meta['layout_name'].lower().startswith('heatmap') and layout_meta['layout_name'].lower().endswith('zscore'):
+                                layouts, _ = tree_plot.get_heatmap_layouts(
+                                    t, [prop], layout_meta['config']['level'],
+                                    column_width=layout_meta['config']['column_width'],
+                                    padding_x=layout_meta['config']['padding_x'], padding_y=layout_meta['config']['padding_y'], 
+                                    internal_rep=layout_meta['config']['internal_num_rep'],
+                                    color_config=color_config, norm_method='zscore'
+                                )
+                                layout = layouts[0]
+                                layout.width = layout_meta['config']['column_width']
+                                layout.padding_x = layout_meta['config']['padding_x']
+                                layout.padding_y = layout_meta['config']['padding_y']
+                                layout.internal_num_rep = layout_meta['config']['internal_num_rep']
+                            
+                            
+                        current_layouts.append(layout)
+
+                tree_info['layouts'] = current_layouts
+
+                start_explore_thread(t, treename, current_layouts, current_props)
+                #return "Layouts metadata updated successfully."
+            except json.JSONDecodeError:
+                return "Invalid metadata format.", 400
+    # Start the ete exploration thread
+
+    if request.method == 'GET':
+        start_explore_thread(t, treename, current_layouts, current_props)
+
+    # Before rendering the template, convert to JSON
+    #layouts_json = json.dumps(tree_info['layouts'])
+    layouts_metadata_json = json.dumps(layouts_metadata)
+
     # Render template
-    return template('explore_tree', treename=treename, tree_info=tree_info, selected_props=current_props, color_schemes=continuous_colormaps)
+    return template(
+        'explore_tree_v2',
+        treename=treename,
+        tree_info=tree_info,
+        selected_props=current_props,
+        color_schemes=continuous_colormaps,
+        layouts_metadata=layouts_metadata,
+        layouts_metadata_json = json.dumps(layouts_metadata)
+    )
 
 def get_colormap_hex_colors(colormap_name, num_colors):
     if colormap_name == 'default':
-        return paired_color
+        return default_paired_color
     else:
         cmap = plt.get_cmap(colormap_name)
         colors = [mcolors.to_hex(cmap(i / (num_colors - 1))) for i in range(num_colors)]
@@ -449,10 +1277,13 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
     """
     Processes a single layer, applying user selections and updating layouts, properties, and level.
     """
+    layout2colorconfg = {}
     selected_props = layer.get('props', [])
     selected_layout = layer.get('layout', '')
     query_type = layer.get('queryType', '')
+    rank_selection = layer.get('rankSelection', '')
     query_box = layer.get('query', '')
+
     prop2type = tree_info['prop2type']
 
     # Process color configuration for the current layer
@@ -460,7 +1291,6 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
     categorical_color_scheme = layer.get('categoricalColorscheme', 'default')
 
     # numerical settings
-    
     maxval = layer.get('maxVal', '') # this should be automatically calculated
     minval = layer.get('minVal', '') # this should be automatically calculated
     color_min = layer.get('colorMin', '#0000ff')
@@ -471,17 +1301,19 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
     barplot_width = layer.get('barplotWidth', 200)
     barplot_scale = layer.get('barplotScaleProperty', '')
     barplot_range = layer.get('barplotRange', '')
-    barplotColorOption = layer.get('barplotColorOption', 'same')
-    barplot_color_scheme = layer.get('barplotColorscheme', 'default')
+    barplot_color_option = layer.get('barplotColorOption', 'same')
+    barplot_color_scheme = layer.get('barplotColorScheme', 'default')
     barplot_colorby = layer.get('barplotFillProperty', None)
     
     # binary settings
     if selected_layout == 'binary-layout':
         same_color = layer.get('isUnicolor', True)
+
         if not same_color:
             bianry_color_scheme = layer.get('binaryColorscheme', 'default')
         else:
             unicolorColor = layer.get('unicolorColor', '#ff0000')
+
         aggregate_option = layer.get('aggregateOption', 'gradient')
         
         if aggregate_option == 'gradient':
@@ -495,13 +1327,16 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
     
     # Apply selected layout based on type directly within this function
     if selected_layout in categorical_layout_list:
+        
         for index, prop in enumerate(selected_props):
             prop_values = sorted(list(set(utils.tree_prop_array(t, prop))))
             paired_color = get_colormap_hex_colors(categorical_color_scheme, len(prop_values))
             color_config[prop] = {}
             color_config[prop]['value2color'] = utils.assign_color_to_values(prop_values, paired_color)
             color_config[prop]['detail2color'] = {}
+        
         level, current_layouts = apply_categorical_layouts(t, selected_layout, selected_props, tree_info, current_layouts, level, column_width, padding_x, padding_y, color_config)
+        
     elif selected_layout == 'binary-layout':
         for index, prop in enumerate(selected_props):
             prop_values = utils.tree_prop_array(t, prop, leaf_only=True)
@@ -519,6 +1354,7 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
         column_width=column_width, reverse=False, padding_x=padding_x, padding_y=padding_y,
         color_config=color_config, same_color=same_color, aggregate=aggregate)
         current_layouts.extend(binary_layouts)
+
     elif selected_layout == 'branchscore-layout':
         for index, prop in enumerate(selected_props):
             color_config[prop] = {}
@@ -535,8 +1371,14 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
         current_layouts.extend(branchscore_layouts)
     elif selected_layout == 'barplot-layout':
         for index, prop in enumerate(selected_props):
-            if barplotColorOption == 'colorby':
+            if barplot_color_option == 'colorby':
                 color_config = None
+            elif barplot_color_option == 'custom':
+                barplot_custom_color = layer.get('barplotCustomColor', '#ff0000')
+                color_config[prop] = {}
+                color_config[prop]['value2color'] = {}
+                color_config[prop]['detail2color'] = {}
+                color_config[prop]['detail2color']['barplot_color'] = (barplot_custom_color, '')
             else:
                 paired_color = get_colormap_hex_colors(barplot_color_scheme, len(selected_props))
                 color_config[prop] = {}
@@ -564,11 +1406,16 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
             color_config[prop]['detail2color']['color_mid'] = (color_mid, '')
             color_config[prop]['detail2color']['color_min'] = (color_min, minval)
         # Convert maxval and minval to floats if they exist
-        if maxval:
+        if maxval is not None and maxval != '':
             maxval = float(maxval)
-        if minval:
+        else:
+            maxval = None
+        if minval is not None and minval != '':
             minval = float(minval)
-        if minval and maxval:
+        else:
+            minval = None
+
+        if minval is not None and maxval is not None:
             bubble_range=[minval, maxval]
         else:
             bubble_range = []
@@ -633,7 +1480,7 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
             sorted_list_props = sorted(list_props, key=lambda x: index_map[x])
             for list_prop in sorted_list_props:
                 matrix, minval, maxval, value2color = results_list[list_prop]
-                matrix_layout = tree_plot.profile_layouts.LayoutPropsMatrixOld(name=f"Numerical_matrix_{list_prop}", 
+                matrix_layout = tree_plot.profile_layouts.LayoutPropsMatrixOld(name=f"Numerical-matrix_{list_prop}", 
                     matrix=matrix, matrix_type='numerical', matrix_props=[list_prop], is_list=True, 
                     value_color=value2color, value_range=[minval, maxval], column=level,
                     poswidth=column_width)
@@ -642,7 +1489,7 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
         if single_props:
             index_map = {value: idx for idx, value in enumerate(selected_props)}
             sorted_single_props = sorted(single_props, key=lambda x: index_map[x])
-            matrix_layout = tree_plot.profile_layouts.LayoutPropsMatrixOld(name=f"Numerical_matrix_{sorted_single_props}", 
+            matrix_layout = tree_plot.profile_layouts.LayoutPropsMatrixOld(name=f"Numerical-matrix_{sorted_single_props}", 
                 matrix=matrix, matrix_type='numerical', matrix_props=sorted_single_props, is_list=False, 
                 value_color=value2color, value_range=[minval, maxval], column=level,
                 poswidth=column_width)
@@ -681,16 +1528,17 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
         
     # Process query actions for the current layer
     current_layouts = apply_queries(query_type, query_box, current_layouts, paired_color, tree_info, level)
+    
     current_props.extend(selected_props)
 
-    return current_layouts, current_props, level
+    return current_layouts, current_props, level, color_config
 
 def apply_categorical_layouts(t, selected_layout, selected_props, tree_info, current_layouts, level, column_width, padding_x, padding_y, color_config):
     """
     Applies categorical layouts such as rectangle, label, colorbranch, bubble, piechart, background, and profiling.
     """
     prop2type = tree_info['prop2type']
-
+    
     # Apply specific categorical layout configurations
     if selected_layout == 'rectangle-layout':
         rectangle_layouts, level, _ = tree_plot.get_rectangle_layouts(
@@ -735,9 +1583,11 @@ def apply_categorical_layouts(t, selected_layout, selected_props, tree_info, cur
 
     elif selected_layout == 'profiling-layout':
         for profiling_prop in selected_props:
+            
             matrix, value2color, all_profiling_values = tree_plot.multiple2matrix(
-                t, profiling_prop, prop2type=prop2type, color_config=color_config
+                t, profiling_prop, prop2type=prop2type, color_config=color_config,
             )
+            
             matrix_layout = tree_plot.profile_layouts.LayoutPropsMatrixBinary(
                 name=f"Profiling_{profiling_prop}", matrix=matrix, matrix_props=all_profiling_values,
                 value_range=[0, 1], value_color=value2color, column=level, poswidth=column_width
@@ -751,7 +1601,7 @@ def apply_categorical_layouts(t, selected_layout, selected_props, tree_info, cur
             t, selected_props, color_config=color_config
         )
         matrix_layout = tree_plot.profile_layouts.LayoutPropsMatrixOld(
-            name=f"Categorical_matrix_{selected_props}", matrix=matrix, matrix_type='categorical',
+            name=f"Categorical-matrix_{selected_props}", matrix=matrix, matrix_type='categorical',
             matrix_props=selected_props, value_color=value2color, column=level, poswidth=column_width
         )
         current_layouts.append(matrix_layout)
@@ -781,7 +1631,6 @@ def apply_analytic_layouts(t, selected_layout, selected_props, tree_info, curren
             t, selected_props, level, prop2type=tree_info['prop2type'],
             padding_x=padding_x, padding_y=padding_y, color_config=color_config
         )
-        current_props.extend(ls_props)
         current_layouts.extend(ls_layouts)
     return level, current_layouts
 
@@ -845,13 +1694,13 @@ def apply_taxonomic_layouts(t, selected_layout, selected_props, tree_info, curre
     # Add scientific name and evolutionary events layouts
     taxa_layouts.append(
         layouts.taxon_layouts.LayoutSciName(
-            name='Taxa Scientific name',
+            name='Taxa_Scientific name',
             color_dict=taxon_color_dict
         )
     )
     taxa_layouts.append(
         layouts.taxon_layouts.LayoutEvolEvents(
-            name='Taxa Evolutionary events',
+            name='Taxa_Evolutionary events',
             prop="evoltype",
             speciation_color="blue",
             duplication_color="red",
@@ -892,7 +1741,7 @@ def apply_highlight_queries(query_strings, current_layouts, paired_color, tree_i
         color2conditions = {paired_color[idx]: condition_list}
         
         s_layout = layouts.conditional_layouts.LayoutHighlight(
-            name=f'Highlight_{condition}', color2conditions=color2conditions, 
+            name=f'Highlighted-by_{condition}', color2conditions=color2conditions, 
             column=level, prop2type=tree_info['prop2type']
         )
         current_layouts.append(s_layout)
@@ -910,7 +1759,7 @@ def apply_collapse_queries(query_strings, current_layouts, paired_color, tree_in
         color2conditions = {paired_color[idx]: condition_list}
         
         c_layout = layouts.conditional_layouts.LayoutCollapse(
-            name=f'Collapse_{condition}', color2conditions=color2conditions, 
+            name=f'Collapsed-by_{condition}', color2conditions=color2conditions, 
             column=level, prop2type=tree_info['prop2type']
         )
         current_layouts.append(c_layout)
@@ -932,8 +1781,6 @@ def start_explore_thread(t, treename, current_layouts, current_props):
     explore_threads[treename] = (explorer_thread, stop_event)
     print(explore_threads)
     explorer_thread.start()
-
-    
 
 def convert_query_string(query_string):
     # Split the query by semicolon to get each statement

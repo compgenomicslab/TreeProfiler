@@ -357,7 +357,6 @@ class LayoutPropsMatrixOld(TreeLayout):
 
     def set_node_style(self, node):
         array = self.get_array(node)
-        #array = self.get_array(node)
         if array:
             if not self.is_list:
                 if len(self.matrix_props) > 1:
@@ -835,7 +834,7 @@ class ProfileFace(Face):
         self.seq = seq
         self.seqlength = len(self.seq)
         self.value2color = value2color
-        self.absence_color = '#EBEBEB'
+        self.absence_color = value2color.get(None, '#EBEBEB') if value2color else '#EBEBEB'
 
         self.autoformat = True  # block if 1px contains > 1 tile
 

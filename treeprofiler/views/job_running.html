@@ -21,7 +21,7 @@
         if (status !== "complete" && status !== "failed") {
             setTimeout(checkJobStatus, 1000);  // Re-check status every second
         } else if (status === "complete") {
-            window.location.href = `/tree/${jobId}/result`;  // Redirect to result page when done
+            window.location.href = `/explore_tree/${jobId}`;  // Redirect to result page when done
         }
     }
 
