@@ -662,7 +662,9 @@ def run(args):
         if layout == 'profiling-layout':
             profiling_props = args.profiling_layout
             for profiling_prop in profiling_props:
-                matrix, value2color, all_profiling_values = multiple2matrix(tree, profiling_prop, prop2type=prop2type, color_config=color_config, eteformat_flag=eteformat_flag)
+                matrix, value2color, all_profiling_values = multiple2matrix(tree, profiling_prop, 
+                prop2type=prop2type, color_config=color_config, eteformat_flag=eteformat_flag)
+
                 matrix_layout = profile_layouts.LayoutPropsMatrixBinary(name=f"Profiling_{all_profiling_values}",
                 matrix=matrix, matrix_props=all_profiling_values, value_range=[0,1],
                 value_color=value2color, column=level, poswidth=args.column_width)
@@ -2294,6 +2296,7 @@ def multiple2matrix(tree, profiling_prop, prop2type=None, color_config=None, ete
 
     # Determine the data type of the profiling property
     data_type = prop2type.get(profiling_prop)
+
     # Get all categorical values based on whether data_type is a list and eteformat_flag
     if data_type and data_type == list:
         tree_prop_array = utils.tree_prop_array(tree, profiling_prop, leaf_only=True, list_type=not eteformat_flag)

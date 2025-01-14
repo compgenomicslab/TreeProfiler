@@ -219,13 +219,15 @@ def do_upload():
 
 def process_upload_job(job_args):
     """Function to handle the actual processing of the uploaded data."""
+    eteformat_flag = False
+    
     treename = job_args['treename']
     # Initialize variables and parse arguments
     separator = "\t" if job_args.get("separator") == "<tab>" else job_args.get("separator", ",")
     tree_data = job_args.get("tree_data")
     treeparser = job_args.get("treeparser")
     is_annotated_tree = job_args.get("is_annotated_tree")
-
+    
     summary_methods = job_args.get("summary_methods")
     
     # Parse summary methods JSON, if provided
@@ -244,22 +246,54 @@ def process_upload_job(job_args):
     if tree_data:
         tree = utils.ete4_parse(tree_data, internal_parser=treeparser)
     elif tree_file_path and os.path.exists(tree_file_path):
-        with open(tree_file_path, 'r') as f:
-            tree = utils.ete4_parse(f.read(), internal_parser=treeparser)
+        
+        # # load tree with newick
+        # with open(tree_file_path, 'r') as f:
+        #     tree = utils.ete4_parse(f.read(), internal_parser=treeparser)
+        
+        # Remove the temporary file after usage
+        
+        tree, eteformat_flag = utils.validate_tree(tree_file_path, 'auto', treeparser)
         os.remove(tree_file_path)
 
     if is_annotated_tree:
+        prop2type = {}
+        node_props = []
+        for path, node in tree.iter_prepostorder():
+            prop2type.update(utils.get_prop2type(node))
+
+        avail_props = list(prop2type.keys())
+        node_props.extend(avail_props)
+        del avail_props[avail_props.index('name')]
+        del avail_props[avail_props.index('dist')]
+        if 'support' in avail_props:
+            del avail_props[avail_props.index('support')]
+
+        # convert list data to string
+        list_keys = [key for key, value in prop2type.items() if value == list]
+        # Replace all commas in the tree with '||'
+        list_sep = '||'
+        for node in tree.leaves():
+            for key in list_keys:
+                if node.props.get(key):
+                    list2str = list_sep.join(node.props.get(key))
+                    node.add_prop(key, list2str)
+
+        annotated_newick = tree.write(props=avail_props, 
+        parser=utils.get_internal_parser(treeparser),format_root_node=True)
         
+        
+
         # Store the processed data
         trees[treename] = {
             'tree': tree_data,
             'treeparser': treeparser,
             #'columns': columns,
             #'metadata': job_args.get("metadata"),
-            'node_props': 'node_props',
+            'node_props': node_props,
             "updated_tree": '',
-            'annotated_tree': tree.write(format_root_node=True),
-            'prop2type': {},
+            'annotated_tree': annotated_newick,
+            'prop2type': prop2type,
             'layouts': [],
             'taxonomic_annotation': True if job_args.get("taxon_column") else False,
             'rank_list':[],
@@ -394,7 +428,6 @@ def process_upload_job(job_args):
         if job_args.get("taxon_column"):
             taxonomic_props = ['rank', 'sci_name', 'taxid', 'evoltype', 'dup_sp', 'dup_percent', 'lca']
             node_props.extend(taxonomic_props)
-        
         
         # Store the processed data
         trees[treename] = {
@@ -1470,7 +1503,7 @@ def apply_categorical_layouts(t, selected_layout, selected_props, tree_info, cur
     Applies categorical layouts such as rectangle, label, colorbranch, bubble, piechart, background, and profiling.
     """
     prop2type = tree_info['prop2type']
-
+    
     # Apply specific categorical layout configurations
     if selected_layout == 'rectangle-layout':
         rectangle_layouts, level, _ = tree_plot.get_rectangle_layouts(
@@ -1515,9 +1548,11 @@ def apply_categorical_layouts(t, selected_layout, selected_props, tree_info, cur
 
     elif selected_layout == 'profiling-layout':
         for profiling_prop in selected_props:
+            
             matrix, value2color, all_profiling_values = tree_plot.multiple2matrix(
-                t, profiling_prop, prop2type=prop2type, color_config=color_config
+                t, profiling_prop, prop2type=prop2type, color_config=color_config,
             )
+            
             matrix_layout = tree_plot.profile_layouts.LayoutPropsMatrixBinary(
                 name=f"Profiling_{profiling_prop}", matrix=matrix, matrix_props=all_profiling_values,
                 value_range=[0, 1], value_color=value2color, column=level, poswidth=column_width

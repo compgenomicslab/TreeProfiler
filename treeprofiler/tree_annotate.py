@@ -929,8 +929,9 @@ def run(args):
         for node in annotated_tree.leaves():
             for key in list_keys:
                 if node.props.get(key):
-                    list2str = list_sep.join(str(node.props.get(key)))
+                    list2str = list_sep.join(node.props.get(key))
                     node.add_prop(key, list2str)
+                    
         avail_props = list(prop2type.keys())
 
         #del avail_props[avail_props.index('name')]
