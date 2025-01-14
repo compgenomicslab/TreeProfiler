@@ -482,6 +482,24 @@
     //     }
     // });
     
+    // event listener for treefile
+    document.getElementById('treeFile').addEventListener('change', (event) => {
+        const treeFileInput = event.target;
+        const treenameInput = document.getElementById('treename');
+
+        if (treeFileInput.files.length > 0) {
+            // Get the selected file name
+            const fileName = treeFileInput.files[0].name;
+
+            // Remove the file extension
+            const fileNameWithoutExtension = fileName.replace(/\.[^/.]+$/, '');
+
+            // Update the tree name input field
+            treenameInput.value = fileNameWithoutExtension;
+        }
+    });
+
+    // event listener for parsing multiple metadata files
     document.getElementById('parseMetadataBtn').addEventListener('click', async () => {
         const files = document.getElementById('metadataFiles').files; // Get all selected files
         if (files.length > 0) {

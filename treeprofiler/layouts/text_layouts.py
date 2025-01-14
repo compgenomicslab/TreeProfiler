@@ -487,7 +487,7 @@ class LayoutBubbleCategorical(TreeLayout):
             max_radius=1, padding_x=2, padding_y=0, 
             scale=True, legend=True, active=True):
 
-        name = name or f'Bubble_{prop}'
+        name = name or f'CategoricalBubble_{prop}'
         super().__init__(name)
 
         self.aligned_faces = True
@@ -537,7 +537,7 @@ class LayoutBubbleCategorical(TreeLayout):
                 # node.sm_style["fgopacity"] = self.fgopacity
                 prop_face = CircleFace(radius=bubble_size, color=bubble_color, 
                 padding_x=self.padding_x, padding_y=self.padding_y)
-                node.add_face(prop_face, column=0, 
+                node.add_face(prop_face, column=self.column, 
                 position="branch_right", collapsed_only=False)
 
         

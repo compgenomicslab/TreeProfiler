@@ -480,21 +480,30 @@ def run(args):
         #     layouts.extend(heatmap_layouts)
 
         if layout == 'heatmap-layout':
-            heatmap_layouts, level = get_heatmap_layouts(tree, args.heatmap_layout, level, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep, color_config=color_config, norm_method='min-max')
+            heatmap_layouts, level = get_heatmap_layouts(tree, 
+            args.heatmap_layout, level, column_width=args.column_width, 
+            padding_x=args.padding_x, padding_y=args.padding_y, 
+            internal_rep=internal_num_rep, color_config=color_config, norm_method='min-max')
             layouts.extend(heatmap_layouts)
             for prop in args.heatmap_layout:
                 visualized_props.append(prop)
                 visualized_props.append(utils.add_suffix(prop, internal_num_rep))
             
         if layout == 'heatmap-mean-layout':
-            heatmap_mean_layouts, level = get_heatmap_layouts(tree, args.heatmap_mean_layout, level, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep, color_config=color_config, norm_method='mean')
+            heatmap_mean_layouts, level = get_heatmap_layouts(tree, 
+            args.heatmap_mean_layout, level, column_width=args.column_width, 
+            padding_x=args.padding_x, padding_y=args.padding_y, 
+            internal_rep=internal_num_rep, color_config=color_config, norm_method='mean')
             layouts.extend(heatmap_mean_layouts)
             for prop in args.heatmap_mean_layout:
                 visualized_props.append(prop)
                 visualized_props.append(utils.add_suffix(prop, internal_num_rep))
 
         if layout == 'heatmap-zscore-layout':
-            heatmap_zscore_layouts, level = get_heatmap_layouts(tree, args.heatmap_zscore_layout, level, column_width=args.column_width, padding_x=args.padding_x, padding_y=args.padding_y, internal_rep=internal_num_rep, color_config=color_config, norm_method='zscore')
+            heatmap_zscore_layouts, level = get_heatmap_layouts(tree, 
+            args.heatmap_zscore_layout, level, column_width=args.column_width, 
+            padding_x=args.padding_x, padding_y=args.padding_y, 
+            internal_rep=internal_num_rep, color_config=color_config, norm_method='zscore')
             layouts.extend(heatmap_zscore_layouts)
             for prop in args.heatmap_zscore_layout:
                 visualized_props.append(prop)
@@ -1499,6 +1508,7 @@ def get_categorical_bubble_layouts(tree, props, level, prop2type, column_width=7
     prop_color_dict = {}
     layouts = []
     max_radius = 15
+    level = level + 1 # add one more level for bubble layout because 0 is leaf name
     for prop in props:
         color_dict = {} # key = value, value = color id
         if color_config and color_config.get(prop):
@@ -1518,11 +1528,7 @@ def get_categorical_bubble_layouts(tree, props, level, prop2type, column_width=7
             # normal text prop
             color_dict = utils.assign_color_to_values(prop_values, paired_color)
 
-        # layout = text_layouts.LayoutRect(name='Rectangular_'+prop, column=level,
-        #             color_dict=color_dict, prop=prop,
-        #             width=column_width, padding_x=padding_x, padding_y=padding_y)
-        # Configure and add layout
-        layout = text_layouts.LayoutBubbleCategorical(name=f'Bubble_{prop}', column=level, 
+        layout = text_layouts.LayoutBubbleCategorical(name=f'Categorical-Bubble_{prop}', column=level, 
         prop=prop, color_dict=color_dict, 
         max_radius=max_radius, padding_x=padding_x, padding_y=padding_y)
 
@@ -1606,7 +1612,7 @@ def get_numerical_bubble_layouts(tree, props, level, prop2type, padding_x=0, pad
                 value2color[val] = gradientscolor[color_index+1]
 
         # Configure and add layout
-        layout = staple_layouts.LayoutBubbleNumerical(name=f'Bubble_{prop}', 
+        layout = staple_layouts.LayoutBubbleNumerical(name=f'Numerical-Bubble_{prop}', 
         column=level, prop=prop, max_radius=max_radius, abs_maxval=abs_maxval, 
         padding_x=padding_x, padding_y=padding_y, value2color=value2color, 
         bubble_range=bubble_range, 
