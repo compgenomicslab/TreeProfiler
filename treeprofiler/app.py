@@ -271,19 +271,40 @@ def process_upload_job(job_args):
 
         # convert list data to string
         list_keys = [key for key, value in prop2type.items() if value == list]
+        
         # Replace all commas in the tree with '||'
         list_sep = '||'
         for node in tree.leaves():
             for key in list_keys:
                 if node.props.get(key):
-                    list2str = list_sep.join(node.props.get(key))
+                    
+                    list2str = list_sep.join(map(str, node.props.get(key)))
                     node.add_prop(key, list2str)
 
         annotated_newick = tree.write(props=avail_props, 
         parser=utils.get_internal_parser(treeparser),format_root_node=True)
         
-        
+        # check if alignment pro is there
+        if 'alignment' in prop2type.keys():
+            alignment_annotation = True
+        else:
+            alignment_annotation = False
 
+        # check if domain pro is there
+        if 'dom_arq' in prop2type.keys():
+            domain_annotation = True
+        else:
+            domain_annotation = False
+
+        # check taxonomic annotation
+        taxonomic_props = ['rank', 'sci_name', 'taxid', 'named_lineage']
+        
+        all_present = all(prop in prop2type.keys() for prop in taxonomic_props)
+        if all_present:
+            taxonomic_annotation = True
+        else:
+            taxonomic_annotation = False
+        
         # Store the processed data
         trees[treename] = {
             'tree': tree_data,
@@ -295,10 +316,10 @@ def process_upload_job(job_args):
             'annotated_tree': annotated_newick,
             'prop2type': prop2type,
             'layouts': [],
-            'taxonomic_annotation': True if job_args.get("taxon_column") else False,
+            'taxonomic_annotation': taxonomic_annotation,
             'rank_list':[],
-            'alignment_annotation': True if alignment_file_path else False,
-            'domain_annotation': True if pfam_file_path else False,
+            'alignment_annotation': alignment_annotation,
+            'domain_annotation': domain_annotation,
         }
     else:
         # Process metadata
@@ -581,6 +602,7 @@ def explore_tree(treename):
         t = Tree(tree_info['annotated_tree'])
     
     
+    
     # Default configuration settings
     default_configs = {
         "level": 1,
@@ -701,8 +723,8 @@ def explore_tree(treename):
                                 if layout_prefix == "alignment":
                                     # basic 
                                     layout_config = {
-                                        "layout_name": name,  # Retrieve layout name from processed layouts
-                                        "applied_props": [applied_props],  # Props linked to this layout
+                                        "layout_name": layout.name,  # Retrieve layout name from processed layouts
+                                        "applied_props": [layout_prefix],  # Props linked to this layout
                                         "config": {
                                             # "level": getattr(layout, 'column', level),
                                             #"column_width": getattr(layout, 'column_width', default_configs['column_width']),
