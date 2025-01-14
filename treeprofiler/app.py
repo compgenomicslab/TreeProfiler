@@ -249,7 +249,7 @@ def process_upload_job(job_args):
         os.remove(tree_file_path)
 
     if is_annotated_tree:
-        print("this way")
+        
         # Store the processed data
         trees[treename] = {
             'tree': tree_data,
