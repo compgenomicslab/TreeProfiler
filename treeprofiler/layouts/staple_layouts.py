@@ -70,7 +70,6 @@ class LayoutPlot(TreeLayout):
         self.size_prop = size_prop
         self.color_prop = color_prop
         self.size_range = size_range
-        self.size_range = size_range
 
         self.color = color
         self.colors = colors
@@ -145,6 +144,7 @@ class LayoutPlot(TreeLayout):
         if not self.size_prop:
             return self.width
         minval, maxval = self.size_range
+
         return float(node.props.get(prop, 0)) / maxval * self.width
 
     def get_color(self, node):
@@ -302,6 +302,7 @@ class LayoutHeatmap(TreeLayout):
                                     )
     def set_node_style(self, node):
         heatmap_num = node.props.get(self.prop)
+
         if heatmap_num is not None and heatmap_num != 'NaN':
             heatmap_num = float(heatmap_num)
             if node.is_leaf:
@@ -318,7 +319,7 @@ class LayoutHeatmap(TreeLayout):
                     color=gradient_color, padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
                     node.add_face(identF, column = self.column,  position = 'aligned')
             
-        elif node.is_leaf and node.props.get(self.internal_prop):
+        elif node.is_leaf and node.props.get(self.internal_prop) is not None:
             heatmap_num = node.props.get(self.internal_prop)
             heatmap_num = float(heatmap_num)
             # heatmap
@@ -335,7 +336,7 @@ class LayoutHeatmap(TreeLayout):
                 color=gradient_color, padding_x=self.padding_x, padding_y=self.padding_y, tooltip=tooltip)
                 node.add_face(identF, column = self.column,  position = 'aligned', collapsed_only=True)
         
-        elif node.props.get(self.internal_prop):
+        elif node.props.get(self.internal_prop) is not None:
             heatmap_num = node.props.get(self.internal_prop)
             heatmap_num = float(heatmap_num)
             # heatmap
@@ -570,7 +571,7 @@ class LayoutBubbleNumerical(TreeLayout):
             bubble_range=[], color_range=[], internal_rep='avg',
             scale=True, legend=True, active=True):
 
-        name = name or f'Bubble_{prop}'
+        name = name or f'NumericalBubble_{prop}'
         super().__init__(name)
 
         self.aligned_faces = True
