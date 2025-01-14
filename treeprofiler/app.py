@@ -18,6 +18,10 @@ from treeprofiler import tree_plot
 from treeprofiler.src import utils
 from treeprofiler import layouts
 
+from bottle import TEMPLATE_PATH
+
+# Set the template directory
+TEMPLATE_PATH.append(os.path.join(os.path.dirname(__file__), 'views'))
 
 # In-memory storage for chunks and complete files
 trees = {}
