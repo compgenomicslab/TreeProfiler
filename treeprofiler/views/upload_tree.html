@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Tree</title>
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <script src="/static/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/jquery.min.js"></script>
+</head>
+<body>
+
+<div class="container mt-5">
+    <h1>Upload a New Tree</h1>
+    
+    <form id="uploadTreeForm" enctype="multipart/form-data">
+        
+        <!-- Tree Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Tree</h5>
+            </div>
+            <div class="card-body">
+                <div class="form-group row mt-3">
+                    <label for="treename" class="col-sm-3 col-form-label">Tree Name</label>
+                    <div class="col-sm-3">
+                        <input type="text" class="form-control" id="treename" name="treename" placeholder="Enter Tree Name" value="test" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="tree" class="col-sm-3 col-form-label">Upload Tree File in Newick Format</label>
+                    <!-- <small class="form-text text-muted">upload a Newick file</small> -->
+                    <input type="file" class="form-control-file mt-2" id="treeFile" name="treeFile">
+                </div>
+                <div class="form-group row mt-3">
+                    <label for="treeparser" class="col-sm-3 col-form-label">Tree Parser</label>
+                    <div class="col-sm-3">
+                        <select class="form-control" id="treeparser" name="treeparser" required>
+                            <option value="name" >Name</option>
+                            <option value="support" selected>Support</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group row mt-3">
+                    <label for="isAnnotatedTree" class="col-sm-3 col-form-label">Is uploaded tree annotated</label>
+                    <div class="col-sm-3">
+                        <input type="checkbox" class="form-check-input" id="isAnnotatedTree" name="isAnnotatedTree" style="width: 25px; height: 25px;">
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+        
+        <!-- Metadata Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Metadata (Optional)</h5>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label for="metadata" class="col-sm-3 col-form-label">Metadata File(s)</label>
+                    <!-- <input type="file" class="form-control-file mt-2" id="metadataFile" name="metadataFile"> -->
+                    <input type="file" class="form-control-file mt-2" id="metadataFiles" name="metadataFiles" multiple>
+                </div>
+                <div class="form-group row mt-3">
+                    <label for="separator" class="col-sm-3 col-form-label">Metadata Separator</label>
+                    <div class="col-sm-3">
+                        <input type="text" class="form-control" id="separator" name="separator" placeholder="<tab>" value="<tab>">
+                    </div>
+                    <small class="form-text text-muted">Specify the metadata file separator (default is "&lt;tab&gt;", for comma use ",").</small>
+                </div>
+                <div class="mt-3">
+                    <button type="button" class="btn btn-secondary" id="parseMetadataBtn">Parsing metadata</button>
+                </div>
+                <div id="metadataAnalysis" class="mt-3" style="display: none;">
+                    <h6>Detected Column Types:</h6>
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Column</th>
+                                <th>Data Type</th>
+                                <th>Summary Method for Ancestor Nodes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="columnTypeList"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <!-- End Metada section -->
+
+        <!-- Taxonomic Annotation Section -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5>Taxonomic Annotation (Optional)</h5>
+                <button type="button" class="btn btn-secondary btn-sm" id="toggleTaxonomicBtn">Activate Taxonomic Annotation</button>
+            </div>
+            <div id="taxonomicSection" class="card-body collapsed" style="display: none;">
+                <div class="form-group row mt-3">
+                    <!-- Taxonomic ID Column -->
+                    <div class="col-md-2">
+                        <label for="taxonomicIdColumn">Taxonomic ID Column</label>
+                        <select class="form-control" id="taxonomicIdColumn" name="taxonomicIdColumn">
+                            <!-- Add column options dynamically based on metadata -->
+                            <option value="name">name</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Taxa DB -->
+                    <div class="col-md-2">
+                        <label for="taxaDb">Taxa DB</label>
+                        <select class="form-control" id="taxaDb" name="taxaDb" onchange="updateVersionOptions()">
+                            <option value="NCBI">NCBI</option>
+                            <option value="GTDB">GTDB</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Version -->
+                    <div class="col-md-2">
+                        <label for="version">Version</label>
+                        <select class="form-control" id="version" name="version">
+                            <option value="-">-</option>
+                        </select>
+                    </div>
+
+                    <!-- Species Field Delimiter -->
+                    <div class="col-md-2">
+                        <label for="speciesFieldDelimiter">Species Field Delimiter</label>
+                        <input type="text" class="form-control" id="speciesFieldDelimiter" name="speciesFieldDelimiter" value=".">
+                    </div>
+                    
+                    <!-- Species Field Index -->
+                    <div class="col-md-2">
+                        <label for="speciesFieldIndex">Species Field Index</label>
+                        <input type="text" class="form-control" id="speciesFieldIndex" name="speciesFieldIndex" placeholder="Enter index" value="0">
+                    </div>
+
+                     <!-- ignore unclassified -->
+                     <div class="col-md-2">
+                        <label for="ignoreUnclassified">ignore unclassified</label>
+                        <select class="form-control" id="ignoreUnclassified" name="ignoreUnclassified">
+                            <option value="False">False</option>
+                            <option value="True">True</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- End Taxonomic section -->
+
+        <!-- ACR section -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5>Ancestral Character Reconstruction (Optional)</h5>
+                <button type="button" class="btn btn-secondary btn-sm" id="toggleACRBtn">Activate Ancestral Character Reconstruction</button>
+            </div>
+            <div id="acrSection" class="card-body collapsed" style="display: none;">
+                <div class="form-group row mt-3">
+                    <div class="col-md-4">
+                        <label for="acrColumn">Select ACR Column</label>
+                        <select class="form-control" id="acrColumn" name="acrColumn" multiple>
+                            <!-- Options will be dynamically populated -->
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="acrMethod">ACR Method</label>
+                        <small class="form-text text-muted">(Datatype aligned with the metadata setting)</small>
+                        <select class="form-control" id="acrMethod" name="acrMethod">
+                            <optgroup label="Categorical">
+                                <option value="MPPA">Maximum Likelihood: MPPA</option>
+                                <option value="MAP">Maximum Likelihood: MAP</option>
+                                <option value="ML">Maximum Likelihood: ML</option>
+                                <option value="ACCTRAN">Maximum Parsimony: ACCTRAN</option>
+                                <option value="DELTRAN">Maximum Parsimony: DELTRAN</option>
+                                <option value="DOWNPASS">Maximum Parsimony: DOWNPASS</option>
+                                <option value="MP">Maximum Parsimony: MP</option>
+                            </optgroup>
+
+                            <optgroup label="Numerical">
+                                <option value="ML">Maximum Likelihood</option>
+                                <option value="BAYESIAN">Bayesian</option>
+                            </optgroup>
+
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="acrModel">Model of Evolution</label>
+                        <select class="form-control" id="acrModel" name="acrModel">
+                            <optgroup label="Categorical">
+                                <option value="F81">F81 (Felsenstein 1981)</option>
+                                <option value="JC">Jukes-Cantor</option>
+                                <option value="EFT">EFT (estimate-from-tips)</option>
+                            </optgroup>
+                            <optgroup label="Numerical">
+                                <option value="BM">BM (Brownian Motion)</option>
+                                <option value="OU">OU (Ornstein-Uhlenbeck)</option>
+                            </optgroup> 
+                        </select>
+                    </div>
+                    
+                </div>
+                <div class="form-group row mt-3">
+                    <div class="col-md-4">
+                        <label for="phylosignal">Phylogenetic Signal Testing</label>
+                        <small class="form-text text-muted">(Only available for Maximum Likelihood methods)</small>
+                        <select class="form-control" id="phylosignal" name="phylosignal" onchange="showDeltaOptions()">
+                            <option value="">-</option>
+                            <optgroup label="Categorical">
+                                <option value="delta">Delta Statistic</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    <!-- Delta Statistic Options (hidden by default) -->
+                    <div id="deltaOptions" class="form-group row mt-3" style="display: none;">
+                        <div class="col-md-4">
+                            <label for="entType">Ent-type</label>
+                            <select class="form-control" id="entType" name="entType">
+                                <option value="SE">Shannon Entropy (SE)</option>
+                                <option value="LSE">Linear Shannon Entropy (LSE)</option>
+                                <option value="GINI">Gini Impurity</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="iteration">Iterations</label>
+                            <input type="number" class="form-control" id="iteration" name="iteration" value="10000" min="1">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="lambda0">Lambda0</label>
+                            <input type="number" class="form-control" id="lambda0" name="lambda0" value="0.1" step="0.01">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="se">Standard Deviation (SE)</label>
+                            <input type="number" class="form-control" id="se" name="se" value="0.5" step="0.01">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="thin">Thin</label>
+                            <input type="number" class="form-control" id="thin" name="thin" value="10" min="1">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="burn">Burn</label>
+                            <input type="number" class="form-control" id="burn" name="burn" value="100" min="0">
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+        <!-- End ACR section -->
+
+        <!-- Lineage specificity section -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5>Lineage specificity (Optional)</h5>
+                <button type="button" class="btn btn-secondary btn-sm" id="toggleLStn">Activate Lineage specificity analysis</button>
+            </div>
+            <div id="lsSection" class="card-body collapsed" style="display: none;">
+                <div class="form-group row mt-3">
+                    <div class="col-md-4">
+                        <label for="acrColumn">Select LS Column</label>
+                        <select class="form-control" id="lsColumn" name="lsColumn" multiple>
+                            <!-- Options will be dynamically populated -->
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="percision">Percision</label>
+                        <input type="number" class="form-control" id="percision" name="percision" value="0.95" step="0.01">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="sensitivity">Sensitivity</label>
+                        <input type="number" class="form-control" id="sensitivity" name="sensitivity" value="0.95" step="0.01">
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+        <!-- End Lineage specificity section -->
+
+        <!-- Alignment Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Alignment (Optional)</h5>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label for="alignment" class="col-sm-3 col-form-label">Alignment File</label>
+                    <input type="file" class="form-control-file mt-2" id="alignmentFile" name="alignmentFile">
+                </div>
+                <div class="form-group row mt-3">
+                    <label for="consensusCutoff" class="col-sm-3 col-form-label">Consensus Sequence Threshold</label>
+                    <div class="col-sm-3">
+                        <input type="number" class="form-control" id="consensusCutoff" name="consensusCutoff" value="0.70" step="0.01">
+                    </div>
+                    <small class="form-text text-muted">If consensus cutff is 0, it means no consensus sequences will be computed in Ancestor nodes. </small>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Pfam Annotation Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Pfam Annotation from emapper (Optional)</h5>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label for="pfam" class="col-sm-3 col-form-label">Pfam annotation</label>
+                    <input type="file" class="form-control-file mt-2" id="pfamFile" name="pfamFile">
+                </div>
+            </div>
+        </div>
+        
+        <!-- Submit Button -->
+        <button type="button" class="btn btn-primary" onclick="submitForm()">Annotate and Visualize Tree!</button>
+    </form>
+</div>
+
+<script>
+    async function submitForm() {
+        const treename = document.getElementById('treename').value;
+        const treeparser = document.getElementById('treeparser').value;
+        const treeFile = document.getElementById('treeFile').files[0];
+        const isAnnotatedTree = document.getElementById('isAnnotatedTree').checked;
+        // const metadataFile = document.getElementById('metadataFile').files[0];
+        const metadataFiles = document.getElementById('metadataFiles').files;
+        const alignmentFile = document.getElementById('alignmentFile').files[0];
+        const pfamFile = document.getElementById('pfamFile').files[0];
+        const separator = document.getElementById('separator').value;
+        
+        if (!treename) {
+            alert("Please enter a tree name.");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("treename", treename);
+
+        if (treeFile) {
+            await uploadFileInChunks(treeFile, 'treeFile', treename);
+        } else {
+            alert("Please provide tree data in Newick format or upload a file.");
+            return;
+        }
+
+        formData.append("treeparser", treeparser);
+        formData.append("isAnnotatedTree", isAnnotatedTree);
+
+        // Process metadata files as chunks
+        if (metadataFiles.length > 0) {
+            const metadataFilesList = [];
+            for (const [index, file] of Array.from(metadataFiles).entries()) {
+                const fileId = `metadata_${index}`;
+                await uploadFileInChunks(file, 'metadataFile', treename, fileId);
+                metadataFilesList.push(fileId);
+            }
+            formData.append("metadataFiles", JSON.stringify(metadataFilesList));
+        }
+
+        if (separator) {
+            formData.append("separator", separator);
+        }
+
+        // Collect and append ACR settings if the section is active
+        const acrSection = document.getElementById("acrSection");
+        if (!acrSection.classList.contains("collapsed")) {
+            const acrColumns = Array.from(document.getElementById("acrColumn").selectedOptions).map(option => option.value);
+            const acrMethod = document.getElementById("acrMethod").value;
+            const acrModel = document.getElementById("acrModel").value;
+            const phylosignal = document.getElementById("phylosignal").value;
+
+            acrColumns.forEach(column => formData.append("acrColumn[]", column));
+            formData.append("acrMethod", acrMethod);
+            formData.append("acrModel", acrModel);
+            formData.append("phylosignal", phylosignal);
+
+            // Append delta statistic options if selected
+            if (phylosignal === 'delta') {
+                const entType = document.getElementById("entType").value;
+                const iteration = document.getElementById("iteration").value;
+                const lambda0 = document.getElementById("lambda0").value;
+                const se = document.getElementById("se").value;
+                const thin = document.getElementById("thin").value;
+                const burn = document.getElementById("burn").value;
+
+                formData.append("entType", entType);
+                formData.append("iteration", iteration);
+                formData.append("lambda0", lambda0);
+                formData.append("se", se);
+                formData.append("thin", thin);
+                formData.append("burn", burn);
+            }
+        }
+
+        // Collect and append LS settings if the section is active
+        const lsSection = document.getElementById("lsSection");
+        if (!lsSection.classList.contains("collapsed")) {
+            const lsColumns = Array.from(document.getElementById("lsColumn").selectedOptions).map(option => option.value);
+            const percision = document.getElementById("percision").value;
+            const sensitivity = document.getElementById("sensitivity").value;
+
+            lsColumns.forEach(column => formData.append("lsColumn[]", column));
+            formData.append("percision", percision);
+            formData.append("sensitivity", sensitivity);
+        }
+        
+        // Check if taxonomic section is activated before adding fields
+        const taxonomicSection = document.getElementById("taxonomicSection");
+        if (!taxonomicSection.classList.contains("collapsed")) {  // Only add if section is active
+            const taxonomicIdColumn = document.getElementById("taxonomicIdColumn").value;
+            const taxaDb = document.getElementById("taxaDb").value;
+            const version = document.getElementById("version").value;
+            const speciesFieldDelimiter = document.getElementById("speciesFieldDelimiter").value;
+            const speciesFieldIndex = document.getElementById("speciesFieldIndex").value;
+            const ignoreUnclassified = document.getElementById("ignoreUnclassified").value;
+
+            formData.append("taxonomicIdColumn", taxonomicIdColumn);
+            formData.append("taxaDb", taxaDb);
+            formData.append("version", version);
+            formData.append("speciesFieldDelimiter", speciesFieldDelimiter);
+            formData.append("speciesFieldIndex", speciesFieldIndex);
+            formData.append("ignoreUnclassified", ignoreUnclassified);
+        }
+        
+        const columnTypes = collectColumnTypes();
+        columnTypes.text_prop.forEach(item => formData.append("text_prop[]", item));
+        columnTypes.num_prop.forEach(item => formData.append("num_prop[]", item));
+        columnTypes.bool_prop.forEach(item => formData.append("bool_prop[]", item));
+        columnTypes.multiple_text_prop.forEach(item => formData.append("multiple_text_prop[]", item));
+
+        const summarySelections = collectSummarySelections();
+        formData.append("summary_methods", JSON.stringify(summarySelections));
+
+        if (alignmentFile) {
+            await uploadFileInChunks(alignmentFile, 'alignmentFile', treename);
+        }
+        formData.append("consensusCutoff", document.getElementById('consensusCutoff').value);
+
+        if (pfamFile) {
+            await uploadFileInChunks(pfamFile, 'pfamFile', treename);
+        }
+
+        const response = await fetch('/upload', {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json();
+        const job_id = data.job_id;
+
+        // Redirect to status page for this job
+        window.location.href = `/tree/${job_id}?job_id=${job_id}`;
+        }
+    
+        
+    async function checkStatus(jobId) {
+        let response = await fetch(`/job_status/${jobId}`);
+        let data = await response.json();
+        if (data.status === "complete") {
+            window.location.href = `/explore_tree/${jobId}`;
+        } else if (data.status === "failed") {
+            document.getElementById('status').innerText = "Job failed.";
+        } else {
+            setTimeout(() => checkStatus(jobId), 2000);  // Poll every 2 seconds
+        }
+    }
+    
+    // Function to collect summary selections with simplified values
+    function collectSummarySelections() {
+        const summarySelections = {};
+        document.querySelectorAll('.summary-method').forEach(select => {
+            const columnName = select.getAttribute('data-summary');
+            let summaryMethod = select.value;
+
+            // Simplify specific values
+            if (summaryMethod === 'raw counter') {
+                summaryMethod = 'raw';
+            } else if (summaryMethod === 'relative counter') {
+                summaryMethod = 'relative';
+            }
+
+            summarySelections[columnName] = summaryMethod;
+        });
+        return summarySelections;
+    }
+
+    // document.getElementById('parseMetadataBtn').addEventListener('click', async () => {
+    //     const file = document.getElementById('metadataFile').files[0];
+    //     if (file) {
+    //         const separator = document.getElementById('separator').value === "<tab>" ? "\t" : document.getElementById('separator').value;
+    //         const text = await file.text();
+    //         parseMetadata(text, separator);
+    //     } else {
+    //         alert("Please select a metadata file first.");
+    //     }
+    // });
+    
+    // event listener for treefile
+    document.getElementById('treeFile').addEventListener('change', (event) => {
+        const treeFileInput = event.target;
+        const treenameInput = document.getElementById('treename');
+
+        if (treeFileInput.files.length > 0) {
+            // Get the selected file name
+            const fileName = treeFileInput.files[0].name;
+
+            // Remove the file extension
+            const fileNameWithoutExtension = fileName.replace(/\.[^/.]+$/, '');
+
+            // Update the tree name input field
+            treenameInput.value = fileNameWithoutExtension;
+        }
+    });
+    
+    // event listener for parsing multiple metadata files
+    document.getElementById('parseMetadataBtn').addEventListener('click', async () => {
+        const files = document.getElementById('metadataFiles').files; // Get all selected files
+        if (files.length > 0) {
+            const separator = document.getElementById('separator').value === "<tab>" ? "\t" : document.getElementById('separator').value;
+
+            // Call the function to parse multiple metadata files
+            await parseMultipleMetadata(files, separator);
+
+            console.log("Metadata parsing completed.");
+        } else {
+            alert("Please select one or more metadata files first.");
+        }
+    });
+
+    async function parseMultipleMetadata(files, separator) {
+        const combinedHeaders = new Set(); // Use a Set to track unique headers
+        const combinedData = {}; // Store data keyed by header
+        let isFirstFile = true; // Track if the file is the first for Node ID column
+
+        for (const file of files) {
+            const text = await file.text();
+            const rows = text.trim().split('\n');
+
+            if (rows.length < 2) {
+                alert(`File "${file.name}" is too short to analyze.`);
+                continue;
+            }
+
+            const headers = rows[0].split(separator);
+            const columnData = headers.map(() => []);
+
+            rows.slice(1).forEach(row => {
+                const cells = row.split(separator);
+                cells.forEach((cell, index) => {
+                    columnData[index].push(cell.trim());
+                });
+            });
+
+            // Update global combined data
+            headers.forEach((header, index) => {
+                if (!combinedData[header]) {
+                    combinedData[header] = [];
+                }
+                combinedData[header] = combinedData[header].concat(columnData[index]);
+            });
+
+            // Add headers to the combined set
+            headers.forEach(header => combinedHeaders.add(header));
+
+            // Only update column options for the first file
+            if (isFirstFile) {
+                isFirstFile = false;
+            }
+        }
+
+        // Detect column types and render results
+        const columnTypes = Array.from(combinedHeaders).map((header, index) => {
+            const columnValues = combinedData[header] || [];
+            const type = index === 0 ? "Node ID Column" : detectColumnType(columnValues);
+            return { column: header, type };
+        });
+
+        updateTaxonomicIdOptions(combinedHeaders);
+        updateAcrOptions(combinedHeaders);
+        updateLsOptions(combinedHeaders);
+        renderColumnTypeTable(columnTypes);
+        document.getElementById('metadataAnalysis').style.display = 'block';
+    }
+
+    function parseMetadata(text, separator) {
+        const rows = text.trim().split('\n');
+        if (rows.length < 2) {
+            alert("Metadata file is too short to analyze.");
+            return;
+        }
+
+        const headers = rows[0].split(separator);
+        const columnData = headers.map(() => []);
+
+        rows.slice(1).forEach(row => {
+            const cells = row.split(separator);
+            cells.forEach((cell, index) => {
+                columnData[index].push(cell.trim());
+            });
+        });
+
+        console.log("Metadata headers:", headers);
+        updateTaxonomicIdOptions(headers);  // Call the function to update options with metadata columns
+        updateAcrOptions(headers);          // Update options for ACR columns
+        updateLsOptions(headers);           // Update options for LS columns
+
+        const columnTypes = headers.map((header, index) => {
+            return {
+                column: header,
+                type: index === 0 ? "Node ID Column" : detectColumnType(columnData[index])
+            };
+        });
+
+        const columnTypeList = document.getElementById('columnTypeList');
+        columnTypeList.innerHTML = "";
+
+        columnTypes.forEach((col, index) => {
+            const row = document.createElement('tr');
+            const columnCell = document.createElement('td');
+            columnCell.textContent = col.column;
+            row.appendChild(columnCell);
+
+            const typeCell = document.createElement('td');
+            if (index === 0) {
+                typeCell.textContent = "Node ID Column";
+            } else {
+                typeCell.innerHTML = `
+                    <select class="form-control-sm" data-column="${col.column}" onchange="updateSummaryOptions(this)">
+                        <option value="Categorical" ${col.type === 'Categorical' ? 'selected' : ''}>Categorical</option>
+                        <option value="List" ${col.type === 'List' ? 'selected' : ''}>List</option>
+                        <option value="Numerical" ${col.type === 'Numerical' ? 'selected' : ''}>Numerical</option>
+                        <option value="Binary" ${col.type === 'Binary' ? 'selected' : ''}>Binary</option>
+                    </select>
+                `;
+            }
+            row.appendChild(typeCell);
+
+            const summaryCell = document.createElement('td');
+            if (index === 0) {
+                summaryCell.textContent = "-";
+            } else {
+                summaryCell.innerHTML = `
+                    <select class="form-control-sm summary-method" data-summary="${col.column}">
+                        ${generateSummaryOptions(col.type)}
+                    </select>
+                `;
+            }
+            row.appendChild(summaryCell);
+
+            columnTypeList.appendChild(row);
+        });
+        document.getElementById('metadataAnalysis').style.display = 'block';
+    }
+
+    function renderColumnTypeTable(columnTypes) {
+        const columnTypeList = document.getElementById('columnTypeList');
+        columnTypeList.innerHTML = ""; // Clear the table
+
+        columnTypes.forEach((col, index) => {
+            const row = document.createElement('tr');
+            const columnCell = document.createElement('td');
+            columnCell.textContent = col.column;
+            row.appendChild(columnCell);
+
+            const typeCell = document.createElement('td');
+            if (col.type === "Node ID Column" && index === 0) {
+                typeCell.textContent = "Node ID Column";
+            } else {
+                typeCell.innerHTML = `
+                    <select class="form-control-sm" data-column="${col.column}" onchange="updateSummaryOptions(this)">
+                        <option value="Categorical" ${col.type === 'Categorical' ? 'selected' : ''}>Categorical</option>
+                        <option value="List" ${col.type === 'List' ? 'selected' : ''}>List</option>
+                        <option value="Numerical" ${col.type === 'Numerical' ? 'selected' : ''}>Numerical</option>
+                        <option value="Binary" ${col.type === 'Binary' ? 'selected' : ''}>Binary</option>
+                    </select>
+                `;
+            }
+            row.appendChild(typeCell);
+
+            const summaryCell = document.createElement('td');
+            if (col.type === "Node ID Column" && index === 0) {
+                summaryCell.textContent = "-";
+            } else {
+                summaryCell.innerHTML = `
+                    <select class="form-control-sm summary-method" data-summary="${col.column}">
+                        ${generateSummaryOptions(col.type)}
+                    </select>
+                `;
+            }
+            row.appendChild(summaryCell);
+
+            columnTypeList.appendChild(row);
+        });
+    }
+    function updateTaxonomicIdOptions(columns) {
+        const taxonomicIdColumn = document.getElementById('taxonomicIdColumn');
+        taxonomicIdColumn.innerHTML = "";  // Clear existing options
+
+        columns.forEach(col => {
+            const option = document.createElement('option');
+            option.value = col;
+            option.textContent = col;
+            taxonomicIdColumn.appendChild(option);
+        });
+    }
+
+    function updateAcrOptions(columns) {
+        const acrColumnSelect = document.getElementById('acrColumn');
+        const existingOptions = new Set(Array.from(acrColumnSelect.options).map(option => option.value));
+        // Add only new columns
+        columns.forEach(col => {
+            if (!existingOptions.has(col)) {
+                const option = document.createElement('option');
+                option.value = col;
+                option.textContent = col;
+                acrColumnSelect.appendChild(option);
+            }
+        });
+    }
+
+    function updateLsOptions(columns) {
+        const lsColumnSelect = document.getElementById('lsColumn');
+        const existingOptions = new Set(Array.from(lsColumnSelect.options).map(option => option.value));
+
+        // Add only new columns
+        columns.forEach(col => {
+            if (!existingOptions.has(col)) {
+                const option = document.createElement('option');
+                option.value = col;
+                option.textContent = col;
+                lsColumnSelect.appendChild(option);
+            }
+        });
+    }
+
+    function showDeltaOptions() {
+        const phylosignalSelect = document.getElementById('phylosignal');
+        const deltaOptions = document.getElementById('deltaOptions');
+        console.log(phylosignalSelect.value)
+        if (phylosignalSelect.value === 'delta') {
+            deltaOptions.style.display = '';
+        } else {
+            deltaOptions.style.display = 'none';
+        }
+    }
+
+    function updateVersionOptions() {
+        const taxaDb = document.getElementById("taxaDb").value;
+        const versionSelect = document.getElementById("version");
+
+        // Clear current options
+        versionSelect.innerHTML = "";
+
+        if (taxaDb === "GTDB") {
+            // Add GTDB versions
+            const gtdbVersions = ["95", "202", "207", "214", "220"];
+            gtdbVersions.forEach(version => {
+                const option = document.createElement("option");
+                option.value = version;
+                option.text = version;
+                versionSelect.appendChild(option);
+            });
+        } else {
+            // Default option for NCBI
+            const defaultOption = document.createElement("option");
+            defaultOption.value = "-";
+            defaultOption.text = "-";
+            versionSelect.appendChild(defaultOption);
+        }
+    }
+
+    function generateSummaryOptions(type) {
+        const options = {
+            Numerical: ["all", "sum", "avg", "max", "min", "std", "none"],
+            Categorical: ["raw counter", "relative counter", "none"],
+            Binary: ["raw counter", "relative counter", "none"],
+            List: ["raw counter", "relative_counter","none"],
+        };
+        return options[type] ? options[type].map(opt => `<option value="${opt}">${opt}</option>`).join('') : '<option value="none">none</option>';
+    }
+
+    function updateSummaryOptions(selectElem) {
+        const column = selectElem.getAttribute('data-column');
+        const type = selectElem.value;
+        const summarySelect = document.querySelector(`select[data-summary="${column}"]`);
+        summarySelect.innerHTML = generateSummaryOptions(type);
+    }
+
+    function detectColumnType(values) {
+        const uniqueValues = [...new Set(values)];
+        const isBinary = uniqueValues.length === 2 && uniqueValues.every(val => ["0", "1", "true", "false", "t", "f"].includes(val.toLowerCase()));
+        const isNumeric = uniqueValues.every(val => !isNaN(val));
+        const isTaxonomic = uniqueValues.every(val => /^[A-Z][a-z]+(?:\s[a-z]+)?$/.test(val));
+        
+        if (isNumeric) return "Numerical";
+        else if (isBinary) return "Binary";
+        else if (isTaxonomic) return "Taxonomic";
+        else return "Categorical";
+    }
+
+    function collectColumnTypes() {
+        const text_prop = [];
+        const num_prop = [];
+        const bool_prop = [];
+        const multiple_text_prop = [];
+
+        document.querySelectorAll('#columnTypeList select').forEach(select => {
+            const colName = select.getAttribute('data-column');
+            const type = select.value;
+
+            if (type === 'Numerical') num_prop.push(colName);
+            else if (type === 'Binary') bool_prop.push(colName);
+            else if (type === 'List') multiple_text_prop.push(colName);
+            else text_prop.push(colName);
+        });
+
+        return { text_prop, num_prop, bool_prop, multiple_text_prop};
+    }
+
+    async function uploadFileInChunks(file, fieldName, treename, fileId = null) {
+        const CHUNK_SIZE = 1024 * 1024; // 1MB
+        const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+        fileId = fileId || `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`; // Generate unique ID if not provided
+
+        for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+            const start = chunkIndex * CHUNK_SIZE;
+            const end = Math.min(file.size, start + CHUNK_SIZE);
+            const chunk = file.slice(start, end);
+
+            const chunkFormData = new FormData();
+            chunkFormData.append("treename", treename);
+            chunkFormData.append(fieldName, chunk);
+            chunkFormData.append("chunkIndex", chunkIndex);
+            chunkFormData.append("totalChunks", totalChunks);
+            chunkFormData.append("fileId", fileId);
+
+            await fetch('/upload_chunk', {
+                method: 'POST',
+                body: chunkFormData
+            });
+        }
+    }
+    // Toggle visibility of taxonomic annotation section
+    document.getElementById("toggleTaxonomicBtn").addEventListener("click", () => {
+        const taxonomicSection = document.getElementById("taxonomicSection");
+        const isCollapsed = taxonomicSection.classList.toggle("collapsed");
+        taxonomicSection.style.display = isCollapsed ? "none" : "block";
+    });
+
+    // Toggle visibility of ACR section
+    document.getElementById("toggleACRBtn").addEventListener("click", () => {
+        const acrSection = document.getElementById("acrSection");
+        const isCollapsed = acrSection.classList.toggle("collapsed");
+        acrSection.style.display = isCollapsed ? "none" : "block";
+    });
+
+    // Toggle visibility of Lineage specificity section
+    document.getElementById("toggleLStn").addEventListener("click", () => {
+        const lsSection = document.getElementById("lsSection");
+        const isCollapsed = lsSection.classList.toggle("collapsed");
+        lsSection.style.display = isCollapsed ? "none" : "block";
+    });
+</script>
+</body>
+</html>
+

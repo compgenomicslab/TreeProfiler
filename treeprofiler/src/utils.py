@@ -13,6 +13,7 @@ import matplotlib as mpl
 import matplotlib.colors as mcolors
 import numpy as np
 from scipy import stats
+import numbers
 import random
 import colorsys
 import operator
@@ -128,7 +129,7 @@ def call(node, prop, datatype, operator_string, right_value):
 
 def to_code(condition_strings):
     conditional_output = []
-    operators = [ '<', '<=', '>', '>=', '=', '!=', 'in', 'contains'] 
+    operators = [ '<', '<=', '>', '>=', '=', '!=', 'contains'] 
     
     r = re.compile( '|'.join( '(?:{})'.format(re.escape(o)) for o in sorted(operators, reverse=True, key=len)) )
 
@@ -270,7 +271,23 @@ def get_internal_parser(internal_parser="name"):
         return 1
     elif internal_parser == "support":
         return 0
-         
+
+def get_prop2type(node):
+    output = {}
+    prop2value = node.props
+    if '_speciesFunction' in prop2value:
+        del prop2value['_speciesFunction']
+    
+    for prop, value in prop2value.items():
+        if value != 'NaN':
+            if isinstance(value, numbers.Number):
+                output[prop] = float
+            elif type(value) == list:
+                output[prop] = list
+            else:
+                output[prop] = str    
+    return output
+
 def ete4_parse(newick, internal_parser="name"):
     tree = PhyloTree(newick, parser=get_internal_parser(internal_parser))
     # Correct 0-dist trees
@@ -348,11 +365,6 @@ def conditional_prune(tree, conditions_input, prop2type):
             #     if n.dist == 0: 
             #         n.dist = 1
     return tree
-
-
-    #array = [n.props.get(prop) if n.props.get(prop) else 'NaN' for n in nodes] 
-    array = [n.props.get(prop) for n in nodes if n.props.get(prop) ] 
-    return array
 
 # def _tree_prop_array(node, prop, leaf_only=False, numeric=False, list_type=False):
 #     array = []

@@ -1,0 +1,57 @@
+/* Floating control panel */
+.control-panel {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 280px;
+    max-height: 80vh;
+    padding: 15px;
+    background-color: #f8f9fa;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    z-index: 1000;
+    transition: transform 0.3s ease;
+    overflow-y: auto;
+    resize: horizontal;
+    border: 1px solid #ccc;
+}
+
+.control-panel.minimized {
+    transform: translateY(-100%);
+}
+
+.control-panel-tab {
+    position: fixed;
+    top: 0;
+    right: 20px;
+    padding: 10px;
+    background-color: #007bff;
+    color: white;
+    border-radius: 0 0 5px 5px;
+    cursor: pointer;
+    font-weight: bold;
+    z-index: 1001;
+    text-align: center;
+}
+
+.control-panel-footer {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 10px;
+    border-top: 1px solid #ddd;
+    margin-top: 20px;
+}
+
+.fullscreen-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 1002;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-weight: bold;
+}
