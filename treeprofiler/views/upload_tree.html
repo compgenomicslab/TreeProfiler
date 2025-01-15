@@ -31,6 +31,12 @@
                     <label for="tree" class="col-sm-3 col-form-label">Upload Tree File in Newick Format</label>
                     <!-- <small class="form-text text-muted">upload a Newick file</small> -->
                     <input type="file" class="form-control-file mt-2" id="treeFile" name="treeFile">
+                    <!-- Example Link -->
+                    <div class="mt-2">
+                        <span>Or use an example:</span>
+                        <a href="#" class="example-link" data-type="tree" data-file="/examples/basic_example1/basic_example1.nw">Example Tree</a>
+                        <!-- <a href="#" class="example-link" data-type="tree" data-file="../examples/basic_example1/basic_example1.nw">Example Tree</a> -->
+                    </div>
                 </div>
                 <div class="form-group row mt-3">
                     <label for="treeparser" class="col-sm-3 col-form-label">Tree Parser</label>
@@ -61,6 +67,12 @@
                     <label for="metadata" class="col-sm-3 col-form-label">Metadata File(s)</label>
                     <!-- <input type="file" class="form-control-file mt-2" id="metadataFile" name="metadataFile"> -->
                     <input type="file" class="form-control-file mt-2" id="metadataFiles" name="metadataFiles" multiple>
+                    <!-- Example Link -->
+                    <div class="mt-2">
+                        <span>Or use example metadata:</span>
+                        <a href="#" class="example-link" data-type="metadata" data-file="/examples/basic_example1/basic_example1_metadata.tsv">Example Metadata</a>
+                    </div>
+
                 </div>
                 <div class="form-group row mt-3">
                     <label for="separator" class="col-sm-3 col-form-label">Metadata Separator</label>
@@ -491,6 +503,43 @@
     //     }
     // });
     
+    // load examples
+    document.querySelectorAll('.example-link').forEach(link => {
+        link.addEventListener('click', async function (event) {
+            event.preventDefault();
+
+            const fileType = this.dataset.type; // "tree" or "metadata"
+            const exampleFilePath = this.dataset.file;
+            console.log(exampleFilePath)
+
+            try {
+                const response = await fetch(exampleFilePath); // Fetch the example file
+                if (!response.ok) throw new Error("Failed to fetch example file");
+
+                const blob = await response.blob();
+                const file = new File([blob], exampleFilePath.split('/').pop(), { type: blob.type });
+
+                // Fill the corresponding input
+                if (fileType === 'tree') {
+                    const treeInput = document.getElementById('treeFile');
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(file);
+                    treeInput.files = dataTransfer.files;
+                    alert("Example tree loaded into the input!");
+                } else if (fileType === 'metadata') {
+                    const metadataInput = document.getElementById('metadataFiles');
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(file);
+                    metadataInput.files = dataTransfer.files;
+                    alert("Example metadata loaded into the input!");
+                }
+            } catch (error) {
+                console.error(error);
+                alert("Failed to load the example file.");
+            }
+        });
+    });
+    
     // event listener for treefile
     document.getElementById('treeFile').addEventListener('change', (event) => {
         const treeFileInput = event.target;
@@ -508,6 +557,7 @@
         }
     });
     
+
     // event listener for parsing multiple metadata files
     document.getElementById('parseMetadataBtn').addEventListener('click', async () => {
         const files = document.getElementById('metadataFiles').files; // Get all selected files
