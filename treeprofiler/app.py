@@ -557,6 +557,12 @@ def upload_chunk():
 
     return "Chunk received"
 
+@app.route('/examples/<filepath:path>')
+def serve_examples(filepath):
+    """Serve example files."""
+    examples_dir = os.path.abspath(os.path.join(os.getcwd(), '..', 'examples'))
+    return static_file(filepath, root=examples_dir)
+
 @app.route('/job_status/<job_id>')
 def job_status_check(job_id):
     status = job_status.get(job_id, "not_found")
