@@ -503,17 +503,20 @@
     //     }
     // });
     
-    // load examples
+    // Load examples
     document.querySelectorAll('.example-link').forEach(link => {
         link.addEventListener('click', async function (event) {
             event.preventDefault();
 
             const fileType = this.dataset.type; // "tree" or "metadata"
             const exampleFilePath = this.dataset.file;
-            console.log(exampleFilePath)
+            const baseUrl = window.location.origin; // Automatically gets the website's base URL
+            const fullFilePath = `${baseUrl}${exampleFilePath}`; // Combine base URL with file path
+
+            console.log(fullFilePath);
 
             try {
-                const response = await fetch(exampleFilePath); // Fetch the example file
+                const response = await fetch(fullFilePath); // Fetch the example file
                 if (!response.ok) throw new Error("Failed to fetch example file");
 
                 const blob = await response.blob();
@@ -525,20 +528,36 @@
                     const dataTransfer = new DataTransfer();
                     dataTransfer.items.add(file);
                     treeInput.files = dataTransfer.files;
-                    alert("Example tree loaded into the input!");
+                    showCustomAlert(`Example tree loaded into the input! <br> <a href="${fullFilePath}" >View File</a>`);
                 } else if (fileType === 'metadata') {
                     const metadataInput = document.getElementById('metadataFiles');
                     const dataTransfer = new DataTransfer();
                     dataTransfer.items.add(file);
                     metadataInput.files = dataTransfer.files;
-                    alert("Example metadata loaded into the input!");
+                    showCustomAlert(`Example metadata loaded into the input! <br> <a href="${fullFilePath}" >View File</a>`);
                 }
             } catch (error) {
                 console.error(error);
-                alert("Failed to load the example file.");
+                showCustomAlert("Failed to load the example file.");
             }
         });
     });
+
+    // Function to show a custom alert
+    function showCustomAlert(message) {
+        const alertDiv = document.createElement('div');
+        alertDiv.innerHTML = `
+            <div style="position: fixed; top: 20px; right: 20px; z-index: 1000; background: #f8d7da; color: #721c24; padding: 15px; border: 1px solid #f5c6cb; border-radius: 5px;">
+                ${message}
+                <button style="margin-left: 10px; background: none; border: none; font-weight: bold; cursor: pointer; color: #721c24;" onclick="this.parentElement.remove()">×</button>
+            </div>`;
+        document.body.appendChild(alertDiv);
+        // setTimeout(() => {
+        //     if (alertDiv.parentElement) alertDiv.parentElement.remove();
+        // }, 5000); // Automatically dismiss after 5 seconds
+    }
+
+
     
     // event listener for treefile
     document.getElementById('treeFile').addEventListener('change', (event) => {
