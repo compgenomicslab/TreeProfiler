@@ -77,6 +77,14 @@
         #layoutConfig select {
             font-size: 0.9rem;
         }
+        
+        #addLayerBtn {
+            max-width: 250px; /* Set a reasonable max width */
+            width: 100%; /* Ensure responsiveness */
+            font-weight: bold; /* Highlight the text slightly */
+            border-radius: 5px; /* Slightly rounded corners */
+            padding: 8px 15px; /* Balanced padding for readability */
+        }
     </style>
 </head>
 <body>
@@ -171,7 +179,9 @@
                                 <option value="ls-layout">LS Layout</option>
                             </optgroup>
                         </select>
-
+                        <div id="layoutConfig" class="layout-config">
+                            <p class="text-muted">Select a layout to see configuration options.</p>
+                        </div>
                         <!-- Config-->
                         <div id="layoutConfig" class="layout-config">
                             <div class="card mt-4 shadow-sm">
@@ -319,10 +329,9 @@
                             </div>
                         </div>
                     
-                        <div id="layoutConfig" class="layout-config">
-                            <p class="text-muted">Select a layout to see configuration options.</p>
-                        </div>
-                        <button id="addLayerBtn" class="btn btn-success w-100 mt-3">Add Layout</button>
+                        <button id="addLayerBtn" class="btn btn-success mt-3 mx-auto d-block">
+                            Add Layout
+                        </button>                        
                     </div>
                 </div>
             </div>
