@@ -343,94 +343,108 @@
             <button class="toggle-tab-content" aria-label="Toggle Predefined">+</button>
             <div class="tab-content-inner">
                 <div class="predefined-layouts">
-                    <div class="card-body">
-                        <!-- Taxonomic Layouts Subcard -->
+                    <div class="row row-cols-1 row-cols-md-3 g-3">
+                        <!-- Taxonomic Layouts Card -->
                         % if tree_info['taxonomic_annotation']:
-                        <div class="card mb-3 shadow-sm">
-                            <div class="card-header d-flex align-items-center justify-content-between">
-                                <h6 class="mb-0 text-primary">Taxonomic Layouts</h6>
-                            </div>
-                            <div class="card-body">
-                                <select id="taxonomicLayoutSelect" class="form-control mb-2">
-                                    <option value="taxonclade-layout">Taxon Clade Layout</option>
-                                    <option value="taxonrectangle-layout">Taxon Rectangle Layout</option>
-                                    <option value="taxoncollapse-layout">Taxon Collapse Layout</option>
-                                </select>
-                                <button id="activateTaxonomicLayout" class="btn btn-success w-100">Activate Taxonomic Layout</button>
-                            </div>
-                        </div>
-                        % else:
-                        <div class="card mb-3 shadow-sm">
-                            <div class="card-header d-flex align-items-center justify-content-between">
-                                <h6 class="mb-0 text-danger">Taxonomic Layouts</h6>
-                            </div>
-                            <div class="card-body">
-                                <p class="text-muted mb-0">The input tree does not contain taxonomic annotations.</p>
-                            </div>
-                        </div>
-                        % end
-
-                        <!-- Alignment Layouts Subcard -->
-                        % if tree_info['alignment_annotation']:
-                        <div class="card mb-3 shadow-sm">
-                            <div class="card-header d-flex align-items-center justify-content-between">
-                                <h6 class="mb-0 text-primary">Alignment Layouts</h6>
-                            </div>
-                            <div id="alignmentLayoutsBody" class="collapse show">
-                                <div class="card-body">
-                                    <div id="alignmentSettings" class="form-group">
-                                        <label for="alignmentType" class="fw-bold mb-2">Alignment Window:</label>
-                                        <div class="row g-2">
-                                            <div class="col-md-6">
-                                                <label for="algStart" class="form-label small">Start</label>
-                                                <input type="number" class="form-control form-control-sm" id="algStart" name="algStart" placeholder="Start position">
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label for="algEnd" class="form-label small">End</label>
-                                                <input type="number" class="form-control form-control-sm" id="algEnd" name="algEnd" placeholder="End position">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <button id="activateAlignmentLayout" class="btn btn-success w-100 mt-3 fw-bold">Activate Alignment Layout</button>
+                        <div class="col">
+                            <div class="card shadow-sm h-100 d-flex flex-column">
+                                <div class="card-header">
+                                    <h6 class="mb-0 text-primary">Taxonomic Layouts</h6>
+                                </div>
+                                <div class="card-body flex-grow-1">
+                                    <select id="taxonomicLayoutSelect" class="form-control mb-2">
+                                        <option value="taxonclade-layout">Taxon Clade Layout</option>
+                                        <option value="taxonrectangle-layout">Taxon Rectangle Layout</option>
+                                        <option value="taxoncollapse-layout">Taxon Collapse Layout</option>
+                                    </select>
+                                </div>
+                                <div class="card-footer mt-auto">
+                                    <button id="activateTaxonomicLayout" class="btn btn-success w-100">Activate</button>
                                 </div>
                             </div>
                         </div>
                         % else:
-                        <div class="card mb-3 shadow-sm">
-                            <div class="card-header d-flex align-items-center justify-content-between">
-                                <h6 class="mb-0 text-danger">Alignment Layouts</h6>
-                            </div>
-                            <div class="card-body">
-                                <p class="text-muted mb-0">The input tree does not include alignment annotations.</p>
+                        <div class="col">
+                            <div class="card shadow-sm h-100 d-flex flex-column">
+                                <div class="card-header">
+                                    <h6 class="mb-0 text-danger">Taxonomic Layouts</h6>
+                                </div>
+                                <div class="card-body flex-grow-1">
+                                    <p class="text-muted mb-0">The input tree does not contain taxonomic annotations.</p>
+                                </div>
                             </div>
                         </div>
                         % end
-
-                        <!-- Domain Layouts Subcard -->
-                        % if tree_info['domain_annotation']:
-                        <div class="card mb-3 shadow-sm">
-                            <div class="card-header d-flex align-items-center justify-content-between">
-                                <h6 class="mb-0 text-primary">Domain Layouts</h6>
-                            </div>
-                            <div class="card-body">
-                                <button id="activateDomainLayout" class="btn btn-success w-100">Activate Domain Layout</button>
+        
+                        <!-- Alignment Layouts Card -->
+                        % if tree_info['alignment_annotation']:
+                        <div class="col">
+                            <div class="card shadow-sm h-100 d-flex flex-column">
+                                <div class="card-header">
+                                    <h6 class="mb-0 text-primary">Alignment Layouts</h6>
+                                </div>
+                                <div class="card-body flex-grow-1">
+                                    <label for="alignmentType" class="fw-bold mb-2">Alignment Window:</label>
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <label for="algStart" class="form-label small">Start</label>
+                                            <input type="number" class="form-control form-control-sm" id="algStart" name="algStart" placeholder="Start position">
+                                        </div>
+                                        <div class="col-6">
+                                            <label for="algEnd" class="form-label small">End</label>
+                                            <input type="number" class="form-control form-control-sm" id="algEnd" name="algEnd" placeholder="End position">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-footer mt-auto">
+                                    <button id="activateAlignmentLayout" class="btn btn-success w-100">Activate</button>
+                                </div>
                             </div>
                         </div>
                         % else:
-                        <div class="card mb-3 shadow-sm">
-                            <div class="card-header d-flex align-items-center justify-content-between">
-                                <h6 class="mb-0 text-danger">Domain Layouts</h6>
-                            </div>
-                            <div class="card-body">
-                                <p class="text-muted mb-0">The input tree does not have domain annotations.</p>
+                        <div class="col">
+                            <div class="card shadow-sm h-100 d-flex flex-column">
+                                <div class="card-header">
+                                    <h6 class="mb-0 text-danger">Alignment Layouts</h6>
+                                </div>
+                                <div class="card-body flex-grow-1">
+                                    <p class="text-muted mb-0">The input tree does not include alignment annotations.</p>
+                                </div>
                             </div>
                         </div>
                         % end
-
+        
+                        <!-- Domain Layouts Card -->
+                        % if tree_info['domain_annotation']:
+                        <div class="col">
+                            <div class="card shadow-sm h-100 d-flex flex-column">
+                                <div class="card-header">
+                                    <h6 class="mb-0 text-primary">Domain Layouts</h6>
+                                </div>
+                                <div class="card-body flex-grow-1"></div>
+                                <div class="card-footer mt-auto">
+                                    <button id="activateDomainLayout" class="btn btn-success w-100">Activate</button>
+                                </div>
+                            </div>
+                        </div>
+                        % else:
+                        <div class="col">
+                            <div class="card shadow-sm h-100 d-flex flex-column">
+                                <div class="card-header">
+                                    <h6 class="mb-0 text-danger">Domain Layouts</h6>
+                                </div>
+                                <div class="card-body flex-grow-1">
+                                    <p class="text-muted mb-0">The input tree does not have domain annotations.</p>
+                                </div>
+                            </div>
+                        </div>
+                        % end
                     </div>
                 </div>
             </div>
         </div>
+        
+        
 
         <!-- Conditional Actions Tab -->
         <div class="tab-pane fade collapsible collapsed" id="conditional" role="tabpanel" aria-labelledby="conditional-tab">
