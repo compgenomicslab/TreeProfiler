@@ -453,7 +453,8 @@
                 <h5>Conditional Actions (Highlight, Collapse, Prune)</h5>
                 <div id="customQueryCardBody">
                     <div class="card-body">
-                        <div class="form-group">
+                        <!-- Select Action Dropdown -->
+                        <div class="form-group mb-4">
                             <label for="customQueryType" class="fw-bold">Select Action:</label>
                             <select class="form-control" id="customQueryType" name="customQueryType">
                                 <option value="">-- Choose an action --</option>
@@ -465,49 +466,60 @@
                                 % end
                             </select>
                         </div>
-                        <div id="queryFields" class="form-group mt-3">
-                            <label for="queryProp" class="fw-bold">Select Property:</label>
-                            <select class="form-control" id="queryProp" name="queryProp">
-                                % for prop in selected_props:
-                                <option value="{{ prop }}">{{ prop }}</option>
-                                % end
-                            </select>
-
-                            <!-- Dynamic Counter Input Container -->
-                            <div id="dynamicCounterProps"></div>
-
-                            <label for="queryOperation" class="fw-bold mt-2">Operation:</label>
-                            <select class="form-control" id="queryOperation" name="queryOperation">
-                                <option value="=">Equals (=)</option>
-                                <option value="!=">Not Equals (!=)</option>
-                                <option value="contains">Contains</option>
-                                <option value="&gt;">Greater Than (&gt;)</option>
-                                <option value="&lt;">Less Than (&lt;)</option>
-                            </select>
-
-                            <label for="queryValue" class="fw-bold mt-2">Enter Value:</label>
-                            <input type="text" class="form-control" id="queryValue" name="queryValue" placeholder="Enter value here">
-
-                            <div class="btn-group mt-3">
-                                <button type="button" class="btn btn-secondary" id="addQueryBtn">Add</button>
-                                <button type="button" class="btn btn-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <span class="visually-hidden">Toggle Dropdown</span>
-                                </button>
-                                <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="#" id="addWithAnd">Add with AND</a></li>
-                                    <li><a class="dropdown-item" href="#" id="addWithOr">Add with OR</a></li>
-                                </ul>
+        
+                        <!-- Query Fields in a Single Row -->
+                        <div class="row g-2 align-items-end mb-4">
+                            <div class="col-md-4">
+                                <label for="queryProp" class="fw-bold">Select Property:</label>
+                                <select class="form-control" id="queryProp" name="queryProp">
+                                    % for prop in selected_props:
+                                    <option value="{{ prop }}">{{ prop }}</option>
+                                    % end
+                                </select>
                             </div>
-                            
-                            <div class="mt-3">
-                                <label for="queryBox" class="fw-bold mt-2">Current Query:</label>
+        
+                            <div class="col-md-4">
+                                <label for="queryOperation" class="fw-bold">Operation:</label>
+                                <select class="form-control" id="queryOperation" name="queryOperation">
+                                    <option value="=">Equals (=)</option>
+                                    <option value="!=">Not Equals (!=)</option>
+                                    <option value="contains">Contains</option>
+                                    <option value="&gt;">Greater Than (&gt;)</option>
+                                    <option value="&lt;">Less Than (&lt;)</option>
+                                </select>
+                            </div>
+        
+                            <div class="col-md-4">
+                                <label for="queryValue" class="fw-bold">Enter Value:</label>
+                                <input type="text" class="form-control" id="queryValue" name="queryValue" placeholder="Enter value">
+                            </div>
+                        </div>
+        
+                        <!-- Add Query Buttons -->
+                        <div class="row mb-4">
+                            <div class="col">
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-secondary" id="addQueryBtn">Add</button>
+                                    <button type="button" class="btn btn-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <span class="visually-hidden">Toggle Dropdown</span>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="#" id="addWithAnd">Add with AND</a></li>
+                                        <li><a class="dropdown-item" href="#" id="addWithOr">Add with OR</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mb-4">
+                            <div class="col">
+                                <label for="queryBox" class="fw-bold">Current Query:</label>
                                 <textarea class="form-control" id="queryBox" name="queryBox" rows="3" readonly></textarea>
                                 <small><a href="#" id="clearQueryBox" class="text-danger">Clear Query</a></small>
                             </div>
-                            
                         </div>
-
-                        <div id="taxonomicOptions" class="form-group mt-3" style="display:none">
+        
+                        <!-- Taxonomic Rank Selection -->
+                        <div id="taxonomicOptions" class="form-group mb-4" style="display:none">
                             <label for="rankSelection" class="form-label fw-bold">Select Taxonomic Rank:</label>
                             <select id="rankSelection" name="taxonomicRanks" class="form-control">
                                 % for rank in tree_info['rank_list']:
@@ -515,14 +527,16 @@
                                 % end
                             </select>
                         </div>
-                        
+        
+                        <!-- Execute Action Button -->
                         <div class="text-center mt-4">
-                            <button id="sendQuery" class="btn btn-success w-100 py-2">Execute Action</button>
+                            <button id="sendQuery" class="btn btn-success px-4">Execute Action</button>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+        
 
         <!-- Edit Layouts Tab -->
         <div class="tab-pane fade collapsible collapsed" id="edit-layouts" role="tabpanel" aria-labelledby="edit-layouts-tab">
@@ -570,13 +584,14 @@
                     </div>
                     <!-- Apply Changes Button -->
                     <div class="text-center mt-4">
-                        <button id="applyChangesBtn" class="btn btn-success w-100 py-2 fw-bold">
+                        <button id="applyChangesBtn" class="btn btn-success px-4">
                             <i class="bi bi-check-circle-fill me-2"></i>Apply Changes
                         </button>
                     </div>
                 </div>
             </div>
         </div>
+        
     </div>
 
     <!-- Iframe container -->
