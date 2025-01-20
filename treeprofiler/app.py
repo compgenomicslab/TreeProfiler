@@ -1262,7 +1262,7 @@ def explore_tree(treename):
 
     # Render template
     return template(
-        'explore_tree_v2',
+        'explore_tree_v3',
         treename=treename,
         tree_info=tree_info,
         selected_props=current_props,
