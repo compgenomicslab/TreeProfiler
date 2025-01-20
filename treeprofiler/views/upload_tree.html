@@ -326,6 +326,7 @@
 </div>
 
 <script>
+    
     async function submitForm() {
         const treename = document.getElementById('treename').value;
         const treeparser = document.getElementById('treeparser').value;
@@ -565,17 +566,16 @@
         const treenameInput = document.getElementById('treename');
 
         if (treeFileInput.files.length > 0) {
-            // Get the selected file name
             const fileName = treeFileInput.files[0].name;
-
-            // Remove the file extension
             const fileNameWithoutExtension = fileName.replace(/\.[^/.]+$/, '');
 
-            // Update the tree name input field
-            treenameInput.value = fileNameWithoutExtension;
+            // Generate a simple hash for uniqueness (e.g., using current timestamp)
+            const uniqueHash = Date.now().toString(36);
+
+            // Set the tree name as "fileName-hash"
+            treenameInput.value = `${fileNameWithoutExtension}-${uniqueHash}`;
         }
-    });
-    
+    });    
 
     // event listener for parsing multiple metadata files
     document.getElementById('parseMetadataBtn').addEventListener('click', async () => {

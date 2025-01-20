@@ -162,7 +162,6 @@ def stop_explore():
 @app.route('/upload', method='POST')
 def do_upload():
     treename = request.forms.get('treename')
-
     
     if not treename:
         response.status = 400
