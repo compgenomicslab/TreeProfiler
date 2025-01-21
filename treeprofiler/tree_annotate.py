@@ -684,7 +684,6 @@ def run_array_annotate(tree, array_dict, num_stat='none', column2method={}):
                 if array.get(node.name):
                     node.add_prop(filename, array.get(node.name))
 
-
     # merge annotations to internal nodes
     for node in tree.traverse():
         if not node.is_leaf:
@@ -892,6 +891,9 @@ def run(args):
 
     if args.data_matrix:
         annotated_tree = run_array_annotate(annotated_tree, array_dict, num_stat=args.num_stat, column2method=column2method)
+        # update prop2type
+        for filename in array_dict.keys():
+            prop2type[filename] = list
 
     if args.outdir:
         base=os.path.splitext(os.path.basename(args.tree))[0]
@@ -923,22 +925,26 @@ def run(args):
         ### out newick
         ## need to correct wrong symbols in the newick tree, such as ',' -> '||'
         # Find all keys where the value is of type list
+
         list_keys = [key for key, value in prop2type.items() if value == list]
         # Replace all commas in the tree with '||'
         list_sep = '||'
         for node in annotated_tree.leaves():
             for key in list_keys:
                 if node.props.get(key):
-                    list2str = list_sep.join(node.props.get(key))
+                    cont2str = list(map(str, node.props.get(key)))
+                    list2str = list_sep.join(cont2str)
                     node.add_prop(key, list2str)
+
                     
         avail_props = list(prop2type.keys())
 
         #del avail_props[avail_props.index('name')]
         del avail_props[avail_props.index('dist')]
+        del avail_props[avail_props.index('name')]
         if 'support' in avail_props:
             del avail_props[avail_props.index('support')]
-    
+
         annotated_tree.write(outfile=os.path.join(args.outdir, out_newick), props=avail_props, 
                     parser=utils.get_internal_parser(args.internal), format_root_node=True)
     

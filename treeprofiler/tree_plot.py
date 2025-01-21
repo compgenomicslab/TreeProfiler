@@ -699,7 +699,7 @@ def run(args):
             # if is list, it should provide more than one matrix
             matrix, minval, maxval, value2color, results_list, list_props, single_props = numerical2matrix(tree, 
                 numerical_props, count_negative=True, internal_num_rep=internal_num_rep, 
-                color_config=color_config, norm_method='min-max')
+                color_config=color_config, norm_method='min-max', prop2type=prop2type, eteformat_flag=eteformat_flag)
 
             if list_props:
                 index_map = {value: idx for idx, value in enumerate(numerical_props)}
@@ -1817,7 +1817,7 @@ def categorical2matrix(tree, profiling_props, dtype=str, color_config=None):
     
     return leaf2matrix, value2color
 
-def numerical2matrix(tree, profiling_props, count_negative=True, internal_num_rep=None, color_config=None, norm_method='min-max'):
+def numerical2matrix(tree, profiling_props, count_negative=True, internal_num_rep=None, color_config=None, norm_method='min-max', prop2type=None, eteformat_flag=False):
     """
     Input:
     tree: A tree structure with nodes, each having properties.
@@ -1994,21 +1994,30 @@ def numerical2matrix(tree, profiling_props, count_negative=True, internal_num_re
 
     single_props = set()
     list_props = set()
-    
+    list_sep = '||'
     for node in tree.traverse():
         node2matrix_single[node.name] = []
         for profiling_prop in profiling_props:
+            data_type = prop2type.get(profiling_prop, None)
+
             prop_value = node.props.get(profiling_prop)
+            
             if prop_value is not None:
-                if isinstance(prop_value, list):
+                if isinstance(prop_value, list) or data_type == list:
                     list_props.add(profiling_prop)
+
+                    if not eteformat_flag:
+                        prop_value = prop_value.split(list_sep)
+                        
                     prop_value = list(map(float, prop_value))
+
                     if node.name not in node2matrix_list[profiling_prop]:
                         node2matrix_list[profiling_prop][node.name] = []
                     node2matrix_list[profiling_prop][node.name] = prop_value
                 else:
                     single_props.add(profiling_prop)
                     node2matrix_single[node.name].append(float(prop_value))
+
             else:
                 if internal_num_rep != 'none':
                     representative_prop = utils.add_suffix(profiling_prop, internal_num_rep)
