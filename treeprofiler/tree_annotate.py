@@ -678,6 +678,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
 def run_array_annotate(tree, array_dict, num_stat='none', column2method={}):
     matrix_props = list(array_dict.keys())
     # annotate to the leaves
+    start = time.time()
     for node in tree.traverse():
         if node.is_leaf:
             for filename, array in array_dict.items():
@@ -699,6 +700,8 @@ def run_array_annotate(tree, array_dict, num_stat='none', column2method={}):
                     for stat, value in stats.items():
                         node.add_prop(utils.add_suffix(prop, stat), value.tolist())
                         #prop2type[utils.add_suffix(prop, stat)] = float
+    end = time.time()
+    logger.info(f'Time for run_array_annotate to run: {end - start}')
     return tree
 
 
