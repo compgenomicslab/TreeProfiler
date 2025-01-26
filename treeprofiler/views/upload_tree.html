@@ -70,6 +70,14 @@
                     <small class="form-text text-muted">Specify the metadata file separator (default is "&lt;tab&gt;", for comma use ",").</small>
                 </div>
                 <div class="form-group row mt-3">
+                    <label for="loadAsMatrix" class="col-sm-3 col-form-label">Load metadata as numerical data matrix</label>
+
+                    <div class="col-sm-3">
+                        <input type="checkbox" class="form-check-input" id="loadAsMatrix" name="loadAsMatrix" style="width: 25px; height: 25px;">
+                    </div>
+
+                </div>
+                <!-- <div class="form-group row mt-3">
                     <div class="col-sm-3">
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="loadAsMatrix" name="loadAsMatrix">
@@ -78,7 +86,7 @@
                             </label>
                         </div>
                     </div>
-                </div>
+                </div> -->
                 <div class="mt-3">
                     <button type="button" class="btn btn-secondary" id="parseMetadataBtn">Parsing metadata</button>
                 </div>
@@ -95,6 +103,17 @@
                         <tbody id="columnTypeList"></tbody>
                     </table>
                 </div>
+                <!-- <div id="matrixInternalNumRepOption" style="display: none;">
+                    <label for="matrixInternalNumRep">Internal Numerical Representation:</label>
+                    <select id="matrixInternalNumRep" class="form-control">
+                        <option value="avg">Average</option>
+                        <option value="sum">Sum</option>
+                        <option value="max">Maximum</option>
+                        <option value="min">Minimum</option>
+                        <option value="std">Standard Deviation</option>
+                        <option value="none">None</option>
+                    </select>
+                </div> -->
             </div>
         </div>
         <!-- End Metada section -->
@@ -334,6 +353,7 @@
         const alignmentFile = document.getElementById('alignmentFile').files[0];
         const pfamFile = document.getElementById('pfamFile').files[0];
         const separator = document.getElementById('separator').value;
+        const loadAsMatrix = document.getElementById('loadAsMatrix').checked;
         
         if (!treename) {
             alert("Please enter a tree name.");
@@ -519,15 +539,20 @@
     });
     
     // event listener for parsing multiple metadata files
+    
     document.getElementById('parseMetadataBtn').addEventListener('click', async () => {
         const files = document.getElementById('metadataFiles').files; // Get all selected files
+        const loadAsMatrix = document.getElementById('loadAsMatrix').checked; // Check if the checkbox is selected
         if (files.length > 0) {
             const separator = document.getElementById('separator').value === "<tab>" ? "\t" : document.getElementById('separator').value;
-
-            // Call the function to parse multiple metadata files
-            await parseMultipleMetadata(files, separator);
-
-            console.log("Metadata parsing completed.");
+            
+            if (loadAsMatrix) {
+                //document.getElementById('parseMetadataBtn').style.display = 'none';
+                //document.getElementById('matrixInternalNumRepOption').style.display = 'block';
+                await parseMatrixMetadata(files, separator);
+            } else {
+                await parseMultipleMetadata(files, separator);
+            }
         } else {
             alert("Please select one or more metadata files first.");
         }
@@ -588,76 +613,110 @@
         document.getElementById('metadataAnalysis').style.display = 'block';
     }
 
-    function parseMetadata(text, separator) {
-        const rows = text.trim().split('\n');
-        if (rows.length < 2) {
-            alert("Metadata file is too short to analyze.");
-            return;
-        }
+    // function parseMetadata(text, separator) {
+    //     const rows = text.trim().split('\n');
+    //     if (rows.length < 2) {
+    //         alert("Metadata file is too short to analyze.");
+    //         return;
+    //     }
 
-        const headers = rows[0].split(separator);
-        const columnData = headers.map(() => []);
+    //     const headers = rows[0].split(separator);
+    //     const columnData = headers.map(() => []);
 
-        rows.slice(1).forEach(row => {
-            const cells = row.split(separator);
-            cells.forEach((cell, index) => {
-                columnData[index].push(cell.trim());
-            });
-        });
+    //     rows.slice(1).forEach(row => {
+    //         const cells = row.split(separator);
+    //         cells.forEach((cell, index) => {
+    //             columnData[index].push(cell.trim());
+    //         });
+    //     });
 
-        console.log("Metadata headers:", headers);
-        updateTaxonomicIdOptions(headers);  // Call the function to update options with metadata columns
-        updateAcrOptions(headers);          // Update options for ACR columns
-        updateLsOptions(headers);           // Update options for LS columns
+    //     console.log("Metadata headers:", headers);
+    //     updateTaxonomicIdOptions(headers);  // Call the function to update options with metadata columns
+    //     updateAcrOptions(headers);          // Update options for ACR columns
+    //     updateLsOptions(headers);           // Update options for LS columns
 
-        const columnTypes = headers.map((header, index) => {
+    //     const columnTypes = headers.map((header, index) => {
+    //         return {
+    //             column: header,
+    //             type: index === 0 ? "Node ID Column" : detectColumnType(columnData[index])
+    //         };
+    //     });
+
+    //     const columnTypeList = document.getElementById('columnTypeList');
+    //     columnTypeList.innerHTML = "";
+
+    //     columnTypes.forEach((col, index) => {
+    //         const row = document.createElement('tr');
+    //         const columnCell = document.createElement('td');
+    //         columnCell.textContent = col.column;
+    //         row.appendChild(columnCell);
+
+    //         const typeCell = document.createElement('td');
+    //         if (index === 0) {
+    //             typeCell.textContent = "Node ID Column";
+    //         } else {
+    //             typeCell.innerHTML = `
+    //                 <select class="form-control-sm" data-column="${col.column}" onchange="updateSummaryOptions(this)">
+    //                     <option value="Categorical" ${col.type === 'Categorical' ? 'selected' : ''}>Categorical</option>
+    //                     <option value="List" ${col.type === 'List' ? 'selected' : ''}>List</option>
+    //                     <option value="Numerical" ${col.type === 'Numerical' ? 'selected' : ''}>Numerical</option>
+    //                     <option value="Binary" ${col.type === 'Binary' ? 'selected' : ''}>Binary</option>
+    //                 </select>
+    //             `;
+    //         }
+    //         row.appendChild(typeCell);
+
+    //         const summaryCell = document.createElement('td');
+    //         if (index === 0) {
+    //             summaryCell.textContent = "-";
+    //         } else {
+    //             summaryCell.innerHTML = `
+    //                 <select class="form-control-sm summary-method" data-summary="${col.column}">
+    //                     ${generateSummaryOptions(col.type)}
+    //                 </select>
+    //             `;
+    //         }
+    //         row.appendChild(summaryCell);
+
+    //         columnTypeList.appendChild(row);
+    //     });
+    //     document.getElementById('metadataAnalysis').style.display = 'block';
+    // }
+    
+    async function parseMatrixMetadata(files, separator) {
+        const columnTypes = Array.from(files).map(file => {
             return {
-                column: header,
-                type: index === 0 ? "Node ID Column" : detectColumnType(columnData[index])
+                column: file.name,
+                type: "Numerical"
             };
         });
 
+        renderMatrixColumnTypeTable(columnTypes);
+    }
+
+    function renderMatrixColumnTypeTable(columnTypes) {
         const columnTypeList = document.getElementById('columnTypeList');
         columnTypeList.innerHTML = "";
 
-        columnTypes.forEach((col, index) => {
+        columnTypes.forEach(col => {
             const row = document.createElement('tr');
             const columnCell = document.createElement('td');
             columnCell.textContent = col.column;
             row.appendChild(columnCell);
 
             const typeCell = document.createElement('td');
-            if (index === 0) {
-                typeCell.textContent = "Node ID Column";
-            } else {
-                typeCell.innerHTML = `
-                    <select class="form-control-sm" data-column="${col.column}" onchange="updateSummaryOptions(this)">
-                        <option value="Categorical" ${col.type === 'Categorical' ? 'selected' : ''}>Categorical</option>
-                        <option value="List" ${col.type === 'List' ? 'selected' : ''}>List</option>
-                        <option value="Numerical" ${col.type === 'Numerical' ? 'selected' : ''}>Numerical</option>
-                        <option value="Binary" ${col.type === 'Binary' ? 'selected' : ''}>Binary</option>
-                    </select>
-                `;
-            }
+            typeCell.textContent = col.type;
             row.appendChild(typeCell);
 
             const summaryCell = document.createElement('td');
-            if (index === 0) {
-                summaryCell.textContent = "-";
-            } else {
-                summaryCell.innerHTML = `
-                    <select class="form-control-sm summary-method" data-summary="${col.column}">
-                        ${generateSummaryOptions(col.type)}
-                    </select>
-                `;
-            }
+            summaryCell.innerHTML = `<select class="form-control-sm summary-method" data-summary="${col.column}">
+                                        ${generateSummaryOptions(col.type)}
+                                      </select>`;
             row.appendChild(summaryCell);
 
             columnTypeList.appendChild(row);
         });
-        document.getElementById('metadataAnalysis').style.display = 'block';
     }
-
     function renderColumnTypeTable(columnTypes) {
         const columnTypeList = document.getElementById('columnTypeList');
         columnTypeList.innerHTML = ""; // Clear the table
