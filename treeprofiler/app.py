@@ -13,7 +13,7 @@ from wsgiref.simple_server import WSGIServer, WSGIRequestHandler
 
 
 from ete4 import Tree
-from treeprofiler.tree_annotate import run_tree_annotate, parse_csv, name_nodes  # or other functions you need
+from treeprofiler.tree_annotate import run_tree_annotate, run_array_annotate, parse_csv, parse_tsv_to_array, name_nodes  # or other functions you need
 from treeprofiler import tree_plot
 from treeprofiler.src import utils
 from treeprofiler import layouts
@@ -181,8 +181,13 @@ def do_upload():
         "tree_data": request.forms.get('tree'),
         "treeparser": request.forms.get('treeparser'),
         "is_annotated_tree": request.forms.get('isAnnotatedTree') == 'true',
+        
         "metadata": request.forms.get('metadata'),
         "separator": request.forms.get('separator'),
+
+        "matrix": request.forms.get('matrix'),
+        "matrix_separator": request.forms.get('matrixSeparator'),
+
         "text_prop": request.forms.getlist('text_prop[]'),
         "num_prop": request.forms.getlist('num_prop[]'),
         "bool_prop": request.forms.getlist('bool_prop[]'),
@@ -243,6 +248,10 @@ def process_upload_job(job_args):
     metadata_file_paths = uploaded_chunks.get(treename, {}).get("metadata")
     metadata_file_list = list(metadata_file_paths.values())
     
+    matrix_file_paths = uploaded_chunks.get(treename, {}).get("matrix")
+    matrix_file_list = list(matrix_file_paths.values())
+    matrix_separator = "\t" if job_args.get("matrix_separator") == "<tab>" else job_args.get("matrix_separator", ",")
+
     alignment_file_path = uploaded_chunks.get(treename, {}).get("alignment")
     pfam_file_path = uploaded_chunks.get(treename, {}).get("pfam")
     
@@ -350,6 +359,7 @@ def process_upload_job(job_args):
             "multiple_text_prop": job_args.get("multiple_text_prop")
         }
         
+        
         # Taxonomic annotation options
         taxonomic_options = {}
         if job_args.get("taxon_column"):
@@ -421,6 +431,17 @@ def process_upload_job(job_args):
             threads=threads
         )
 
+        # Process Matrix
+        matrix_options = {}
+
+        if matrix_file_list:
+            array_dict = parse_tsv_to_array(matrix_file_list, delimiter=matrix_separator)
+            
+            annotated_tree = run_array_annotate(annotated_tree, array_dict, column2method=column2method)
+            # update prop2type
+            for filename in array_dict.keys():
+                prop2type[filename] = list
+
         if job_args.get("taxon_column"):
             rank_list = sorted(list(set(utils.tree_prop_array(annotated_tree, 'rank'))))
         else:
@@ -428,10 +449,13 @@ def process_upload_job(job_args):
 
         # Post-processing of annotated tree properties
         list_keys = [key for key, value in prop2type.items() if value == list]
+        list_sep = '||'
         for node in annotated_tree.leaves():
             for key in list_keys:
                 if node.props.get(key):
-                    node.add_prop(key, '||'.join(node.props[key]))
+                    cont2str = list(map(str, node.props.get(key)))
+                    list2str = list_sep.join(cont2str)
+                    node.add_prop(key, list2str)
         
         # Name the nodes
         annotated_tree = name_nodes(annotated_tree)
@@ -498,7 +522,7 @@ def upload_tree():
 @app.route('/upload_chunk', method='POST')
 def upload_chunk():
     # Determine the file type based on the request
-    chunk = request.files.get('treeFile') or request.files.get('metadataFile') or request.files.get('alignmentFile') or request.files.get('pfamFile')
+    chunk = request.files.get('treeFile') or request.files.get('metadataFile') or request.files.get('alignmentFile') or request.files.get('pfamFile') or request.files.get('matrixFile')
     chunk_index = int(request.forms.get("chunkIndex"))
     total_chunks = int(request.forms.get("totalChunks"))
     treename = request.forms.get("treename")
@@ -509,6 +533,8 @@ def upload_chunk():
         file_type = "tree"
     elif 'metadataFile' in request.files:
         file_type = "metadata"
+    elif 'matrixFile' in request.files:
+        file_type = "matrix"
     elif 'alignmentFile' in request.files:
         file_type = "alignment"
     elif 'pfamFile' in request.files:
@@ -518,10 +544,16 @@ def upload_chunk():
 
     # Initialize storage
     if treename not in uploaded_chunks:
-        uploaded_chunks[treename] = {"tree": {}, "metadata": {}, "alignment": {}, "pfam": {}}
+        uploaded_chunks[treename] = {
+            "tree": {}, 
+            "metadata": {}, 
+            "matrix": {},
+            "alignment": {}, 
+            "pfam": {}
+        }
 
     # Handle metadata specifically for multiple files
-    if file_type == "metadata":
+    if file_type == "metadata" or file_type == "matrix":
         if file_id not in uploaded_chunks[treename][file_type]:
             uploaded_chunks[treename][file_type][file_id] = []
         uploaded_chunks[treename][file_type][file_id].append((chunk_index, chunk.file.read()))
