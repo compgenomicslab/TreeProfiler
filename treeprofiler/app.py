@@ -13,11 +13,15 @@ from wsgiref.simple_server import WSGIServer, WSGIRequestHandler
 
 
 from ete4 import Tree
-from treeprofiler.tree_annotate import run_tree_annotate, parse_csv, name_nodes  # or other functions you need
+from treeprofiler.tree_annotate import run_tree_annotate, run_array_annotate, parse_csv, parse_tsv_to_array, name_nodes  # or other functions you need
 from treeprofiler import tree_plot
 from treeprofiler.src import utils
 from treeprofiler import layouts
 
+from bottle import TEMPLATE_PATH
+
+# Set the template directory
+TEMPLATE_PATH.append(os.path.join(os.path.dirname(__file__), 'views'))
 
 # In-memory storage for chunks and complete files
 trees = {}
@@ -158,25 +162,33 @@ def stop_explore():
 @app.route('/upload', method='POST')
 def do_upload():
     treename = request.forms.get('treename')
+
+    
     if not treename:
         response.status = 400
-        print({"error": "Tree name is required"})
         return {"error": "Tree name is required"}
 
     if treename in job_status:
         response.status = 400
-        print({"error": "A job with this tree name is already in progress"})
         return {"error": "A job with this tree name is already in progress"}
 
     job_status[treename] = "running"
 
     # Collect all form data
+
     job_args = {
         "treename": treename,
         "tree_data": request.forms.get('tree'),
         "treeparser": request.forms.get('treeparser'),
+        "is_annotated_tree": request.forms.get('isAnnotatedTree') == 'true',
+        
         "metadata": request.forms.get('metadata'),
         "separator": request.forms.get('separator'),
+
+        "matrix": request.forms.get('matrix'),
+        "matrix_name": request.forms.get('matrixFiles'),
+        "matrix_separator": request.forms.get('matrixSeparator'),
+
         "text_prop": request.forms.getlist('text_prop[]'),
         "num_prop": request.forms.getlist('num_prop[]'),
         "bool_prop": request.forms.getlist('bool_prop[]'),
@@ -217,11 +229,15 @@ def do_upload():
 
 def process_upload_job(job_args):
     """Function to handle the actual processing of the uploaded data."""
+    eteformat_flag = False
+    
     treename = job_args['treename']
     # Initialize variables and parse arguments
     separator = "\t" if job_args.get("separator") == "<tab>" else job_args.get("separator", ",")
     tree_data = job_args.get("tree_data")
     treeparser = job_args.get("treeparser")
+    is_annotated_tree = job_args.get("is_annotated_tree")
+    
     summary_methods = job_args.get("summary_methods")
     
     # Parse summary methods JSON, if provided
@@ -233,6 +249,11 @@ def process_upload_job(job_args):
     metadata_file_paths = uploaded_chunks.get(treename, {}).get("metadata")
     metadata_file_list = list(metadata_file_paths.values())
     
+    matrix_file_paths = uploaded_chunks.get(treename, {}).get("matrix")
+
+    matrix_file_list = list(matrix_file_paths.values())
+    matrix_separator = "\t" if job_args.get("matrix_separator") == "<tab>" else job_args.get("matrix_separator", ",")
+
     alignment_file_path = uploaded_chunks.get(treename, {}).get("alignment")
     pfam_file_path = uploaded_chunks.get(treename, {}).get("pfam")
     
@@ -240,155 +261,255 @@ def process_upload_job(job_args):
     if tree_data:
         tree = utils.ete4_parse(tree_data, internal_parser=treeparser)
     elif tree_file_path and os.path.exists(tree_file_path):
-        with open(tree_file_path, 'r') as f:
-            tree = utils.ete4_parse(f.read(), internal_parser=treeparser)
+        
+        # # load tree with newick
+        # with open(tree_file_path, 'r') as f:
+        #     tree = utils.ete4_parse(f.read(), internal_parser=treeparser)
+        
+        # Remove the temporary file after usage
+        
+        tree, eteformat_flag = utils.validate_tree(tree_file_path, 'auto', treeparser)
         os.remove(tree_file_path)
 
-    # Process metadata
-    metadata_options = {}
-    columns = {}
-
-    if metadata_file_list:
-        metadata_dict, node_props, columns, prop2type = parse_csv(metadata_file_list, delimiter=separator)
-    else:
-        metadata_dict = {}
-        node_props = []
+    if is_annotated_tree:
         prop2type = {}
-    
-    node_props = list(prop2type.keys())
+        node_props = []
+        for path, node in tree.iter_prepostorder():
+            prop2type.update(utils.get_prop2type(node))
 
-    metadata_options = {
-        "metadata_dict": metadata_dict,
-        "node_props": node_props,
-        "columns": columns,
-        "prop2type": prop2type,
-        "text_prop": job_args.get("text_prop"),
-        "num_prop": job_args.get("num_prop"),
-        "bool_prop": job_args.get("bool_prop"),
-        "multiple_text_prop": job_args.get("multiple_text_prop")
-    }
-    
-    
-    # Taxonomic annotation options
-    taxonomic_options = {}
-    if job_args.get("taxon_column"):
-        taxonomic_options = {
-            "taxon_column": job_args.get("taxon_column"),
-            "taxadb": job_args.get("taxadb"),
-            "gtdb_version": job_args.get("version"),
-            "taxon_delimiter": job_args.get("species_delimiter"),
-            "taxa_field": job_args.get("species_index"),
-            "ignore_unclassified": job_args.get("ignore_unclassified")
+        avail_props = list(prop2type.keys())
+        node_props.extend(avail_props)
+        del avail_props[avail_props.index('name')]
+        del avail_props[avail_props.index('dist')]
+        if 'support' in avail_props:
+            del avail_props[avail_props.index('support')]
+
+        # convert list data to string
+        list_keys = [key for key, value in prop2type.items() if value == list]
+        
+        # Replace all commas in the tree with '||'
+        list_sep = '||'
+        for node in tree.leaves():
+            for key in list_keys:
+                if node.props.get(key):
+                    
+                    list2str = list_sep.join(map(str, node.props.get(key)))
+                    node.add_prop(key, list2str)
+
+        annotated_newick = tree.write(props=avail_props, 
+        parser=utils.get_internal_parser(treeparser),format_root_node=True)
+        
+        # check if alignment pro is there
+        if 'alignment' in prop2type.keys():
+            alignment_annotation = True
+        else:
+            alignment_annotation = False
+
+        # check if domain pro is there
+        if 'dom_arq' in prop2type.keys():
+            domain_annotation = True
+        else:
+            domain_annotation = False
+
+        # check taxonomic annotation
+        taxonomic_props = ['rank', 'sci_name', 'taxid', 'named_lineage']
+        
+        all_present = all(prop in prop2type.keys() for prop in taxonomic_props)
+        if all_present:
+            taxonomic_annotation = True
+        else:
+            taxonomic_annotation = False
+        
+        # Store the processed data
+        trees[treename] = {
+            'tree': tree_data,
+            'treeparser': treeparser,
+            #'columns': columns,
+            #'metadata': job_args.get("metadata"),
+            'node_props': node_props,
+            "updated_tree": '',
+            'annotated_tree': annotated_newick,
+            'prop2type': prop2type,
+            'layouts': [],
+            'taxonomic_annotation': taxonomic_annotation,
+            'rank_list':[],
+            'alignment_annotation': alignment_annotation,
+            'domain_annotation': domain_annotation,
         }
-
-    # for analytic methods
-    analytic_options = {}
-    acr_discrete_columns = []
-    acr_continuous_columns = []
-    if job_args.get("acr_columns"):
-        for acr_prop in job_args.get("acr_columns"):
-            if prop2type.get(acr_prop) == str:
-                acr_discrete_columns.append(acr_prop)
-            elif prop2type.get(acr_prop) == float:
-                acr_continuous_columns.append(acr_prop)
-        analytic_options = {
-            "acr_discrete_columns": acr_discrete_columns,
-            "acr_continuous_columns": acr_continuous_columns,
-            "prediction_method": job_args.get("prediction_method"),
-            "model": job_args.get("model")
-        }
-        if job_args.get("phylosignal") == 'delta':
-            analytic_options['delta_stats'] = True
-            analytic_options['ent_type'] = job_args.get("ent_type")
-            analytic_options['iteration'] = int(job_args.get("iteration"))
-            analytic_options['lambda0'] = float(job_args.get("lambda0"))
-            analytic_options['se'] = float(job_args.get("se"))
-            analytic_options['thin'] = int(job_args.get("thin"))
-            analytic_options['burn'] = int(job_args.get("burn"))
-
-    ls_columns = []
-    if job_args.get("ls_columns"):
-        ls_columns = job_args.get("ls_columns")
-        analytic_options['ls_columns'] = ls_columns
-        analytic_options['prec_cutoff'] = float(job_args.get("prec_cutoff"))
-        analytic_options['sens_cutoff'] = float(job_args.get("sens_cutoff"))
-
-    # Alignment options
-    alignment_options = {}
-    if alignment_file_path:
-        alignment_options = {
-            "alignment": alignment_file_path,
-            "consensus_cutoff": float(job_args.get("consensus_cutoff"))
-        }
-
-    # Emapper options
-    emapper_options = {
-        "emapper_mode": False,
-        "emapper_pfam": pfam_file_path if pfam_file_path else None
-    }
-
-    # Run annotation
-    threads = 6
-    annotated_tree, prop2type = run_tree_annotate(
-        tree,
-        **metadata_options,
-        **emapper_options,
-        **taxonomic_options,
-        **analytic_options,
-        **alignment_options,
-        column2method=column2method,
-        threads=threads
-    )
-
-    if job_args.get("taxon_column"):
-        rank_list = sorted(list(set(utils.tree_prop_array(annotated_tree, 'rank'))))
     else:
-        rank_list = []
+        # Process metadata
+        metadata_options = {}
+        columns = {}
 
-    # Post-processing of annotated tree properties
-    list_keys = [key for key, value in prop2type.items() if value == list]
-    for node in annotated_tree.leaves():
-        for key in list_keys:
-            if node.props.get(key):
-                node.add_prop(key, '||'.join(node.props[key]))
-    
-    # Name the nodes
-    annotated_tree = name_nodes(annotated_tree)
+        if metadata_file_list:
+            metadata_dict, node_props, columns, prop2type = parse_csv(metadata_file_list, delimiter=separator)
+        else:
+            metadata_dict = {}
+            node_props = []
+            prop2type = {}
+        
+        node_props = list(prop2type.keys())
 
-    #avail_props = [key for key in prop2type.keys() if key not in ['name', 'dist', 'support']]
-    avail_props = list(prop2type.keys())
+        metadata_options = {
+            "metadata_dict": metadata_dict,
+            "node_props": node_props,
+            "columns": columns,
+            "prop2type": prop2type,
+            "text_prop": job_args.get("text_prop"),
+            "num_prop": job_args.get("num_prop"),
+            "bool_prop": job_args.get("bool_prop"),
+            "multiple_text_prop": job_args.get("multiple_text_prop")
+        }
+        
+        
+        # Taxonomic annotation options
+        taxonomic_options = {}
+        if job_args.get("taxon_column"):
+            taxonomic_options = {
+                "taxon_column": job_args.get("taxon_column"),
+                "taxadb": job_args.get("taxadb"),
+                "gtdb_version": job_args.get("version"),
+                "taxon_delimiter": job_args.get("species_delimiter"),
+                "taxa_field": job_args.get("species_index"),
+                "ignore_unclassified": job_args.get("ignore_unclassified")
+            }
 
-    annotated_newick = annotated_tree.write(props=avail_props, format_root_node=True)
+        # for analytic methods
+        analytic_options = {}
+        acr_discrete_columns = []
+        acr_continuous_columns = []
+        if job_args.get("acr_columns"):
+            for acr_prop in job_args.get("acr_columns"):
+                if prop2type.get(acr_prop) == str:
+                    acr_discrete_columns.append(acr_prop)
+                elif prop2type.get(acr_prop) == float:
+                    acr_continuous_columns.append(acr_prop)
+            analytic_options = {
+                "acr_discrete_columns": acr_discrete_columns,
+                "acr_continuous_columns": acr_continuous_columns,
+                "prediction_method": job_args.get("prediction_method"),
+                "model": job_args.get("model")
+            }
+            if job_args.get("phylosignal") == 'delta':
+                analytic_options['delta_stats'] = True
+                analytic_options['ent_type'] = job_args.get("ent_type")
+                analytic_options['iteration'] = int(job_args.get("iteration"))
+                analytic_options['lambda0'] = float(job_args.get("lambda0"))
+                analytic_options['se'] = float(job_args.get("se"))
+                analytic_options['thin'] = int(job_args.get("thin"))
+                analytic_options['burn'] = int(job_args.get("burn"))
 
-    # Add node properties for display
-    node_props = metadata_options.get('node_props', [])
+        ls_columns = []
+        if job_args.get("ls_columns"):
+            ls_columns = job_args.get("ls_columns")
+            analytic_options['ls_columns'] = ls_columns
+            analytic_options['prec_cutoff'] = float(job_args.get("prec_cutoff"))
+            analytic_options['sens_cutoff'] = float(job_args.get("sens_cutoff"))
 
-    # check if tree has support values
-    sample_node = annotated_tree.children[0]
-    if 'support' in sample_node.props:
-        node_props.extend(['name', 'dist', 'support'])
-    else:
-        node_props.extend(['name', 'dist'])
-    if job_args.get("taxon_column"):
-        taxonomic_props = ['rank', 'sci_name', 'taxid', 'evoltype', 'dup_sp', 'dup_percent', 'lca']
-        node_props.extend(taxonomic_props)
-    
-    # Store the processed data
-    trees[treename] = {
-        'tree': tree_data,
-        'treeparser': treeparser,
-        'columns': columns,
-        'metadata': job_args.get("metadata"),
-        'node_props': node_props,
-        "updated_tree": "",
-        'annotated_tree': annotated_newick,
-        'prop2type': prop2type,
-        'layouts': [],
-        'taxonomic_annotation': True if job_args.get("taxon_column") else False,
-        'rank_list':rank_list,
-        'alignment_annotation': True if alignment_file_path else False,
-        'domain_annotation': True if pfam_file_path else False,
-    }
+        # Alignment options
+        alignment_options = {}
+        if alignment_file_path:
+            alignment_options = {
+                "alignment": alignment_file_path,
+                "consensus_cutoff": float(job_args.get("consensus_cutoff"))
+            }
+
+        # Emapper options
+        emapper_options = {
+            "emapper_mode": False,
+            "emapper_pfam": pfam_file_path if pfam_file_path else None
+        }
+
+        # Run annotation
+        threads = 6
+        annotated_tree, prop2type = run_tree_annotate(
+            tree,
+            **metadata_options,
+            **emapper_options,
+            **taxonomic_options,
+            **analytic_options,
+            **alignment_options,
+            column2method=column2method,
+            threads=threads
+        )
+
+        # Process Matrix
+        node_props_array = []
+        if matrix_file_list:
+            tmp2filename = {os.path.basename(value): key for key, value in matrix_file_paths.items()}
+            array_dict = parse_tsv_to_array(matrix_file_list, delimiter=matrix_separator)
+            filename2array = {}
+
+            for key, value in array_dict.items():
+                filename2array[tmp2filename[key]] = value
+            
+            annotated_tree = run_array_annotate(annotated_tree, filename2array, column2method=column2method)
+            # update prop2type
+            for filename in filename2array.keys():
+                prop2type[filename] = list
+                prop2type[utils.add_suffix(filename, 'avg')] = list
+                prop2type[utils.add_suffix(filename, 'max')] = list
+                prop2type[utils.add_suffix(filename, 'min')] = list
+                prop2type[utils.add_suffix(filename, 'sum')] = list
+                prop2type[utils.add_suffix(filename, 'std')] = list
+
+            node_props_array = list(filename2array.keys())
+
+        if job_args.get("taxon_column"):
+            rank_list = sorted(list(set(utils.tree_prop_array(annotated_tree, 'rank'))))
+        else:
+            rank_list = []
+
+        # Post-processing of annotated tree properties
+        list_keys = [key for key, value in prop2type.items() if value == list]
+
+        list_sep = '||'
+        for node in annotated_tree.traverse():
+            for key in list_keys:
+                if node.props.get(key):
+                    cont2str = list(map(str, node.props.get(key)))
+                    list2str = list_sep.join(cont2str)
+                    node.add_prop(key, list2str)
+        
+        # Name the nodes
+        annotated_tree = name_nodes(annotated_tree)
+
+        #avail_props = [key for key in prop2type.keys() if key not in ['name', 'dist', 'support']]
+        avail_props = list(prop2type.keys())
+
+        annotated_newick = annotated_tree.write(props=avail_props, format_root_node=True)
+
+        # Add node properties for display
+        node_props = metadata_options.get('node_props', [])
+        if node_props_array:
+            node_props.extend(node_props_array)
+
+        # check if tree has support values
+        sample_node = annotated_tree.children[0]
+        if 'support' in sample_node.props:
+            node_props.extend(['name', 'dist', 'support'])
+        else:
+            node_props.extend(['name', 'dist'])
+        if job_args.get("taxon_column"):
+            taxonomic_props = ['rank', 'sci_name', 'taxid', 'evoltype', 'dup_sp', 'dup_percent', 'lca']
+            node_props.extend(taxonomic_props)
+        
+        # Store the processed data
+        trees[treename] = {
+            'tree': tree_data,
+            'treeparser': treeparser,
+            #'columns': columns,
+            #'metadata': job_args.get("metadata"),
+            'node_props': node_props,
+            "updated_tree": "",
+            'annotated_tree': annotated_newick,
+            'prop2type': prop2type,
+            'layouts': [],
+            'taxonomic_annotation': True if job_args.get("taxon_column") else False,
+            'rank_list':rank_list,
+            'alignment_annotation': True if alignment_file_path else False,
+            'domain_annotation': True if pfam_file_path else False,
+        }
 
     # Cleanup temporary alignment file after usage
     if alignment_file_path and os.path.exists(alignment_file_path):
@@ -417,7 +538,7 @@ def upload_tree():
 @app.route('/upload_chunk', method='POST')
 def upload_chunk():
     # Determine the file type based on the request
-    chunk = request.files.get('treeFile') or request.files.get('metadataFile') or request.files.get('alignmentFile') or request.files.get('pfamFile')
+    chunk = request.files.get('treeFile') or request.files.get('metadataFile') or request.files.get('alignmentFile') or request.files.get('pfamFile') or request.files.get('matrixFile')
     chunk_index = int(request.forms.get("chunkIndex"))
     total_chunks = int(request.forms.get("totalChunks"))
     treename = request.forms.get("treename")
@@ -428,6 +549,8 @@ def upload_chunk():
         file_type = "tree"
     elif 'metadataFile' in request.files:
         file_type = "metadata"
+    elif 'matrixFile' in request.files:
+        file_type = "matrix"
     elif 'alignmentFile' in request.files:
         file_type = "alignment"
     elif 'pfamFile' in request.files:
@@ -437,10 +560,16 @@ def upload_chunk():
 
     # Initialize storage
     if treename not in uploaded_chunks:
-        uploaded_chunks[treename] = {"tree": {}, "metadata": {}, "alignment": {}, "pfam": {}}
+        uploaded_chunks[treename] = {
+            "tree": {}, 
+            "metadata": {}, 
+            "matrix": {},
+            "alignment": {}, 
+            "pfam": {}
+        }
 
     # Handle metadata specifically for multiple files
-    if file_type == "metadata":
+    if file_type == "metadata" or file_type == "matrix":
         if file_id not in uploaded_chunks[treename][file_type]:
             uploaded_chunks[treename][file_type][file_id] = []
         uploaded_chunks[treename][file_type][file_id].append((chunk_index, chunk.file.read()))
@@ -506,6 +635,7 @@ def check_job_status():
 @app.route('/explore_tree/<treename>', method=['GET', 'POST', 'PUT'])
 def explore_tree(treename):
     tree_info = trees.get(treename)
+    
     if not tree_info:
         return f"Tree '{treename}' not found."
 
@@ -516,8 +646,10 @@ def explore_tree(treename):
 
     if current_layouts:
         layout_manager = {layout.name: layout for layout in current_layouts}
-    current_props = sorted(list(tree_info['prop2type'].keys()))
     
+    prop2type = tree_info['prop2type']
+    current_props = sorted(list(tree_info['prop2type'].keys()))
+
     if tree_info['updated_tree']:
         t = Tree(tree_info['updated_tree'])
     else:
@@ -576,14 +708,13 @@ def explore_tree(treename):
                         # prune tree by condition 
                         query_box = layer.get('query', '')
                         query_strings = convert_query_string(query_box)
-                        prop2type = tree_info['prop2type']
                         t = utils.conditional_prune(t, query_strings, prop2type)
                         tree_info['updated_tree'] = t.write(props=current_props, format_root_node=True)
                     
                     # Process each layer individually without altering its structure
                     current_layouts, current_props, level, color_config = process_layer(
                         t, layer, tree_info, current_layouts, current_props, level,
-                        column_width, padding_x, padding_y, color_config, internal_num_rep, default_paired_color
+                        column_width, padding_x, padding_y, color_config, internal_num_rep, default_paired_color, 
                     )
                     
                     
@@ -644,8 +775,8 @@ def explore_tree(treename):
                                 if layout_prefix == "alignment":
                                     # basic 
                                     layout_config = {
-                                        "layout_name": name,  # Retrieve layout name from processed layouts
-                                        "applied_props": [applied_props],  # Props linked to this layout
+                                        "layout_name": layout.name,  # Retrieve layout name from processed layouts
+                                        "applied_props": [layout_prefix],  # Props linked to this layout
                                         "config": {
                                             # "level": getattr(layout, 'column', level),
                                             #"column_width": getattr(layout, 'column_width', default_configs['column_width']),
@@ -997,7 +1128,7 @@ def explore_tree(treename):
                                 matrix, minval, maxval, value2color, results_list, list_props, single_props = tree_plot.numerical2matrix(t, 
                                 selected_props, count_negative=True, 
                                 internal_num_rep=layout_meta['config']['internal_num_rep'], 
-                                color_config=color_config, norm_method='min-max')
+                                color_config=color_config, norm_method='min-max', prop2type=tree_info['prop2type'])
                                 
                                 # TODO add list_props at this moment
                                 if list_props:
@@ -1164,7 +1295,7 @@ def explore_tree(treename):
 
     # Render template
     return template(
-        'explore_tree_v2',
+        'explore_tree_v3',
         treename=treename,
         tree_info=tree_info,
         selected_props=current_props,
@@ -1382,7 +1513,7 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
             color_config[prop]['detail2color']['color_min'] = (color_min, minval)
         matrix, minval, maxval, value2color, results_list, list_props, single_props = tree_plot.numerical2matrix(t, 
         selected_props, count_negative=True, internal_num_rep=internal_num_rep, 
-        color_config=color_config, norm_method='min-max')
+        color_config=color_config, norm_method='min-max', prop2type=prop2type)
         if list_props:
             index_map = {value: idx for idx, value in enumerate(selected_props)}
             sorted_list_props = sorted(list_props, key=lambda x: index_map[x])
@@ -1446,7 +1577,7 @@ def apply_categorical_layouts(t, selected_layout, selected_props, tree_info, cur
     Applies categorical layouts such as rectangle, label, colorbranch, bubble, piechart, background, and profiling.
     """
     prop2type = tree_info['prop2type']
-
+    
     # Apply specific categorical layout configurations
     if selected_layout == 'rectangle-layout':
         rectangle_layouts, level, _ = tree_plot.get_rectangle_layouts(
@@ -1491,9 +1622,11 @@ def apply_categorical_layouts(t, selected_layout, selected_props, tree_info, cur
 
     elif selected_layout == 'profiling-layout':
         for profiling_prop in selected_props:
+            
             matrix, value2color, all_profiling_values = tree_plot.multiple2matrix(
-                t, profiling_prop, prop2type=prop2type, color_config=color_config
+                t, profiling_prop, prop2type=prop2type, color_config=color_config,
             )
+            
             matrix_layout = tree_plot.profile_layouts.LayoutPropsMatrixBinary(
                 name=f"Profiling_{profiling_prop}", matrix=matrix, matrix_props=all_profiling_values,
                 value_range=[0, 1], value_color=value2color, column=level, poswidth=column_width

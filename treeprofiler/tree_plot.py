@@ -662,7 +662,9 @@ def run(args):
         if layout == 'profiling-layout':
             profiling_props = args.profiling_layout
             for profiling_prop in profiling_props:
-                matrix, value2color, all_profiling_values = multiple2matrix(tree, profiling_prop, prop2type=prop2type, color_config=color_config, eteformat_flag=eteformat_flag)
+                matrix, value2color, all_profiling_values = multiple2matrix(tree, profiling_prop, 
+                prop2type=prop2type, color_config=color_config, eteformat_flag=eteformat_flag)
+
                 matrix_layout = profile_layouts.LayoutPropsMatrixBinary(name=f"Profiling_{all_profiling_values}",
                 matrix=matrix, matrix_props=all_profiling_values, value_range=[0,1],
                 value_color=value2color, column=level, poswidth=args.column_width)
@@ -697,7 +699,7 @@ def run(args):
             # if is list, it should provide more than one matrix
             matrix, minval, maxval, value2color, results_list, list_props, single_props = numerical2matrix(tree, 
                 numerical_props, count_negative=True, internal_num_rep=internal_num_rep, 
-                color_config=color_config, norm_method='min-max')
+                color_config=color_config, norm_method='min-max', prop2type=prop2type, eteformat_flag=eteformat_flag)
 
             if list_props:
                 index_map = {value: idx for idx, value in enumerate(numerical_props)}
@@ -1815,7 +1817,7 @@ def categorical2matrix(tree, profiling_props, dtype=str, color_config=None):
     
     return leaf2matrix, value2color
 
-def numerical2matrix(tree, profiling_props, count_negative=True, internal_num_rep=None, color_config=None, norm_method='min-max'):
+def numerical2matrix(tree, profiling_props, count_negative=True, internal_num_rep=None, color_config=None, norm_method='min-max', prop2type=None, eteformat_flag=False):
     """
     Input:
     tree: A tree structure with nodes, each having properties.
@@ -1992,14 +1994,21 @@ def numerical2matrix(tree, profiling_props, count_negative=True, internal_num_re
 
     single_props = set()
     list_props = set()
-    
+    list_sep = '||'
+
     for node in tree.traverse():
         node2matrix_single[node.name] = []
         for profiling_prop in profiling_props:
+            data_type = prop2type.get(profiling_prop, None)
             prop_value = node.props.get(profiling_prop)
+            
             if prop_value is not None:
-                if isinstance(prop_value, list):
+                if isinstance(prop_value, list) or data_type == list:
                     list_props.add(profiling_prop)
+
+                    if not eteformat_flag:
+                        prop_value = prop_value.split(list_sep)
+                        
                     prop_value = list(map(float, prop_value))
                     if node.name not in node2matrix_list[profiling_prop]:
                         node2matrix_list[profiling_prop][node.name] = []
@@ -2007,13 +2016,16 @@ def numerical2matrix(tree, profiling_props, count_negative=True, internal_num_re
                 else:
                     single_props.add(profiling_prop)
                     node2matrix_single[node.name].append(float(prop_value))
+
             else:
                 if internal_num_rep != 'none':
                     representative_prop = utils.add_suffix(profiling_prop, internal_num_rep)
                     prop_value = node.props.get(representative_prop)
                     if prop_value is not None:
-                        if isinstance(prop_value, list):
+                        if isinstance(prop_value, list) or prop2type.get(representative_prop) == list:
                             list_props.add(profiling_prop)
+                            if not eteformat_flag:
+                                prop_value = prop_value.split(list_sep)
                             prop_value = list(map(float, prop_value))
                             if node.name not in node2matrix_list[profiling_prop]:
                                 node2matrix_list[profiling_prop][node.name] = []
@@ -2294,6 +2306,7 @@ def multiple2matrix(tree, profiling_prop, prop2type=None, color_config=None, ete
 
     # Determine the data type of the profiling property
     data_type = prop2type.get(profiling_prop)
+
     # Get all categorical values based on whether data_type is a list and eteformat_flag
     if data_type and data_type == list:
         tree_prop_array = utils.tree_prop_array(tree, profiling_prop, leaf_only=True, list_type=not eteformat_flag)

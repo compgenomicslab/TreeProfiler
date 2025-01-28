@@ -40,7 +40,10 @@ setup(
         },
     #scripts=['treeprofiler.py'],
     entry_points = {
-        'console_scripts': ['treeprofiler=treeprofiler.treeprofiler:main']
+        'console_scripts': [
+            'treeprofiler=treeprofiler.treeprofiler:main',
+            'treeprofiler-desktop=treeprofiler.app:start_server',  # Link to app.py's start_server
+        ]
     },
     data_files=[
         ('examples', example_files),
