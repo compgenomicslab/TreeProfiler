@@ -430,7 +430,7 @@ def conditional_prune(tree, conditions_input, prop2type):
 
 def tree_prop_array(node, prop, leaf_only=False, numeric=False, list_type=False):
     array = []
-    sep = '||'
+    list_sep = '||'
     
     # Decide whether to traverse all nodes or only leaves
     nodes = node.leaves() if leaf_only else node.traverse()
@@ -442,7 +442,7 @@ def tree_prop_array(node, prop, leaf_only=False, numeric=False, list_type=False)
             
             # Handle list-type property values
             if list_type:
-                prop_value = prop_value.split(sep)
+                prop_value = prop_value.split(list_sep)
                 if numeric:
                     try:
                         # Convert elements to floats, replace empty with NaN

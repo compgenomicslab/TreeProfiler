@@ -13,7 +13,7 @@ from wsgiref.simple_server import WSGIServer, WSGIRequestHandler
 
 
 from ete4 import Tree
-from treeprofiler.tree_annotate import run_tree_annotate, parse_csv, name_nodes  # or other functions you need
+from treeprofiler.tree_annotate import run_tree_annotate, run_array_annotate, parse_csv, parse_tsv_to_array, name_nodes  # or other functions you need
 from treeprofiler import tree_plot
 from treeprofiler.src import utils
 from treeprofiler import layouts
@@ -175,14 +175,20 @@ def do_upload():
     job_status[treename] = "running"
 
     # Collect all form data
-    
+
     job_args = {
         "treename": treename,
         "tree_data": request.forms.get('tree'),
         "treeparser": request.forms.get('treeparser'),
         "is_annotated_tree": request.forms.get('isAnnotatedTree') == 'true',
+        
         "metadata": request.forms.get('metadata'),
         "separator": request.forms.get('separator'),
+
+        "matrix": request.forms.get('matrix'),
+        "matrix_name": request.forms.get('matrixFiles'),
+        "matrix_separator": request.forms.get('matrixSeparator'),
+
         "text_prop": request.forms.getlist('text_prop[]'),
         "num_prop": request.forms.getlist('num_prop[]'),
         "bool_prop": request.forms.getlist('bool_prop[]'),
@@ -243,6 +249,11 @@ def process_upload_job(job_args):
     metadata_file_paths = uploaded_chunks.get(treename, {}).get("metadata")
     metadata_file_list = list(metadata_file_paths.values())
     
+    matrix_file_paths = uploaded_chunks.get(treename, {}).get("matrix")
+
+    matrix_file_list = list(matrix_file_paths.values())
+    matrix_separator = "\t" if job_args.get("matrix_separator") == "<tab>" else job_args.get("matrix_separator", ",")
+
     alignment_file_path = uploaded_chunks.get(treename, {}).get("alignment")
     pfam_file_path = uploaded_chunks.get(treename, {}).get("pfam")
     
@@ -350,6 +361,7 @@ def process_upload_job(job_args):
             "multiple_text_prop": job_args.get("multiple_text_prop")
         }
         
+        
         # Taxonomic annotation options
         taxonomic_options = {}
         if job_args.get("taxon_column"):
@@ -421,6 +433,28 @@ def process_upload_job(job_args):
             threads=threads
         )
 
+        # Process Matrix
+        node_props_array = []
+        if matrix_file_list:
+            tmp2filename = {os.path.basename(value): key for key, value in matrix_file_paths.items()}
+            array_dict = parse_tsv_to_array(matrix_file_list, delimiter=matrix_separator)
+            filename2array = {}
+
+            for key, value in array_dict.items():
+                filename2array[tmp2filename[key]] = value
+            
+            annotated_tree = run_array_annotate(annotated_tree, filename2array, column2method=column2method)
+            # update prop2type
+            for filename in filename2array.keys():
+                prop2type[filename] = list
+                prop2type[utils.add_suffix(filename, 'avg')] = list
+                prop2type[utils.add_suffix(filename, 'max')] = list
+                prop2type[utils.add_suffix(filename, 'min')] = list
+                prop2type[utils.add_suffix(filename, 'sum')] = list
+                prop2type[utils.add_suffix(filename, 'std')] = list
+
+            node_props_array = list(filename2array.keys())
+
         if job_args.get("taxon_column"):
             rank_list = sorted(list(set(utils.tree_prop_array(annotated_tree, 'rank'))))
         else:
@@ -428,10 +462,14 @@ def process_upload_job(job_args):
 
         # Post-processing of annotated tree properties
         list_keys = [key for key, value in prop2type.items() if value == list]
-        for node in annotated_tree.leaves():
+
+        list_sep = '||'
+        for node in annotated_tree.traverse():
             for key in list_keys:
                 if node.props.get(key):
-                    node.add_prop(key, '||'.join(node.props[key]))
+                    cont2str = list(map(str, node.props.get(key)))
+                    list2str = list_sep.join(cont2str)
+                    node.add_prop(key, list2str)
         
         # Name the nodes
         annotated_tree = name_nodes(annotated_tree)
@@ -443,6 +481,8 @@ def process_upload_job(job_args):
 
         # Add node properties for display
         node_props = metadata_options.get('node_props', [])
+        if node_props_array:
+            node_props.extend(node_props_array)
 
         # check if tree has support values
         sample_node = annotated_tree.children[0]
@@ -498,7 +538,7 @@ def upload_tree():
 @app.route('/upload_chunk', method='POST')
 def upload_chunk():
     # Determine the file type based on the request
-    chunk = request.files.get('treeFile') or request.files.get('metadataFile') or request.files.get('alignmentFile') or request.files.get('pfamFile')
+    chunk = request.files.get('treeFile') or request.files.get('metadataFile') or request.files.get('alignmentFile') or request.files.get('pfamFile') or request.files.get('matrixFile')
     chunk_index = int(request.forms.get("chunkIndex"))
     total_chunks = int(request.forms.get("totalChunks"))
     treename = request.forms.get("treename")
@@ -509,6 +549,8 @@ def upload_chunk():
         file_type = "tree"
     elif 'metadataFile' in request.files:
         file_type = "metadata"
+    elif 'matrixFile' in request.files:
+        file_type = "matrix"
     elif 'alignmentFile' in request.files:
         file_type = "alignment"
     elif 'pfamFile' in request.files:
@@ -518,10 +560,16 @@ def upload_chunk():
 
     # Initialize storage
     if treename not in uploaded_chunks:
-        uploaded_chunks[treename] = {"tree": {}, "metadata": {}, "alignment": {}, "pfam": {}}
+        uploaded_chunks[treename] = {
+            "tree": {}, 
+            "metadata": {}, 
+            "matrix": {},
+            "alignment": {}, 
+            "pfam": {}
+        }
 
     # Handle metadata specifically for multiple files
-    if file_type == "metadata":
+    if file_type == "metadata" or file_type == "matrix":
         if file_id not in uploaded_chunks[treename][file_type]:
             uploaded_chunks[treename][file_type][file_id] = []
         uploaded_chunks[treename][file_type][file_id].append((chunk_index, chunk.file.read()))
@@ -598,13 +646,14 @@ def explore_tree(treename):
 
     if current_layouts:
         layout_manager = {layout.name: layout for layout in current_layouts}
-    current_props = sorted(list(tree_info['prop2type'].keys()))
     
+    prop2type = tree_info['prop2type']
+    current_props = sorted(list(tree_info['prop2type'].keys()))
+
     if tree_info['updated_tree']:
         t = Tree(tree_info['updated_tree'])
     else:
         t = Tree(tree_info['annotated_tree'])
-    
     
     
     # Default configuration settings
@@ -659,14 +708,13 @@ def explore_tree(treename):
                         # prune tree by condition 
                         query_box = layer.get('query', '')
                         query_strings = convert_query_string(query_box)
-                        prop2type = tree_info['prop2type']
                         t = utils.conditional_prune(t, query_strings, prop2type)
                         tree_info['updated_tree'] = t.write(props=current_props, format_root_node=True)
                     
                     # Process each layer individually without altering its structure
                     current_layouts, current_props, level, color_config = process_layer(
                         t, layer, tree_info, current_layouts, current_props, level,
-                        column_width, padding_x, padding_y, color_config, internal_num_rep, default_paired_color
+                        column_width, padding_x, padding_y, color_config, internal_num_rep, default_paired_color, 
                     )
                     
                     
@@ -1080,7 +1128,7 @@ def explore_tree(treename):
                                 matrix, minval, maxval, value2color, results_list, list_props, single_props = tree_plot.numerical2matrix(t, 
                                 selected_props, count_negative=True, 
                                 internal_num_rep=layout_meta['config']['internal_num_rep'], 
-                                color_config=color_config, norm_method='min-max')
+                                color_config=color_config, norm_method='min-max', prop2type=tree_info['prop2type'])
                                 
                                 # TODO add list_props at this moment
                                 if list_props:
@@ -1465,7 +1513,7 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
             color_config[prop]['detail2color']['color_min'] = (color_min, minval)
         matrix, minval, maxval, value2color, results_list, list_props, single_props = tree_plot.numerical2matrix(t, 
         selected_props, count_negative=True, internal_num_rep=internal_num_rep, 
-        color_config=color_config, norm_method='min-max')
+        color_config=color_config, norm_method='min-max', prop2type=prop2type)
         if list_props:
             index_map = {value: idx for idx, value in enumerate(selected_props)}
             sorted_list_props = sorted(list_props, key=lambda x: index_map[x])
