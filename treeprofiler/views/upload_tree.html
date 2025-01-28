@@ -402,9 +402,10 @@
         if (matrixFiles.length > 0) {
             const matrixFilesList = [];
             for (const [index, file] of Array.from(matrixFiles).entries()) {
-                const fileId = `matrix_${index}`;
-                await uploadFileInChunks(file, 'matrixFile', treename, fileId);
-                matrixFilesList.push(fileId);
+                //const fileId = `matrix_${index}`;
+                
+                await uploadFileInChunks(file, 'matrixFile', treename, file.name);
+                matrixFilesList.push(file.name);
             }
             formData.append("matrixFiles", JSON.stringify(matrixFilesList));
             formData.append("matrixSeparator", matrixSeparator);
