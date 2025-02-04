@@ -665,7 +665,7 @@ def run(args):
                 matrix, value2color, all_profiling_values = multiple2matrix(tree, profiling_prop, 
                 prop2type=prop2type, color_config=color_config, eteformat_flag=eteformat_flag)
 
-                matrix_layout = profile_layouts.LayoutPropsMatrixBinary(name=f"Profiling_{all_profiling_values}",
+                matrix_layout = profile_layouts.LayoutPropsMatrixBinary(name=f"Profiling_{profiling_prop}",
                 matrix=matrix, matrix_props=all_profiling_values, value_range=[0,1],
                 value_color=value2color, column=level, poswidth=args.column_width)
                 level += 1
