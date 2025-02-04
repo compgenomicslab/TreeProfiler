@@ -1995,11 +1995,11 @@ def numerical2matrix(tree, profiling_props, count_negative=True, internal_num_re
     single_props = set()
     list_props = set()
     list_sep = '||'
+
     for node in tree.traverse():
         node2matrix_single[node.name] = []
         for profiling_prop in profiling_props:
             data_type = prop2type.get(profiling_prop, None)
-
             prop_value = node.props.get(profiling_prop)
             
             if prop_value is not None:
@@ -2010,7 +2010,6 @@ def numerical2matrix(tree, profiling_props, count_negative=True, internal_num_re
                         prop_value = prop_value.split(list_sep)
                         
                     prop_value = list(map(float, prop_value))
-
                     if node.name not in node2matrix_list[profiling_prop]:
                         node2matrix_list[profiling_prop][node.name] = []
                     node2matrix_list[profiling_prop][node.name] = prop_value
@@ -2023,8 +2022,10 @@ def numerical2matrix(tree, profiling_props, count_negative=True, internal_num_re
                     representative_prop = utils.add_suffix(profiling_prop, internal_num_rep)
                     prop_value = node.props.get(representative_prop)
                     if prop_value is not None:
-                        if isinstance(prop_value, list):
+                        if isinstance(prop_value, list) or prop2type.get(representative_prop) == list:
                             list_props.add(profiling_prop)
+                            if not eteformat_flag:
+                                prop_value = prop_value.split(list_sep)
                             prop_value = list(map(float, prop_value))
                             if node.name not in node2matrix_list[profiling_prop]:
                                 node2matrix_list[profiling_prop][node.name] = []
