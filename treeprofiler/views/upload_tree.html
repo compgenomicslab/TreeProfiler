@@ -330,6 +330,18 @@
             </div>
         </div>
         
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>EggNOG-mapper Annotation(Optional)</h5>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label for="emapper" class="col-sm-3 col-form-label">Emapper Annotation</label>
+                    <input type="file" class="form-control-file mt-2" id="emapperFile" name="emapperFile">
+                </div>
+            </div>
+        </div>
+
         <!-- Pfam Annotation Section -->
         <div class="card mb-4">
             <div class="card-header">
@@ -343,6 +355,8 @@
             </div>
         </div>
         
+        
+
         <!-- Submit Button -->
         <button type="button" class="btn btn-primary" onclick="submitForm()">Annotate and Visualize Tree!</button>
     </form>
@@ -358,6 +372,7 @@
         const metadataFiles = document.getElementById('metadataFiles').files;
         const alignmentFile = document.getElementById('alignmentFile').files[0];
         const pfamFile = document.getElementById('pfamFile').files[0];
+        const emapperFile = document.getElementById('emapperFile').files[0];
         const separator = document.getElementById('separator').value;
         
         // for data matrix
@@ -488,6 +503,10 @@
 
         if (pfamFile) {
             await uploadFileInChunks(pfamFile, 'pfamFile', treename);
+        }
+
+        if (emapperFile) {
+            await uploadFileInChunks(emapperFile, 'emapperFile', treename);
         }
 
         const response = await fetch('/upload', {

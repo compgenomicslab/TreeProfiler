@@ -944,10 +944,13 @@ def run(args):
 
         #del avail_props[avail_props.index('name')]
         del avail_props[avail_props.index('dist')]
-        del avail_props[avail_props.index('name')]
+        
+        if args.internal == 'name':
+            del avail_props[avail_props.index('name')]
+        
         if 'support' in avail_props:
             del avail_props[avail_props.index('support')]
-
+        
         annotated_tree.write(outfile=os.path.join(args.outdir, out_newick), props=avail_props, 
                     parser=utils.get_internal_parser(args.internal), format_root_node=True)
     
@@ -1572,6 +1575,7 @@ def name_nodes(tree):
                 node.name = 'N'+str(i)
             else:
                 node.name = 'Root'
+
     return tree
 
 def gtdb_accession_to_taxid(accession):
@@ -1686,11 +1690,11 @@ def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field
         if n.props.get('rank') and n.props.get('rank') != 'Unknown':
             rank2values[n.props.get('rank')].append(n.props.get('sci_name',''))
 
-        # TODO assign internal node as sci_name, ATTENTION of potential bug
-        if n.name:
-            pass
-        else:
-            n.name = n.props.get("sci_name", "")
+        # # TODO assign internal node as sci_name, ATTENTION of potential bug
+        # if n.name:
+        #     pass
+        # else:
+        #     n.name = n.props.get("sci_name", "")
         
     return tree, rank2values
 
