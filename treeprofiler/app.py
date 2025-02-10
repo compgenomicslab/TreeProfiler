@@ -13,7 +13,7 @@ from wsgiref.simple_server import WSGIServer, WSGIRequestHandler
 
 
 from ete4 import Tree
-from treeprofiler.tree_annotate import run_tree_annotate, run_array_annotate, parse_csv, parse_tsv_to_array, name_nodes  # or other functions you need
+from treeprofiler.tree_annotate import run_tree_annotate, run_array_annotate, parse_emapper_annotations, parse_csv, parse_tsv_to_array, name_nodes  # or other functions you need
 from treeprofiler import tree_plot
 from treeprofiler.src import utils
 from treeprofiler import layouts
@@ -218,6 +218,7 @@ def do_upload():
         "alignment": request.forms.get('alignment'),
         "consensus_cutoff": request.forms.get('consensusCutoff'),
 
+        "emapper": request.forms.get('emapper'),
         "pfam": request.forms.get('pfam'),
         "summary_methods": request.forms.get('summary_methods')
     }
@@ -256,6 +257,7 @@ def process_upload_job(job_args):
 
     alignment_file_path = uploaded_chunks.get(treename, {}).get("alignment")
     pfam_file_path = uploaded_chunks.get(treename, {}).get("pfam")
+    emapper_file_path = uploaded_chunks.get(treename, {}).get("emapper")
     
     # Load the tree data
     if tree_data:
@@ -415,9 +417,37 @@ def process_upload_job(job_args):
             }
 
         # Emapper options
+        if emapper_file_path:
+            emapper_metadata_dict, emapper_node_props, emapper_columns = parse_emapper_annotations(emapper_file_path)
+            metadata_dict = utils.merge_dictionaries(metadata_dict, emapper_metadata_dict)
+            node_props.extend(emapper_node_props)
+            columns.update(emapper_columns)
+            prop2type.update({
+                'seed_ortholog': str,
+                'evalue': float,
+                'score': float,
+                'eggNOG_OGs': list,
+                'max_annot_lvl': str,
+                'COG_category': str,
+                'Description': str,
+                'Preferred_name': str,
+                'GOs': list,
+                'EC':str,
+                'KEGG_ko': list,
+                'KEGG_Pathway': list,
+                'KEGG_Module': list,
+                'KEGG_Reaction':list,
+                'KEGG_rclass':list,
+                'BRITE':list,
+                'KEGG_TC':list,
+                'CAZy':list,
+                'BiGG_Reaction':list,
+                'PFAMs':list
+            })
+            
         emapper_options = {
-            "emapper_mode": False,
-            "emapper_pfam": pfam_file_path if pfam_file_path else None
+            "emapper_pfam": pfam_file_path if pfam_file_path else None,
+            "emapper_mode": True if emapper_file_path else False
         }
 
         # Run annotation
@@ -538,7 +568,7 @@ def upload_tree():
 @app.route('/upload_chunk', method='POST')
 def upload_chunk():
     # Determine the file type based on the request
-    chunk = request.files.get('treeFile') or request.files.get('metadataFile') or request.files.get('alignmentFile') or request.files.get('pfamFile') or request.files.get('matrixFile')
+    chunk = request.files.get('treeFile') or request.files.get('metadataFile') or request.files.get('alignmentFile') or request.files.get('pfamFile') or request.files.get('emapperFile') or request.files.get('matrixFile')
     chunk_index = int(request.forms.get("chunkIndex"))
     total_chunks = int(request.forms.get("totalChunks"))
     treename = request.forms.get("treename")
@@ -553,6 +583,8 @@ def upload_chunk():
         file_type = "matrix"
     elif 'alignmentFile' in request.files:
         file_type = "alignment"
+    elif 'emapperFile' in request.files:
+        file_type = "emapper"
     elif 'pfamFile' in request.files:
         file_type = "pfam"
     else:
@@ -565,7 +597,8 @@ def upload_chunk():
             "metadata": {}, 
             "matrix": {},
             "alignment": {}, 
-            "pfam": {}
+            "pfam": {},
+            "emapper": {}
         }
 
     # Handle metadata specifically for multiple files
