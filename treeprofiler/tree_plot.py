@@ -568,13 +568,6 @@ def run(args):
             layouts.extend(circlebranch_layouts)
             for prop in args.circlebranch_layout:
                 visualized_props.append(prop)
-
-        if layout == 'circlebranch-layout':
-            circlebranch_layouts, level, color_dict = get_circlebranch_layouts(tree, args.circlebranch_layout, 
-            level, prop2type=prop2type, padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config)
-            layouts.extend(circlebranch_layouts)
-            for prop in args.circlebranch_layout:
-                visualized_props.append(prop)
         
         if layout == 'squarebranch-layout':
             squarebranch_layouts, level, color_dict = get_squarebranch_layouts(tree, args.squarebranch_layout, 
