@@ -209,7 +209,20 @@ def poplulate_plot_args(plot_args_p):
     group.add_argument('--textbranch-layout',
         nargs='+',
         required=False,
-        help="<prop1> <prop2> names of properties where values will be displayed on the branch.")
+        help="<prop1> <prop2> names of properties where values will be displayed on the branch in text.")
+    group.add_argument('--circlebranch-layout',
+        nargs='+',
+        required=False,
+        help="<prop1> <prop2> names of properties where values will be displayed on the branch in the shape of cricle.")
+    group.add_argument('--squarebranch-layout',
+        nargs='+',
+        required=False,
+        help="<prop1> <prop2> names of properties where values will be displayed on the branch in the shape of square.")
+    group.add_argument('--trianglebranch-layout',
+        nargs='+',
+        required=False,
+        help="<prop1> <prop2> names of properties where values will be displayed on the branch in the shape of triangle.")
+    
     group.add_argument('--label-layout',
         nargs='+',
         required=False,
@@ -543,10 +556,38 @@ def run(args):
         
         if layout == 'textbranch-layout':
             textbranch_layouts, level, color_dict = get_textbranch_layouts(tree, args.textbranch_layout, 
-            level, column_width=args.column_width, prop2type=prop2type, padding_x=args.padding_x, padding_y=args.padding_y, 
-            color_config=color_config)
+            level, column_width=args.column_width, prop2type=prop2type, 
+            padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config)
             layouts.extend(textbranch_layouts)
             for prop in args.textbranch_layout:
+                visualized_props.append(prop)
+
+        if layout == 'circlebranch-layout':
+            circlebranch_layouts, level, color_dict = get_circlebranch_layouts(tree, args.circlebranch_layout, 
+            level, prop2type=prop2type, padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config)
+            layouts.extend(circlebranch_layouts)
+            for prop in args.circlebranch_layout:
+                visualized_props.append(prop)
+
+        if layout == 'circlebranch-layout':
+            circlebranch_layouts, level, color_dict = get_circlebranch_layouts(tree, args.circlebranch_layout, 
+            level, prop2type=prop2type, padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config)
+            layouts.extend(circlebranch_layouts)
+            for prop in args.circlebranch_layout:
+                visualized_props.append(prop)
+        
+        if layout == 'squarebranch-layout':
+            squarebranch_layouts, level, color_dict = get_squarebranch_layouts(tree, args.squarebranch_layout, 
+            level, prop2type=prop2type, padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config)
+            layouts.extend(squarebranch_layouts)
+            for prop in args.squarebranch_layout:
+                visualized_props.append(prop)
+
+        if layout == 'trianglebranch-layout':
+            trianglebranch_layouts, level, color_dict = get_trianglebranch_layouts(tree, args.trianglebranch_layout, 
+            level, prop2type=prop2type, padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config)
+            layouts.extend(trianglebranch_layouts)
+            for prop in args.trianglebranch_layout:
                 visualized_props.append(prop)
 
         if layout == 'bubble-layout':
@@ -1237,13 +1278,110 @@ def get_widthbranch_layouts(tree, props, level, prop2type, padding_x=1, padding_
     return
 
 def get_circlebranch_layouts(tree, props, level, prop2type, padding_x=1, padding_y=0, color_config=None):
-    return
+    prop_color_dict = {}
+    layouts = []
+    symbol = 'circle'
+    symbol_size = 5
+    max_radius = 1
+    fgopacity = 0.8
+    
+    for prop in props:
+        color_dict = {} # key = value, value = color id
+        symbol_color = paired_color[level]
+
+        if color_config and color_config.get(prop):
+            if color_config.get(prop).get('value2color'):
+                color_dict = color_config.get(prop).get('value2color')
+        else:
+            if prop2type and prop2type.get(prop) == list:
+                leaf_values = list(map(list,set(map(tuple,utils.tree_prop_array(tree, prop)))))    
+                prop_values = [val for sublist in leaf_values for val in sublist]
+            else:
+                prop_values = sorted(list(set(utils.tree_prop_array(tree, prop))))
+            
+            # normal text prop
+            color_dict = utils.assign_color_to_values(prop_values, paired_color)
+
+        layout = text_layouts.LayoutSymbolbranch(f'{symbol}Branch_{prop}', prop=prop,
+            column=level, symbol=symbol, symbol_color=symbol_color, color_dict=color_dict,
+            max_radius=max_radius, symbol_size=symbol_size, 
+            padding_x=padding_x, padding_y=padding_y, fgopacity=fgopacity,
+            scale=True, legend=True, active=True
+            )
+        layouts.append(layout)
+        level +=1 
+    
+    return layouts, level, prop_color_dict
 
 def get_squarebranch_layouts(tree, props, level, prop2type, padding_x=1, padding_y=0, color_config=None):
-    return
+    prop_color_dict = {}
+    layouts = []
+    symbol = 'square'
+    symbol_size = 5
+    max_radius = 1
+    fgopacity = 0.8
+    
+    for prop in props:
+        color_dict = {} # key = value, value = color id
+        symbol_color = paired_color[level]
 
-def get_trainglebranch_layouts(tree, props, level, prop2type, padding_x=1, padding_y=0, color_config=None):
-    return
+        if color_config and color_config.get(prop):
+            if color_config.get(prop).get('value2color'):
+                color_dict = color_config.get(prop).get('value2color')
+        else:
+            if prop2type and prop2type.get(prop) == list:
+                leaf_values = list(map(list,set(map(tuple,utils.tree_prop_array(tree, prop)))))    
+                prop_values = [val for sublist in leaf_values for val in sublist]
+            else:
+                prop_values = sorted(list(set(utils.tree_prop_array(tree, prop))))
+            
+            # normal text prop
+            color_dict = utils.assign_color_to_values(prop_values, paired_color)
+
+        layout = text_layouts.LayoutSymbolbranch(f'{symbol}Branch_{prop}', prop=prop,
+            column=level, symbol=symbol, symbol_color=symbol_color, color_dict=color_dict,
+            max_radius=max_radius, symbol_size=symbol_size, 
+            padding_x=padding_x, padding_y=padding_y, fgopacity=fgopacity,
+            scale=True, legend=True, active=True
+            )
+        layouts.append(layout)
+        level +=1 
+    return layouts, level, prop_color_dict
+
+def get_trianglebranch_layouts(tree, props, level, prop2type, padding_x=1, padding_y=0, color_config=None):
+    prop_color_dict = {}
+    layouts = []
+    symbol = 'triangle'
+    symbol_size = 5
+    max_radius = 1
+    fgopacity = 0.8
+    
+    for prop in props:
+        color_dict = {} # key = value, value = color id
+        symbol_color = paired_color[level]
+
+        if color_config and color_config.get(prop):
+            if color_config.get(prop).get('value2color'):
+                color_dict = color_config.get(prop).get('value2color')
+        else:
+            if prop2type and prop2type.get(prop) == list:
+                leaf_values = list(map(list,set(map(tuple,utils.tree_prop_array(tree, prop)))))    
+                prop_values = [val for sublist in leaf_values for val in sublist]
+            else:
+                prop_values = sorted(list(set(utils.tree_prop_array(tree, prop))))
+            
+            # normal text prop
+            color_dict = utils.assign_color_to_values(prop_values, paired_color)
+
+        layout = text_layouts.LayoutSymbolbranch(f'{symbol}Branch_{prop}', prop=prop,
+            column=level, symbol=symbol, symbol_color=symbol_color, color_dict=color_dict,
+            max_radius=max_radius, symbol_size=symbol_size, 
+            padding_x=padding_x, padding_y=padding_y, fgopacity=fgopacity,
+            scale=True, legend=True, active=True
+            )
+        layouts.append(layout)
+        level +=1 
+    return layouts, level, prop_color_dict
 
 def get_rectangle_layouts(tree, props, level, prop2type, column_width=70, padding_x=1, padding_y=0, color_config=None, precomputed_props={}):
     prop_color_dict = {}

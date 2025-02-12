@@ -298,7 +298,7 @@ class LayoutTextbranch(TreeLayout):
                                     )
     def set_node_style(self, node):
         prop_text = node.props.get(self.prop)
-        if prop_text is not '':
+        if prop_text is not None and prop_text != '':
             if type(prop_text) == list:
                 prop_text = ",".join(prop_text)
             else:
@@ -309,8 +309,7 @@ class LayoutTextbranch(TreeLayout):
                 prop_face = TextFace(prop_text, color='black', min_fsize=self.min_fsize, max_fsize=self.max_fsize, padding_x=self.padding_x, width=self.width )
             node.add_face(prop_face, position="branch_bottom")
             node.add_face(prop_face, position="branch_bottom", collapsed_only=True)
-
-    
+   
 class LayoutColorbranch(TreeLayout):
     def __init__(self, name, column, color_dict, prop, legend=True, width=70, padding_x=1, padding_y=0):
         super().__init__(name)
@@ -600,4 +599,67 @@ class LayoutBubbleCategorical(TreeLayout):
                 node.add_face(prop_face, column=self.column, 
                 position="branch_right", collapsed_only=False)
 
+class LayoutSymbolbranch(TreeLayout):
+    def __init__(self, name=None, prop=None, position="branch_right",
+            column=0, symbol='circle', symbol_color=None, color_dict=None, 
+            max_radius=1, symbol_size=5, fgopacity=0.8, 
+            padding_x=2, padding_y=0, 
+            scale=True, legend=True, active=True):
         
+        name = name or f'{symbol}Branch_{prop}'
+        super().__init__(name)
+
+        self.aligned_faces = True
+        self.prop = prop
+        self.symbol = symbol # circle, square and triangle
+        self.symbol_color = symbol_color
+
+        self.column = column
+        self.position = position
+        self.color_dict = color_dict
+
+        self.max_radius = float(max_radius)
+        self.symbol_size = float(symbol_size)
+        self.fgopacity = float(fgopacity)
+
+        self.padding_x = padding_x
+        self.padding_y = padding_y
+   
+        self.legend = legend
+        self.active = active
+    
+    def set_tree_style(self, tree, tree_style):
+        super().set_tree_style(tree, tree_style)
+        if self.legend:
+            if self.color_dict and len(self.color_dict) > 1:
+                # self.color_dict['NA'] = self.absence_color
+                tree_style.add_legend(title=self.prop,
+                                    variable='discrete',
+                                    colormap=self.color_dict
+                                    )
+            else:
+                tree_style.add_legend(title=self.prop,
+                                    variable='discrete',
+                                    colormap={
+                                        self.prop: self.symbol_color
+                                        }
+                                    )
+    
+    def set_node_style(self, node):
+        prop_text = node.props.get(self.prop) 
+        if prop_text is not None and prop_text != '':
+            if type(prop_text) == list:
+                prop_text = ",".join(prop_text)
+            else:
+                pass
+            if self.color_dict and len(self.color_dict) > 1:
+                node.sm_style['shape'] = self.symbol
+                node.sm_style["fgcolor"] = self.color_dict.get(prop_text)
+                node.sm_style['size'] =  self.symbol_size
+                node.sm_style['fgopacity'] = self.fgopacity
+            else:
+                node.sm_style['shape'] = self.symbol
+                node.sm_style["fgcolor"] = self.symbol_color
+                node.sm_style['size'] =  self.symbol_size
+                node.sm_style['fgopacity'] = self.fgopacity
+
