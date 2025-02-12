@@ -222,23 +222,22 @@ class LayoutText(TreeLayout):
                                     )
 
     def set_node_style(self, node):
-        if node.is_leaf and node.props.get(self.prop):
+        if node.is_leaf and node.props.get(self.prop) is not '':
             prop_text = node.props.get(self.prop)
-            if prop_text:
-                if type(prop_text) == list:
-                    prop_text = ",".join(prop_text)
-                else:
-                    pass
-                if self.color_dict:
-                    prop_face = TextFace(prop_text, color=self.color_dict.get(prop_text, 'black'),min_fsize=self.min_fsize, max_fsize=self.max_fsize, padding_x=self.padding_x, width=self.width )
-                else:
-                    prop_face = TextFace(prop_text, color='black', min_fsize=self.min_fsize, max_fsize=self.max_fsize, padding_x=self.padding_x, width=self.width )
+            if type(prop_text) == list:
+                prop_text = ",".join(prop_text)
+            else:
+                pass
+            if self.color_dict:
+                prop_face = TextFace(prop_text, color=self.color_dict.get(prop_text, 'black'),min_fsize=self.min_fsize, max_fsize=self.max_fsize, padding_x=self.padding_x, width=self.width )
+            else:
+                prop_face = TextFace(prop_text, color='black', min_fsize=self.min_fsize, max_fsize=self.max_fsize, padding_x=self.padding_x, width=self.width )
             node.add_face(prop_face, column=self.column, position="aligned")
             
         elif node.is_leaf and node.props.get(self.internal_prop):
             stackedbar_face = get_stackedbarface(node, self.internal_prop, self.color_dict, width=self.width, padding_x=self.padding_x, padding_y=self.padding_y)
             node.add_face(stackedbar_face, column = self.column, position = "aligned", collapsed_only=False)
-
+        
         elif node.props.get(self.internal_prop):
             stackedbar_face = get_stackedbarface(node, self.internal_prop, self.color_dict, width=self.width, padding_x=self.padding_x, padding_y=self.padding_y)
             node.add_face(stackedbar_face, column = self.column, position = "aligned", collapsed_only=True)
@@ -250,7 +249,68 @@ class LayoutText(TreeLayout):
             prop_face = RectFace(width=self.width, height=self.height, color=self.absence_color, \
                     padding_x=self.padding_x , padding_y=self.padding_y, tooltip=None)
             node.add_face(prop_face, column=self.column, position="aligned", collapsed_only=True)
+            # if not node.is_leaf and node.props.get(self.prop):
+            #     prop_text = node.props.get(self.prop)
+            #     if type(prop_text) == list:
+            #         prop_text = ",".join(prop_text)
+            #     else:
+            #         pass
+            #     if self.color_dict:
+            #         prop_face = TextFace(prop_text, color=self.color_dict.get(prop_text, 'black'),min_fsize=self.min_fsize, max_fsize=self.max_fsize, padding_x=self.padding_x, width=self.width )
+            #     else:
+            #         prop_face = TextFace(prop_text, color='black', min_fsize=self.min_fsize, max_fsize=self.max_fsize, padding_x=self.padding_x, width=self.width )
+            #     node.add_face(prop_face, column=self.column, position="branch_right")
+            #     node.add_face(prop_face, column=self.column, position="branch_right", collapsed_only=True)
 
+class LayoutTextbranch(TreeLayout):
+    def __init__(self, name, column, text_color, color_dict, prop, width=70, min_fsize=5, max_fsize=15, padding_x=1, padding_y=0, legend=True, aligned_faces=True):
+        super().__init__(name, aligned_faces=aligned_faces)
+        self.aligned_faces = True
+        self.prop = prop
+        self.column = column
+        self.text_color = text_color
+        self.color_dict = color_dict
+        self.legend = legend
+        self.width = width
+        self.height = None
+        self.min_fsize = min_fsize 
+        self.max_fsize = max_fsize
+        self.padding_x = padding_x
+        self.padding_y = padding_y
+
+    def set_tree_style(self, tree, tree_style):
+        super().set_tree_style(tree, tree_style)
+        text = TextFace(self.prop, min_fsize=self.min_fsize, max_fsize=self.max_fsize, padding_x=self.padding_x, width=self.width, rotation=315)
+        tree_style.aligned_panel_header.add_face(text, column=self.column)
+
+        if self.legend:
+            if self.color_dict:
+                tree_style.add_legend(title=self.prop,
+                                    variable='discrete',
+                                    colormap=self.color_dict
+                                    )
+            else:
+                tree_style.add_legend(title=self.prop,
+                                    variable='discrete',
+                                    colormap={
+                                        self.prop: self.text_color
+                                        }
+                                    )
+    def set_node_style(self, node):
+        prop_text = node.props.get(self.prop)
+        if prop_text is not '':
+            if type(prop_text) == list:
+                prop_text = ",".join(prop_text)
+            else:
+                pass
+            if self.text_color:
+                prop_face = TextFace(prop_text, color=self.text_color, min_fsize=self.min_fsize, max_fsize=self.max_fsize, padding_x=self.padding_x, width=self.width)
+            else:
+                prop_face = TextFace(prop_text, color='black', min_fsize=self.min_fsize, max_fsize=self.max_fsize, padding_x=self.padding_x, width=self.width )
+            node.add_face(prop_face, position="branch_bottom")
+            node.add_face(prop_face, position="branch_bottom", collapsed_only=True)
+
+    
 class LayoutColorbranch(TreeLayout):
     def __init__(self, name, column, color_dict, prop, legend=True, width=70, padding_x=1, padding_y=0):
         super().__init__(name)
