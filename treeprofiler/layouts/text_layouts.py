@@ -599,14 +599,14 @@ class LayoutBubbleCategorical(TreeLayout):
                 node.add_face(prop_face, column=self.column, 
                 position="branch_right", collapsed_only=False)
 
-class LayoutSymbolbranch(TreeLayout):
+class LayoutSymbolNode(TreeLayout):
     def __init__(self, name=None, prop=None, position="branch_right",
             column=0, symbol='circle', symbol_color=None, color_dict=None, 
             max_radius=1, symbol_size=5, fgopacity=0.8, 
             padding_x=2, padding_y=0, 
             scale=True, legend=True, active=True):
         
-        name = name or f'{symbol}Branch_{prop}'
+        name = name or f'{symbol}Node_{prop}'
         super().__init__(name)
 
         self.aligned_faces = True

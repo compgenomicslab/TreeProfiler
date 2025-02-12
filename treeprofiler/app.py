@@ -69,7 +69,9 @@ categorical_layout_list = [
     'piechart-layout',
     'background-layout',
     'categorical-matrix-layout',
-    'profiling-layout'
+    'profiling-layout',
+    'textbranch-layout',
+    'nodesymbol-layout',
 ]
 
 categorical_prefix = [
@@ -80,7 +82,9 @@ categorical_prefix = [
     "piechart",
     "background",
     "categorical-matrix",
-    "profiling"
+    "profiling",
+    'textbranch',
+    'nodesymbol'
 ]
 
 numerical_prefix = [
