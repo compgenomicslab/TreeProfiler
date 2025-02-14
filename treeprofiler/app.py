@@ -70,7 +70,6 @@ categorical_layout_list = [
     'background-layout',
     'categorical-matrix-layout',
     'profiling-layout',
-    'textbranch-layout',
     'nodesymbol-layout',
 ]
 
@@ -1403,7 +1402,6 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
     
     # Apply selected layout based on type directly within this function
     if selected_layout in categorical_layout_list:
-        
         for index, prop in enumerate(selected_props):
             prop_values = sorted(list(set(utils.tree_prop_array(t, prop))))
             paired_color = get_colormap_hex_colors(categorical_color_scheme, len(prop_values))
@@ -1413,6 +1411,35 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
         
         level, current_layouts = apply_categorical_layouts(t, selected_layout, selected_props, tree_info, current_layouts, level, column_width, padding_x, padding_y, color_config)
         
+    elif selected_layout == 'textbranch-layout':
+        # text branch
+        text_color_scheme = layer.get('textColorscheme', None)
+        text_color = layer.get('unicolorColor', None)
+        text_position = layer.get('textposition', 'branch_bottom')
+        if text_color:
+            for prop in selected_props:
+                layout = layouts.text_layouts.LayoutTextbranch(name='TextBranch_'+prop, 
+                column=level, text_color=text_color, color_dict={}, prop=prop, 
+                position=text_position, width=column_width, 
+                padding_x=padding_x, padding_y=padding_y)
+                level +=1 
+                current_layouts.append(layout)
+        else:
+            for index, prop in enumerate(selected_props):
+                prop_values = sorted(list(set(utils.tree_prop_array(t, prop))))
+                paired_color = get_colormap_hex_colors(text_color_scheme, len(prop_values))
+                color_config[prop] = {}
+                color_config[prop]['value2color'] = utils.assign_color_to_values(prop_values, paired_color)
+                color_config[prop]['detail2color'] = {}
+            for prop in selected_props:
+                color_dict = color_config.get(prop).get('value2color')
+                layout = layouts.text_layouts.LayoutTextbranch(name='TextBranch_'+prop, 
+                column=level, text_color=None, color_dict=color_dict, prop=prop, 
+                position=text_position, width=column_width, 
+                padding_x=padding_x, padding_y=padding_y)
+                level +=1 
+                current_layouts.append(layout)
+
     elif selected_layout == 'binary-layout':
         for index, prop in enumerate(selected_props):
             prop_values = utils.tree_prop_array(t, prop, leaf_only=True)

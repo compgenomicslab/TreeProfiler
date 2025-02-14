@@ -160,6 +160,8 @@
                                 <option value="categorical-matrix-layout">Categorical Matrix Layout</option>
                                 <option value="piechart-layout">Piechart Layout</option>
                                 <option value="profiling-layout">Profiling Layout</option>
+                                <option value="textbranch-layout">Text Branch Layout </option>
+                                <option value="nodesymbol-layout">Node Symbol Layout </option>
                             </optgroup>
                             <optgroup label="Binary">
                                 <option value="binary-layout">Binary Layout</option>
@@ -229,7 +231,44 @@
                                                 % end
                                             </select>
                                         </div>
-                    
+
+                                        <!--text branch settings-->
+                                        <div id="textbranchSettings" class="form-group mt-4" style="display: none;">
+                                            <div class="row g-3 mt-3">
+                                                <div class="col-md-6">
+                                                    <label for="textPosition" class="form-label small">Text Position</label>
+                                                    
+                                                    <select class="form-select" id="textPosition" name="textPosition">
+                                                        <option value="branch_bottom">Branch Bottom</option>
+                                                        <option value="branch_up">Branch Up</option>
+                                                        <option value="branch_right">Branch Right</option>
+                                                        <option value="aligned">Aligned</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="row g-3 mt-3">
+                                                <div class="form-check form-group col-md-6 d-flex align-items-center">
+                                                    <input class="form-check-input me-2" type="checkbox" value="unicolor" id="unicolorOption" name="unicolorOption">
+                                                    <label class="form-check-label small" for="unicolorOption">Use Unicolor</label>
+                                                </div>
+                                                
+                                                <div id="unicolorPicker" class="form-group col-md-6" style="display: none;">
+                                                    <label for="unicolorColor" class="form-label small">Select Unicolor:</label>
+                                                    <input type="color" id="unicolorColor" name="unicolorColor" class="form-control" value="#ff0000">
+                                                </div>
+                                            
+                                                <div id="textColorscheme" class="form-group col-md-6">
+                                                    <label for="textColorscheme" class="form-label small">Select Color Scheme:</label>
+                                                    <select class="form-select" id="textColorscheme" name="textColorscheme">
+                                                        % for colormap in color_schemes:
+                                                        <option value="{{ colormap }}">{{ colormap }}</option>
+                                                        % end
+                                                    </select>
+                                                </div>
+                                            </div>                                            
+                                        </div> 
+                                        
+
                                         <!-- Binary Layout Settings -->
                                         <div id="binarySettings" class="form-group mt-4" style="display: none;">
                                             <h6 class="fw-bold text-secondary">Binary Layout Settings</h6>
@@ -1269,13 +1308,22 @@
                 "background-layout",
                 "categorical-matrix-layout",
                 "piechart-layout",
-                "profiling-layout"
+                "profiling-layout",
+                "nodesymbol-layout"
             ];
 
             if (categoricalLayouts.includes(selectedLayout)) {
                 $('#categoricalSettings').show();
             } else {
                 $('#categoricalSettings').hide();
+            }
+
+            if (selectedLayout === "textbranch-layout") {
+                $('#categoricalSettings').hide();
+                $('#textbranchSettings').show();
+            } else {
+                $('#categoricalSettings').show();
+                $('#textbranchSettings').hide();
             }
 
             if (selectedLayout === "binary-layout") {
@@ -1367,18 +1415,21 @@
         document.getElementById('clearQueryBox').addEventListener('click', clearQueryBox);
         document.getElementById('addQueryBtn').addEventListener('click', addInitialQueryPart);
         
-        // 
+        // text branch and color
         const unicolorOption = document.getElementById('unicolorOption');
         const unicolorPicker = document.getElementById('unicolorPicker');
         const binaryColorScheme = document.getElementById('binaryColorScheme');
-
+        const textColorscheme = document.getElementById('textColorscheme')
+        const textPosition = document.getElementById('textPosition')
         unicolorOption.addEventListener('change', () => {
             if (unicolorOption.checked) {
                 unicolorPicker.style.display = 'block';
                 binaryColorScheme.style.display = 'none';
+                textColorscheme.style.display = 'none';
             } else {
                 unicolorPicker.style.display = 'none';
                 binaryColorScheme.style.display = 'block';
+                textColorscheme.style.display = 'block';
             }
         });
     };

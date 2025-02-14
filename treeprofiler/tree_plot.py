@@ -1258,7 +1258,7 @@ def get_textbranch_layouts(tree, props, level, prop2type, column_width=70, paddi
         if color_config and color_config.get(prop):
             if color_config.get(prop).get('value2color'):
                 color_dict = color_config.get(prop).get('value2color')
-       
+
         layout = text_layouts.LayoutTextbranch(name='TextBranch_'+prop, 
         column=level, text_color=text_color, color_dict=color_dict, prop=prop, 
         width=column_width, padding_x=padding_x, padding_y=padding_y)
