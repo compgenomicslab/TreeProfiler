@@ -1409,7 +1409,26 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
             color_config[prop]['value2color'] = utils.assign_color_to_values(prop_values, paired_color)
             color_config[prop]['detail2color'] = {}
         
-        level, current_layouts = apply_categorical_layouts(t, selected_layout, selected_props, tree_info, current_layouts, level, column_width, padding_x, padding_y, color_config)
+        if selected_layout == 'nodesymbol-layout':
+            for prop in selected_props:
+                color_dict = color_config.get(prop)['value2color']
+                symbol = layer.get('symbolOption', 'circle')
+                symbol_size = layer.get('symbolSize', "5")
+                if symbol_size:
+                    symbol_size = float(symbol_size)
+                fgopacity = layer.get('fgopacity', "5")
+                
+                layout = layouts.text_layouts.LayoutSymbolNode(f'{symbol}Node_{prop}', prop=prop,
+                    column=level, symbol=symbol, symbol_color=None, color_dict=color_dict,
+                    symbol_size=symbol_size, 
+                    padding_x=padding_x, padding_y=padding_y, fgopacity=fgopacity,
+                    scale=True, legend=True, active=True
+                )
+                level +=1 
+                current_layouts.append(layout)
+            
+        else:
+            level, current_layouts = apply_categorical_layouts(t, selected_layout, selected_props, tree_info, current_layouts, level, column_width, padding_x, padding_y, color_config)
         
     elif selected_layout == 'textbranch-layout':
         # text branch
@@ -1439,7 +1458,7 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
                 padding_x=padding_x, padding_y=padding_y)
                 level +=1 
                 current_layouts.append(layout)
-
+    
     elif selected_layout == 'binary-layout':
         for index, prop in enumerate(selected_props):
             prop_values = utils.tree_prop_array(t, prop, leaf_only=True)

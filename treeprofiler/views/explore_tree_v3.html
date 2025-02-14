@@ -268,6 +268,20 @@
                                             </div>                                            
                                         </div> 
                                         
+                                        <div id="nodesymbolSettins" class="form-group mt-4" style="display: none;">
+                                            <label for="symbolOption" class="form-label small">Symbol option for node:</label>
+                                            <select class="form-control" id="symbolOption" name="symbolOption">
+                                                <option value="circle">Circle</option>
+                                                <option value="square">Square</option>
+                                                <option value="triangle">Triangle</option>
+                                            </select>
+
+                                            <label for="symbolSize" class="form-label small">Node Size or Radius</label>
+                                            <input type="number" class="form-control" id="symbolSize" name="symbolSize" value="5">
+                                            
+                                            <label for="fgopacity" class="form-label small">Opacity</label>
+                                            <input type="number" class="form-control" id="fgopacity" name="fgopacity" min="0" max="1" step="0.01" value="0.8">
+                                        </div>
 
                                         <!-- Binary Layout Settings -->
                                         <div id="binarySettings" class="form-group mt-4" style="display: none;">
@@ -792,6 +806,16 @@
 
         // Categorical layout settings
         const categoricalColorscheme = document.getElementById('categoricalColorscheme').value;
+        
+        // Text Branch layout settings
+        const textColorscheme = document.getElementById('textColorscheme')
+        const textPosition = document.getElementById('textPosition')
+
+        // Node Symbol Layout settings
+        const symbolOption = document.getElementById('symbolOption').value;
+        const symbolSize = document.getElementById('symbolSize').value;
+        const fgopacity = document.getElementById('fgopacity').value;
+
         // Binary layout settings
         const isUnicolor = document.getElementById('unicolorOption').checked;
         const binaryColorScheme = isUnicolor ? null : document.getElementById('binaryColorSchemeSelect').value;
@@ -833,6 +857,14 @@
             rankSelection,
             
             categoricalColorscheme,
+            
+            textColorscheme,
+            textPosition,
+            
+            symbolOption,
+            symbolSize,
+            fgopacity,
+
             isUnicolor,
             binaryColorScheme,
             unicolorColor,
@@ -1324,6 +1356,12 @@
             } else {
                 $('#categoricalSettings').show();
                 $('#textbranchSettings').hide();
+            }
+
+            if (selectedLayout == "nodesymbol-layout") {
+                $('#nodesymbolSettins').show();
+            } else {
+                $('#nodesymbolSettins').hide();
             }
 
             if (selectedLayout === "binary-layout") {
