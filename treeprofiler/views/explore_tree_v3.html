@@ -160,6 +160,8 @@
                                 <option value="categorical-matrix-layout">Categorical Matrix Layout</option>
                                 <option value="piechart-layout">Piechart Layout</option>
                                 <option value="profiling-layout">Profiling Layout</option>
+                                <option value="textbranch-layout">Text Branch Layout </option>
+                                <option value="nodesymbol-layout">Node Symbol Layout </option>
                             </optgroup>
                             <optgroup label="Binary">
                                 <option value="binary-layout">Binary Layout</option>
@@ -229,7 +231,58 @@
                                                 % end
                                             </select>
                                         </div>
-                    
+
+                                        <!--text branch settings-->
+                                        <div id="textbranchSettings" class="form-group mt-4" style="display: none;">
+                                            
+                                            <div class="form-group mt-3">
+                                                <label for="textPosition" class="form-label small">Text Position</label>
+                                                
+                                                <select class="form-select" id="textPosition" name="textPosition">
+                                                    <option value="branch_bottom">Branch Bottom</option>
+                                                    <option value="branch_up">Branch Up</option>
+                                                    <option value="branch_right">Branch Right</option>
+                                                    <option value="aligned">Aligned</option>
+                                                </select>
+                                            </div>
+                                        
+                                        
+                                            <div class="form-check form-group mt-3">
+                                                <input class="form-check-input me-2" type="checkbox" value="unicolor" id="textunicolorOption" name="textunicolorOption">
+                                                <label class="form-check-label small" for="textunicolorOption">Use Unicolor</label>
+                                            </div>
+                                            
+                                            <div id="textunicolorPicker" class="form-group mt-3" style="display: none;">
+                                                <label for="textunicolorColor" class="form-label small">Select Unicolor:</label>
+                                                <input type="color" id="textunicolorColor" name="textunicolorColor" class="form-control" value="#ff0000">
+                                            </div>
+                                        
+                                            <div id="textColorscheme" class="form-group mt-3">
+                                                <label for="textColorschemeSelect" class="form-label small">Select Color Scheme:</label>
+                                                <select class="form-select" id="textColorschemeSelect" name="textColorschemeSelect">
+                                                    % for colormap in color_schemes:
+                                                    <option value="{{ colormap }}">{{ colormap }}</option>
+                                                    % end
+                                                </select>
+                                            </div>
+                                                                                       
+                                        </div> 
+                                        
+                                        <div id="nodesymbolSettins" class="form-group mt-4" style="display: none;">
+                                            <label for="symbolOption" class="form-label small">Symbol option for node:</label>
+                                            <select class="form-control" id="symbolOption" name="symbolOption">
+                                                <option value="circle">Circle</option>
+                                                <option value="square">Square</option>
+                                                <option value="triangle">Triangle</option>
+                                            </select>
+
+                                            <label for="symbolSize" class="form-label small">Node Size or Radius</label>
+                                            <input type="number" class="form-control" id="symbolSize" name="symbolSize" value="5">
+                                            
+                                            <label for="fgopacity" class="form-label small">Opacity</label>
+                                            <input type="number" class="form-control" id="fgopacity" name="fgopacity" min="0" max="1" step="0.01" value="0.8">
+                                        </div>
+
                                         <!-- Binary Layout Settings -->
                                         <div id="binarySettings" class="form-group mt-4" style="display: none;">
                                             <h6 class="fw-bold text-secondary">Binary Layout Settings</h6>
@@ -242,12 +295,12 @@
                                             </div>
                     
                                             <div class="form-check form-group mt-3">
-                                                <input class="form-check-input" type="checkbox" value="unicolor" id="unicolorOption" name="unicolorOption">
-                                                <label class="form-check-label small" for="unicolorOption">Use Unicolor</label>
+                                                <input class="form-check-input" type="checkbox" value="unicolor" id="binaryunicolorOption" name="binaryunicolorOption">
+                                                <label class="form-check-label small" for="binaryunicolorOption">Use Unicolor</label>
                                             </div>
-                                            <div id="unicolorPicker" class="form-group mt-3" style="display: none;">
-                                                <label for="unicolorColor" class="form-label small">Select Unicolor:</label>
-                                                <input type="color" id="unicolorColor" name="unicolorColor" class="form-control" value="#ff0000">
+                                            <div id="binaryunicolorPicker" class="form-group mt-3" style="display: none;">
+                                                <label for="binaryunicolorColor" class="form-label small">Select Unicolor:</label>
+                                                <input type="color" id="binaryunicolorColor" name="binaryunicolorColor" class="form-control" value="#ff0000">
                                             </div>
                     
                                             <div id="binaryColorScheme" class="form-group mt-3">
@@ -741,7 +794,6 @@
         }
     });
     
-    
     // Handle Add Layout Button
     $('#addLayerBtn').click(() => {
         // // Custom query settings
@@ -753,10 +805,23 @@
 
         // Categorical layout settings
         const categoricalColorscheme = document.getElementById('categoricalColorscheme').value;
+        
+        // Text Branch layout settings
+        const textPosition = document.getElementById('textPosition').value;
+        const istextUnicolor = document.getElementById('textunicolorOption').checked;
+        const textColorScheme = istextUnicolor ? null : document.getElementById('textColorschemeSelect').value;
+        const textunicolorColor = istextUnicolor ? document.getElementById('textunicolorColor').value : null;
+        
+
+        // Node Symbol Layout settings
+        const symbolOption = document.getElementById('symbolOption').value;
+        const symbolSize = document.getElementById('symbolSize').value;
+        const fgopacity = document.getElementById('fgopacity').value;
+
         // Binary layout settings
-        const isUnicolor = document.getElementById('unicolorOption').checked;
-        const binaryColorScheme = isUnicolor ? null : document.getElementById('binaryColorSchemeSelect').value;
-        const unicolorColor = isUnicolor ? document.getElementById('unicolorColor').value : null;
+        const isbinaryUnicolor = document.getElementById('binaryunicolorOption').checked;
+        const binaryColorScheme = isbinaryUnicolor ? null : document.getElementById('binaryColorSchemeSelect').value;
+        const binaryunicolorColor = isbinaryUnicolor ? document.getElementById('binaryunicolorColor').value : null;
         const aggregateOption = document.getElementById('aggregateOption').value;
 
         // numerical layout settings
@@ -794,9 +859,18 @@
             rankSelection,
             
             categoricalColorscheme,
-            isUnicolor,
+            
+            textColorScheme,
+            textPosition,
+            textunicolorColor,
+            
+            symbolOption,
+            symbolSize,
+            fgopacity,
+
+            isbinaryUnicolor,
             binaryColorScheme,
-            unicolorColor,
+            binaryunicolorColor,
             aggregateOption,
             minVal,
             maxVal,
@@ -1016,8 +1090,29 @@
                     layerContainer.appendChild(field);
                 }
 
-                // Handle Numerical-Matrix Specific Settings
                 const layoutPrefix = layout.layout_name.split('_')[0].toLowerCase(); // Extract prefix and convert to lowercase
+                // Handle Text Branch Layout Specific Settings
+                if (layoutPrefix === 'textbranch') {
+                    const istextUnicolor = document.querySelector('select#layer-istextUnicolor');
+                    const textunicolorColor = document.querySelector('input#layer-textunicolorColor');
+                    const textColorScheme = document.querySelector('select#layer-textColorScheme');
+                    if (istextUnicolor) {
+                        istextUnicolor.addEventListener('change', function () {
+                        if (this.value === 'True') {
+                            textunicolorColor.disabled = false; // Enable textunicolorColor
+                            textColorScheme.disabled = true; // Disable textColorScheme
+                        } else {
+                            textunicolorColor.disabled = true; // Disable textunicolorColor
+                            textColorScheme.disabled = false; // Enable textColorScheme
+                        }
+                    });
+                    };
+                    // Trigger change event to set the initial state
+                    istextUnicolor.dispatchEvent(new Event('change'));
+                    
+                }
+                
+                // Handle Numerical-Matrix Specific Settings
                 if (layoutPrefix === 'numerical-matrix') {
                     const minValInput = document.querySelector('input#layer-minVal');
                     const maxValInput = document.querySelector('input#layer-maxVal');
@@ -1092,7 +1187,7 @@
             let input;
 
             // Special handling for categoricalColorscheme or similar dropdown fields
-            if (key === 'categoricalColorscheme') {
+            if (key === 'categoricalColorscheme' || key === 'textColorScheme') {
                 input = document.createElement('select');
                 input.classList.add('form-control');
                 input.setAttribute('id', `${type}-${key}`);
@@ -1102,6 +1197,57 @@
                     option.value = color;
                     option.textContent = color;
                     if (color === value) {
+                        option.selected = true;
+                    }
+                    input.appendChild(option);
+                });
+            } else if (key === 'istextUnicolor') {
+                input = document.createElement('select');
+                input.classList.add('form-control');
+                input.setAttribute('id', `${type}-${key}`);
+                input.setAttribute('name', `${type}-${key}`);
+                ['True', 'False'].forEach(optionValue => {
+                    const option = document.createElement('option');
+                    option.value = optionValue;
+                    option.textContent = optionValue;
+                    if (optionValue === value) {
+                        option.selected = true;
+                    }
+                    input.appendChild(option);
+                });
+            } else if (key === 'textunicolorColor') {
+                input = document.createElement('input');
+                input.setAttribute('type', 'color'); // Explicitly set type="color"
+                input.setAttribute('id', `${type}-${key}`);
+                input.setAttribute('name', `${type}-${key}`);
+                input.classList.add('form-control');
+                input.value = value || '#000000'; // Default color if no value provided
+            } else if (key === 'textPosition') {
+                // Special handling for aggregateOption in binary-layout
+                input = document.createElement('select');
+                input.classList.add('form-control');
+                input.setAttribute('id', `${type}-${key}`);
+                input.setAttribute('name', `${type}-${key}`);
+                ['branch_bottom', 'branch_up', 'branch_right', 'aligned'].forEach(optionValue => {
+                    const option = document.createElement('option');
+                    option.value = optionValue;
+                    option.textContent = optionValue;
+                    if (optionValue === value) {
+                        option.selected = true;
+                    }
+                    input.appendChild(option);
+                });
+            } else if (key === 'symbolOption') {
+                // Special handling for aggregateOption in binary-layout
+                input = document.createElement('select');
+                input.classList.add('form-control');
+                input.setAttribute('id', `${type}-${key}`);
+                input.setAttribute('name', `${type}-${key}`);
+                ['circle', 'square', 'triangle'].forEach(optionValue => {
+                    const option = document.createElement('option');
+                    option.value = optionValue;
+                    option.textContent = optionValue;
+                    if (optionValue === value) {
                         option.selected = true;
                     }
                     input.appendChild(option);
@@ -1269,13 +1415,28 @@
                 "background-layout",
                 "categorical-matrix-layout",
                 "piechart-layout",
-                "profiling-layout"
+                "profiling-layout",
+                "nodesymbol-layout"
             ];
 
             if (categoricalLayouts.includes(selectedLayout)) {
                 $('#categoricalSettings').show();
             } else {
                 $('#categoricalSettings').hide();
+            }
+
+            if (selectedLayout === "textbranch-layout") {
+                $('#categoricalSettings').hide();
+                $('#textbranchSettings').show();
+            } else {
+                $('#categoricalSettings').show();
+                $('#textbranchSettings').hide();
+            }
+
+            if (selectedLayout == "nodesymbol-layout") {
+                $('#nodesymbolSettins').show();
+            } else {
+                $('#nodesymbolSettins').hide();
             }
 
             if (selectedLayout === "binary-layout") {
@@ -1367,18 +1528,32 @@
         document.getElementById('clearQueryBox').addEventListener('click', clearQueryBox);
         document.getElementById('addQueryBtn').addEventListener('click', addInitialQueryPart);
         
-        // 
-        const unicolorOption = document.getElementById('unicolorOption');
-        const unicolorPicker = document.getElementById('unicolorPicker');
+        // text branch and color
+        const binaryunicolorOption = document.getElementById('binaryunicolorOption');
+        const binaryunicolorPicker = document.getElementById('binaryunicolorPicker');
         const binaryColorScheme = document.getElementById('binaryColorScheme');
-
-        unicolorOption.addEventListener('change', () => {
-            if (unicolorOption.checked) {
-                unicolorPicker.style.display = 'block';
+        binaryunicolorOption.addEventListener('change', () => {
+            if (binaryunicolorOption.checked) {
+                binaryunicolorPicker.style.display = 'block';
                 binaryColorScheme.style.display = 'none';
             } else {
-                unicolorPicker.style.display = 'none';
+                binaryunicolorPicker.style.display = 'none';
                 binaryColorScheme.style.display = 'block';
+
+            }
+        });
+        const textunicolorOption = document.getElementById('textunicolorOption');
+        const textunicolorPicker = document.getElementById('textunicolorPicker');
+        const textColorscheme = document.getElementById('textColorscheme')
+
+        const textPosition = document.getElementById('textPosition')
+        textunicolorOption.addEventListener('change', () => {
+            if (textunicolorOption.checked) {
+                textunicolorPicker.style.display = 'block';
+                textColorscheme.style.display = 'none';
+            } else {
+                textunicolorPicker.style.display = 'none';
+                textColorscheme.style.display = 'block';
             }
         });
     };

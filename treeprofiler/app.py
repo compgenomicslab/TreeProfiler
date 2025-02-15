@@ -69,7 +69,8 @@ categorical_layout_list = [
     'piechart-layout',
     'background-layout',
     'categorical-matrix-layout',
-    'profiling-layout'
+    'profiling-layout',
+    'nodesymbol-layout',
 ]
 
 categorical_prefix = [
@@ -80,7 +81,9 @@ categorical_prefix = [
     "piechart",
     "background",
     "categorical-matrix",
-    "profiling"
+    "profiling",
+    'textbranch',
+    'nodesymbol'
 ]
 
 numerical_prefix = [
@@ -914,9 +917,40 @@ def explore_tree(treename):
                                         },
                                         "layer": {}
                                     }
-                                    layout_config['layer']['categoricalColorscheme'] = layer.get('categoricalColorscheme', 'default')   
+                                    if layout_prefix == 'textbranch':
+                                        layout_config['layer']['textPosition'] = layer.get('textPosition', 'branch_bottom')
+                                        if layer.get('textunicolorColor'):
+                                            layout_config['layer']['istextUnicolor'] = 'True'
+                                        else:
+                                            layout_config['layer']['istextUnicolor'] = 'False'
+                                        layout_config['layer']['textColorScheme'] = layer.get('textColorScheme')
+                                        layout_config['layer']['textunicolorColor'] = layer.get('textunicolorColor')
+                                    
+                                    else:
+                                        layout_config['layer']['categoricalColorscheme'] = layer.get('categoricalColorscheme', 'default')   
+                                
+                                    # numerical layout
+                                
+                                elif layout_prefix in ['circlenode', 'squarenode', 'trianglenode']:
+                                    # basic 
+                                    color_config = color_config.get(applied_props, {})
+                                    layout_config = {
+                                        "layout_name": name,  # Retrieve layout name from processed layouts
+                                        "applied_props": [applied_props],  # Props linked to this layout
+                                        "config": {
+                                            "level": getattr(layout, 'column', level),
+                                            "column_width": getattr(layout, 'column_width', default_configs['column_width']),
+                                            "padding_x": getattr(layout, 'padding_x', default_configs['padding_x']),
+                                            "padding_y": getattr(layout, 'padding_y', default_configs['padding_y']),
+                                            #"color_config": color_config
+                                        },
+                                        "layer": {}
+                                    }
+                                    layout_config['layer']['categoricalColorscheme'] = layer.get('categoricalColorscheme', 'default')
+                                    layout_config['layer']['symbolOption'] = layer.get('symbolOption', 'circle')
+                                    layout_config['layer']['symbolSize'] = float(layer.get('symbolSize', 5))
+                                    layout_config['layer']['fgopacity'] = float(layer.get('fgopacity', 0.8))
 
-                                # numerical layout
                                 elif layout_prefix in numerical_prefix:
                                     if layout_prefix == 'barplot':
                                         # basic 
@@ -1085,7 +1119,6 @@ def explore_tree(treename):
                 for layout_meta in updated_metadata:
                     layout = layout_manager.get(layout_meta['layout_name'])
                     layout_prefix = layout_meta['layout_name'].split('_')[0].lower()
-                    
                     if layout:
                         # for categorical
                         if layout_prefix in categorical_prefix:
@@ -1107,6 +1140,30 @@ def explore_tree(treename):
                                 layout.padding_x = layout_meta['config']['padding_x']
                                 layout.padding_y = layout_meta['config']['padding_y']
                                 layout.color_dict = color_config.get(prop).get('value2color')
+                            elif layout_prefix == 'textbranch':
+
+                                layout.position = layout_meta['layer'].get('textPosition')
+
+                                if layout_meta['layer'].get('istextUnicolor') == 'True':
+                                    layout.text_color = layout_meta['layer'].get('textunicolorColor')
+                                    layout.color_dict = {}
+                                else:
+                                    layout.text_color = None
+                                    text_color_scheme = layout_meta['layer'].get('textColorScheme', None)
+                                    prop_values = sorted(list(set(utils.tree_prop_array(t, prop))))
+                                    paired_color = get_colormap_hex_colors(text_color_scheme, len(prop_values))
+                                    color_config[prop] = {}
+                                    color_config[prop]['value2color'] = utils.assign_color_to_values(prop_values, paired_color)
+                                    color_config[prop]['detail2color'] = {}
+                                    color_dict = color_config.get(prop).get('value2color')
+                                    layout.color_dict = color_dict
+                                
+                                # change directly in layout
+                                layout.column = layout_meta['config']['level']
+                                layout.width = layout_meta['config']['column_width']
+                                layout.padding_x = layout_meta['config']['padding_x']
+                                layout.padding_y = layout_meta['config']['padding_y']
+                                
                             else:
                                 categorical_color_scheme = layout_meta['layer'].get('categoricalColorscheme', 'default')
                                 prop_values = sorted(list(set(utils.tree_prop_array(t, prop))))
@@ -1122,6 +1179,26 @@ def explore_tree(treename):
                                 layout.padding_y = layout_meta['config']['padding_y']
                                 layout.color_dict = color_config.get(prop).get('value2color')
 
+                        
+                        elif layout_prefix in ['circlenode', 'squarenode', 'trianglenode']:
+                            prop = layout_meta['applied_props'][0]
+                            layout.symbol = layout_meta['layer'].get('symbolOption', 'circle')
+                            layout.symbol_size = float(layout_meta['layer'].get('symbolSize', 5))
+                            layout.fgopacity = float(layout_meta['layer'].get('fgopacity', 0.8))
+                            
+                            categorical_color_scheme = layout_meta['layer'].get('categoricalColorscheme', 'default')
+                            prop_values = sorted(list(set(utils.tree_prop_array(t, prop))))
+                            paired_color = get_colormap_hex_colors(categorical_color_scheme, len(prop_values))
+                            color_config[prop] = {}
+                            color_config[prop]['value2color'] = utils.assign_color_to_values(prop_values, paired_color)
+                            color_config[prop]['detail2color'] = {}
+                            
+                            # change directly in layout
+                            layout.column = layout_meta['config']['level']
+                            layout.width = layout_meta['config']['column_width']
+                            layout.padding_x = layout_meta['config']['padding_x']
+                            layout.padding_y = layout_meta['config']['padding_y']
+                            layout.color_dict = color_config.get(prop).get('value2color')
                         # for binary
                         elif layout_prefix in binary_prefix:
                             prop = layout_meta['applied_props'][0]
@@ -1139,7 +1216,7 @@ def explore_tree(treename):
                             layout.width = layout_meta['config']['column_width']
                             layout.padding_x = layout_meta['config']['padding_x']
                             layout.padding_y = layout_meta['config']['padding_y']
-                            
+                        
                         # for numerical
                         elif layout_prefix in numerical_prefix:
                             prop = layout_meta['applied_props'][0]
@@ -1379,12 +1456,12 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
     
     # binary settings
     if selected_layout == 'binary-layout':
-        same_color = layer.get('isUnicolor', True)
+        same_color = layer.get('isbinaryUnicolor', True)
 
         if not same_color:
-            bianry_color_scheme = layer.get('binaryColorscheme', 'default')
+            bianry_color_scheme = layer.get('binaryColorScheme', 'default')
         else:
-            unicolorColor = layer.get('unicolorColor', '#ff0000')
+            unicolorColor = layer.get('binaryunicolorColor', '#ff0000')
 
         aggregate_option = layer.get('aggregateOption', 'gradient')
         
@@ -1399,7 +1476,6 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
     
     # Apply selected layout based on type directly within this function
     if selected_layout in categorical_layout_list:
-        
         for index, prop in enumerate(selected_props):
             prop_values = sorted(list(set(utils.tree_prop_array(t, prop))))
             paired_color = get_colormap_hex_colors(categorical_color_scheme, len(prop_values))
@@ -1407,8 +1483,59 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
             color_config[prop]['value2color'] = utils.assign_color_to_values(prop_values, paired_color)
             color_config[prop]['detail2color'] = {}
         
-        level, current_layouts = apply_categorical_layouts(t, selected_layout, selected_props, tree_info, current_layouts, level, column_width, padding_x, padding_y, color_config)
+        if selected_layout == 'nodesymbol-layout':
+            for prop in selected_props:
+                color_dict = color_config.get(prop)['value2color']
+                symbol = layer.get('symbolOption', 'circle')
+                symbol_size = layer.get('symbolSize', 5)
+                if symbol_size:
+                    symbol_size = float(symbol_size)
+                fgopacity = layer.get('fgopacity', 0.8)
+                
+                layout = layouts.text_layouts.LayoutSymbolNode(f'{symbol}Node_{prop}', prop=prop,
+                    column=level, symbol=symbol, symbol_color=None, color_dict=color_dict,
+                    symbol_size=symbol_size, 
+                    padding_x=padding_x, padding_y=padding_y, fgopacity=fgopacity,
+                    scale=True, legend=True, active=True
+                )
+                level +=1 
+                current_layouts.append(layout)
+            
+        else:
+            level, current_layouts = apply_categorical_layouts(t, selected_layout, selected_props, tree_info, current_layouts, level, column_width, padding_x, padding_y, color_config)
         
+    elif selected_layout == 'textbranch-layout':
+        # text branch
+
+        text_position = layer.get('textPosition', 'branch_bottom')
+        text_color_scheme = layer.get('textColorScheme', None)
+
+        text_color = layer.get('textunicolorColor', None)
+
+        if text_color:
+            for prop in selected_props:
+                layout = layouts.text_layouts.LayoutTextbranch(name='TextBranch_'+prop, 
+                column=level, text_color=text_color, color_dict={}, prop=prop, 
+                position=text_position, width=column_width, 
+                padding_x=padding_x, padding_y=padding_y)
+                level +=1 
+                current_layouts.append(layout)
+        else:
+            for index, prop in enumerate(selected_props):
+                prop_values = sorted(list(set(utils.tree_prop_array(t, prop))))
+                paired_color = get_colormap_hex_colors(text_color_scheme, len(prop_values))
+                color_config[prop] = {}
+                color_config[prop]['value2color'] = utils.assign_color_to_values(prop_values, paired_color)
+                color_config[prop]['detail2color'] = {}
+            for prop in selected_props:
+                color_dict = color_config.get(prop).get('value2color')
+                layout = layouts.text_layouts.LayoutTextbranch(name='TextBranch_'+prop, 
+                column=level, text_color=None, color_dict=color_dict, prop=prop, 
+                position=text_position, width=column_width, 
+                padding_x=padding_x, padding_y=padding_y)
+                level +=1 
+                current_layouts.append(layout)
+    
     elif selected_layout == 'binary-layout':
         for index, prop in enumerate(selected_props):
             prop_values = utils.tree_prop_array(t, prop, leaf_only=True)

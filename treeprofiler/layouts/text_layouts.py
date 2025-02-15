@@ -263,13 +263,14 @@ class LayoutText(TreeLayout):
             #     node.add_face(prop_face, column=self.column, position="branch_right", collapsed_only=True)
 
 class LayoutTextbranch(TreeLayout):
-    def __init__(self, name, column, text_color, color_dict, prop, width=70, min_fsize=5, max_fsize=15, padding_x=1, padding_y=0, legend=True, aligned_faces=True):
+    def __init__(self, name, column, text_color, color_dict, prop, position="branch_bottom", width=70, min_fsize=5, max_fsize=15, padding_x=1, padding_y=0, legend=True, aligned_faces=True):
         super().__init__(name, aligned_faces=aligned_faces)
         self.aligned_faces = True
         self.prop = prop
         self.column = column
         self.text_color = text_color
         self.color_dict = color_dict
+        self.position = position
         self.legend = legend
         self.width = width
         self.height = None
@@ -303,12 +304,16 @@ class LayoutTextbranch(TreeLayout):
                 prop_text = ",".join(prop_text)
             else:
                 pass
-            if self.text_color:
+
+            if self.color_dict and self.color_dict.get(prop_text):
+                color = self.color_dict.get(prop_text)
+                prop_face = TextFace(prop_text, color=color, min_fsize=self.min_fsize, max_fsize=self.max_fsize, padding_x=self.padding_x, width=self.width)
+            elif self.text_color:
                 prop_face = TextFace(prop_text, color=self.text_color, min_fsize=self.min_fsize, max_fsize=self.max_fsize, padding_x=self.padding_x, width=self.width)
             else:
-                prop_face = TextFace(prop_text, color='black', min_fsize=self.min_fsize, max_fsize=self.max_fsize, padding_x=self.padding_x, width=self.width )
-            node.add_face(prop_face, position="branch_bottom")
-            node.add_face(prop_face, position="branch_bottom", collapsed_only=True)
+                prop_face = TextFace(prop_text, color='black', min_fsize=self.min_fsize, max_fsize=self.max_fsize, padding_x=self.padding_x, width=self.width)
+            node.add_face(prop_face, position=self.position)
+            node.add_face(prop_face, position=self.position, collapsed_only=True)
    
 class LayoutColorbranch(TreeLayout):
     def __init__(self, name, column, color_dict, prop, legend=True, width=70, padding_x=1, padding_y=0):
@@ -599,14 +604,14 @@ class LayoutBubbleCategorical(TreeLayout):
                 node.add_face(prop_face, column=self.column, 
                 position="branch_right", collapsed_only=False)
 
-class LayoutSymbolbranch(TreeLayout):
+class LayoutSymbolNode(TreeLayout):
     def __init__(self, name=None, prop=None, position="branch_right",
             column=0, symbol='circle', symbol_color=None, color_dict=None, 
             max_radius=1, symbol_size=5, fgopacity=0.8, 
             padding_x=2, padding_y=0, 
             scale=True, legend=True, active=True):
         
-        name = name or f'{symbol}Branch_{prop}'
+        name = name or f'{symbol}Node_{prop}'
         super().__init__(name)
 
         self.aligned_faces = True

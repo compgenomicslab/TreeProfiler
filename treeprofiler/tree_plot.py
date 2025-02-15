@@ -210,15 +210,15 @@ def poplulate_plot_args(plot_args_p):
         nargs='+',
         required=False,
         help="<prop1> <prop2> names of properties where values will be displayed on the branch in text.")
-    group.add_argument('--circlebranch-layout',
+    group.add_argument('--circlenode-layout',
         nargs='+',
         required=False,
         help="<prop1> <prop2> names of properties where values will be displayed on the branch in the shape of cricle.")
-    group.add_argument('--squarebranch-layout',
+    group.add_argument('--squarenode-layout',
         nargs='+',
         required=False,
         help="<prop1> <prop2> names of properties where values will be displayed on the branch in the shape of square.")
-    group.add_argument('--trianglebranch-layout',
+    group.add_argument('--trianglenode-layout',
         nargs='+',
         required=False,
         help="<prop1> <prop2> names of properties where values will be displayed on the branch in the shape of triangle.")
@@ -562,32 +562,25 @@ def run(args):
             for prop in args.textbranch_layout:
                 visualized_props.append(prop)
 
-        if layout == 'circlebranch-layout':
-            circlebranch_layouts, level, color_dict = get_circlebranch_layouts(tree, args.circlebranch_layout, 
+        if layout == 'circlenode-layout':
+            circlenode_layouts, level, color_dict = get_circlenode_layouts(tree, args.circlenode_layout, 
             level, prop2type=prop2type, padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config)
-            layouts.extend(circlebranch_layouts)
-            for prop in args.circlebranch_layout:
-                visualized_props.append(prop)
-
-        if layout == 'circlebranch-layout':
-            circlebranch_layouts, level, color_dict = get_circlebranch_layouts(tree, args.circlebranch_layout, 
-            level, prop2type=prop2type, padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config)
-            layouts.extend(circlebranch_layouts)
-            for prop in args.circlebranch_layout:
+            layouts.extend(circlenode_layouts)
+            for prop in args.circlenode_layout:
                 visualized_props.append(prop)
         
-        if layout == 'squarebranch-layout':
-            squarebranch_layouts, level, color_dict = get_squarebranch_layouts(tree, args.squarebranch_layout, 
+        if layout == 'squarenode-layout':
+            squarenode_layouts, level, color_dict = get_squarenode_layouts(tree, args.squarenode_layout, 
             level, prop2type=prop2type, padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config)
-            layouts.extend(squarebranch_layouts)
-            for prop in args.squarebranch_layout:
+            layouts.extend(squarenode_layouts)
+            for prop in args.squarenode_layout:
                 visualized_props.append(prop)
 
-        if layout == 'trianglebranch-layout':
-            trianglebranch_layouts, level, color_dict = get_trianglebranch_layouts(tree, args.trianglebranch_layout, 
+        if layout == 'trianglenode-layout':
+            trianglenode_layouts, level, color_dict = get_trianglenode_layouts(tree, args.trianglenode_layout, 
             level, prop2type=prop2type, padding_x=args.padding_x, padding_y=args.padding_y, color_config=color_config)
-            layouts.extend(trianglebranch_layouts)
-            for prop in args.trianglebranch_layout:
+            layouts.extend(trianglenode_layouts)
+            for prop in args.trianglenode_layout:
                 visualized_props.append(prop)
 
         if layout == 'bubble-layout':
@@ -1265,7 +1258,7 @@ def get_textbranch_layouts(tree, props, level, prop2type, column_width=70, paddi
         if color_config and color_config.get(prop):
             if color_config.get(prop).get('value2color'):
                 color_dict = color_config.get(prop).get('value2color')
-       
+
         layout = text_layouts.LayoutTextbranch(name='TextBranch_'+prop, 
         column=level, text_color=text_color, color_dict=color_dict, prop=prop, 
         width=column_width, padding_x=padding_x, padding_y=padding_y)
@@ -1277,7 +1270,7 @@ def get_textbranch_layouts(tree, props, level, prop2type, column_width=70, paddi
 def get_widthbranch_layouts(tree, props, level, prop2type, padding_x=1, padding_y=0, color_config=None):
     return
 
-def get_circlebranch_layouts(tree, props, level, prop2type, padding_x=1, padding_y=0, color_config=None):
+def get_circlenode_layouts(tree, props, level, prop2type, padding_x=1, padding_y=0, color_config=None):
     prop_color_dict = {}
     layouts = []
     symbol = 'circle'
@@ -1302,7 +1295,7 @@ def get_circlebranch_layouts(tree, props, level, prop2type, padding_x=1, padding
             # normal text prop
             color_dict = utils.assign_color_to_values(prop_values, paired_color)
 
-        layout = text_layouts.LayoutSymbolbranch(f'{symbol}Branch_{prop}', prop=prop,
+        layout = text_layouts.LayoutSymbolNode(f'{symbol}Node_{prop}', prop=prop,
             column=level, symbol=symbol, symbol_color=symbol_color, color_dict=color_dict,
             max_radius=max_radius, symbol_size=symbol_size, 
             padding_x=padding_x, padding_y=padding_y, fgopacity=fgopacity,
@@ -1313,7 +1306,7 @@ def get_circlebranch_layouts(tree, props, level, prop2type, padding_x=1, padding
     
     return layouts, level, prop_color_dict
 
-def get_squarebranch_layouts(tree, props, level, prop2type, padding_x=1, padding_y=0, color_config=None):
+def get_squarenode_layouts(tree, props, level, prop2type, padding_x=1, padding_y=0, color_config=None):
     prop_color_dict = {}
     layouts = []
     symbol = 'square'
@@ -1338,7 +1331,7 @@ def get_squarebranch_layouts(tree, props, level, prop2type, padding_x=1, padding
             # normal text prop
             color_dict = utils.assign_color_to_values(prop_values, paired_color)
 
-        layout = text_layouts.LayoutSymbolbranch(f'{symbol}Branch_{prop}', prop=prop,
+        layout = text_layouts.LayoutSymbolNode(f'{symbol}Node_{prop}', prop=prop,
             column=level, symbol=symbol, symbol_color=symbol_color, color_dict=color_dict,
             max_radius=max_radius, symbol_size=symbol_size, 
             padding_x=padding_x, padding_y=padding_y, fgopacity=fgopacity,
@@ -1348,7 +1341,7 @@ def get_squarebranch_layouts(tree, props, level, prop2type, padding_x=1, padding
         level +=1 
     return layouts, level, prop_color_dict
 
-def get_trianglebranch_layouts(tree, props, level, prop2type, padding_x=1, padding_y=0, color_config=None):
+def get_trianglenode_layouts(tree, props, level, prop2type, padding_x=1, padding_y=0, color_config=None):
     prop_color_dict = {}
     layouts = []
     symbol = 'triangle'
@@ -1373,7 +1366,7 @@ def get_trianglebranch_layouts(tree, props, level, prop2type, padding_x=1, paddi
             # normal text prop
             color_dict = utils.assign_color_to_values(prop_values, paired_color)
 
-        layout = text_layouts.LayoutSymbolbranch(f'{symbol}Branch_{prop}', prop=prop,
+        layout = text_layouts.LayoutSymbolNode(f'{symbol}Node_{prop}', prop=prop,
             column=level, symbol=symbol, symbol_color=symbol_color, color_dict=color_dict,
             max_radius=max_radius, symbol_size=symbol_size, 
             padding_x=padding_x, padding_y=padding_y, fgopacity=fgopacity,
