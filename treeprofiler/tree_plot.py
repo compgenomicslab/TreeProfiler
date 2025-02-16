@@ -1097,7 +1097,7 @@ def get_acr_continuous_layouts(tree, props, level, prop2type, padding_x=1, paddi
             index = np.abs(index_values - search_value).argmin()+1
             value2color[search_value] = gradientscolor[index]
         layout = phylosignal_layouts.LayoutACRContinuous(name='ACR_'+prop, column=level, \
-            color_dict=value2color, prop=prop, value_range=[minval, maxval], \
+            color_dict=value2color, score_prop=prop, value_range=[minval, maxval], \
             color_range=[gradientscolor[20], gradientscolor[10], gradientscolor[1]])
         layouts.append(layout)
     return layouts
