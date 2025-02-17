@@ -1362,7 +1362,7 @@ def process_node(node_data):
 
     # Process text, multitext, bool, and num properties
     if text_prop:
-        internal_props_text = merge_text_annotations(node_leaves, text_prop, column2method, emapper_mode)
+        internal_props_text = merge_text_annotations(node_leaves, text_prop, column2method, emapper_mode=True)
         internal_props.update(internal_props_text)
 
     if multiple_text_prop:
