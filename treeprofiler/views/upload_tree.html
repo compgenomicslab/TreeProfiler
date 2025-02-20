@@ -738,6 +738,12 @@
         const taxonomicIdColumn = document.getElementById('taxonomicIdColumn');
         taxonomicIdColumn.innerHTML = "";  // Clear existing options
 
+        // Ensure "name" is always in the list
+        const nameOption = document.createElement('option');
+        nameOption.value = "name";
+        nameOption.textContent = "name";
+        taxonomicIdColumn.appendChild(nameOption);
+        
         columns.forEach(col => {
             const option = document.createElement('option');
             option.value = col;
