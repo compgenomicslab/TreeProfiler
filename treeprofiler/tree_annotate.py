@@ -262,7 +262,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         taxadb='GTDB', gtdb_version=None, taxa_dump=None, taxon_column=None,
         taxon_delimiter='', taxa_field=0, ignore_unclassified=False,
         rank_limit=None, pruned_by=None, 
-        acr_discrete_columns=None, acr_continuous_columns=None, prediction_method="MPPA", model="F81", 
+        acr_discrete_columns=[], acr_continuous_columns=[], prediction_method="MPPA", model="F81", 
         delta_stats=False, ent_type="SE", 
         iteration=100, lambda0=0.1, se=0.5, thin=10, burn=100, 
         ls_columns=None, prec_cutoff=0.95, sens_cutoff=0.95, 
@@ -594,7 +594,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         for node in annotated_tree.traverse("postorder"):
             if not node.is_leaf:
                 nodes.append(node)
-                node_data = (node, node2leaves[node], text_prop, multiple_text_prop, bool_prop, num_prop, column2method, alignment if 'alignment' in locals() else None, name2seq if 'name2seq' in locals() else None, consensus_cutoff, emapper_mode)
+                node_data = (node, node2leaves[node], text_prop, multiple_text_prop, bool_prop, num_prop, acr_discrete_columns, column2method, alignment if 'alignment' in locals() else None, name2seq if 'name2seq' in locals() else None, consensus_cutoff, emapper_mode)
                 nodes_data.append(node_data)
         
         # Process nodes in parallel if more than one thread is specified
@@ -712,7 +712,7 @@ def run(args):
     prop2type = {}
     metadata_dict = {}
     column2method = {}
-
+    emapper_mode = True
     setup_logger()
 
     if args.metadata:
@@ -777,7 +777,6 @@ def run(args):
     logger.info(f'Time for parse_csv to run: {end - start}')
     
     if args.emapper_annotations:
-        emapper_mode = True
         emapper_metadata_dict, emapper_node_props, emapper_columns = parse_emapper_annotations(args.emapper_annotations)
         metadata_dict = utils.merge_dictionaries(metadata_dict, emapper_metadata_dict)
         node_props.extend(emapper_node_props)
@@ -804,8 +803,7 @@ def run(args):
             'BiGG_Reaction':list,
             'PFAMs':list
         })
-    else:
-        emapper_mode = False
+
 
     # start annotation
     if args.column_summary_method:
@@ -1357,12 +1355,12 @@ def load_metadata_to_tree(tree, metadata_dict, prop2type={}, taxon_column=None, 
     return tree
 
 def process_node(node_data):
-    node, node_leaves, text_prop, multiple_text_prop, bool_prop, num_prop, column2method, alignment, name2seq, consensus_cutoff, emapper_mode = node_data
+    node, node_leaves, text_prop, multiple_text_prop, bool_prop, num_prop, acr_discrete_columns, column2method, alignment, name2seq, consensus_cutoff, emapper_mode = node_data
     internal_props = {}
 
     # Process text, multitext, bool, and num properties
     if text_prop:
-        internal_props_text = merge_text_annotations(node_leaves, text_prop, column2method, emapper_mode=True)
+        internal_props_text = merge_text_annotations(node_leaves, text_prop, column2method, acr_discrete_columns, emapper_mode=emapper_mode)
         internal_props.update(internal_props_text)
 
     if multiple_text_prop:
@@ -1370,7 +1368,7 @@ def process_node(node_data):
         internal_props.update(internal_props_multi)
 
     if bool_prop:
-        internal_props_bool = merge_text_annotations(node_leaves, bool_prop, column2method)
+        internal_props_bool = merge_text_annotations(node_leaves, bool_prop, column2method, acr_discrete_columns)
         internal_props.update(internal_props_bool)
 
     if num_prop:
@@ -1388,12 +1386,15 @@ def process_node(node_data):
 
     return internal_props, consensus_seq
 
-def merge_text_annotations(nodes, target_props, column2method, emapper_mode=False):
+def merge_text_annotations(nodes, target_props, column2method, acr_discrete_columns=[], emapper_mode=True):
     pair_seperator = "--"
     item_seperator = "||"
     internal_props = {}
     counters = {}
     
+    # Ensure acr_discrete_columns is a set (avoids long condition checks)
+    acr_discrete_columns = set(acr_discrete_columns or [])
+
     for target_prop in target_props:
         counter_stat = column2method.get(target_prop, "raw")
         prop_list = utils.children_prop_array_missing(nodes, target_prop)
@@ -1404,9 +1405,9 @@ def merge_text_annotations(nodes, target_props, column2method, emapper_mode=Fals
 
         if counter_stat == 'raw':
             # Find the key with the highest count
-            if emapper_mode and counter:
+            if emapper_mode and counter and target_prop not in acr_discrete_columns:
                 most_common_key = max(counter, key=counter.get)
-                internal_props[target_prop] = most_common_key
+                internal_props[target_prop] = most_common_key+"check()[];:,check"
 
             # Add the raw counts to internal_props
             internal_props[utils.add_suffix(target_prop, 'counter')] = item_seperator.join(
@@ -1415,7 +1416,7 @@ def merge_text_annotations(nodes, target_props, column2method, emapper_mode=Fals
 
         elif counter_stat == 'relative':
             # Find the key with the highest count
-            if emapper_mode and counter:
+            if emapper_mode and counter and target_prop not in acr_discrete_columns:
                 most_common_key = max(counter, key=counter.get)
                 internal_props[target_prop] = most_common_key
 
