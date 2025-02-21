@@ -661,12 +661,17 @@ def tree_status(treename):
     """Serves the job_running.html template to show job status."""
     return template('job_running', treename=treename, job_id=treename)
 
+
 @app.route('/check_job_status')
 def check_job_status():
     """API endpoint to check the status of a given job."""
     job_id = request.query.get('job_id')
     status = job_status.get(job_id, "not_found")
     return status
+    
+@app.route('/iframe_status/<treename>')
+def check_iframe_status(treename):
+    return {"ready": tree_ready_status.get(treename, False)}
 
 @app.route('/explore_tree/<treename>', method=['GET', 'POST', 'PUT'])
 def explore_tree(treename):
@@ -1965,14 +1970,20 @@ def apply_collapse_queries(query_strings, current_layouts, paired_color, tree_in
     
     return current_layouts
 
+tree_ready_status = {}
+
 def start_explore_thread(t, treename, current_layouts, current_props):
     """
-    Starts the ete exploration in a separate thread.
+    Starts the ete exploration in a separate thread and tracks when the tree is ready.
     """
+    global tree_ready_status
+    tree_ready_status[treename] = False  # Mark tree as not ready
 
     def explore():
+        print(f"Starting tree visualization for {treename}...")
         t.explore(name=treename, layouts=current_layouts, port=5051, open_browser=False, include_props=current_props)
-    
+        tree_ready_status[treename] = True  # Mark tree as ready when done
+
     explorer_thread = threading.Thread(target=explore)
     explorer_thread.start()
 
