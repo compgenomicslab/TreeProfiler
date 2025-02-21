@@ -1407,7 +1407,7 @@ def merge_text_annotations(nodes, target_props, column2method, acr_discrete_colu
             # Find the key with the highest count
             if emapper_mode and counter and target_prop not in acr_discrete_columns:
                 most_common_key = max(counter, key=counter.get)
-                internal_props[target_prop] = most_common_key+"check()[];:,check"
+                internal_props[target_prop] = most_common_key
 
             # Add the raw counts to internal_props
             internal_props[utils.add_suffix(target_prop, 'counter')] = item_seperator.join(
