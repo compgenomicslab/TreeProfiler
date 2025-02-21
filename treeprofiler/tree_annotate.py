@@ -1386,6 +1386,23 @@ def process_node(node_data):
 
     return internal_props, consensus_seq
 
+def get_top_keys(counter, max_keys=2, separator="||", suffix="..."):
+    """Returns the top keys with the highest counts, sorted, and limited to max_keys, only when tied."""
+    if not counter:
+        return None  # Handle empty counter case
+
+    max_count = max(counter.values())
+    top_keys = sorted([key for key, value in counter.items() if value == max_count])  # Sort alphabetically
+
+    # If only one key has the highest count, return it directly
+    if len(top_keys) == 1:
+        return top_keys[0]
+
+    # If there is a tie, return up to max_keys, adding suffix if needed
+    if len(top_keys) > max_keys:
+        return separator.join(top_keys[:max_keys]) + separator + suffix
+    return separator.join(top_keys)
+
 def merge_text_annotations(nodes, target_props, column2method, acr_discrete_columns=[], emapper_mode=True):
     pair_seperator = "--"
     item_seperator = "||"
@@ -1406,8 +1423,8 @@ def merge_text_annotations(nodes, target_props, column2method, acr_discrete_colu
         if counter_stat == 'raw':
             # Find the key with the highest count
             if emapper_mode and counter and target_prop not in acr_discrete_columns:
-                most_common_key = max(counter, key=counter.get)
-                internal_props[target_prop] = most_common_key
+                # most_common_key = max(counter, key=counter.get)
+                internal_props[target_prop] = get_top_keys(counter)
 
             # Add the raw counts to internal_props
             internal_props[utils.add_suffix(target_prop, 'counter')] = item_seperator.join(
@@ -1417,8 +1434,8 @@ def merge_text_annotations(nodes, target_props, column2method, acr_discrete_colu
         elif counter_stat == 'relative':
             # Find the key with the highest count
             if emapper_mode and counter and target_prop not in acr_discrete_columns:
-                most_common_key = max(counter, key=counter.get)
-                internal_props[target_prop] = most_common_key
+                # most_common_key = max(counter, key=counter.get)
+                internal_props[target_prop] = get_top_keys(counter)
 
             total = sum(counter.values())
 
