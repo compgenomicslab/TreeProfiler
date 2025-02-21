@@ -384,6 +384,7 @@
                     
                         <button id="addLayerBtn" class="btn btn-success mt-3 mx-auto d-block">
                             Add Layout
+                            <span id="addLayerSpinner" class="spinner-border spinner-border-sm ms-2" style="display: none;"></span>
                         </button>                        
                     </div>
                 </div>
@@ -799,6 +800,10 @@
     
     // Handle Add Layout Button
     $('#addLayerBtn').click(() => {
+        // Show the spinner and disable the button
+        $("#addLayerBtn").prop("disabled", true);
+        $("#addLayerSpinner").show();
+
         // // Custom query settings
         const queryType = null;
         const query = null;
