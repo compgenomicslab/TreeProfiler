@@ -595,8 +595,14 @@
                         </div>
         
                         <!-- Execute Action Button -->
-                        <div class="text-center mt-4">
+                        <!-- <div class="text-center mt-4">
                             <button id="sendQuery" class="btn btn-success px-4">Execute Action</button>
+                        </div> -->
+                        <div class="text-center mt-4">
+                            <button id="sendQuery" class="btn btn-success px-4">
+                                <span class="button-text">Execute Action</span>
+                                <span class="spinner-border spinner-border-sm ms-2" style="display: none;"></span>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -1727,6 +1733,14 @@ $('#activateDomainLayout').click(() => activateLayout('domain-layout', '#activat
     }
 
     document.getElementById('sendQuery').addEventListener('click', () => {
+        const button = $("#sendQuery");
+        const spinner = button.find(".spinner-border");
+        const buttonText = button.find(".button-text");
+
+        // Disable button and show spinner
+        button.prop("disabled", true);
+        spinner.show();
+
         // Retrieve query type and query value
         const queryType = document.getElementById('customQueryType')?.value || null;
         const query = document.getElementById('queryBox')?.value || null;
@@ -1735,20 +1749,46 @@ $('#activateDomainLayout').click(() => activateLayout('domain-layout', '#activat
         // Ensure a valid queryType is selected
         if (!queryType) {
             alert('Please select a query type before sending.');
+            button.prop("disabled", false);
+            spinner.hide();
             return;
         } 
-        
-        if (!query) {
-            if (queryType !== 'rank_limit') {
-                alert('Please add a query before sending.');
-                return;
-            }
-        };
 
+        if (!query && queryType !== 'rank_limit') {
+            alert('Please add a query before sending.');
+            button.prop("disabled", false);
+            spinner.hide();
+            return;
+        }
+
+        // Form the layer object
+        // if (queryType === 'rank_limit') {
+        //     const query = null;
+        //     const rankSelection = document.getElementById('rankSelection').value;
+        //     console.log("checking rank selection", rankSelection);
+        //     const layer = {
+        //         queryType,
+        //         query,
+        //         rankSelection
+        //     };
+        //     // Add the layer to the layers array
+        //     layers.push(layer);
+        // } else if (queryType === 'highlight' || queryType === 'collapse' || queryType === 'prune') {
+        //     const rankSelection = null;
+        //     const layer = {
+        //         queryType,
+        //         query,
+        //         rankSelection
+        //     };
+        //     // Add the layer to the layers array
+        //     layers.push(layer);
+        // }
         if (queryType === 'rank_limit'){
             const rankSelection = document.getElementById('rankSelection').value;
             if (!rankSelection) {
                 alert('Please select a taxonomic rank before sending.');
+                button.prop("disabled", false);
+                spinner.hide();
                 return;
             }
         } 
@@ -1757,27 +1797,11 @@ $('#activateDomainLayout').click(() => activateLayout('domain-layout', '#activat
         if (queryType === 'rank_limit') {
             const query = null;
             const rankSelection = document.getElementById('rankSelection').value;
-            console.log("checking rank selection", rankSelection);
-            const layer = {
-                queryType,
-                query,
-                rankSelection
-            };
-            // Add the layer to the layers array
-            layers.push(layer);
-        } else if (queryType === 'highlight' || queryType === 'collapse' || queryType === 'prune') {
-            const rankSelection = null;
-            const layer = {
-                queryType,
-                query,
-                rankSelection
-            };
-            // Add the layer to the layers array
-            layers.push(layer);
+            console.log("Checking rank selection", rankSelection);
+            layers.push({ queryType, query, rankSelection });
+        } else if (["highlight", "collapse", "prune"].includes(queryType)) {
+            layers.push({ queryType, query, rankSelection: null });
         }
-        
-
-        
 
         // Collect additional general settings
         const layersData = JSON.stringify(layers);
@@ -1821,6 +1845,8 @@ $('#activateDomainLayout').click(() => activateLayout('domain-layout', '#activat
         ).fail((error) => {
             console.error('Error sending query:', error);
             alert('Failed to send query. Please try again.');
+            button.prop("disabled", false);
+            spinner.hide();
             window.location.reload();
         });
     });
