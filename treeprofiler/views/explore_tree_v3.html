@@ -595,9 +595,6 @@
                         </div>
         
                         <!-- Execute Action Button -->
-                        <!-- <div class="text-center mt-4">
-                            <button id="sendQuery" class="btn btn-success px-4">Execute Action</button>
-                        </div> -->
                         <div class="text-center mt-4">
                             <button id="sendQuery" class="btn btn-success px-4">
                                 <span class="button-text">Execute Action</span>
@@ -657,7 +654,9 @@
                     <!-- Apply Changes Button -->
                     <div class="text-center mt-4">
                         <button id="applyChangesBtn" class="btn btn-success px-4">
-                            <i class="bi bi-check-circle-fill me-2"></i>Apply Changes
+                            <i class="bi bi-check-circle-fill me-2"></i> 
+                            <span class="button-text">Apply Changes</span>
+                            <span class="spinner-border spinner-border-sm ms-2" style="display: none;"></span>
                         </button>
                     </div>
                 </div>
@@ -1394,19 +1393,34 @@ $('#activateDomainLayout').click(() => activateLayout('domain-layout', '#activat
 
         // Handle Apply Changes Button
         document.getElementById('applyChangesBtn').addEventListener('click', function () {
+            const button = $("#applyChangesBtn");
+            const spinner = button.find(".spinner-border");
+            const buttonText = button.find(".button-text");
+
+            // Disable button and show spinner
+            button.prop("disabled", true);
+            spinner.show();
+
             fetch('/explore_tree/{{ treename }}', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: new URLSearchParams({
-                    updated_metadata: layoutsMetadataInput.value
+                    updated_metadata: document.getElementById('layoutsMetadataInput').value
                 })
             })
             .then(response => response.text())
             .then(data => {
-                alert("Layouts metadata updated successfully!");
-                location.reload();
+                // alert("Layouts metadata updated successfully!");
+                location.reload(); // Refresh after success
             })
-            .catch(error => console.error('Error:', error));
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to apply changes. Please try again.');
+
+                // Restore button state
+                button.prop("disabled", false);
+                spinner.hide();
+            });
         });
     });
 
