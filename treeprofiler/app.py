@@ -1869,7 +1869,7 @@ def apply_taxonomic_layouts(t, selected_layout, selected_props, tree_info, curre
             taxa_layout = layouts.taxon_layouts.TaxaCollapse(
                 name="TaxaCollapse_" + rank,
                 rank=rank,
-                rect_width=column_width,
+                rect_width=column_width/2,
                 color_dict=color_dict,
                 column=level
             )

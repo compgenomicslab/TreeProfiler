@@ -413,7 +413,11 @@
                                     </select>
                                 </div>
                                 <div class="card-footer mt-auto">
-                                    <button id="activateTaxonomicLayout" class="btn btn-success w-100">Activate</button>
+                                    <!-- <button id="activateTaxonomicLayout" class="btn btn-success w-100">Activate</button> -->
+                                    <button id="activateTaxonomicLayout" class="btn btn-success w-100">
+                                        <span class="button-text">Activate</span>
+                                        <span class="spinner-border spinner-border-sm ms-2" style="display: none;"></span>
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -450,8 +454,12 @@
                                         </div>
                                     </div>
                                 </div>
+                                <!-- <button id="activateAlignmentLayout" class="btn btn-success w-100">Activate</button> -->
                                 <div class="card-footer mt-auto">
-                                    <button id="activateAlignmentLayout" class="btn btn-success w-100">Activate</button>
+                                    <button id="activateAlignmentLayout" class="btn btn-success w-100">
+                                        <span class="button-text">Activate</span>
+                                        <span class="spinner-border spinner-border-sm ms-2" style="display: none;"></span>
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -476,9 +484,13 @@
                                     <h6 class="mb-0 text-primary">Domain Layouts</h6>
                                 </div>
                                 <div class="card-body flex-grow-1"></div>
-                                <div class="card-footer mt-auto">
+                                <!-- <div class="card-footer mt-auto">
                                     <button id="activateDomainLayout" class="btn btn-success w-100">Activate</button>
-                                </div>
+                                </div> -->
+                                <button id="activateDomainLayout" class="btn btn-success w-100">
+                                    <span class="button-text">Activate</span>
+                                    <span class="spinner-border spinner-border-sm ms-2" style="display: none;"></span>
+                                </button>
                             </div>
                         </div>
                         % else:
@@ -953,7 +965,15 @@
         });
     });
 
-    function activateLayout(layoutName) {
+    function activateLayout(layoutName, buttonId) {
+        const button = $(buttonId);
+        const spinner = button.find(".spinner-border");
+        const buttonText = button.find(".button-text");
+
+        // Show spinner and disable button
+        button.prop("disabled", true);
+        spinner.show();
+
         if (layoutName === 'alignment-layout') {
             const algStart = document.getElementById('algStart')?.value || null;
             const algEnd = document.getElementById('algEnd')?.value || null;
@@ -1006,9 +1026,10 @@
     }
 
     // Usage
-    $('#activateTaxonomicLayout').click(() => activateLayout($('#taxonomicLayoutSelect').val()));
-    $('#activateAlignmentLayout').click(() => activateLayout('alignment-layout'));
-    $('#activateDomainLayout').click(() => activateLayout('domain-layout'));
+    // Attach event listeners
+$('#activateTaxonomicLayout').click(() => activateLayout($('#taxonomicLayoutSelect').val(), '#activateTaxonomicLayout'));
+$('#activateAlignmentLayout').click(() => activateLayout('alignment-layout', '#activateAlignmentLayout'));
+$('#activateDomainLayout').click(() => activateLayout('domain-layout', '#activateDomainLayout'));
 
 
     document.getElementById('resetTreeBtn').addEventListener('click', () => {
