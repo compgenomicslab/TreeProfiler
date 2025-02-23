@@ -356,12 +356,24 @@
         </div>
         
         <!-- Submit Button -->
-        <button type="button" class="btn btn-primary" onclick="submitForm()">Annotate and Visualize Tree!</button>
+        <!-- <button type="button" class="btn btn-primary" onclick="submitForm()">Annotate and Visualize Tree!</button> -->
+        <button type="button" id="submitFormBtn" class="btn btn-primary" onclick="submitForm()">
+            <span class="button-text">Annotate and Visualize Tree!</span>
+            <span class="spinner-border spinner-border-sm ms-2" style="display: none;"></span>
+        </button>
     </form>
 </div>
 
 <script>
     async function submitForm() {
+        const button = document.getElementById("submitFormBtn");
+        const spinner = button.querySelector(".spinner-border");
+        const buttonText = button.querySelector(".button-text");
+
+        // Disable the button and show the spinner
+        button.disabled = true;
+        spinner.style.display = "inline-block";
+
         const treename = document.getElementById('treename').value;
         const treeparser = document.getElementById('treeparser').value;
         const treeFile = document.getElementById('treeFile').files[0];
@@ -379,6 +391,8 @@
 
         if (!treename) {
             alert("Please enter a tree name.");
+            button.disabled = false;
+            spinner.style.display = "none";
             return;
         }
 
@@ -389,6 +403,8 @@
             await uploadFileInChunks(treeFile, 'treeFile', treename);
         } else {
             alert("Please provide tree data in Newick format or upload a file.");
+            button.disabled = false;
+            spinner.style.display = "none";
             return;
         }
 
