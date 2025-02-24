@@ -629,8 +629,12 @@
                                     <td class="align-middle text-center">{{ layout['layout_name'] }}</td>
                                     <td>
                                         <ul class="list-unstyled mb-0 text-secondary">
-                                            % for prop in layout['applied_props']:
+                                            % applied_props = layout.get('applied_props', [])  # Ensure it exists
+                                            % for index, prop in enumerate(applied_props[:20]):  # Show only first 20 items
                                             <li>{{ prop }}</li>
+                                            % end
+                                            % if len(applied_props) > 20:
+                                            <li>...</li>  <!-- Append "..." if there are more than 20 items -->
                                             % end
                                         </ul>
                                     </td>

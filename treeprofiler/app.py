@@ -1417,6 +1417,7 @@ def explore_tree(treename):
     # Start the ete exploration thread
 
     if request.method == 'GET':
+
         start_explore_thread(t, treename, current_layouts, current_props)
 
     # Before rendering the template, convert to JSON
