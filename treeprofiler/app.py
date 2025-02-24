@@ -1142,7 +1142,9 @@ def explore_tree(treename):
                     if layout:
                         # for categorical
                         if layout_prefix in categorical_prefix:
-                            prop = layout_meta['applied_props'][0]
+                            if layout_meta['applied_props']:
+                                prop = layout_meta['applied_props'][0]
+                            
                             # reset color config
                             if layout_prefix  == 'piechart':
                                 original_prop = prop.split('_counter')[0] # get the original prop
@@ -1417,7 +1419,6 @@ def explore_tree(treename):
                                 window = [alg_start, alg_end]
                             else:
                                 window = []
-                            print(window)
                             layout.window = window
 
                         current_layouts.append(layout)
@@ -1432,11 +1433,17 @@ def explore_tree(treename):
 
     if request.method == 'GET':
         if treename == 'eggnog_example':
-            print("test, loading example layout")
+            emapper_example_layouts = load_emapper_layout(t)
+            if current_layouts:
+                current_layouts.extend(emapper_example_layouts)
+                start_explore_thread(t, treename, current_layouts, current_props)
+            else:
+                start_explore_thread(t, treename, emapper_example_layouts, current_props)
         elif treename == 'gtdb_example':
-            print("test, loading example_layout")
-            
-        start_explore_thread(t, treename, current_layouts, current_props)
+            start_explore_thread(t, treename, current_layouts, current_props)
+        else:
+            start_explore_thread(t, treename, current_layouts, current_props)
+        
 
     # Before rendering the template, convert to JSON
     #layouts_json = json.dumps(tree_info['layouts'])
@@ -2005,8 +2012,159 @@ def apply_collapse_queries(query_strings, current_layouts, paired_color, tree_in
     return current_layouts
 
 def load_emapper_layout(tree):
+    emapper_layouts = []
+    internal_num_rep = 'avg'
+    level = 1
+    column_width = 20
+    barplot_width = 200
+    eteformat_flag = False
+    rank2values = {}
+    prop2type = {# start with leaf name
+        'name':str,
+        'dist':float,
+        'support':float,
+        'rank': str,
+        'sci_name': str,
+        'taxid': str,
+        'lineage':str,
+        'named_lineage': str,
+        'evoltype': str,
+        'dup_sp': str,
+        'dup_percent': float,
+        'lca':str
+    }
+    popup_prop_keys = list(prop2type.keys()) 
 
-    return
+    # for path, node in tree.iter_prepostorder():
+    #     prop2type.update(utils.get_prop2type(node))
+
+    prop2type.update({
+            'seed_ortholog': str,
+            'evalue': float,
+            'score': float,
+            'eggNOG_OGs': list,
+            'max_annot_lvl': str,
+            'COG_category': str,
+            'Description': str,
+            'Preferred_name': str,
+            'GOs': list,
+            'EC':str,
+            'KEGG_ko': list,
+            'KEGG_Pathway': list,
+            'KEGG_Module': list,
+            'KEGG_Reaction':list,
+            'KEGG_rclass':list,
+            'BRITE':list,
+            'KEGG_TC':list,
+            'CAZy':list,
+            'BiGG_Reaction':list,
+            'PFAMs':list
+    })
+
+    num_props = [
+        #'evalue',
+        'score'
+    ]
+
+    barplot_layouts, level, _ = tree_plot.get_barplot_layouts(tree, num_props, level, prop2type, column_width=barplot_width, internal_rep=internal_num_rep)   
+    emapper_layouts.extend(barplot_layouts)
+    
+    rect_props = [
+        #'seed_ortholog',
+        'max_annot_lvl',
+        'COG_category',
+        #'Description',
+        #'Preferred_name',
+    ]
+    
+    multiple_text_props = [
+        'eggNOG_OGs', #28PAR@1|root,2QVY3@2759|Eukaryota
+        'GOs', #GO:0000002,GO:0000003
+        'KEGG_ko', #ko:K04451,ko:K10148
+        'KEGG_Pathway', #ko01522,ko01524
+        # Domains
+        'PFAMs'
+    ]
+
+    for multiple_text_prop in multiple_text_props:
+        matrix, value2color, all_profiling_values = tree_plot.multiple2matrix(tree, multiple_text_prop, prop2type=prop2type, eteformat_flag=eteformat_flag)
+        
+        if multiple_text_prop == 'KEGG_ko':
+            active = True
+        else:
+            active = False
+        multiple_text_prop_layout = tree_plot.profile_layouts.LayoutPropsMatrixBinary(name=f"Profiling_{multiple_text_prop}",
+        matrix=matrix, matrix_props=all_profiling_values, value_range=[0,1],
+        active=active,
+        value_color=value2color, column=level, poswidth=column_width)
+
+
+        level += 1
+        emapper_layouts.append(multiple_text_prop_layout)
+
+    label_layouts, level, _ = tree_plot.get_rectangle_layouts(tree, rect_props, level, prop2type=prop2type, column_width=column_width)
+    emapper_layouts.extend(label_layouts)
+    
+    text_branch_props = [
+        'Preferred_name'
+    ]
+    pname_prop = text_branch_props[0]
+    prop_values = sorted(list(set(utils.tree_prop_array(tree, pname_prop))))
+    paired_color = get_colormap_hex_colors('default', len(prop_values))
+    color_dict = utils.assign_color_to_values(prop_values, paired_color)
+    text_position = 'branch_bottom'
+    pname_layout = layouts.text_layouts.LayoutTextbranch(name='TextBranch_'+pname_prop, 
+                column=level, text_color=None, color_dict=color_dict, prop=pname_prop, 
+                position=text_position, width=column_width)
+    
+    #text_branch_layouts, level, _ = tree_plot.get_textbranch_layouts(tree, text_branch_props, level, column_width=column_width, prop2type=prop2type)
+    emapper_layouts.append(pname_layout)
+
+    taxon_color_dict = {}
+    taxa_layouts = []
+
+    # generate a rank2values dict for pre taxonomic annotated tree
+    if not rank2values:
+        rank2values = defaultdict(list)
+        for n in tree.traverse():
+            if n.props.get('rank') and n.props.get('rank') != 'Unknown':
+                rank = n.props.get('rank')
+                rank2values[rank].append(n.props.get('sci_name',''))
+    else:       
+        pass
+
+    # assign color for each value of each rank
+    for rank, value in sorted(rank2values.items()):
+        value = list(set(value))
+        color_dict = utils.assign_color_to_values(value, paired_color)
+        if rank =='clade':
+            active = True
+        else:
+            active = False
+        taxa_layout = layouts.taxon_layouts.TaxaClade(name='TaxaClade_'+rank, level=level, rank=rank, color_dict=color_dict, active=active)
+        taxa_layouts.append(taxa_layout)
+        taxon_color_dict[rank] = color_dict
+
+    taxa_layouts.append(layouts.taxon_layouts.LayoutSciName(name = 'Taxa_Scientific_name', color_dict=taxon_color_dict))
+    taxa_layouts.append(layouts.taxon_layouts.LayoutEvolEvents(name = 'Taxa_Evolutionary_events', prop="evoltype",
+        speciation_color="blue", 
+        duplication_color="red", node_size = 3,
+        legend=True))
+    emapper_layouts.extend(taxa_layouts)
+
+    # alignment
+    lengh = len(max(utils.tree_prop_array(tree, 'alignment'),key=len))
+    
+    window = []
+
+    aln_layout = layouts.seq_layouts.LayoutAlignment(name='Alignment', 
+                alignment_prop='alignment', column=level, scale_range=lengh, 
+                window=window, summarize_inner_nodes=True)
+    emapper_layouts.append(aln_layout)
+    # pfam domain
+    domain_layout = layouts.seq_layouts.LayoutDomain(name="Domain", prop='dom_arq')
+    emapper_layouts.append(domain_layout)
+    return emapper_layouts
 
 tree_ready_status = {}
 
