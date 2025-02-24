@@ -2000,6 +2000,7 @@ def numerical2matrix(tree, profiling_props, count_negative=True, internal_num_re
     A dictionary of matrix representation of the tree leaves and their properties.
     A sorted dictionary mapping property values to their corresponding colors.
     """
+
     def flatten(l):
         return [item for sublist in l for item in sublist]
 
@@ -2072,9 +2073,8 @@ def numerical2matrix(tree, profiling_props, count_negative=True, internal_num_re
                     minval = float(temp_min_val)
                 if temp_max_val:
                     maxval = float(temp_max_val)
-
                 gradientscolor = utils.build_custom_gradient(20, min_color, max_color, mid_color)
-        
+
         if profiling_props:
             for profiling_prop in profiling_props:
                 if color_config.get(profiling_prop) is not None:
@@ -2222,7 +2222,7 @@ def numerical2matrix(tree, profiling_props, count_negative=True, internal_num_re
         results_list = {}
         for prop in profiling_props:
             if prop in list_props:
-                minval_list, maxval_list, value2color_list = process_color_configuration(node2matrix_list[prop])
+                minval_list, maxval_list, value2color_list = process_color_configuration(node2matrix_list[prop], profiling_props)
                 results_list[prop] = (node2matrix_list[prop], minval_list, maxval_list, value2color_list)
             else:
                 results_list[prop] = (None, None, None, None)

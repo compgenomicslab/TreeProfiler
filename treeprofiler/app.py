@@ -1047,7 +1047,8 @@ def explore_tree(treename):
                                             },
                                             "layer": {}
                                         }
-                                        minval, maxval = layout.bubble_rage
+
+                                        minval, maxval = layout.bubble_range
                                         layout_config['layer']['maxVal'] = maxval
                                         layout_config['layer']['minVal'] = minval
                                         layout_config['layer']['colorMin'] = layer.get('colorMin', '#0000ff')
@@ -1676,6 +1677,7 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
             color_config[prop]['detail2color']['color_max'] = (color_max, maxval)
             color_config[prop]['detail2color']['color_mid'] = (color_mid, '')
             color_config[prop]['detail2color']['color_min'] = (color_min, minval)
+        
         matrix, minval, maxval, value2color, results_list, list_props, single_props = tree_plot.numerical2matrix(t, 
         selected_props, count_negative=True, internal_num_rep=internal_num_rep, 
         color_config=color_config, norm_method='min-max', prop2type=prop2type)
