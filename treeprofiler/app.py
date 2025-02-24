@@ -1405,7 +1405,21 @@ def explore_tree(treename):
                                 layout.padding_y = layout_meta['config']['padding_y']
                                 layout.internal_num_rep = layout_meta['config']['internal_num_rep']
                             
-                            
+                        if layout.name == 'Alignment_layout':
+                            alg_start = layout_meta['layer']['algStart']
+                            alg_end = layout_meta['layer']['algEnd']
+                            if alg_start != '':
+                                alg_start = int(alg_start)
+                            if alg_end != '':
+                                alg_end = int(alg_end)
+
+                            if alg_start != '' and alg_end != '':
+                                window = [alg_start, alg_end]
+                            else:
+                                window = []
+                            print(window)
+                            layout.window = window
+
                         current_layouts.append(layout)
 
                 tree_info['layouts'] = current_layouts
@@ -1417,7 +1431,11 @@ def explore_tree(treename):
     # Start the ete exploration thread
 
     if request.method == 'GET':
-
+        if treename == 'eggnog_example':
+            print("test, loading example layout")
+        elif treename == 'gtdb_example':
+            print("test, loading example_layout")
+            
         start_explore_thread(t, treename, current_layouts, current_props)
 
     # Before rendering the template, convert to JSON
@@ -1969,7 +1987,6 @@ def apply_highlight_queries(query_strings, current_layouts, paired_color, tree_i
     
     return current_layouts
 
-
 def apply_collapse_queries(query_strings, current_layouts, paired_color, tree_info, level):
     """
     Processes collapse queries and appends them to current layouts.
@@ -1987,6 +2004,10 @@ def apply_collapse_queries(query_strings, current_layouts, paired_color, tree_in
     
     return current_layouts
 
+def load_emapper_layout(tree):
+
+    return
+
 tree_ready_status = {}
 
 def start_explore_thread(t, treename, current_layouts, current_props):
@@ -1998,7 +2019,7 @@ def start_explore_thread(t, treename, current_layouts, current_props):
 
     def explore():
         print(f"Starting tree visualization for {treename}...")
-        t.explore(name=treename, layouts=current_layouts, host='138.4.138.153', port=5051, open_browser=False, include_props=current_props)
+        t.explore(name=treename, layouts=current_layouts, host='138.4.138.153', port=5051, open_browser=False)
         tree_ready_status[treename] = True  # Mark tree as ready when done
 
     explorer_thread = threading.Thread(target=explore)
