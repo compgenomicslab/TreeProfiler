@@ -433,6 +433,9 @@
             await loadExampleFile(inputId, filePath);
         }
 
+        // Automatically toggle the taxonomic annotation section
+        toggleTaxonomicSection();
+        
         // Show confirmation message
         showCustomAlert("EggNOG example files loaded successfully!");
         submitForm();
@@ -1071,6 +1074,16 @@
                 method: 'POST',
                 body: chunkFormData
             });
+        }
+    }
+
+    // Function to toggle the taxonomic section
+    function toggleTaxonomicSection() {
+        const taxonomicSection = document.getElementById("taxonomicSection");
+        const isCollapsed = taxonomicSection.classList.contains("collapsed");
+
+        if (isCollapsed) {
+            document.getElementById("toggleTaxonomicBtn").click(); // Simulate button click
         }
     }
     // Toggle visibility of taxonomic annotation section

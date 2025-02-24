@@ -630,10 +630,10 @@
                                     <td>
                                         <ul class="list-unstyled mb-0 text-secondary">
                                             % applied_props = layout.get('applied_props', [])  # Ensure it exists
-                                            % for index, prop in enumerate(applied_props[:20]):  # Show only first 20 items
+                                            % for index, prop in enumerate(applied_props[:10]):  # Show only first 20 items
                                             <li>{{ prop }}</li>
                                             % end
-                                            % if len(applied_props) > 20:
+                                            % if len(applied_props) > 10:
                                             <li>...</li>  <!-- Append "..." if there are more than 20 items -->
                                             % end
                                         </ul>
