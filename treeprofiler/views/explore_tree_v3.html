@@ -88,7 +88,7 @@
     </style>
 </head>
 <body>
-<div class="container-fluid mt-4">
+<div class="container-fluid mt-0">
     <ul class="nav nav-tabs" id="controlPanelTabs" role="tablist">
         <li class="nav-item">
             <button class="nav-link active" id="properties-tab" data-bs-toggle="tab" data-bs-target="#properties" type="button" role="tab" aria-controls="properties" aria-selected="true">Metadata-Based Layouts</button>
@@ -155,11 +155,13 @@
                                 <option value="colorbranch-layout">Color Branch Layout</option>
                                 <option value="label-layout">Label Layout</option>
                                 <option value="rectangle-layout">Rectangular Layout</option>
-                                <option value="categorical-bubble-layout">Bubble Layout</option>
+                                <!-- <option value="categorical-bubble-layout">Bubble Layout</option> -->
                                 <option value="background-layout">Background Layout</option>
                                 <option value="categorical-matrix-layout">Categorical Matrix Layout</option>
                                 <option value="piechart-layout">Piechart Layout</option>
                                 <option value="profiling-layout">Profiling Layout</option>
+                                <option value="textbranch-layout">Text Branch Layout </option>
+                                <option value="nodesymbol-layout">Node Symbol Layout </option>
                             </optgroup>
                             <optgroup label="Binary">
                                 <option value="binary-layout">Binary Layout</option>
@@ -229,7 +231,58 @@
                                                 % end
                                             </select>
                                         </div>
-                    
+
+                                        <!--text branch settings-->
+                                        <div id="textbranchSettings" class="form-group mt-4" style="display: none;">
+                                            
+                                            <div class="form-group mt-3">
+                                                <label for="textPosition" class="form-label small">Text Position</label>
+                                                
+                                                <select class="form-select" id="textPosition" name="textPosition">
+                                                    <option value="branch_bottom">Branch Bottom</option>
+                                                    <option value="branch_up">Branch Up</option>
+                                                    <option value="branch_right">Branch Right</option>
+                                                    <option value="aligned">Aligned</option>
+                                                </select>
+                                            </div>
+                                        
+                                        
+                                            <div class="form-check form-group mt-3">
+                                                <input class="form-check-input me-2" type="checkbox" value="unicolor" id="textunicolorOption" name="textunicolorOption">
+                                                <label class="form-check-label small" for="textunicolorOption">Use Unicolor</label>
+                                            </div>
+                                            
+                                            <div id="textunicolorPicker" class="form-group mt-3" style="display: none;">
+                                                <label for="textunicolorColor" class="form-label small">Select Unicolor:</label>
+                                                <input type="color" id="textunicolorColor" name="textunicolorColor" class="form-control" value="#ff0000">
+                                            </div>
+                                        
+                                            <div id="textColorscheme" class="form-group mt-3">
+                                                <label for="textColorschemeSelect" class="form-label small">Select Color Scheme:</label>
+                                                <select class="form-select" id="textColorschemeSelect" name="textColorschemeSelect">
+                                                    % for colormap in color_schemes:
+                                                    <option value="{{ colormap }}">{{ colormap }}</option>
+                                                    % end
+                                                </select>
+                                            </div>
+                                                                                       
+                                        </div> 
+                                        
+                                        <div id="nodesymbolSettins" class="form-group mt-4" style="display: none;">
+                                            <label for="symbolOption" class="form-label small">Symbol option for node:</label>
+                                            <select class="form-control" id="symbolOption" name="symbolOption">
+                                                <option value="circle">Circle</option>
+                                                <option value="square">Square</option>
+                                                <option value="triangle">Triangle</option>
+                                            </select>
+
+                                            <label for="symbolSize" class="form-label small">Node Size or Radius</label>
+                                            <input type="number" class="form-control" id="symbolSize" name="symbolSize" value="5">
+                                            
+                                            <label for="fgopacity" class="form-label small">Opacity</label>
+                                            <input type="number" class="form-control" id="fgopacity" name="fgopacity" min="0" max="1" step="0.01" value="0.8">
+                                        </div>
+
                                         <!-- Binary Layout Settings -->
                                         <div id="binarySettings" class="form-group mt-4" style="display: none;">
                                             <h6 class="fw-bold text-secondary">Binary Layout Settings</h6>
@@ -242,12 +295,12 @@
                                             </div>
                     
                                             <div class="form-check form-group mt-3">
-                                                <input class="form-check-input" type="checkbox" value="unicolor" id="unicolorOption" name="unicolorOption">
-                                                <label class="form-check-label small" for="unicolorOption">Use Unicolor</label>
+                                                <input class="form-check-input" type="checkbox" value="unicolor" id="binaryunicolorOption" name="binaryunicolorOption">
+                                                <label class="form-check-label small" for="binaryunicolorOption">Use Unicolor</label>
                                             </div>
-                                            <div id="unicolorPicker" class="form-group mt-3" style="display: none;">
-                                                <label for="unicolorColor" class="form-label small">Select Unicolor:</label>
-                                                <input type="color" id="unicolorColor" name="unicolorColor" class="form-control" value="#ff0000">
+                                            <div id="binaryunicolorPicker" class="form-group mt-3" style="display: none;">
+                                                <label for="binaryunicolorColor" class="form-label small">Select Unicolor:</label>
+                                                <input type="color" id="binaryunicolorColor" name="binaryunicolorColor" class="form-control" value="#ff0000">
                                             </div>
                     
                                             <div id="binaryColorScheme" class="form-group mt-3">
@@ -331,6 +384,7 @@
                     
                         <button id="addLayerBtn" class="btn btn-success mt-3 mx-auto d-block">
                             Add Layout
+                            <span id="addLayerSpinner" class="spinner-border spinner-border-sm ms-2" style="display: none;"></span>
                         </button>                        
                     </div>
                 </div>
@@ -359,7 +413,11 @@
                                     </select>
                                 </div>
                                 <div class="card-footer mt-auto">
-                                    <button id="activateTaxonomicLayout" class="btn btn-success w-100">Activate</button>
+                                    <!-- <button id="activateTaxonomicLayout" class="btn btn-success w-100">Activate</button> -->
+                                    <button id="activateTaxonomicLayout" class="btn btn-success w-100">
+                                        <span class="button-text">Activate</span>
+                                        <span class="spinner-border spinner-border-sm ms-2" style="display: none;"></span>
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -396,8 +454,12 @@
                                         </div>
                                     </div>
                                 </div>
+                                <!-- <button id="activateAlignmentLayout" class="btn btn-success w-100">Activate</button> -->
                                 <div class="card-footer mt-auto">
-                                    <button id="activateAlignmentLayout" class="btn btn-success w-100">Activate</button>
+                                    <button id="activateAlignmentLayout" class="btn btn-success w-100">
+                                        <span class="button-text">Activate</span>
+                                        <span class="spinner-border spinner-border-sm ms-2" style="display: none;"></span>
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -422,9 +484,13 @@
                                     <h6 class="mb-0 text-primary">Domain Layouts</h6>
                                 </div>
                                 <div class="card-body flex-grow-1"></div>
-                                <div class="card-footer mt-auto">
+                                <!-- <div class="card-footer mt-auto">
                                     <button id="activateDomainLayout" class="btn btn-success w-100">Activate</button>
-                                </div>
+                                </div> -->
+                                <button id="activateDomainLayout" class="btn btn-success w-100">
+                                    <span class="button-text">Activate</span>
+                                    <span class="spinner-border spinner-border-sm ms-2" style="display: none;"></span>
+                                </button>
                             </div>
                         </div>
                         % else:
@@ -530,7 +596,10 @@
         
                         <!-- Execute Action Button -->
                         <div class="text-center mt-4">
-                            <button id="sendQuery" class="btn btn-success px-4">Execute Action</button>
+                            <button id="sendQuery" class="btn btn-success px-4">
+                                <span class="button-text">Execute Action</span>
+                                <span class="spinner-border spinner-border-sm ms-2" style="display: none;"></span>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -585,7 +654,9 @@
                     <!-- Apply Changes Button -->
                     <div class="text-center mt-4">
                         <button id="applyChangesBtn" class="btn btn-success px-4">
-                            <i class="bi bi-check-circle-fill me-2"></i>Apply Changes
+                            <i class="bi bi-check-circle-fill me-2"></i> 
+                            <span class="button-text">Apply Changes</span>
+                            <span class="spinner-border spinner-border-sm ms-2" style="display: none;"></span>
                         </button>
                     </div>
                 </div>
@@ -596,8 +667,11 @@
 
     <!-- Iframe container -->
     <div class="position-relative mt-3">
-        <iframe src="http://138.4.138.153:5051" id="treeIframe" width="100%" height="800px" frameborder="0"
+        <div id="iframeContainer" style="display: none;">
+        <iframe id="treeIframe" width="100%" height="800px" frameborder="0"
             allowfullscreen></iframe>
+        </div>
+        <p id="loadingMessage">Loading tree visualization, please wait...</p>
     </div>
 
     <!-- Back Home and Utility Buttons -->
@@ -741,9 +815,12 @@
         }
     });
     
-    
     // Handle Add Layout Button
     $('#addLayerBtn').click(() => {
+        // Show the spinner and disable the button
+        $("#addLayerBtn").prop("disabled", true);
+        $("#addLayerSpinner").show();
+
         // // Custom query settings
         const queryType = null;
         const query = null;
@@ -753,10 +830,23 @@
 
         // Categorical layout settings
         const categoricalColorscheme = document.getElementById('categoricalColorscheme').value;
+        
+        // Text Branch layout settings
+        const textPosition = document.getElementById('textPosition').value;
+        const istextUnicolor = document.getElementById('textunicolorOption').checked;
+        const textColorScheme = istextUnicolor ? null : document.getElementById('textColorschemeSelect').value;
+        const textunicolorColor = istextUnicolor ? document.getElementById('textunicolorColor').value : null;
+        
+
+        // Node Symbol Layout settings
+        const symbolOption = document.getElementById('symbolOption').value;
+        const symbolSize = document.getElementById('symbolSize').value;
+        const fgopacity = document.getElementById('fgopacity').value;
+
         // Binary layout settings
-        const isUnicolor = document.getElementById('unicolorOption').checked;
-        const binaryColorScheme = isUnicolor ? null : document.getElementById('binaryColorSchemeSelect').value;
-        const unicolorColor = isUnicolor ? document.getElementById('unicolorColor').value : null;
+        const isbinaryUnicolor = document.getElementById('binaryunicolorOption').checked;
+        const binaryColorScheme = isbinaryUnicolor ? null : document.getElementById('binaryColorSchemeSelect').value;
+        const binaryunicolorColor = isbinaryUnicolor ? document.getElementById('binaryunicolorColor').value : null;
         const aggregateOption = document.getElementById('aggregateOption').value;
 
         // numerical layout settings
@@ -794,9 +884,18 @@
             rankSelection,
             
             categoricalColorscheme,
-            isUnicolor,
+            
+            textColorScheme,
+            textPosition,
+            textunicolorColor,
+            
+            symbolOption,
+            symbolSize,
+            fgopacity,
+
+            isbinaryUnicolor,
             binaryColorScheme,
-            unicolorColor,
+            binaryunicolorColor,
             aggregateOption,
             minVal,
             maxVal,
@@ -867,10 +966,19 @@
         ).fail((error) => {
             console.error('Error adding layout:', error);
             alert('Failed to add layout. Please try again.');
+            window.location.reload();
         });
     });
 
-    function activateLayout(layoutName) {
+    function activateLayout(layoutName, buttonId) {
+        const button = $(buttonId);
+        const spinner = button.find(".spinner-border");
+        const buttonText = button.find(".button-text");
+
+        // Show spinner and disable button
+        button.prop("disabled", true);
+        spinner.show();
+
         if (layoutName === 'alignment-layout') {
             const algStart = document.getElementById('algStart')?.value || null;
             const algEnd = document.getElementById('algEnd')?.value || null;
@@ -918,13 +1026,15 @@
         ).fail((error) => {
             console.error(`Error activating ${layoutName}:`, error);
             alert(`Failed to activate ${layoutName}. Please try again.`);
+            window.location.reload();
         });
     }
 
     // Usage
-    $('#activateTaxonomicLayout').click(() => activateLayout($('#taxonomicLayoutSelect').val()));
-    $('#activateAlignmentLayout').click(() => activateLayout('alignment-layout'));
-    $('#activateDomainLayout').click(() => activateLayout('domain-layout'));
+    // Attach event listeners
+$('#activateTaxonomicLayout').click(() => activateLayout($('#taxonomicLayoutSelect').val(), '#activateTaxonomicLayout'));
+$('#activateAlignmentLayout').click(() => activateLayout('alignment-layout', '#activateAlignmentLayout'));
+$('#activateDomainLayout').click(() => activateLayout('domain-layout', '#activateDomainLayout'));
 
 
     document.getElementById('resetTreeBtn').addEventListener('click', () => {
@@ -1016,8 +1126,29 @@
                     layerContainer.appendChild(field);
                 }
 
-                // Handle Numerical-Matrix Specific Settings
                 const layoutPrefix = layout.layout_name.split('_')[0].toLowerCase(); // Extract prefix and convert to lowercase
+                // Handle Text Branch Layout Specific Settings
+                if (layoutPrefix === 'textbranch') {
+                    const istextUnicolor = document.querySelector('select#layer-istextUnicolor');
+                    const textunicolorColor = document.querySelector('input#layer-textunicolorColor');
+                    const textColorScheme = document.querySelector('select#layer-textColorScheme');
+                    if (istextUnicolor) {
+                        istextUnicolor.addEventListener('change', function () {
+                        if (this.value === 'True') {
+                            textunicolorColor.disabled = false; // Enable textunicolorColor
+                            textColorScheme.disabled = true; // Disable textColorScheme
+                        } else {
+                            textunicolorColor.disabled = true; // Disable textunicolorColor
+                            textColorScheme.disabled = false; // Enable textColorScheme
+                        }
+                    });
+                    };
+                    // Trigger change event to set the initial state
+                    istextUnicolor.dispatchEvent(new Event('change'));
+                    
+                }
+                
+                // Handle Numerical-Matrix Specific Settings
                 if (layoutPrefix === 'numerical-matrix') {
                     const minValInput = document.querySelector('input#layer-minVal');
                     const maxValInput = document.querySelector('input#layer-maxVal');
@@ -1092,7 +1223,7 @@
             let input;
 
             // Special handling for categoricalColorscheme or similar dropdown fields
-            if (key === 'categoricalColorscheme') {
+            if (key === 'categoricalColorscheme' || key === 'textColorScheme') {
                 input = document.createElement('select');
                 input.classList.add('form-control');
                 input.setAttribute('id', `${type}-${key}`);
@@ -1102,6 +1233,57 @@
                     option.value = color;
                     option.textContent = color;
                     if (color === value) {
+                        option.selected = true;
+                    }
+                    input.appendChild(option);
+                });
+            } else if (key === 'istextUnicolor') {
+                input = document.createElement('select');
+                input.classList.add('form-control');
+                input.setAttribute('id', `${type}-${key}`);
+                input.setAttribute('name', `${type}-${key}`);
+                ['True', 'False'].forEach(optionValue => {
+                    const option = document.createElement('option');
+                    option.value = optionValue;
+                    option.textContent = optionValue;
+                    if (optionValue === value) {
+                        option.selected = true;
+                    }
+                    input.appendChild(option);
+                });
+            } else if (key === 'textunicolorColor') {
+                input = document.createElement('input');
+                input.setAttribute('type', 'color'); // Explicitly set type="color"
+                input.setAttribute('id', `${type}-${key}`);
+                input.setAttribute('name', `${type}-${key}`);
+                input.classList.add('form-control');
+                input.value = value || '#000000'; // Default color if no value provided
+            } else if (key === 'textPosition') {
+                // Special handling for aggregateOption in binary-layout
+                input = document.createElement('select');
+                input.classList.add('form-control');
+                input.setAttribute('id', `${type}-${key}`);
+                input.setAttribute('name', `${type}-${key}`);
+                ['branch_bottom', 'branch_up', 'branch_right', 'aligned'].forEach(optionValue => {
+                    const option = document.createElement('option');
+                    option.value = optionValue;
+                    option.textContent = optionValue;
+                    if (optionValue === value) {
+                        option.selected = true;
+                    }
+                    input.appendChild(option);
+                });
+            } else if (key === 'symbolOption') {
+                // Special handling for aggregateOption in binary-layout
+                input = document.createElement('select');
+                input.classList.add('form-control');
+                input.setAttribute('id', `${type}-${key}`);
+                input.setAttribute('name', `${type}-${key}`);
+                ['circle', 'square', 'triangle'].forEach(optionValue => {
+                    const option = document.createElement('option');
+                    option.value = optionValue;
+                    option.textContent = optionValue;
+                    if (optionValue === value) {
                         option.selected = true;
                     }
                     input.appendChild(option);
@@ -1211,19 +1393,34 @@
 
         // Handle Apply Changes Button
         document.getElementById('applyChangesBtn').addEventListener('click', function () {
+            const button = $("#applyChangesBtn");
+            const spinner = button.find(".spinner-border");
+            const buttonText = button.find(".button-text");
+
+            // Disable button and show spinner
+            button.prop("disabled", true);
+            spinner.show();
+
             fetch('/explore_tree/{{ treename }}', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: new URLSearchParams({
-                    updated_metadata: layoutsMetadataInput.value
+                    updated_metadata: document.getElementById('layoutsMetadataInput').value
                 })
             })
             .then(response => response.text())
             .then(data => {
-                alert("Layouts metadata updated successfully!");
-                location.reload();
+                // alert("Layouts metadata updated successfully!");
+                location.reload(); // Refresh after success
             })
-            .catch(error => console.error('Error:', error));
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to apply changes. Please try again.');
+
+                // Restore button state
+                button.prop("disabled", false);
+                spinner.hide();
+            });
         });
     });
 
@@ -1269,13 +1466,28 @@
                 "background-layout",
                 "categorical-matrix-layout",
                 "piechart-layout",
-                "profiling-layout"
+                "profiling-layout",
+                "nodesymbol-layout"
             ];
 
             if (categoricalLayouts.includes(selectedLayout)) {
                 $('#categoricalSettings').show();
             } else {
                 $('#categoricalSettings').hide();
+            }
+
+            if (selectedLayout === "textbranch-layout") {
+                $('#categoricalSettings').hide();
+                $('#textbranchSettings').show();
+            } else {
+                $('#categoricalSettings').show();
+                $('#textbranchSettings').hide();
+            }
+
+            if (selectedLayout == "nodesymbol-layout") {
+                $('#nodesymbolSettins').show();
+            } else {
+                $('#nodesymbolSettins').hide();
             }
 
             if (selectedLayout === "binary-layout") {
@@ -1367,18 +1579,32 @@
         document.getElementById('clearQueryBox').addEventListener('click', clearQueryBox);
         document.getElementById('addQueryBtn').addEventListener('click', addInitialQueryPart);
         
-        // 
-        const unicolorOption = document.getElementById('unicolorOption');
-        const unicolorPicker = document.getElementById('unicolorPicker');
+        // text branch and color
+        const binaryunicolorOption = document.getElementById('binaryunicolorOption');
+        const binaryunicolorPicker = document.getElementById('binaryunicolorPicker');
         const binaryColorScheme = document.getElementById('binaryColorScheme');
-
-        unicolorOption.addEventListener('change', () => {
-            if (unicolorOption.checked) {
-                unicolorPicker.style.display = 'block';
+        binaryunicolorOption.addEventListener('change', () => {
+            if (binaryunicolorOption.checked) {
+                binaryunicolorPicker.style.display = 'block';
                 binaryColorScheme.style.display = 'none';
             } else {
-                unicolorPicker.style.display = 'none';
+                binaryunicolorPicker.style.display = 'none';
                 binaryColorScheme.style.display = 'block';
+
+            }
+        });
+        const textunicolorOption = document.getElementById('textunicolorOption');
+        const textunicolorPicker = document.getElementById('textunicolorPicker');
+        const textColorscheme = document.getElementById('textColorscheme')
+
+        const textPosition = document.getElementById('textPosition')
+        textunicolorOption.addEventListener('change', () => {
+            if (textunicolorOption.checked) {
+                textunicolorPicker.style.display = 'block';
+                textColorscheme.style.display = 'none';
+            } else {
+                textunicolorPicker.style.display = 'none';
+                textColorscheme.style.display = 'block';
             }
         });
     };
@@ -1521,6 +1747,14 @@
     }
 
     document.getElementById('sendQuery').addEventListener('click', () => {
+        const button = $("#sendQuery");
+        const spinner = button.find(".spinner-border");
+        const buttonText = button.find(".button-text");
+
+        // Disable button and show spinner
+        button.prop("disabled", true);
+        spinner.show();
+
         // Retrieve query type and query value
         const queryType = document.getElementById('customQueryType')?.value || null;
         const query = document.getElementById('queryBox')?.value || null;
@@ -1529,20 +1763,46 @@
         // Ensure a valid queryType is selected
         if (!queryType) {
             alert('Please select a query type before sending.');
+            button.prop("disabled", false);
+            spinner.hide();
             return;
         } 
-        
-        if (!query) {
-            if (queryType !== 'rank_limit') {
-                alert('Please add a query before sending.');
-                return;
-            }
-        };
 
+        if (!query && queryType !== 'rank_limit') {
+            alert('Please add a query before sending.');
+            button.prop("disabled", false);
+            spinner.hide();
+            return;
+        }
+
+        // Form the layer object
+        // if (queryType === 'rank_limit') {
+        //     const query = null;
+        //     const rankSelection = document.getElementById('rankSelection').value;
+        //     console.log("checking rank selection", rankSelection);
+        //     const layer = {
+        //         queryType,
+        //         query,
+        //         rankSelection
+        //     };
+        //     // Add the layer to the layers array
+        //     layers.push(layer);
+        // } else if (queryType === 'highlight' || queryType === 'collapse' || queryType === 'prune') {
+        //     const rankSelection = null;
+        //     const layer = {
+        //         queryType,
+        //         query,
+        //         rankSelection
+        //     };
+        //     // Add the layer to the layers array
+        //     layers.push(layer);
+        // }
         if (queryType === 'rank_limit'){
             const rankSelection = document.getElementById('rankSelection').value;
             if (!rankSelection) {
                 alert('Please select a taxonomic rank before sending.');
+                button.prop("disabled", false);
+                spinner.hide();
                 return;
             }
         } 
@@ -1551,27 +1811,11 @@
         if (queryType === 'rank_limit') {
             const query = null;
             const rankSelection = document.getElementById('rankSelection').value;
-            console.log("checking rank selection", rankSelection);
-            const layer = {
-                queryType,
-                query,
-                rankSelection
-            };
-            // Add the layer to the layers array
-            layers.push(layer);
-        } else if (queryType === 'highlight' || queryType === 'collapse' || queryType === 'prune') {
-            const rankSelection = null;
-            const layer = {
-                queryType,
-                query,
-                rankSelection
-            };
-            // Add the layer to the layers array
-            layers.push(layer);
+            console.log("Checking rank selection", rankSelection);
+            layers.push({ queryType, query, rankSelection });
+        } else if (["highlight", "collapse", "prune"].includes(queryType)) {
+            layers.push({ queryType, query, rankSelection: null });
         }
-        
-
-        
 
         // Collect additional general settings
         const layersData = JSON.stringify(layers);
@@ -1615,6 +1859,9 @@
         ).fail((error) => {
             console.error('Error sending query:', error);
             alert('Failed to send query. Please try again.');
+            button.prop("disabled", false);
+            spinner.hide();
+            window.location.reload();
         });
     });
 
@@ -1623,20 +1870,21 @@
     $('#queryProp').on('select2:unselect', removeCounterInputField);
 </script>
 <script>
-    // Get references to the toggle button and wrapper
-    // const toggleControlPanelBtn = document.getElementById('toggleControlPanel');
-    // const controlPanelWrapper = document.getElementById('controlPanelWrapper');
 
-    // // Add click event to toggle the minimized state
-    // toggleControlPanelBtn.addEventListener('click', () => {
-    //     controlPanelWrapper.classList.toggle('minimized');
-    //     // Update button icon
-    //     if (controlPanelWrapper.classList.contains('minimized')) {
-    //         toggleControlPanelBtn.innerHTML = '&#x25B2;'; // Up arrow for minimized state
-    //     } else {
-    //         toggleControlPanelBtn.innerHTML = '&#x25BC;'; // Down arrow for expanded state
-    //     }
-    // });
+    async function checkTreeStatus() {
+        const response = await fetch(`/iframe_status/{{ treename }}`);
+        const data = await response.json();
+
+        if (data.ready) {
+            document.getElementById("loadingMessage").style.display = "none";
+            document.getElementById("iframeContainer").style.display = "block";
+            document.getElementById("treeIframe").src = "http://138.4.138.153:5051";
+        } else {
+            setTimeout(checkTreeStatus, 500); // Check again in 0.5 second
+        }
+    }
+
+    checkTreeStatus();
 
     // this is for fullscreen settings
     const togglebtn = document.getElementById("fullscreenBtn");
