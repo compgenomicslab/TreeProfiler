@@ -781,12 +781,21 @@
         }
     });
 
+    let combinedHeaders = new Set(); // Use a Set to track unique headers
+    let combinedData = {}; // Store data keyed by header
     async function parseMultipleMetadata(files, separator) {
-        const combinedHeaders = new Set(); // Use a Set to track unique headers
-        const combinedData = {}; // Store data keyed by header
+        
         let isFirstFile = true; // Track if the file is the first for Node ID column
-
+        let hasTarGzFile = false; // Track if any .tar.gz file is uploaded
+        
         for (const file of files) {
+            if (file.name.endsWith(".tar.gz")) {
+                console.log(`Extracting ${file.name}...`);
+                await uploadAndExtractTar(file);  // Call backend to extract tar.gz
+                hasTarGzFile = true; // Mark tar.gz file
+                continue;  // Skip direct parsing, extracted files will be processed separately
+            }
+
             const text = await file.text();
             const rows = text.trim().split('\n');
 
@@ -822,18 +831,23 @@
             }
         }
 
-        // Detect column types and render results
-        const columnTypes = Array.from(combinedHeaders).map((header, index) => {
-            const columnValues = combinedData[header] || [];
-            const type = index === 0 ? "Node ID Column" : detectColumnType(columnValues);
-            return { column: header, type };
-        });
+        // If a .tar.gz file was uploaded, fetch extracted metadata files
+        if (hasTarGzFile) {
+            await fetchExtractedMetadataFiles();
+        } else {
+            // If only regular metadata files were uploaded, process them normally
+            const columnTypes = Array.from(combinedHeaders).map((header, index) => {
+                const columnValues = combinedData[header] || [];
+                const type = index === 0 ? "Node ID Column" : detectColumnType(columnValues);
+                return { column: header, type };
+            });
 
-        updateTaxonomicIdOptions(combinedHeaders);
-        updateAcrOptions(combinedHeaders);
-        updateLsOptions(combinedHeaders);
-        renderColumnTypeTable(columnTypes);
-        document.getElementById('metadataAnalysis').style.display = 'block';
+            updateTaxonomicIdOptions(combinedHeaders);
+            updateAcrOptions(combinedHeaders);
+            updateLsOptions(combinedHeaders);
+            renderColumnTypeTable(columnTypes);
+            document.getElementById('metadataAnalysis').style.display = 'block';
+        }
     }
     
     document.getElementById('parseMatrixBtn').addEventListener('click', async () => {
@@ -894,8 +908,10 @@
 
             const typeCell = document.createElement('td');
             if (col.type === "Node ID Column" && index === 0) {
+                console.log("nocorrect!")
                 typeCell.textContent = "Node ID Column";
             } else {
+                console.log("correct!")
                 typeCell.innerHTML = `
                     <select class="form-control-sm" data-column="${col.column}" onchange="updateSummaryOptions(this)">
                         <option value="Categorical" ${col.type === 'Categorical' ? 'selected' : ''}>Categorical</option>
@@ -1051,6 +1067,86 @@
         });
 
         return { text_prop, num_prop, bool_prop, multiple_text_prop};
+    }
+
+    // Upload `.tar.gz` and extract on backend
+    async function uploadAndExtractTar(file) {
+        const formData = new FormData();
+        formData.append("tarFile", file);
+
+        try {
+            const response = await fetch('/extract_metadata_tar', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                console.log(`Extracted files: ${data.extracted_files}`);
+            } else {
+                console.error("Failed to extract tar.gz:", data.error);
+            }
+        } catch (error) {
+            console.error("Error uploading tar.gz file:", error);
+        }
+    }
+
+
+    // Fetch and parse extracted metadata files
+    async function fetchExtractedMetadataFiles() {
+        try {
+            const response = await fetch('/get_extracted_metadata');
+            const data = await response.json();
+
+            if (data.files.length > 0) {
+                console.log(`Processing extracted metadata files: ${data.files}`);
+
+                const combinedHeaders = new Set();
+                const combinedData = {}; // Store data keyed by header
+
+                // Process each extracted metadata file
+                for (const file of data.files) {
+                    const fileResponse = await fetch(`/extracted_metadata/${file}`);
+                    const text = await fileResponse.text();
+
+                    const rows = text.trim().split('\n');
+                    if (rows.length < 2) continue;
+
+                    const headers = rows[0].split("\t");
+                    headers.forEach(header => combinedHeaders.add(header));
+
+                    // Store column data
+                    headers.forEach(header => {
+                        if (!combinedData[header]) {
+                            combinedData[header] = [];
+                        }
+                    });
+
+                    rows.slice(1).forEach(row => {
+                        const cells = row.split("\t");
+                        cells.forEach((cell, index) => {
+                            combinedData[headers[index]].push(cell.trim());
+                        });
+                    });
+                }
+
+                // Detect column types
+                const columnTypes = Array.from(combinedHeaders).map((header, index) => {
+                    const columnValues = combinedData[header] || [];
+                    const type = index === 0 ? "Node ID Column" : detectColumnType(columnValues);
+                    return { column: header, type };
+                });
+                
+                // Render detected column types
+                updateTaxonomicIdOptions(combinedHeaders);
+                updateAcrOptions(combinedHeaders);
+                updateLsOptions(combinedHeaders);
+                renderColumnTypeTable(columnTypes);
+                document.getElementById('metadataAnalysis').style.display = 'block';
+            }
+        } catch (error) {
+            console.error("Error fetching extracted metadata files:", error);
+        }
     }
 
     async function uploadFileInChunks(file, fieldName, treename, fileId = null) {

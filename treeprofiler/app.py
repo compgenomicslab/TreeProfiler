@@ -10,7 +10,7 @@ import os
 import json
 import time
 from wsgiref.simple_server import WSGIServer, WSGIRequestHandler
-
+import tarfile
 
 from ete4 import Tree
 from treeprofiler.tree_annotate import run_tree_annotate, run_array_annotate, parse_emapper_annotations, parse_csv, parse_tsv_to_array, name_nodes  # or other functions you need
@@ -22,6 +22,8 @@ from bottle import TEMPLATE_PATH
 
 # Set the template directory
 TEMPLATE_PATH.append(os.path.join(os.path.dirname(__file__), 'views'))
+EXTRACTED_METADATA_DIR = "/tmp/extracted_metadata"
+os.makedirs(EXTRACTED_METADATA_DIR, exist_ok=True)
 
 # In-memory storage for chunks and complete files
 trees = {}
@@ -575,6 +577,38 @@ def home():
             del explore_threads[treename]  # Clean up
 
     return template('upload_tree')  # Render the home page
+
+@app.post('/extract_metadata_tar')
+def extract_metadata_tar():
+    tar_file = request.files.get('tarFile')
+
+    if not tar_file:
+        return {"success": False, "error": "No tar.gz file provided"}
+
+    # Save and extract
+    upload_path = os.path.join(EXTRACTED_METADATA_DIR, tar_file.filename)
+    tar_file.save(upload_path, overwrite=True)
+
+    extracted_files = []
+    try:
+        with tarfile.open(upload_path, "r:gz") as tar:
+            tar.extractall(EXTRACTED_METADATA_DIR)
+            extracted_files = [
+                f for f in os.listdir(EXTRACTED_METADATA_DIR) if f.endswith(".tsv") or f.endswith(".csv")
+            ]
+
+        return {"success": True, "extracted_files": extracted_files}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.route('/get_extracted_metadata')
+def get_extracted_metadata():
+    files = [f for f in os.listdir(EXTRACTED_METADATA_DIR) if f.endswith(".tsv") or f.endswith(".csv")]
+    return {"files": files}
+
+@app.route('/extracted_metadata/<filename>')
+def serve_extracted_metadata(filename):
+    return static_file(filename, root=EXTRACTED_METADATA_DIR)
 
 @app.route('/upload_chunk', method='POST')
 def upload_chunk():
