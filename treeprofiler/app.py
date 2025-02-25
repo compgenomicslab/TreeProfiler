@@ -23,6 +23,7 @@ from bottle import TEMPLATE_PATH
 # Set the template directory
 TEMPLATE_PATH.append(os.path.join(os.path.dirname(__file__), 'views'))
 EXTRACTED_METADATA_DIR = "/tmp/extracted_metadata"
+HOSTNAME = "138.4.138.153"
 os.makedirs(EXTRACTED_METADATA_DIR, exist_ok=True)
 
 # In-memory storage for chunks and complete files
@@ -141,7 +142,7 @@ class CustomServerAdapter(ServerAdapter):
 def run_server():
     """Run the Bottle app."""
     global server_instance
-    server_instance = CustomServerAdapter(host='localhost', port=8081)
+    server_instance = CustomServerAdapter(host=HOSTNAME, port=8081)
     app.run(server=server_instance)
 
 
@@ -2212,7 +2213,7 @@ def start_explore_thread(t, treename, current_layouts, current_props):
 
     def explore():
         print(f"Starting tree visualization for {treename}...")
-        t.explore(name=treename, layouts=current_layouts, port=5051, open_browser=False)
+        t.explore(name=treename, layouts=current_layouts, host=HOSTNAME, port=5051, open_browser=False)
         tree_ready_status[treename] = True  # Mark tree as ready when done
 
     explorer_thread = threading.Thread(target=explore)
