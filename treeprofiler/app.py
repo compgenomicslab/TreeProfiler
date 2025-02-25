@@ -451,11 +451,12 @@ def process_upload_job(job_args):
             
         emapper_options = {
             "emapper_pfam": pfam_file_path if pfam_file_path else None,
-            "emapper_mode": True if emapper_file_path else False
+            "emapper_mode": bool(emapper_file_path)
         }
 
         # Run annotation
         threads = 6
+
         annotated_tree, prop2type = run_tree_annotate(
             tree,
             **metadata_options,

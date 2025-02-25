@@ -781,6 +781,7 @@ def run(args):
     logger.info(f'Time for parse_csv to run: {end - start}')
     
     if args.emapper_annotations:
+        emapper_mode = True
         emapper_metadata_dict, emapper_node_props, emapper_columns = parse_emapper_annotations(args.emapper_annotations)
         metadata_dict = utils.merge_dictionaries(metadata_dict, emapper_metadata_dict)
         node_props.extend(emapper_node_props)
@@ -1372,7 +1373,7 @@ def process_node(node_data):
         internal_props.update(internal_props_multi)
 
     if bool_prop:
-        internal_props_bool = merge_text_annotations(node_leaves, bool_prop, column2method, acr_discrete_columns)
+        internal_props_bool = merge_text_annotations(node_leaves, bool_prop, column2method, acr_discrete_columns, emapper_mode=emapper_mode)
         internal_props.update(internal_props_bool)
 
     if num_prop:
@@ -1426,6 +1427,10 @@ def merge_text_annotations(nodes, target_props, column2method, acr_discrete_colu
         counters[target_prop] = counter  # Add the counter to the counters dictionary
 
         if counter_stat == 'raw':
+            if emapper_mode and counter and target_prop not in acr_discrete_columns:
+                # most_common_key = max(counter, key=counter.get)
+                internal_props[target_prop] = get_top_keys(counter)
+
             # Add the raw counts to internal_props
             internal_props[utils.add_suffix(target_prop, 'counter')] = item_seperator.join(
                 [utils.add_suffix(str(key), value, pair_seperator) for key, value in sorted(counter.items())]

@@ -675,7 +675,9 @@
                 summaryMethod = 'raw';
             } else if (summaryMethod === 'relative counter') {
                 summaryMethod = 'relative';
-            }
+            } else if (summaryMethod === 'dominant') {
+                summaryMethod = 'dominant';
+            } 
 
             summarySelections[columnName] = summaryMethod;
         });
@@ -1024,8 +1026,8 @@
     function generateSummaryOptions(type) {
         const options = {
             Numerical: ["all", "sum", "avg", "max", "min", "std", "none"],
-            Categorical: ["raw counter", "relative counter", "none"],
-            Binary: ["raw counter", "relative counter", "none"],
+            Categorical: ["raw counter", "relative counter", "dominant", "none"],
+            Binary: ["raw counter", "relative counter", "dominant", "none"],
             List: ["raw counter", "relative_counter","none"],
         };
         return options[type] ? options[type].map(opt => `<option value="${opt}">${opt}</option>`).join('') : '<option value="none">none</option>';
