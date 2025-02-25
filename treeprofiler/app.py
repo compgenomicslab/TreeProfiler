@@ -23,6 +23,9 @@ from bottle import TEMPLATE_PATH
 # Set the template directory
 TEMPLATE_PATH.append(os.path.join(os.path.dirname(__file__), 'views'))
 EXTRACTED_METADATA_DIR = "/tmp/extracted_metadata"
+current_dir = os.path.dirname(os.path.abspath(__file__))
+GTDBEXAMPLE_FILE = os.path.abspath(os.path.join(current_dir, '..', 'examples', 'pratical_example', 'gtdb_r202', 'gtdbv202_annotated.ete.tar.gz'))
+HOSTNAME = "138.4.138.153"
 os.makedirs(EXTRACTED_METADATA_DIR, exist_ok=True)
 
 # In-memory storage for chunks and complete files
@@ -141,7 +144,7 @@ class CustomServerAdapter(ServerAdapter):
 def run_server():
     """Run the Bottle app."""
     global server_instance
-    server_instance = CustomServerAdapter(host='localhost', port=8081)
+    server_instance = CustomServerAdapter(host=HOSTNAME, port=8081)
     app.run(server=server_instance)
 
 
@@ -451,21 +454,73 @@ def process_upload_job(job_args):
             
         emapper_options = {
             "emapper_pfam": pfam_file_path if pfam_file_path else None,
-            "emapper_mode": True if emapper_file_path else False
+            "emapper_mode": bool(emapper_file_path)
         }
 
         # Run annotation
         threads = 6
-        annotated_tree, prop2type = run_tree_annotate(
-            tree,
-            **metadata_options,
-            **emapper_options,
-            **taxonomic_options,
-            **analytic_options,
-            **alignment_options,
-            column2method=column2method,
-            threads=threads
-        )
+
+        if treename == 'gtdb_r202_example':
+            extracted_tree_file = extract_tar_gz(GTDBEXAMPLE_FILE, EXTRACTED_METADATA_DIR)  # Extract before using
+            if extracted_tree_file:
+                annotated_tree, eteformat_flag = utils.validate_tree(extracted_tree_file, 'ete')
+                prop2type = {
+                    'gc_percentage': float, 
+                    'genome_size': float, 
+                    'ncbi_assembly_level': str, 
+                    'ncbi_genome_category': str, 
+                    'protein_count': float, 
+                    'name': str, 
+                    'dist': float, 
+                    'support': float, 
+                    'ncbi_assembly_level_counter': str, 
+                    'ncbi_genome_category_counter': str, 
+                    'gc_percentage_avg': float, 
+                    'gc_percentage_sum': float, 
+                    'gc_percentage_max': float, 
+                    'gc_percentage_min': float, 
+                    'gc_percentage_std': float, 
+                    'genome_size_avg': float, 
+                    'genome_size_sum': float, 
+                    'genome_size_max': float, 
+                    'genome_size_min': float, 
+                    'genome_size_std': float, 
+                    'protein_count_avg': float, 
+                    'protein_count_sum': float, 
+                    'protein_count_max': float, 
+                    'protein_count_min': float, 
+                    'protein_count_std': float, 
+                    'aquatic_habitat': str,
+                    'aquatic_habitat_counter': str,
+                    'host_associated': str,
+                    'host_associated_counter': str,
+                    'soil_habitat': str,
+                    'soil_habitat_counter': str,
+                    'rank': str, 
+                    'sci_name': str, 
+                    'taxid': str, 
+                    'lineage': str, 
+                    'named_lineage': str, 
+                    'evoltype': str, 
+                    'dup_sp': str, 
+                    'dup_percent': float, 
+                    'lca': str, 
+                    'common_name': str, 
+                    'species': str
+                }
+            else:
+                raise FileNotFoundError("GTDB example file extraction failed!")
+        else:
+            annotated_tree, prop2type = run_tree_annotate(
+                tree,
+                **metadata_options,
+                **emapper_options,
+                **taxonomic_options,
+                **analytic_options,
+                **alignment_options,
+                column2method=column2method,
+                threads=threads
+            )
 
         # Process Matrix
         node_props_array = []
@@ -1473,8 +1528,14 @@ def explore_tree(treename):
                 start_explore_thread(t, treename, current_layouts, current_props)
             else:
                 start_explore_thread(t, treename, emapper_example_layouts, current_props)
-        elif treename == 'gtdb_example':
-            start_explore_thread(t, treename, current_layouts, current_props)
+        elif treename == 'gtdb_r202_example':
+            gtdb_example_layouts = load_gtdb_layout(t, prop2type)
+            
+            if current_layouts:
+                current_layouts.extend(gtdb_example_layouts)
+                start_explore_thread(t, treename, current_layouts, current_props)
+            else:
+                start_explore_thread(t, treename, gtdb_example_layouts, current_props)
         else:
             start_explore_thread(t, treename, current_layouts, current_props)
         
@@ -2170,7 +2231,7 @@ def load_emapper_layout(tree):
     # assign color for each value of each rank
     for rank, value in sorted(rank2values.items()):
         value = list(set(value))
-        color_dict = utils.assign_color_to_values(value, paired_color)
+        color_dict = utils.assign_color_to_values(value, default_paired_color)
         if rank =='clade':
             active = True
         else:
@@ -2200,6 +2261,86 @@ def load_emapper_layout(tree):
     emapper_layouts.append(domain_layout)
     return emapper_layouts
 
+def load_gtdb_layout(tree, prop2type):
+    gtdb_layouts = []
+    internal_num_rep = 'avg'
+    level = 1
+    column_width = 20
+    barplot_width = 200
+    eteformat_flag = True
+    rank2values = {}
+    
+    barplot_props = [
+        'genome_size', 
+        'protein_count'
+    ]
+
+    barplot_layouts, level, _ = tree_plot.get_barplot_layouts(tree, 
+    barplot_props, level, prop2type, column_width=barplot_width, 
+    internal_rep=internal_num_rep)
+    gtdb_layouts.extend(barplot_layouts)
+
+    heatmap_props = [
+        'gc_percentage'
+    ]
+    heatmap_layouts, level = tree_plot.get_heatmap_layouts(tree, 
+    heatmap_props, level, column_width=column_width, 
+    internal_rep=internal_num_rep, norm_method='min-max')
+    gtdb_layouts.extend(heatmap_layouts)
+
+    binary_props = [
+        'aquatic_habitat',
+        'host_associated', 
+        'soil_habitat',
+    ]
+    binary_layouts, level, color_dict = tree_plot.get_binary_layouts(tree, 
+    binary_props, level, 
+    prop2type=prop2type, column_width=column_width, reverse=False, 
+    same_color=False, aggregate=False)
+    gtdb_layouts.extend(binary_layouts)
+
+    rect_props = [
+        'ncbi_assembly_level', 
+        'ncbi_genome_category'
+    ]
+    label_layouts, level, _ = tree_plot.get_rectangle_layouts(tree, rect_props, 
+    level, prop2type=prop2type, column_width=column_width)
+    gtdb_layouts.extend(label_layouts)
+
+    taxon_color_dict = {}
+    taxa_layouts = []
+
+    # generate a rank2values dict for pre taxonomic annotated tree
+    if not rank2values:
+        rank2values = defaultdict(list)
+        for n in tree.traverse():
+            if n.props.get('rank') and n.props.get('rank') != 'Unknown':
+                rank = n.props.get('rank')
+                rank2values[rank].append(n.props.get('sci_name',''))
+    else:       
+        pass
+
+    # assign color for each value of each rank
+    for rank, value in sorted(rank2values.items()):
+        value = list(set(value))
+        color_dict = utils.assign_color_to_values(value, default_paired_color)
+        if rank == 'superkingdom':
+            active = True
+        else:
+            active = False
+        taxa_layout = layouts.taxon_layouts.TaxaClade(name='TaxaClade_'+rank, level=level, rank=rank, color_dict=color_dict, active=active)
+        taxa_layouts.append(taxa_layout)
+        taxon_color_dict[rank] = color_dict
+
+    taxa_layouts.append(layouts.taxon_layouts.LayoutSciName(name = 'Taxa_Scientific_name', color_dict=taxon_color_dict))
+    taxa_layouts.append(layouts.taxon_layouts.LayoutEvolEvents(name = 'Taxa_Evolutionary_events', prop="evoltype",
+        speciation_color="blue", 
+        duplication_color="red", node_size = 3,
+        legend=True))
+    gtdb_layouts.extend(taxa_layouts)
+
+    return gtdb_layouts
+
 tree_ready_status = {}
 
 def start_explore_thread(t, treename, current_layouts, current_props):
@@ -2211,7 +2352,7 @@ def start_explore_thread(t, treename, current_layouts, current_props):
 
     def explore():
         print(f"Starting tree visualization for {treename}...")
-        t.explore(name=treename, layouts=current_layouts, port=5051, open_browser=False)
+        t.explore(name=treename, layouts=current_layouts, host=HOSTNAME, port=5051, open_browser=False)
         tree_ready_status[treename] = True  # Mark tree as ready when done
 
     explorer_thread = threading.Thread(target=explore)
@@ -2233,6 +2374,16 @@ def convert_query_string(query_string):
         else:
             result.append(query)
     return result
+
+def extract_tar_gz(tar_gz_path, extract_to):
+    """Extract a .tar.gz file and return the first extracted file path."""
+    with tarfile.open(tar_gz_path, "r:gz") as tar:
+        tar.extractall(extract_to)  # Extract all contents
+        extracted_files = tar.getnames()  # List extracted file names
+    
+    if extracted_files:
+        return os.path.join(extract_to, extracted_files[0])  # Return the first extracted file
+    return None  # Return None if no files were found
 
 # run(host='138.4.138.153', port=8081)
 if __name__ == "__main__":
