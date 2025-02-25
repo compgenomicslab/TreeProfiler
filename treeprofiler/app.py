@@ -141,7 +141,7 @@ class CustomServerAdapter(ServerAdapter):
 def run_server():
     """Run the Bottle app."""
     global server_instance
-    server_instance = CustomServerAdapter(host='138.4.138.153', port=8081)
+    server_instance = CustomServerAdapter(host='localhost', port=8081)
     app.run(server=server_instance)
 
 
@@ -2211,7 +2211,7 @@ def start_explore_thread(t, treename, current_layouts, current_props):
 
     def explore():
         print(f"Starting tree visualization for {treename}...")
-        t.explore(name=treename, layouts=current_layouts, host='138.4.138.153', port=5051, open_browser=False)
+        t.explore(name=treename, layouts=current_layouts, port=5051, open_browser=False)
         tree_ready_status[treename] = True  # Mark tree as ready when done
 
     explorer_thread = threading.Thread(target=explore)
