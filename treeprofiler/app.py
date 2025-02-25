@@ -490,6 +490,12 @@ def process_upload_job(job_args):
                     'protein_count_max': float, 
                     'protein_count_min': float, 
                     'protein_count_std': float, 
+                    'aquatic_habitat': str,
+                    'aquatic_habitat_counter': str,
+                    'host_associated': str,
+                    'host_associated_counter': str,
+                    'soil_habitat': str,
+                    'soil_habitat_counter': str,
                     'rank': str, 
                     'sci_name': str, 
                     'taxid': str, 
@@ -1523,7 +1529,13 @@ def explore_tree(treename):
             else:
                 start_explore_thread(t, treename, emapper_example_layouts, current_props)
         elif treename == 'gtdb_r202_example':
-            start_explore_thread(t, treename, current_layouts, current_props)
+            gtdb_example_layouts = load_gtdb_layout(t, prop2type)
+            
+            if current_layouts:
+                current_layouts.extend(gtdb_example_layouts)
+                start_explore_thread(t, treename, current_layouts, current_props)
+            else:
+                start_explore_thread(t, treename, gtdb_example_layouts, current_props)
         else:
             start_explore_thread(t, treename, current_layouts, current_props)
         
@@ -2219,7 +2231,7 @@ def load_emapper_layout(tree):
     # assign color for each value of each rank
     for rank, value in sorted(rank2values.items()):
         value = list(set(value))
-        color_dict = utils.assign_color_to_values(value, paired_color)
+        color_dict = utils.assign_color_to_values(value, default_paired_color)
         if rank =='clade':
             active = True
         else:
@@ -2249,7 +2261,98 @@ def load_emapper_layout(tree):
     emapper_layouts.append(domain_layout)
     return emapper_layouts
 
-def load_gtdb_layout(tree):
+def load_gtdb_layout(tree, prop2type):
+    gtdb_layouts = []
+    internal_num_rep = 'avg'
+    level = 1
+    column_width = 20
+    barplot_width = 200
+    eteformat_flag = True
+    rank2values = {}
+    
+    barplot_props = [
+        'genome_size', 
+        'protein_count'
+    ]
+
+    barplot_layouts, level, _ = tree_plot.get_barplot_layouts(tree, 
+    barplot_props, level, prop2type, column_width=barplot_width, 
+    internal_rep=internal_num_rep)
+    gtdb_layouts.extend(barplot_layouts)
+
+    heatmap_props = [
+        'gc_percentage'
+    ]
+    heatmap_layouts, level = tree_plot.get_heatmap_layouts(tree, 
+    heatmap_props, level, column_width=column_width, 
+    internal_rep=internal_num_rep, norm_method='min-max')
+    gtdb_layouts.extend(heatmap_layouts)
+
+    binary_props = [
+        'aquatic_habitat',
+        'host_associated', 
+        'soil_habitat',
+    ]
+    binary_layouts, level, color_dict = tree_plot.get_binary_layouts(tree, 
+    binary_props, level, 
+    prop2type=prop2type, column_width=column_width, reverse=False, 
+    same_color=False, aggregate=False)
+    gtdb_layouts.extend(binary_layouts)
+
+    rect_props = [
+        'ncbi_assembly_level', 
+        'ncbi_genome_category'
+    ]
+    label_layouts, level, _ = tree_plot.get_rectangle_layouts(tree, rect_props, 
+    level, prop2type=prop2type, column_width=column_width)
+    gtdb_layouts.extend(label_layouts)
+
+    taxon_color_dict = {}
+    taxa_layouts = []
+
+    # generate a rank2values dict for pre taxonomic annotated tree
+    if not rank2values:
+        rank2values = defaultdict(list)
+        for n in tree.traverse():
+            if n.props.get('rank') and n.props.get('rank') != 'Unknown':
+                rank = n.props.get('rank')
+                rank2values[rank].append(n.props.get('sci_name',''))
+    else:       
+        pass
+
+    # assign color for each value of each rank
+    for rank, value in sorted(rank2values.items()):
+        value = list(set(value))
+        color_dict = utils.assign_color_to_values(value, default_paired_color)
+        if rank == 'superkingdom':
+            active = True
+        else:
+            active = False
+        taxa_layout = layouts.taxon_layouts.TaxaClade(name='TaxaClade_'+rank, level=level, rank=rank, color_dict=color_dict, active=active)
+        taxa_layouts.append(taxa_layout)
+        taxon_color_dict[rank] = color_dict
+
+    taxa_layouts.append(layouts.taxon_layouts.LayoutSciName(name = 'Taxa_Scientific_name', color_dict=taxon_color_dict))
+    taxa_layouts.append(layouts.taxon_layouts.LayoutEvolEvents(name = 'Taxa_Evolutionary_events', prop="evoltype",
+        speciation_color="blue", 
+        duplication_color="red", node_size = 3,
+        legend=True))
+    gtdb_layouts.extend(taxa_layouts)
+
+    # taxonclade, taxoncollapse
+    # barplot 
+    # --barplot-layout genome_size protein_count \
+    # --heatmap-layout gc_percentage \
+    # treeprofiler plot \
+    # > --tree gtdbv202_annotated.ete \
+    # > --input-type ete \
+    # > --barplot-layout genome_size protein_count \
+    # > --heatmap-layout gc_percentage \
+    # > --binary-layout aquatic_habitat host_associated soil_habitat \
+    # > --rectangle-layout ncbi_assembly_level ncbi_genome_category \
+    # > --taxonclade-layout \
+    # > --column-width 70
+
     return gtdb_layouts
 
 tree_ready_status = {}
