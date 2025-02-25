@@ -25,7 +25,7 @@ TEMPLATE_PATH.append(os.path.join(os.path.dirname(__file__), 'views'))
 EXTRACTED_METADATA_DIR = "/tmp/extracted_metadata"
 current_dir = os.path.dirname(os.path.abspath(__file__))
 GTDBEXAMPLE_FILE = os.path.abspath(os.path.join(current_dir, '..', 'examples', 'pratical_example', 'gtdb_r202', 'gtdbv202_annotated.ete.tar.gz'))
-HOSTNAME = "138.4.138.153"
+HOSTNAME = "localhost"
 os.makedirs(EXTRACTED_METADATA_DIR, exist_ok=True)
 
 # In-memory storage for chunks and complete files
