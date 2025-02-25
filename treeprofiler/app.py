@@ -23,6 +23,8 @@ from bottle import TEMPLATE_PATH
 # Set the template directory
 TEMPLATE_PATH.append(os.path.join(os.path.dirname(__file__), 'views'))
 EXTRACTED_METADATA_DIR = "/tmp/extracted_metadata"
+current_dir = os.path.dirname(os.path.abspath(__file__))
+GTDBEXAMPLE_FILE = os.path.abspath(os.path.join(current_dir, '..', 'examples', 'pratical_example', 'gtdb_r202', 'gtdbv202_annotated.ete'))
 HOSTNAME = "138.4.138.153"
 os.makedirs(EXTRACTED_METADATA_DIR, exist_ok=True)
 
@@ -458,16 +460,57 @@ def process_upload_job(job_args):
         # Run annotation
         threads = 6
 
-        annotated_tree, prop2type = run_tree_annotate(
-            tree,
-            **metadata_options,
-            **emapper_options,
-            **taxonomic_options,
-            **analytic_options,
-            **alignment_options,
-            column2method=column2method,
-            threads=threads
-        )
+        if treename == 'gtdb_r202_example':
+            annotated_tree, eteformat_flag = utils.validate_tree(GTDBEXAMPLE_FILE, 'ete')
+            prop2type = {
+                'gc_percentage': float, 
+                'genome_size': float, 
+                'ncbi_assembly_level': str, 
+                'ncbi_genome_category': str, 
+                'protein_count': float, 
+                'name': str, 
+                'dist': float, 
+                'support': float, 
+                'ncbi_assembly_level_counter': str, 
+                'ncbi_genome_category_counter': str, 
+                'gc_percentage_avg': float, 
+                'gc_percentage_sum': float, 
+                'gc_percentage_max': float, 
+                'gc_percentage_min': float, 
+                'gc_percentage_std': float, 
+                'genome_size_avg': float, 
+                'genome_size_sum': float, 
+                'genome_size_max': float, 
+                'genome_size_min': float, 
+                'genome_size_std': float, 
+                'protein_count_avg': float, 
+                'protein_count_sum': float, 
+                'protein_count_max': float, 
+                'protein_count_min': float, 
+                'protein_count_std': float, 
+                'rank': str, 
+                'sci_name': str, 
+                'taxid': str, 
+                'lineage': str, 
+                'named_lineage': str, 
+                'evoltype': str, 
+                'dup_sp': str, 
+                'dup_percent': float, 
+                'lca': str, 
+                'common_name': str, 
+                'species': str
+            }
+        else:
+            annotated_tree, prop2type = run_tree_annotate(
+                tree,
+                **metadata_options,
+                **emapper_options,
+                **taxonomic_options,
+                **analytic_options,
+                **alignment_options,
+                column2method=column2method,
+                threads=threads
+            )
 
         # Process Matrix
         node_props_array = []
@@ -1475,7 +1518,7 @@ def explore_tree(treename):
                 start_explore_thread(t, treename, current_layouts, current_props)
             else:
                 start_explore_thread(t, treename, emapper_example_layouts, current_props)
-        elif treename == 'gtdb_example':
+        elif treename == 'gtdb_r202_example':
             start_explore_thread(t, treename, current_layouts, current_props)
         else:
             start_explore_thread(t, treename, current_layouts, current_props)
@@ -2201,6 +2244,9 @@ def load_emapper_layout(tree):
     domain_layout = layouts.seq_layouts.LayoutDomain(name="Domain", prop='dom_arq')
     emapper_layouts.append(domain_layout)
     return emapper_layouts
+
+def load_gtdb_layout(tree):
+    return gtdb_layouts
 
 tree_ready_status = {}
 

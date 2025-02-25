@@ -441,6 +441,40 @@
         submitForm();
     });
 
+    document.getElementById('gtdbExampleBtn').addEventListener('click', function() {
+        const examplePaths = {
+            treeFile: "/examples/pratical_example/gtdb_r202/gtdbv202.nw",
+            metadataFiles: ['/examples/pratical_example/gtdb_r202/ar122_metadata_r202_lite.tar.gz','/examples/pratical_example/gtdb_r202/bac120_metadata_r202_lite.tar.gz']
+        }
+
+        document.getElementById('treename').value = 'gtdb_r202_example';
+
+        // Load tree file
+        loadExampleFile("treeFile", examplePaths.treeFile);
+
+        // Load metadata files (handles multiple `.tar.gz` files properly)
+        for (const filePath of examplePaths.metadataFiles) {
+            loadExampleFile("metadataFiles", filePath);
+        }
+        // Automatically toggle the taxonomic annotation section
+        toggleTaxonomicSection();
+        // Ensure taxonomic values are set correctly after toggling
+        setTimeout(() => {
+            document.getElementById("taxonomicIdColumn").value = 'name';
+            document.getElementById("taxaDb").value = 'GTDB';
+            document.getElementById("version").value = '202';
+            document.getElementById("speciesFieldDelimiter").value = '@';
+            document.getElementById("speciesFieldIndex").value = 0;
+            document.getElementById("ignoreUnclassified").value = 'False';
+        }, 500); // Delay to ensure UI updates
+        
+        // Show confirmation message
+        showCustomAlert("GTDB example files loaded successfully!");
+        setTimeout(() => {
+            submitForm();
+        }, 1000); // Adjust delay if needed
+    });
+
     // Function to fetch and load example files
     async function loadExampleFile(inputId, filePath) {
         try {
@@ -474,13 +508,7 @@
         document.body.appendChild(alertDiv);
     }
 
-    document.getElementById('gtdbExampleBtn').addEventListener('click', function() {
-        showCustomAlert("GTDB example files loaded successfully!");
-        const examplePaths = {
-            treeFile: "/examples/pratical_example/gtdb_r202/gtdbv202.nw",
-            metadataFiles: ['/examples/pratical_example/gtdb_r202/ar122_metadata_r202_lite.tar.gz','/examples/pratical_example/gtdb_r202/bac120_metadata_r202_lite.tar.gz']
-        }
-    });
+    
 </script>
 <script>
     
