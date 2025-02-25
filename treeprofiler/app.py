@@ -24,7 +24,7 @@ from bottle import TEMPLATE_PATH
 TEMPLATE_PATH.append(os.path.join(os.path.dirname(__file__), 'views'))
 EXTRACTED_METADATA_DIR = "/tmp/extracted_metadata"
 current_dir = os.path.dirname(os.path.abspath(__file__))
-GTDBEXAMPLE_FILE = os.path.abspath(os.path.join(current_dir, '..', 'examples', 'pratical_example', 'gtdb_r202', 'gtdbv202_annotated.ete'))
+GTDBEXAMPLE_FILE = os.path.abspath(os.path.join(current_dir, '..', 'examples', 'pratical_example', 'gtdb_r202', 'gtdbv202_annotated.ete.tar.gz'))
 HOSTNAME = "138.4.138.153"
 os.makedirs(EXTRACTED_METADATA_DIR, exist_ok=True)
 
@@ -461,45 +461,49 @@ def process_upload_job(job_args):
         threads = 6
 
         if treename == 'gtdb_r202_example':
-            annotated_tree, eteformat_flag = utils.validate_tree(GTDBEXAMPLE_FILE, 'ete')
-            prop2type = {
-                'gc_percentage': float, 
-                'genome_size': float, 
-                'ncbi_assembly_level': str, 
-                'ncbi_genome_category': str, 
-                'protein_count': float, 
-                'name': str, 
-                'dist': float, 
-                'support': float, 
-                'ncbi_assembly_level_counter': str, 
-                'ncbi_genome_category_counter': str, 
-                'gc_percentage_avg': float, 
-                'gc_percentage_sum': float, 
-                'gc_percentage_max': float, 
-                'gc_percentage_min': float, 
-                'gc_percentage_std': float, 
-                'genome_size_avg': float, 
-                'genome_size_sum': float, 
-                'genome_size_max': float, 
-                'genome_size_min': float, 
-                'genome_size_std': float, 
-                'protein_count_avg': float, 
-                'protein_count_sum': float, 
-                'protein_count_max': float, 
-                'protein_count_min': float, 
-                'protein_count_std': float, 
-                'rank': str, 
-                'sci_name': str, 
-                'taxid': str, 
-                'lineage': str, 
-                'named_lineage': str, 
-                'evoltype': str, 
-                'dup_sp': str, 
-                'dup_percent': float, 
-                'lca': str, 
-                'common_name': str, 
-                'species': str
-            }
+            extracted_tree_file = extract_tar_gz(GTDBEXAMPLE_FILE, EXTRACTED_METADATA_DIR)  # Extract before using
+            if extracted_tree_file:
+                annotated_tree, eteformat_flag = utils.validate_tree(extracted_tree_file, 'ete')
+                prop2type = {
+                    'gc_percentage': float, 
+                    'genome_size': float, 
+                    'ncbi_assembly_level': str, 
+                    'ncbi_genome_category': str, 
+                    'protein_count': float, 
+                    'name': str, 
+                    'dist': float, 
+                    'support': float, 
+                    'ncbi_assembly_level_counter': str, 
+                    'ncbi_genome_category_counter': str, 
+                    'gc_percentage_avg': float, 
+                    'gc_percentage_sum': float, 
+                    'gc_percentage_max': float, 
+                    'gc_percentage_min': float, 
+                    'gc_percentage_std': float, 
+                    'genome_size_avg': float, 
+                    'genome_size_sum': float, 
+                    'genome_size_max': float, 
+                    'genome_size_min': float, 
+                    'genome_size_std': float, 
+                    'protein_count_avg': float, 
+                    'protein_count_sum': float, 
+                    'protein_count_max': float, 
+                    'protein_count_min': float, 
+                    'protein_count_std': float, 
+                    'rank': str, 
+                    'sci_name': str, 
+                    'taxid': str, 
+                    'lineage': str, 
+                    'named_lineage': str, 
+                    'evoltype': str, 
+                    'dup_sp': str, 
+                    'dup_percent': float, 
+                    'lca': str, 
+                    'common_name': str, 
+                    'species': str
+                }
+            else:
+                raise FileNotFoundError("GTDB example file extraction failed!")
         else:
             annotated_tree, prop2type = run_tree_annotate(
                 tree,
@@ -2281,6 +2285,16 @@ def convert_query_string(query_string):
         else:
             result.append(query)
     return result
+
+def extract_tar_gz(tar_gz_path, extract_to):
+    """Extract a .tar.gz file and return the first extracted file path."""
+    with tarfile.open(tar_gz_path, "r:gz") as tar:
+        tar.extractall(extract_to)  # Extract all contents
+        extracted_files = tar.getnames()  # List extracted file names
+    
+    if extracted_files:
+        return os.path.join(extract_to, extracted_files[0])  # Return the first extracted file
+    return None  # Return None if no files were found
 
 # run(host='138.4.138.153', port=8081)
 if __name__ == "__main__":
