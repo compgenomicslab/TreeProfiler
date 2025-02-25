@@ -475,8 +475,11 @@
     }
 
     document.getElementById('gtdbExampleBtn').addEventListener('click', function() {
-        alert("GTDB tree example clicked!"); 
-        // You can replace the alert with a link or action
+        showCustomAlert("GTDB example files loaded successfully!");
+        const examplePaths = {
+            treeFile: "/examples/pratical_example/gtdb_r202/gtdbv202.nw",
+            metadataFiles: ['/examples/pratical_example/gtdb_r202/ar122_metadata_r202_lite.tar.gz','/examples/pratical_example/gtdb_r202/bac120_metadata_r202_lite.tar.gz']
+        }
     });
 </script>
 <script>
