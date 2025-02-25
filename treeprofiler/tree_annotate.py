@@ -153,11 +153,15 @@ def populate_annotate_args(parser):
         help="statistic calculation to perform for numerical data in internal nodes, [all, sum, avg, max, min, std, none]. If 'none' was chosen, numerical properties won't be summarized nor annotated in internal nodes. [default: all]")  
     annotation_group.add_argument('--counter-stat',
         default='raw',
-        choices=['raw', 'relative', 'none'],
+        choices=['raw', 'relative', 'dominant', 'none'],
         type=str,
         required=False,
-        help="statistic calculation to perform for categorical data in internal nodes, raw count or in percentage [raw, relative, none]. If 'none' was chosen, categorical and boolean properties won't be summarized nor annotated in internal nodes [default: raw]")  
-    
+        help="Statistic calculation for categorical data in internal nodes. Options: "
+            "'raw' (absolute count), 'relative' (percentage), 'dominant' (most frequent, up to 3 if tied), "
+            "'none' (no summary). If 'none' is chosen, categorical and boolean properties won't be summarized "
+            "or annotated in internal nodes. [default: raw]"
+    )
+
     acr_group = parser.add_argument_group(title='Ancestral Character Reconstruction arguments',
         description="ACR parameters")
     # ACR for discrete traits columns
@@ -558,7 +562,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
             logger.warning(f"Lineage specificity analysis only support boolean properties, {ls_columns} is not boolean property.")
 
     # statistic method
-    counter_stat = counter_stat #'raw' or 'relative'
+    counter_stat = counter_stat
     num_stat = num_stat
     
     # merge annotations depends on the column datatype
@@ -712,7 +716,7 @@ def run(args):
     prop2type = {}
     metadata_dict = {}
     column2method = {}
-    emapper_mode = True
+    emapper_mode = False
     setup_logger()
 
     if args.metadata:
@@ -1403,7 +1407,7 @@ def get_top_keys(counter, max_keys=2, separator="||", suffix="..."):
         return separator.join(top_keys[:max_keys]) + separator + suffix
     return separator.join(top_keys)
 
-def merge_text_annotations(nodes, target_props, column2method, acr_discrete_columns=[], emapper_mode=True):
+def merge_text_annotations(nodes, target_props, column2method, acr_discrete_columns=[], emapper_mode=False):
     pair_seperator = "--"
     item_seperator = "||"
     internal_props = {}
@@ -1414,6 +1418,7 @@ def merge_text_annotations(nodes, target_props, column2method, acr_discrete_colu
 
     for target_prop in target_props:
         counter_stat = column2method.get(target_prop, "raw")
+        
         prop_list = utils.children_prop_array_missing(nodes, target_prop)
         counter = dict(Counter(prop_list))  # Store the counter
         if 'NaN' in counter:
@@ -1421,27 +1426,28 @@ def merge_text_annotations(nodes, target_props, column2method, acr_discrete_colu
         counters[target_prop] = counter  # Add the counter to the counters dictionary
 
         if counter_stat == 'raw':
-            # Find the key with the highest count
-            if emapper_mode and counter and target_prop not in acr_discrete_columns:
-                # most_common_key = max(counter, key=counter.get)
-                internal_props[target_prop] = get_top_keys(counter)
-
             # Add the raw counts to internal_props
             internal_props[utils.add_suffix(target_prop, 'counter')] = item_seperator.join(
                 [utils.add_suffix(str(key), value, pair_seperator) for key, value in sorted(counter.items())]
             )
 
         elif counter_stat == 'relative':
-            # Find the key with the highest count
-            if emapper_mode and counter and target_prop not in acr_discrete_columns:
-                # most_common_key = max(counter, key=counter.get)
-                internal_props[target_prop] = get_top_keys(counter)
-
             total = sum(counter.values())
 
             # Add the relative counts to internal_props
             internal_props[utils.add_suffix(target_prop, 'counter')] = item_seperator.join(
                 [utils.add_suffix(str(key), '{0:.2f}'.format(float(value)/total), pair_seperator) for key, value in sorted(counter.items())]
+            )
+        elif counter_stat == 'dominant':
+            # Find the key with the highest count
+            emapper_mode = True
+            if emapper_mode and counter and target_prop not in acr_discrete_columns:
+                # most_common_key = max(counter, key=counter.get)
+                internal_props[target_prop] = get_top_keys(counter)
+            
+            # Add the raw counts to internal_props
+            internal_props[utils.add_suffix(target_prop, 'counter')] = item_seperator.join(
+                [utils.add_suffix(str(key), value, pair_seperator) for key, value in sorted(counter.items())]
             )
         elif counter_stat == 'none':
             pass
