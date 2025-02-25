@@ -1882,7 +1882,7 @@ $('#activateDomainLayout').click(() => activateLayout('domain-layout', '#activat
         if (data.ready) {
             document.getElementById("loadingMessage").style.display = "none";
             document.getElementById("iframeContainer").style.display = "block";
-            document.getElementById("treeIframe").src = "http://138.4.138.153:5051";
+            document.getElementById("treeIframe").src = "http://localhost:5051";
         } else {
             setTimeout(checkTreeStatus, 500); // Check again in 0.5 second
         }

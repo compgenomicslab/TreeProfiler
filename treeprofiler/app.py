@@ -141,7 +141,7 @@ class CustomServerAdapter(ServerAdapter):
 def run_server():
     """Run the Bottle app."""
     global server_instance
-    server_instance = CustomServerAdapter(host='138.4.138.153', port=8081)
+    server_instance = CustomServerAdapter(host='localhost', port=8081)
     app.run(server=server_instance)
 
 
@@ -451,11 +451,12 @@ def process_upload_job(job_args):
             
         emapper_options = {
             "emapper_pfam": pfam_file_path if pfam_file_path else None,
-            "emapper_mode": True if emapper_file_path else False
+            "emapper_mode": bool(emapper_file_path)
         }
 
         # Run annotation
         threads = 6
+
         annotated_tree, prop2type = run_tree_annotate(
             tree,
             **metadata_options,
@@ -2211,7 +2212,7 @@ def start_explore_thread(t, treename, current_layouts, current_props):
 
     def explore():
         print(f"Starting tree visualization for {treename}...")
-        t.explore(name=treename, layouts=current_layouts, host='138.4.138.153', port=5051, open_browser=False)
+        t.explore(name=treename, layouts=current_layouts, port=5051, open_browser=False)
         tree_ready_status[treename] = True  # Mark tree as ready when done
 
     explorer_thread = threading.Thread(target=explore)
