@@ -28,10 +28,10 @@ def first_name(tree):
     return next(iter(sci_names))
 
 class TaxaClade(TreeLayout):
-    def __init__(self, name, level, rank, color_dict, legend=True):
-        super().__init__(name, aligned_faces=True)
+    def __init__(self, name, level, rank, color_dict, active=True, legend=True):
+        super().__init__(name, aligned_faces=True, active=active)
 
-        self.activate = False
+        # self.activate = False
         self.name = name
         self.column = level
         self.rank = rank

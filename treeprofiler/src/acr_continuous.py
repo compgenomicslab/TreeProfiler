@@ -1,8 +1,6 @@
 # methods.py
 import numpy as np
 import pymc as pm
-import arviz as az
-import aesara.tensor as at
 
 def build_variance_covariance_matrix(tree, species, sigma, alpha=None, model='BM'):
     """
