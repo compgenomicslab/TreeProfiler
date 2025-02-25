@@ -10,7 +10,7 @@ import os
 import json
 import time
 from wsgiref.simple_server import WSGIServer, WSGIRequestHandler
-
+import tarfile
 
 from ete4 import Tree
 from treeprofiler.tree_annotate import run_tree_annotate, run_array_annotate, parse_emapper_annotations, parse_csv, parse_tsv_to_array, name_nodes  # or other functions you need
@@ -22,6 +22,8 @@ from bottle import TEMPLATE_PATH
 
 # Set the template directory
 TEMPLATE_PATH.append(os.path.join(os.path.dirname(__file__), 'views'))
+EXTRACTED_METADATA_DIR = "/tmp/extracted_metadata"
+os.makedirs(EXTRACTED_METADATA_DIR, exist_ok=True)
 
 # In-memory storage for chunks and complete files
 trees = {}
@@ -165,7 +167,6 @@ def stop_explore():
 @app.route('/upload', method='POST')
 def do_upload():
     treename = request.forms.get('treename')
-
     
     if not treename:
         response.status = 400
@@ -564,9 +565,50 @@ def process_upload_job(job_args):
 def server_static(filepath):
     return static_file(filepath, root='./static')
 
+explore_threads = {}  # Store threads and stop signals for exploration sessions
 @app.route('/')
-def upload_tree():
-    return template('upload_tree')
+def home():
+    # Stop all exploration threads
+    #print(explore_threads)
+    if explore_threads:
+        for treename, (thread, stop_event) in list(explore_threads.items()):
+            stop_event.set()  # Signal the thread to stop
+            thread.join(timeout=1)  # Wait for the thread to terminate
+            del explore_threads[treename]  # Clean up
+
+    return template('upload_tree')  # Render the home page
+
+@app.post('/extract_metadata_tar')
+def extract_metadata_tar():
+    tar_file = request.files.get('tarFile')
+
+    if not tar_file:
+        return {"success": False, "error": "No tar.gz file provided"}
+
+    # Save and extract
+    upload_path = os.path.join(EXTRACTED_METADATA_DIR, tar_file.filename)
+    tar_file.save(upload_path, overwrite=True)
+
+    extracted_files = []
+    try:
+        with tarfile.open(upload_path, "r:gz") as tar:
+            tar.extractall(EXTRACTED_METADATA_DIR)
+            extracted_files = [
+                f for f in os.listdir(EXTRACTED_METADATA_DIR) if f.endswith(".tsv") or f.endswith(".csv")
+            ]
+
+        return {"success": True, "extracted_files": extracted_files}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.route('/get_extracted_metadata')
+def get_extracted_metadata():
+    files = [f for f in os.listdir(EXTRACTED_METADATA_DIR) if f.endswith(".tsv") or f.endswith(".csv")]
+    return {"files": files}
+
+@app.route('/extracted_metadata/<filename>')
+def serve_extracted_metadata(filename):
+    return static_file(filename, root=EXTRACTED_METADATA_DIR)
 
 @app.route('/upload_chunk', method='POST')
 def upload_chunk():
@@ -632,6 +674,12 @@ def upload_chunk():
 
     return "Chunk received"
 
+@app.route('/examples/<filepath:path>')
+def serve_examples(filepath):
+    """Serve example files."""
+    examples_dir = os.path.abspath(os.path.join(os.getcwd(), '..', 'examples'))
+    return static_file(filepath, root=examples_dir)
+
 @app.route('/job_status/<job_id>')
 def job_status_check(job_id):
     status = job_status.get(job_id, "not_found")
@@ -661,12 +709,17 @@ def tree_status(treename):
     """Serves the job_running.html template to show job status."""
     return template('job_running', treename=treename, job_id=treename)
 
+
 @app.route('/check_job_status')
 def check_job_status():
     """API endpoint to check the status of a given job."""
     job_id = request.query.get('job_id')
     status = job_status.get(job_id, "not_found")
     return status
+    
+@app.route('/iframe_status/<treename>')
+def check_iframe_status(treename):
+    return {"ready": tree_ready_status.get(treename, False)}
 
 @app.route('/explore_tree/<treename>', method=['GET', 'POST', 'PUT'])
 def explore_tree(treename):
@@ -1042,7 +1095,8 @@ def explore_tree(treename):
                                             },
                                             "layer": {}
                                         }
-                                        minval, maxval = layout.bubble_rage
+
+                                        minval, maxval = layout.bubble_range
                                         layout_config['layer']['maxVal'] = maxval
                                         layout_config['layer']['minVal'] = minval
                                         layout_config['layer']['colorMin'] = layer.get('colorMin', '#0000ff')
@@ -1122,7 +1176,9 @@ def explore_tree(treename):
                     if layout:
                         # for categorical
                         if layout_prefix in categorical_prefix:
-                            prop = layout_meta['applied_props'][0]
+                            if layout_meta['applied_props']:
+                                prop = layout_meta['applied_props'][0]
+                            
                             # reset color config
                             if layout_prefix  == 'piechart':
                                 original_prop = prop.split('_counter')[0] # get the original prop
@@ -1385,7 +1441,20 @@ def explore_tree(treename):
                                 layout.padding_y = layout_meta['config']['padding_y']
                                 layout.internal_num_rep = layout_meta['config']['internal_num_rep']
                             
-                            
+                        if layout.name == 'Alignment_layout':
+                            alg_start = layout_meta['layer']['algStart']
+                            alg_end = layout_meta['layer']['algEnd']
+                            if alg_start != '':
+                                alg_start = int(alg_start)
+                            if alg_end != '':
+                                alg_end = int(alg_end)
+
+                            if alg_start != '' and alg_end != '':
+                                window = [alg_start, alg_end]
+                            else:
+                                window = []
+                            layout.window = window
+
                         current_layouts.append(layout)
 
                 tree_info['layouts'] = current_layouts
@@ -1397,7 +1466,18 @@ def explore_tree(treename):
     # Start the ete exploration thread
 
     if request.method == 'GET':
-        start_explore_thread(t, treename, current_layouts, current_props)
+        if treename == 'eggnog_example':
+            emapper_example_layouts = load_emapper_layout(t)
+            if current_layouts:
+                current_layouts.extend(emapper_example_layouts)
+                start_explore_thread(t, treename, current_layouts, current_props)
+            else:
+                start_explore_thread(t, treename, emapper_example_layouts, current_props)
+        elif treename == 'gtdb_example':
+            start_explore_thread(t, treename, current_layouts, current_props)
+        else:
+            start_explore_thread(t, treename, current_layouts, current_props)
+        
 
     # Before rendering the template, convert to JSON
     #layouts_json = json.dumps(tree_info['layouts'])
@@ -1671,6 +1751,7 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
             color_config[prop]['detail2color']['color_max'] = (color_max, maxval)
             color_config[prop]['detail2color']['color_mid'] = (color_mid, '')
             color_config[prop]['detail2color']['color_min'] = (color_min, minval)
+        
         matrix, minval, maxval, value2color, results_list, list_props, single_props = tree_plot.numerical2matrix(t, 
         selected_props, count_negative=True, internal_num_rep=internal_num_rep, 
         color_config=color_config, norm_method='min-max', prop2type=prop2type)
@@ -1864,7 +1945,7 @@ def apply_taxonomic_layouts(t, selected_layout, selected_props, tree_info, curre
             taxa_layout = layouts.taxon_layouts.TaxaCollapse(
                 name="TaxaCollapse_" + rank,
                 rank=rank,
-                rect_width=column_width,
+                rect_width=column_width/2,
                 color_dict=color_dict,
                 column=level
             )
@@ -1881,7 +1962,7 @@ def apply_taxonomic_layouts(t, selected_layout, selected_props, tree_info, curre
             taxa_layout = layouts.taxon_layouts.TaxaRectangular(
                 name="TaxaRect_" + rank,
                 rank=rank,
-                rect_width=column_width,
+                rect_width=column_width/2,
                 color_dict=color_dict,
                 column=level
             )
@@ -1947,7 +2028,6 @@ def apply_highlight_queries(query_strings, current_layouts, paired_color, tree_i
     
     return current_layouts
 
-
 def apply_collapse_queries(query_strings, current_layouts, paired_color, tree_info, level):
     """
     Processes collapse queries and appends them to current layouts.
@@ -1965,17 +2045,177 @@ def apply_collapse_queries(query_strings, current_layouts, paired_color, tree_in
     
     return current_layouts
 
+def load_emapper_layout(tree):
+    emapper_layouts = []
+    internal_num_rep = 'avg'
+    level = 1
+    column_width = 20
+    barplot_width = 200
+    eteformat_flag = False
+    rank2values = {}
+    prop2type = {# start with leaf name
+        'name':str,
+        'dist':float,
+        'support':float,
+        'rank': str,
+        'sci_name': str,
+        'taxid': str,
+        'lineage':str,
+        'named_lineage': str,
+        'evoltype': str,
+        'dup_sp': str,
+        'dup_percent': float,
+        'lca':str
+    }
+    popup_prop_keys = list(prop2type.keys()) 
+
+    # for path, node in tree.iter_prepostorder():
+    #     prop2type.update(utils.get_prop2type(node))
+
+    prop2type.update({
+            'seed_ortholog': str,
+            'evalue': float,
+            'score': float,
+            'eggNOG_OGs': list,
+            'max_annot_lvl': str,
+            'COG_category': str,
+            'Description': str,
+            'Preferred_name': str,
+            'GOs': list,
+            'EC':str,
+            'KEGG_ko': list,
+            'KEGG_Pathway': list,
+            'KEGG_Module': list,
+            'KEGG_Reaction':list,
+            'KEGG_rclass':list,
+            'BRITE':list,
+            'KEGG_TC':list,
+            'CAZy':list,
+            'BiGG_Reaction':list,
+            'PFAMs':list
+    })
+
+    num_props = [
+        #'evalue',
+        'score'
+    ]
+
+    barplot_layouts, level, _ = tree_plot.get_barplot_layouts(tree, num_props, level, prop2type, column_width=barplot_width, internal_rep=internal_num_rep)   
+    emapper_layouts.extend(barplot_layouts)
+    
+    rect_props = [
+        #'seed_ortholog',
+        'max_annot_lvl',
+        'COG_category',
+        #'Description',
+        #'Preferred_name',
+    ]
+    
+    multiple_text_props = [
+        'eggNOG_OGs', #28PAR@1|root,2QVY3@2759|Eukaryota
+        'GOs', #GO:0000002,GO:0000003
+        'KEGG_ko', #ko:K04451,ko:K10148
+        'KEGG_Pathway', #ko01522,ko01524
+        # Domains
+        'PFAMs'
+    ]
+
+    for multiple_text_prop in multiple_text_props:
+        matrix, value2color, all_profiling_values = tree_plot.multiple2matrix(tree, multiple_text_prop, prop2type=prop2type, eteformat_flag=eteformat_flag)
+        
+        if multiple_text_prop == 'KEGG_ko':
+            active = True
+        else:
+            active = False
+        multiple_text_prop_layout = tree_plot.profile_layouts.LayoutPropsMatrixBinary(name=f"Profiling_{multiple_text_prop}",
+        matrix=matrix, matrix_props=all_profiling_values, value_range=[0,1],
+        active=active,
+        value_color=value2color, column=level, poswidth=column_width)
+
+
+        level += 1
+        emapper_layouts.append(multiple_text_prop_layout)
+
+    label_layouts, level, _ = tree_plot.get_rectangle_layouts(tree, rect_props, level, prop2type=prop2type, column_width=column_width)
+    emapper_layouts.extend(label_layouts)
+    
+    text_branch_props = [
+        'Preferred_name'
+    ]
+    pname_prop = text_branch_props[0]
+    prop_values = sorted(list(set(utils.tree_prop_array(tree, pname_prop))))
+    paired_color = get_colormap_hex_colors('default', len(prop_values))
+    color_dict = utils.assign_color_to_values(prop_values, paired_color)
+    text_position = 'branch_bottom'
+    pname_layout = layouts.text_layouts.LayoutTextbranch(name='TextBranch_'+pname_prop, 
+                column=level, text_color=None, color_dict=color_dict, prop=pname_prop, 
+                position=text_position, width=column_width)
+    
+    #text_branch_layouts, level, _ = tree_plot.get_textbranch_layouts(tree, text_branch_props, level, column_width=column_width, prop2type=prop2type)
+    emapper_layouts.append(pname_layout)
+
+    taxon_color_dict = {}
+    taxa_layouts = []
+
+    # generate a rank2values dict for pre taxonomic annotated tree
+    if not rank2values:
+        rank2values = defaultdict(list)
+        for n in tree.traverse():
+            if n.props.get('rank') and n.props.get('rank') != 'Unknown':
+                rank = n.props.get('rank')
+                rank2values[rank].append(n.props.get('sci_name',''))
+    else:       
+        pass
+
+    # assign color for each value of each rank
+    for rank, value in sorted(rank2values.items()):
+        value = list(set(value))
+        color_dict = utils.assign_color_to_values(value, paired_color)
+        if rank =='clade':
+            active = True
+        else:
+            active = False
+        taxa_layout = layouts.taxon_layouts.TaxaClade(name='TaxaClade_'+rank, level=level, rank=rank, color_dict=color_dict, active=active)
+        taxa_layouts.append(taxa_layout)
+        taxon_color_dict[rank] = color_dict
+
+    taxa_layouts.append(layouts.taxon_layouts.LayoutSciName(name = 'Taxa_Scientific_name', color_dict=taxon_color_dict))
+    taxa_layouts.append(layouts.taxon_layouts.LayoutEvolEvents(name = 'Taxa_Evolutionary_events', prop="evoltype",
+        speciation_color="blue", 
+        duplication_color="red", node_size = 3,
+        legend=True))
+    emapper_layouts.extend(taxa_layouts)
+
+    # alignment
+    lengh = len(max(utils.tree_prop_array(tree, 'alignment'),key=len))
+    
+    window = []
+
+    aln_layout = layouts.seq_layouts.LayoutAlignment(name='Alignment', 
+                alignment_prop='alignment', column=level, scale_range=lengh, 
+                window=window, summarize_inner_nodes=True)
+    emapper_layouts.append(aln_layout)
+    # pfam domain
+    domain_layout = layouts.seq_layouts.LayoutDomain(name="Domain", prop='dom_arq')
+    emapper_layouts.append(domain_layout)
+    return emapper_layouts
+
+tree_ready_status = {}
+
 def start_explore_thread(t, treename, current_layouts, current_props):
     """
-    Starts the ete exploration in a separate thread.
+    Starts the ete exploration in a separate thread and tracks when the tree is ready.
     """
+    global tree_ready_status
+    tree_ready_status[treename] = False  # Mark tree as not ready
 
     def explore():
-        t.explore(name=treename, layouts=current_layouts, port=5051, open_browser=False, include_props=current_props)
-    
+        print(f"Starting tree visualization for {treename}...")
+        t.explore(name=treename, layouts=current_layouts, port=5051, open_browser=False)
+        tree_ready_status[treename] = True  # Mark tree as ready when done
+
     explorer_thread = threading.Thread(target=explore)
     explorer_thread.start()
-
 
 def convert_query_string(query_string):
     # Split the query by semicolon to get each statement
@@ -1994,5 +2234,6 @@ def convert_query_string(query_string):
             result.append(query)
     return result
 
+# run(host='138.4.138.153', port=8081)
 if __name__ == "__main__":
     start_server()

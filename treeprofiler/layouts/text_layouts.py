@@ -281,8 +281,8 @@ class LayoutTextbranch(TreeLayout):
 
     def set_tree_style(self, tree, tree_style):
         super().set_tree_style(tree, tree_style)
-        text = TextFace(self.prop, min_fsize=self.min_fsize, max_fsize=self.max_fsize, padding_x=self.padding_x, width=self.width, rotation=315)
-        tree_style.aligned_panel_header.add_face(text, column=self.column)
+        #text = TextFace(self.prop, min_fsize=self.min_fsize, max_fsize=self.max_fsize, padding_x=self.padding_x, width=self.width, rotation=315)
+        #tree_style.aligned_panel_header.add_face(text, column=self.column)
 
         if self.legend:
             if self.color_dict:

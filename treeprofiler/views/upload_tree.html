@@ -7,6 +7,42 @@
     <link href="/static/css/bootstrap.min.css" rel="stylesheet">
     <script src="/static/js/bootstrap.bundle.min.js"></script>
     <script src="/static/js/jquery.min.js"></script>
+
+    <!-- Floating Buttons CSS -->
+    <style>
+        #floatingButtons {
+            position: fixed;
+            left: 20px;
+            top: 20%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            z-index: 1000;
+        }
+
+        .floating-btn {
+            background-color: #f8f9fa; /* Light grey background */
+            color: #0077cc; /* Soft blue text */
+            border: 1px solid #0077cc; /* Blue border */
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            width: 220px;
+            text-align: center;
+            transition: all 0.3s ease;
+            box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.1); /* Soft shadow */
+            cursor: pointer;
+        }
+
+        .floating-btn:hover {
+            background-color: #e3f2fd; /* Light blue hover effect */
+            color: #0056b3; /* Darker blue text */
+            border-color: #0056b3;
+            transform: scale(1.05);
+        }
+    </style>
 </head>
 <body>
 
@@ -31,6 +67,12 @@
                     <label for="tree" class="col-sm-3 col-form-label">Upload Tree File in Newick Format</label>
                     <!-- <small class="form-text text-muted">upload a Newick file</small> -->
                     <input type="file" class="form-control-file mt-2" id="treeFile" name="treeFile">
+                    <!-- Example Link -->
+                    <div class="mt-2">
+                        <span>Or use an example:</span>
+                        <a href="#" class="example-link" data-type="tree" data-file="/examples/basic_example1/basic_example1.nw">Example Tree</a>
+                        <!-- <a href="#" class="example-link" data-type="tree" data-file="../examples/basic_example1/basic_example1.nw">Example Tree</a> -->
+                    </div>
                 </div>
                 <div class="form-group row mt-3">
                     <label for="treeparser" class="col-sm-3 col-form-label">Tree Parser</label>
@@ -60,6 +102,12 @@
                 <div class="form-group">
                     <label for="metadata" class="col-sm-3 col-form-label">Metadata File(s)</label>
                     <input type="file" class="form-control-file mt-2" id="metadataFiles" name="metadataFiles" multiple>
+                    <!-- Example Link -->
+                    <div class="mt-2">
+                        <span>Or use example metadata:</span>
+                        <a href="#" class="example-link" data-type="metadata" data-file="/examples/basic_example1/basic_example1_metadata.tsv">Example Metadata</a>
+                    </div>
+
                 </div>
                 <div class="form-group row mt-3">
                     <label for="separator" class="col-sm-3 col-form-label">Metadata Separator</label>
@@ -356,12 +404,92 @@
         </div>
         
         <!-- Submit Button -->
-        <button type="button" class="btn btn-primary" onclick="submitForm()">Annotate and Visualize Tree!</button>
+        <!-- <button type="button" class="btn btn-primary" onclick="submitForm()">Annotate and Visualize Tree!</button> -->
+        <button type="button" id="submitFormBtn" class="btn btn-primary" onclick="submitForm()">
+            <span class="button-text">Annotate and Visualize Tree!</span>
+            <span class="spinner-border spinner-border-sm ms-2" style="display: none;"></span>
+        </button>
     </form>
+</div>
+<!-- Floating Buttons -->
+<div id="floatingButtons">
+    <button id="eggnogExampleBtn" class="floating-btn">EggNOG Annotation Example</button>
+    <button id="gtdbExampleBtn" class="floating-btn">GTDB Tree Example</button>
 </div>
 
 <script>
+    document.getElementById('eggnogExampleBtn').addEventListener('click', async function() {
+        // Example file paths
+        const examplePaths = {
+            treeFile: "/examples/pratical_example/emapper/7955.ENSDARP00000116736.nw",
+            alignmentFile: "/examples/pratical_example/emapper/7955.ENSDARP00000116736.aln.faa",
+            emapperFile: "/examples/pratical_example/emapper/7955.out.emapper.annotations",
+            pfamFile: "/examples/pratical_example/emapper/7955.out.emapper.pfam"
+        };
+
+        document.getElementById('treename').value = 'eggnog_example';
+        // Load each file
+        for (const [inputId, filePath] of Object.entries(examplePaths)) {
+            await loadExampleFile(inputId, filePath);
+        }
+
+        // Automatically toggle the taxonomic annotation section
+        toggleTaxonomicSection();
+        
+        // Show confirmation message
+        showCustomAlert("EggNOG example files loaded successfully!");
+        submitForm();
+    });
+
+    // Function to fetch and load example files
+    async function loadExampleFile(inputId, filePath) {
+        try {
+            const response = await fetch(filePath);
+            if (!response.ok) throw new Error(`Failed to fetch ${filePath}`);
+
+            const blob = await response.blob();
+            const file = new File([blob], filePath.split('/').pop(), { type: blob.type });
+
+            // Assign the file to the input field
+            const inputElement = document.getElementById(inputId);
+            if (inputElement) {
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                inputElement.files = dataTransfer.files;
+            }
+        } catch (error) {
+            console.error(`Error loading ${filePath}:`, error);
+            showCustomAlert(`Failed to load ${filePath}`);
+        }
+    }
+
+    // Function to show a custom alert
+    function showCustomAlert(message) {
+        const alertDiv = document.createElement('div');
+        alertDiv.innerHTML = `
+            <div style="position: fixed; top: 20px; right: 20px; z-index: 1000; background: #d4edda; color: #155724; padding: 15px; border: 1px solid #c3e6cb; border-radius: 5px;">
+                ${message}
+                <button style="margin-left: 10px; background: none; border: none; font-weight: bold; cursor: pointer; color: #155724;" onclick="this.parentElement.remove()">×</button>
+            </div>`;
+        document.body.appendChild(alertDiv);
+    }
+
+    document.getElementById('gtdbExampleBtn').addEventListener('click', function() {
+        alert("GTDB tree example clicked!"); 
+        // You can replace the alert with a link or action
+    });
+</script>
+<script>
+    
     async function submitForm() {
+        const button = document.getElementById("submitFormBtn");
+        const spinner = button.querySelector(".spinner-border");
+        const buttonText = button.querySelector(".button-text");
+
+        // Disable the button and show the spinner
+        button.disabled = true;
+        spinner.style.display = "inline-block";
+
         const treename = document.getElementById('treename').value;
         const treeparser = document.getElementById('treeparser').value;
         const treeFile = document.getElementById('treeFile').files[0];
@@ -379,6 +507,8 @@
 
         if (!treename) {
             alert("Please enter a tree name.");
+            button.disabled = false;
+            spinner.style.display = "none";
             return;
         }
 
@@ -389,6 +519,8 @@
             await uploadFileInChunks(treeFile, 'treeFile', treename);
         } else {
             alert("Please provide tree data in Newick format or upload a file.");
+            button.disabled = false;
+            spinner.style.display = "none";
             return;
         }
 
@@ -561,23 +693,79 @@
     //     }
     // });
     
+    // Load examples
+    document.querySelectorAll('.example-link').forEach(link => {
+        link.addEventListener('click', async function (event) {
+            event.preventDefault();
+
+            const fileType = this.dataset.type; // "tree" or "metadata"
+            const exampleFilePath = this.dataset.file;
+            const baseUrl = window.location.origin; // Automatically gets the website's base URL
+            const fullFilePath = `${baseUrl}${exampleFilePath}`; // Combine base URL with file path
+
+            console.log(fullFilePath);
+
+            try {
+                const response = await fetch(fullFilePath); // Fetch the example file
+                if (!response.ok) throw new Error("Failed to fetch example file");
+
+                const blob = await response.blob();
+                const file = new File([blob], exampleFilePath.split('/').pop(), { type: blob.type });
+
+                // Fill the corresponding input
+                if (fileType === 'tree') {
+                    const treeInput = document.getElementById('treeFile');
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(file);
+                    treeInput.files = dataTransfer.files;
+                    showCustomAlert(`Example tree loaded into the input! <br> <a href="${fullFilePath}" >View File</a>`);
+                } else if (fileType === 'metadata') {
+                    const metadataInput = document.getElementById('metadataFiles');
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(file);
+                    metadataInput.files = dataTransfer.files;
+                    showCustomAlert(`Example metadata loaded into the input! <br> <a href="${fullFilePath}" >View File</a>`);
+                }
+            } catch (error) {
+                console.error(error);
+                showCustomAlert("Failed to load the example file.");
+            }
+        });
+    });
+
+    // Function to show a custom alert
+    function showCustomAlert(message) {
+        const alertDiv = document.createElement('div');
+        alertDiv.innerHTML = `
+            <div style="position: fixed; top: 20px; right: 20px; z-index: 1000; background: #f8d7da; color: #721c24; padding: 15px; border: 1px solid #f5c6cb; border-radius: 5px;">
+                ${message}
+                <button style="margin-left: 10px; background: none; border: none; font-weight: bold; cursor: pointer; color: #721c24;" onclick="this.parentElement.remove()">×</button>
+            </div>`;
+        document.body.appendChild(alertDiv);
+        // setTimeout(() => {
+        //     if (alertDiv.parentElement) alertDiv.parentElement.remove();
+        // }, 5000); // Automatically dismiss after 5 seconds
+    }
+
+
+    
     // event listener for treefile
     document.getElementById('treeFile').addEventListener('change', (event) => {
         const treeFileInput = event.target;
         const treenameInput = document.getElementById('treename');
 
         if (treeFileInput.files.length > 0) {
-            // Get the selected file name
             const fileName = treeFileInput.files[0].name;
-
-            // Remove the file extension
             const fileNameWithoutExtension = fileName.replace(/\.[^/.]+$/, '');
 
-            // Update the tree name input field
-            treenameInput.value = fileNameWithoutExtension;
+            // Generate a simple hash for uniqueness (e.g., using current timestamp)
+            const uniqueHash = Date.now().toString(36);
+
+            // Set the tree name as "fileName-hash"
+            treenameInput.value = `${fileNameWithoutExtension}-${uniqueHash}`;
         }
-    });
-    
+    });    
+
     // event listener for parsing multiple metadata files
     document.getElementById('parseMetadataBtn').addEventListener('click', async () => {
         const files = document.getElementById('metadataFiles').files; // Get all selected files
@@ -593,12 +781,21 @@
         }
     });
 
+    let combinedHeaders = new Set(); // Use a Set to track unique headers
+    let combinedData = {}; // Store data keyed by header
     async function parseMultipleMetadata(files, separator) {
-        const combinedHeaders = new Set(); // Use a Set to track unique headers
-        const combinedData = {}; // Store data keyed by header
+        
         let isFirstFile = true; // Track if the file is the first for Node ID column
-
+        let hasTarGzFile = false; // Track if any .tar.gz file is uploaded
+        
         for (const file of files) {
+            if (file.name.endsWith(".tar.gz")) {
+                console.log(`Extracting ${file.name}...`);
+                await uploadAndExtractTar(file);  // Call backend to extract tar.gz
+                hasTarGzFile = true; // Mark tar.gz file
+                continue;  // Skip direct parsing, extracted files will be processed separately
+            }
+
             const text = await file.text();
             const rows = text.trim().split('\n');
 
@@ -634,18 +831,23 @@
             }
         }
 
-        // Detect column types and render results
-        const columnTypes = Array.from(combinedHeaders).map((header, index) => {
-            const columnValues = combinedData[header] || [];
-            const type = index === 0 ? "Node ID Column" : detectColumnType(columnValues);
-            return { column: header, type };
-        });
+        // If a .tar.gz file was uploaded, fetch extracted metadata files
+        if (hasTarGzFile) {
+            await fetchExtractedMetadataFiles();
+        } else {
+            // If only regular metadata files were uploaded, process them normally
+            const columnTypes = Array.from(combinedHeaders).map((header, index) => {
+                const columnValues = combinedData[header] || [];
+                const type = index === 0 ? "Node ID Column" : detectColumnType(columnValues);
+                return { column: header, type };
+            });
 
-        updateTaxonomicIdOptions(combinedHeaders);
-        updateAcrOptions(combinedHeaders);
-        updateLsOptions(combinedHeaders);
-        renderColumnTypeTable(columnTypes);
-        document.getElementById('metadataAnalysis').style.display = 'block';
+            updateTaxonomicIdOptions(combinedHeaders);
+            updateAcrOptions(combinedHeaders);
+            updateLsOptions(combinedHeaders);
+            renderColumnTypeTable(columnTypes);
+            document.getElementById('metadataAnalysis').style.display = 'block';
+        }
     }
     
     document.getElementById('parseMatrixBtn').addEventListener('click', async () => {
@@ -706,8 +908,10 @@
 
             const typeCell = document.createElement('td');
             if (col.type === "Node ID Column" && index === 0) {
+                console.log("nocorrect!")
                 typeCell.textContent = "Node ID Column";
             } else {
+                console.log("correct!")
                 typeCell.innerHTML = `
                     <select class="form-control-sm" data-column="${col.column}" onchange="updateSummaryOptions(this)">
                         <option value="Categorical" ${col.type === 'Categorical' ? 'selected' : ''}>Categorical</option>
@@ -738,6 +942,12 @@
         const taxonomicIdColumn = document.getElementById('taxonomicIdColumn');
         taxonomicIdColumn.innerHTML = "";  // Clear existing options
 
+        // Ensure "name" is always in the list
+        const nameOption = document.createElement('option');
+        nameOption.value = "name";
+        nameOption.textContent = "name";
+        taxonomicIdColumn.appendChild(nameOption);
+        
         columns.forEach(col => {
             const option = document.createElement('option');
             option.value = col;
@@ -859,6 +1069,86 @@
         return { text_prop, num_prop, bool_prop, multiple_text_prop};
     }
 
+    // Upload `.tar.gz` and extract on backend
+    async function uploadAndExtractTar(file) {
+        const formData = new FormData();
+        formData.append("tarFile", file);
+
+        try {
+            const response = await fetch('/extract_metadata_tar', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                console.log(`Extracted files: ${data.extracted_files}`);
+            } else {
+                console.error("Failed to extract tar.gz:", data.error);
+            }
+        } catch (error) {
+            console.error("Error uploading tar.gz file:", error);
+        }
+    }
+
+
+    // Fetch and parse extracted metadata files
+    async function fetchExtractedMetadataFiles() {
+        try {
+            const response = await fetch('/get_extracted_metadata');
+            const data = await response.json();
+
+            if (data.files.length > 0) {
+                console.log(`Processing extracted metadata files: ${data.files}`);
+
+                const combinedHeaders = new Set();
+                const combinedData = {}; // Store data keyed by header
+
+                // Process each extracted metadata file
+                for (const file of data.files) {
+                    const fileResponse = await fetch(`/extracted_metadata/${file}`);
+                    const text = await fileResponse.text();
+
+                    const rows = text.trim().split('\n');
+                    if (rows.length < 2) continue;
+
+                    const headers = rows[0].split("\t");
+                    headers.forEach(header => combinedHeaders.add(header));
+
+                    // Store column data
+                    headers.forEach(header => {
+                        if (!combinedData[header]) {
+                            combinedData[header] = [];
+                        }
+                    });
+
+                    rows.slice(1).forEach(row => {
+                        const cells = row.split("\t");
+                        cells.forEach((cell, index) => {
+                            combinedData[headers[index]].push(cell.trim());
+                        });
+                    });
+                }
+
+                // Detect column types
+                const columnTypes = Array.from(combinedHeaders).map((header, index) => {
+                    const columnValues = combinedData[header] || [];
+                    const type = index === 0 ? "Node ID Column" : detectColumnType(columnValues);
+                    return { column: header, type };
+                });
+                
+                // Render detected column types
+                updateTaxonomicIdOptions(combinedHeaders);
+                updateAcrOptions(combinedHeaders);
+                updateLsOptions(combinedHeaders);
+                renderColumnTypeTable(columnTypes);
+                document.getElementById('metadataAnalysis').style.display = 'block';
+            }
+        } catch (error) {
+            console.error("Error fetching extracted metadata files:", error);
+        }
+    }
+
     async function uploadFileInChunks(file, fieldName, treename, fileId = null) {
         const CHUNK_SIZE = 1024 * 1024; // 1MB
         const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
@@ -880,6 +1170,16 @@
                 method: 'POST',
                 body: chunkFormData
             });
+        }
+    }
+
+    // Function to toggle the taxonomic section
+    function toggleTaxonomicSection() {
+        const taxonomicSection = document.getElementById("taxonomicSection");
+        const isCollapsed = taxonomicSection.classList.contains("collapsed");
+
+        if (isCollapsed) {
+            document.getElementById("toggleTaxonomicBtn").click(); // Simulate button click
         }
     }
     // Toggle visibility of taxonomic annotation section
