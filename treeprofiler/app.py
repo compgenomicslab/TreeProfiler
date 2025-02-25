@@ -2339,20 +2339,6 @@ def load_gtdb_layout(tree, prop2type):
         legend=True))
     gtdb_layouts.extend(taxa_layouts)
 
-    # taxonclade, taxoncollapse
-    # barplot 
-    # --barplot-layout genome_size protein_count \
-    # --heatmap-layout gc_percentage \
-    # treeprofiler plot \
-    # > --tree gtdbv202_annotated.ete \
-    # > --input-type ete \
-    # > --barplot-layout genome_size protein_count \
-    # > --heatmap-layout gc_percentage \
-    # > --binary-layout aquatic_habitat host_associated soil_habitat \
-    # > --rectangle-layout ncbi_assembly_level ncbi_genome_category \
-    # > --taxonclade-layout \
-    # > --column-width 70
-
     return gtdb_layouts
 
 tree_ready_status = {}
