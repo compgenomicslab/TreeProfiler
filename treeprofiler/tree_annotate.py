@@ -1009,6 +1009,8 @@ def parse_csv(input_files, delimiter='\t', no_headers=False, duplicate=False):
     def update_metadata(reader, node_header):
         # for tar.gz file
         for row in reader:
+            if row[node_header].startswith('##'):
+                continue  # Skip commented lines
             nodename = row[node_header]
             del row[node_header]
 
@@ -1053,6 +1055,9 @@ def parse_csv(input_files, delimiter='\t', no_headers=False, duplicate=False):
                     if member.isfile() and member.name.endswith('.tsv'):
                         with tar.extractfile(member) as tsv_file:
                             tsv_text = tsv_file.read().decode('utf-8').splitlines()
+                            # Skip header comment lines
+                            tsv_text = [line for line in tsv_text if not line.startswith('##')]
+
                             if no_headers:
                                 fields_len = len(tsv_text[0].split(delimiter))
                                 headers = ['col'+str(i) for i in range(fields_len)]
@@ -1067,52 +1072,56 @@ def parse_csv(input_files, delimiter='\t', no_headers=False, duplicate=False):
 
         else:          
             with open(input_file, 'r') as f:
-                # Read the first line to determine the number of fields
-                first_line = next(f)
-                fields_len = len(first_line.split(delimiter))
+                lines = f.readlines()
 
-                # Reset the file pointer to the beginning
-                f.seek(0)
+            # Skip header comment lines
+            lines = [line for line in lines if not line.startswith('##')]
 
-                if no_headers:
-                    # Generate header names
-                    headers = ['col'+str(i) for i in range(fields_len)]
-                    # Create a CSV reader with the generated headers
-                    reader = csv.DictReader(f, delimiter=delimiter, fieldnames=headers)
-                else:
-                    # Use the existing headers in the file
-                    reader = csv.DictReader(f, delimiter=delimiter)
-                    headers = reader.fieldnames
+            first_line = lines[0].strip()
+            fields_len = len(first_line.split(delimiter))
 
-                node_header, node_props = headers[0], headers[1:]
+            # Reset the file pointer to the beginning
+            #f.seek(0)
 
-                for row in reader:
-                    nodename = row[node_header]
-                    del row[node_header]
+            if no_headers:
+                # Generate header names
+                headers = ['col'+str(i) for i in range(fields_len)]
+                # Create a CSV reader with the generated headers
+                reader = csv.DictReader(lines, delimiter=delimiter, fieldnames=headers)
+            else:
+                # Use the existing headers in the file
+                reader = csv.DictReader(lines, delimiter=delimiter)
+                headers = reader.fieldnames
 
-                    # remove missing value
-                    #row = {k: 'NaN' if (not v or v.lower() == 'none') else v for k, v in row.items() } ## replace empty to NaN
-                    row = {k: v for k, v in row.items() if not check_missing(v)}
+            node_header, node_props = headers[0], headers[1:]
 
-                    if nodename in metadata.keys():
-                        for prop, value in row.items():
-                            if duplicate:
-                                if prop in metadata[nodename]:
-                                    exisiting_value = metadata[nodename][prop]
-                                    new_value = ','.join([exisiting_value,value])
-                                    metadata[nodename][prop] = new_value
-                                    columns[prop].append(new_value)
-                                else:
-                                    metadata[nodename][prop] = value
-                                    columns[prop].append(value)
+            for row in reader:
+                nodename = row[node_header]
+                del row[node_header]
+
+                # remove missing value
+                #row = {k: 'NaN' if (not v or v.lower() == 'none') else v for k, v in row.items() } ## replace empty to NaN
+                row = {k: v for k, v in row.items() if not check_missing(v)}
+
+                if nodename in metadata.keys():
+                    for prop, value in row.items():
+                        if duplicate:
+                            if prop in metadata[nodename]:
+                                exisiting_value = metadata[nodename][prop]
+                                new_value = ','.join([exisiting_value,value])
+                                metadata[nodename][prop] = new_value
+                                columns[prop].append(new_value)
                             else:
                                 metadata[nodename][prop] = value
                                 columns[prop].append(value)
-                    else:
-                        metadata[nodename] = dict(row)
-                        for (prop, value) in row.items(): # go over each column name and value
-                            columns[prop].append(value) # append the value into the appropriate list
-                                            # based on column name k
+                        else:
+                            metadata[nodename][prop] = value
+                            columns[prop].append(value)
+                else:
+                    metadata[nodename] = dict(row)
+                    for (prop, value) in row.items(): # go over each column name and value
+                        columns[prop].append(value) # append the value into the appropriate list
+                                        # based on column name k
             update_prop2type(node_props)
     
     return metadata, node_props, columns, prop2type
