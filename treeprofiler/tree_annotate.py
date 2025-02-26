@@ -766,10 +766,13 @@ def run(args):
     # parse csv to metadata table
     start = time.time()
     logger.info(f'start parsing...')
+
+    # extrac nodes name for filtering metadata
+    node_names = {node.name for node in tree.traverse()} 
     # parsing metadata
     if args.metadata: # make a series of metadatas
         metadata_dict, node_props, columns, metadata_prop2type = parse_csv(args.metadata, delimiter=args.metadata_sep, \
-        no_headers=args.no_headers, duplicate=args.duplicate)
+        no_headers=args.no_headers, duplicate=args.duplicate, target_nodes=node_names)
         prop2type.update(metadata_prop2type)
     else: # annotated_tree
         node_props=[]
@@ -995,7 +998,7 @@ def check_tar_gz(file_path):
     except tarfile.ReadError:
         return False
 
-def parse_csv(input_files, delimiter='\t', no_headers=False, duplicate=False):
+def parse_csv(input_files, delimiter='\t', no_headers=False, duplicate=False, target_nodes=set()):
     """
     Takes tsv table as input
     Return
@@ -1006,18 +1009,27 @@ def parse_csv(input_files, delimiter='\t', no_headers=False, duplicate=False):
     metadata = {}
     columns = defaultdict(list)
     prop2type = {}
+    # Convert target_nodes to set for fast lookup
+    if target_nodes is not None and not isinstance(target_nodes, set):
+        target_nodes = set(target_nodes)
+
     def update_metadata(reader, node_header):
         # for tar.gz file
         for row in reader:
             if row[node_header].startswith('##'):
                 continue  # Skip commented lines
             nodename = row[node_header]
+            
             del row[node_header]
 
+            # Skip nodes that are not in target_nodes
+            if target_nodes is not None and nodename not in target_nodes:
+                continue  
+            
             # remove missing value
-            #row = {k: 'NaN' if (not v or v.lower() == 'none') else v for k, v in row.items() } ## replace empty to NaN
+            ## replace empty to NaN
             row = {k: v for k, v in row.items() if not check_missing(v)}
-
+            
             if nodename in metadata.keys():
                 for prop, value in row.items():
                     if duplicate:
@@ -1037,7 +1049,7 @@ def parse_csv(input_files, delimiter='\t', no_headers=False, duplicate=False):
                 for (prop, value) in row.items(): # go over each column name and value
                     columns[prop].append(value) # append the value into the appropriate list
                                     # based on column name k
-
+            
     def update_prop2type(node_props):
         for prop in node_props:
             if set(columns[prop])=={'NaN'}:
@@ -1066,6 +1078,7 @@ def parse_csv(input_files, delimiter='\t', no_headers=False, duplicate=False):
                                 reader = csv.DictReader(tsv_text, delimiter=delimiter)
                                 headers = reader.fieldnames
                             node_header, node_props = headers[0], headers[1:]
+
                             update_metadata(reader, node_header)
                         
                         update_prop2type(node_props)
@@ -1098,6 +1111,10 @@ def parse_csv(input_files, delimiter='\t', no_headers=False, duplicate=False):
             for row in reader:
                 nodename = row[node_header]
                 del row[node_header]
+                
+                # Skip nodes that are not in target_nodes
+                if target_nodes is not None and nodename not in target_nodes:
+                    continue
 
                 # remove missing value
                 #row = {k: 'NaN' if (not v or v.lower() == 'none') else v for k, v in row.items() } ## replace empty to NaN
@@ -1765,7 +1782,7 @@ def get_range(input_range):
     #column_list_idx = [i for i in range(column_start, column_end+1)]
     return column_start, column_end
 
-def parse_emapper_annotations(input_file, delimiter='\t', no_headers=False):
+def parse_emapper_annotations(input_file, delimiter='\t', no_headers=False, target_nodes=None):
     metadata = {}
     columns = defaultdict(list)
     prop2type = {}
@@ -1773,6 +1790,10 @@ def parse_emapper_annotations(input_file, delimiter='\t', no_headers=False):
     #            "max_annot_lvl", "COG_category", "Description", "Preferred_name", "GOs",
     #            "EC", "KEGG_ko", "KEGG_Pathway", "KEGG_Module", "KEGG_Reaction", "KEGG_rclass",
     #            "BRITE", "KEGG_TC", "CAZy", "BiGG_Reaction", "PFAMs"]
+
+    # Convert target_nodes to set for fast lookup
+    if target_nodes is not None and not isinstance(target_nodes, set):
+        target_nodes = set(target_nodes)
 
     with open(input_file, 'r') as f:
         # Skip lines starting with '##'
@@ -1787,6 +1808,10 @@ def parse_emapper_annotations(input_file, delimiter='\t', no_headers=False):
         for row in reader:
             nodename = row[node_header]
             del row[node_header]
+
+            # Skip nodes that are not in target_nodes
+            if target_nodes is not None and nodename not in target_nodes:
+                continue
 
             # remove missing value
             #row = {k: 'NaN' if (not v or v.lower() == 'none') else v for k, v in row.items() } ## replace empty to NaN
