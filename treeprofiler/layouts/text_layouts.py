@@ -222,23 +222,22 @@ class LayoutText(TreeLayout):
                                     )
 
     def set_node_style(self, node):
-        if node.is_leaf and node.props.get(self.prop):
+        if node.is_leaf and node.props.get(self.prop) is not '':
             prop_text = node.props.get(self.prop)
-            if prop_text:
-                if type(prop_text) == list:
-                    prop_text = ",".join(prop_text)
-                else:
-                    pass
-                if self.color_dict:
-                    prop_face = TextFace(prop_text, color=self.color_dict.get(prop_text, 'black'),min_fsize=self.min_fsize, max_fsize=self.max_fsize, padding_x=self.padding_x, width=self.width )
-                else:
-                    prop_face = TextFace(prop_text, color='black', min_fsize=self.min_fsize, max_fsize=self.max_fsize, padding_x=self.padding_x, width=self.width )
+            if type(prop_text) == list:
+                prop_text = ",".join(prop_text)
+            else:
+                pass
+            if self.color_dict:
+                prop_face = TextFace(prop_text, color=self.color_dict.get(prop_text, 'black'),min_fsize=self.min_fsize, max_fsize=self.max_fsize, padding_x=self.padding_x, width=self.width )
+            else:
+                prop_face = TextFace(prop_text, color='black', min_fsize=self.min_fsize, max_fsize=self.max_fsize, padding_x=self.padding_x, width=self.width )
             node.add_face(prop_face, column=self.column, position="aligned")
             
         elif node.is_leaf and node.props.get(self.internal_prop):
             stackedbar_face = get_stackedbarface(node, self.internal_prop, self.color_dict, width=self.width, padding_x=self.padding_x, padding_y=self.padding_y)
             node.add_face(stackedbar_face, column = self.column, position = "aligned", collapsed_only=False)
-
+        
         elif node.props.get(self.internal_prop):
             stackedbar_face = get_stackedbarface(node, self.internal_prop, self.color_dict, width=self.width, padding_x=self.padding_x, padding_y=self.padding_y)
             node.add_face(stackedbar_face, column = self.column, position = "aligned", collapsed_only=True)
@@ -250,7 +249,72 @@ class LayoutText(TreeLayout):
             prop_face = RectFace(width=self.width, height=self.height, color=self.absence_color, \
                     padding_x=self.padding_x , padding_y=self.padding_y, tooltip=None)
             node.add_face(prop_face, column=self.column, position="aligned", collapsed_only=True)
+            # if not node.is_leaf and node.props.get(self.prop):
+            #     prop_text = node.props.get(self.prop)
+            #     if type(prop_text) == list:
+            #         prop_text = ",".join(prop_text)
+            #     else:
+            #         pass
+            #     if self.color_dict:
+            #         prop_face = TextFace(prop_text, color=self.color_dict.get(prop_text, 'black'),min_fsize=self.min_fsize, max_fsize=self.max_fsize, padding_x=self.padding_x, width=self.width )
+            #     else:
+            #         prop_face = TextFace(prop_text, color='black', min_fsize=self.min_fsize, max_fsize=self.max_fsize, padding_x=self.padding_x, width=self.width )
+            #     node.add_face(prop_face, column=self.column, position="branch_right")
+            #     node.add_face(prop_face, column=self.column, position="branch_right", collapsed_only=True)
 
+class LayoutTextbranch(TreeLayout):
+    def __init__(self, name, column, text_color, color_dict, prop, position="branch_bottom", width=70, min_fsize=5, max_fsize=15, padding_x=1, padding_y=0, legend=True, aligned_faces=True):
+        super().__init__(name, aligned_faces=aligned_faces)
+        self.aligned_faces = True
+        self.prop = prop
+        self.column = column
+        self.text_color = text_color
+        self.color_dict = color_dict
+        self.position = position
+        self.legend = legend
+        self.width = width
+        self.height = None
+        self.min_fsize = min_fsize 
+        self.max_fsize = max_fsize
+        self.padding_x = padding_x
+        self.padding_y = padding_y
+
+    def set_tree_style(self, tree, tree_style):
+        super().set_tree_style(tree, tree_style)
+        #text = TextFace(self.prop, min_fsize=self.min_fsize, max_fsize=self.max_fsize, padding_x=self.padding_x, width=self.width, rotation=315)
+        #tree_style.aligned_panel_header.add_face(text, column=self.column)
+
+        if self.legend:
+            if self.color_dict:
+                tree_style.add_legend(title=self.prop,
+                                    variable='discrete',
+                                    colormap=self.color_dict
+                                    )
+            else:
+                tree_style.add_legend(title=self.prop,
+                                    variable='discrete',
+                                    colormap={
+                                        self.prop: self.text_color
+                                        }
+                                    )
+    def set_node_style(self, node):
+        prop_text = node.props.get(self.prop)
+        if prop_text is not None and prop_text != '':
+            if type(prop_text) == list:
+                prop_text = ",".join(prop_text)
+            else:
+                pass
+
+            if self.color_dict and self.color_dict.get(prop_text):
+                color = self.color_dict.get(prop_text)
+                prop_face = TextFace(prop_text, color=color, min_fsize=self.min_fsize, max_fsize=self.max_fsize, padding_x=self.padding_x, width=self.width)
+            elif self.text_color:
+                prop_face = TextFace(prop_text, color=self.text_color, min_fsize=self.min_fsize, max_fsize=self.max_fsize, padding_x=self.padding_x, width=self.width)
+            else:
+                prop_face = TextFace(prop_text, color='black', min_fsize=self.min_fsize, max_fsize=self.max_fsize, padding_x=self.padding_x, width=self.width)
+            node.add_face(prop_face, position=self.position)
+            node.add_face(prop_face, position=self.position, collapsed_only=True)
+   
 class LayoutColorbranch(TreeLayout):
     def __init__(self, name, column, color_dict, prop, legend=True, width=70, padding_x=1, padding_y=0):
         super().__init__(name)
@@ -289,8 +353,8 @@ class LayoutColorbranch(TreeLayout):
                 if node.is_leaf:
                     node.add_face(TextFace(node.name, color = self.color_dict.get(prop_text,""), 
                     padding_x=self.padding_x),column=0, position="branch_right")
-                node.add_face(TextFace(node.name, color = self.color_dict.get(prop_text,""), 
-                padding_x=self.padding_x),column=self.column, position="branch_right", collapsed_only=True)
+                # node.add_face(TextFace(node.name, color = self.color_dict.get(prop_text,""), 
+                # padding_x=self.padding_x),column=self.column, position="branch_right", collapsed_only=True)
 
                 node.sm_style["hz_line_color"] = self.color_dict.get(prop_text,"")
                 node.sm_style["hz_line_width"] = 3
@@ -540,4 +604,67 @@ class LayoutBubbleCategorical(TreeLayout):
                 node.add_face(prop_face, column=self.column, 
                 position="branch_right", collapsed_only=False)
 
+class LayoutSymbolNode(TreeLayout):
+    def __init__(self, name=None, prop=None, position="branch_right",
+            column=0, symbol='circle', symbol_color=None, color_dict=None, 
+            max_radius=1, symbol_size=5, fgopacity=0.8, 
+            padding_x=2, padding_y=0, 
+            scale=True, legend=True, active=True):
         
+        name = name or f'{symbol}Node_{prop}'
+        super().__init__(name)
+
+        self.aligned_faces = True
+        self.prop = prop
+        self.symbol = symbol # circle, square and triangle
+        self.symbol_color = symbol_color
+
+        self.column = column
+        self.position = position
+        self.color_dict = color_dict
+
+        self.max_radius = float(max_radius)
+        self.symbol_size = float(symbol_size)
+        self.fgopacity = float(fgopacity)
+
+        self.padding_x = padding_x
+        self.padding_y = padding_y
+   
+        self.legend = legend
+        self.active = active
+    
+    def set_tree_style(self, tree, tree_style):
+        super().set_tree_style(tree, tree_style)
+        if self.legend:
+            if self.color_dict and len(self.color_dict) > 1:
+                # self.color_dict['NA'] = self.absence_color
+                tree_style.add_legend(title=self.prop,
+                                    variable='discrete',
+                                    colormap=self.color_dict
+                                    )
+            else:
+                tree_style.add_legend(title=self.prop,
+                                    variable='discrete',
+                                    colormap={
+                                        self.prop: self.symbol_color
+                                        }
+                                    )
+    
+    def set_node_style(self, node):
+        prop_text = node.props.get(self.prop) 
+        if prop_text is not None and prop_text != '':
+            if type(prop_text) == list:
+                prop_text = ",".join(prop_text)
+            else:
+                pass
+            if self.color_dict and len(self.color_dict) > 1:
+                node.sm_style['shape'] = self.symbol
+                node.sm_style["fgcolor"] = self.color_dict.get(prop_text)
+                node.sm_style['size'] =  self.symbol_size
+                node.sm_style['fgopacity'] = self.fgopacity
+            else:
+                node.sm_style['shape'] = self.symbol
+                node.sm_style["fgcolor"] = self.symbol_color
+                node.sm_style['size'] =  self.symbol_size
+                node.sm_style['fgopacity'] = self.fgopacity
+

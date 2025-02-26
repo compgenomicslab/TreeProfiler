@@ -24,7 +24,8 @@ def get_piechartface(node, prop, color_dict=None, radius=20, tooltip=None):
     piechart_data = []
     counter_props = node.props.get(prop).split(item_seperator)
     for counter_prop in counter_props:
-        k, v = counter_prop.split(pair_delimiter)
+        k, v = counter_prop.rsplit(pair_delimiter, 1)
+        #k, v = counter_prop.split(pair_delimiter)
         piechart_data.append([k,float(v),color_dict.get(k,None),None])
         
     if piechart_data:
@@ -142,8 +143,10 @@ def get_stackedbarface(node, prop, color_dict=None, width=70, height=None, paddi
     tooltip = ""
     total = 0
     
-    for counter_prop in counter_props:    
-        k, v = counter_prop.split(pair_delimiter)
+    for counter_prop in counter_props:
+   
+        #k, v = counter_prop.split(pair_delimiter)
+        k, v = counter_prop.rsplit(pair_delimiter, 1)  # Ensure splitting only on the last occurrence
         if v:
             total += float(v)
         stackedbar_data.append([k,float(v),color_dict.get(k,absence_color),None])
@@ -155,7 +158,8 @@ def get_stackedbarface(node, prop, color_dict=None, width=70, height=None, paddi
         
         if counter_props:
             for counter_prop in counter_props:
-                k, v = counter_prop.split(pair_delimiter)
+                k, v = counter_prop.rsplit(pair_delimiter, 1)
+                #k, v = counter_prop.split(pair_delimiter)
                 tooltip += f'<b>{k}</b>:  {v}/{int(total)}<br>'
 
         stackedbar_face = StackedBarFace(width=width, height=None, data=stackedbar_data, padding_x=padding_x, padding_y=padding_y, tooltip=tooltip)
