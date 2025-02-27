@@ -349,9 +349,9 @@ def process_upload_job(job_args):
         # Process metadata
         metadata_options = {}
         columns = {}
-
+        node_names = {node.name for node in tree.traverse()} 
         if metadata_file_list:
-            metadata_dict, node_props, columns, prop2type = parse_csv(metadata_file_list, delimiter=separator)
+            metadata_dict, node_props, columns, prop2type = parse_csv(metadata_file_list, delimiter=separator, target_nodes=node_names)
         else:
             metadata_dict = {}
             node_props = []
@@ -425,7 +425,7 @@ def process_upload_job(job_args):
 
         # Emapper options
         if emapper_file_path:
-            emapper_metadata_dict, emapper_node_props, emapper_columns = parse_emapper_annotations(emapper_file_path)
+            emapper_metadata_dict, emapper_node_props, emapper_columns = parse_emapper_annotations(emapper_file_path, target_nodes=node_names)
             metadata_dict = utils.merge_dictionaries(metadata_dict, emapper_metadata_dict)
             node_props.extend(emapper_node_props)
             columns.update(emapper_columns)

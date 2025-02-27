@@ -9,7 +9,7 @@ import csv
 import tarfile
 
 from collections import defaultdict, Counter
-from itertools import chain
+import itertools
 import numpy as np
 from scipy import stats
 import requests
@@ -766,10 +766,13 @@ def run(args):
     # parse csv to metadata table
     start = time.time()
     logger.info(f'start parsing...')
+
+    # extrac nodes name for filtering metadata
+    node_names = {node.name for node in tree.traverse()} 
     # parsing metadata
     if args.metadata: # make a series of metadatas
         metadata_dict, node_props, columns, metadata_prop2type = parse_csv(args.metadata, delimiter=args.metadata_sep, \
-        no_headers=args.no_headers, duplicate=args.duplicate)
+        no_headers=args.no_headers, duplicate=args.duplicate, target_nodes=node_names)
         prop2type.update(metadata_prop2type)
     else: # annotated_tree
         node_props=[]
@@ -995,127 +998,255 @@ def check_tar_gz(file_path):
     except tarfile.ReadError:
         return False
 
-def parse_csv(input_files, delimiter='\t', no_headers=False, duplicate=False):
+
+
+def parse_csv(input_files, delimiter='\t', no_headers=False, duplicate=False, target_nodes=set()):
     """
-    Takes tsv table as input
-    Return
-    metadata, as dictionary of dictionaries for each node's metadata
-    node_props, a list of property names(column names of metadata table)
-    columns, dictionary of property name and it's values
+    Parses metadata and filters nodes based on `target_nodes`.
+    Handles metadata with varying fields efficiently.
+    
+    Returns:
+    - metadata: dict {nodename: {property: value(s)}}
+    - node_props: list of unique column names
+    - columns: dict {property: list of values}
+    - prop2type: dict {property: inferred data type}
     """
-    metadata = {}
+    metadata = defaultdict(dict)
     columns = defaultdict(list)
     prop2type = {}
+
+    # Convert target_nodes to set for fast lookup
+    if target_nodes is not None and not isinstance(target_nodes, set):
+        target_nodes = set(target_nodes)
+
     def update_metadata(reader, node_header):
-        # for tar.gz file
         for row in reader:
+            if row[node_header].startswith('##'):
+                continue  # Skip commented lines
+
             nodename = row[node_header]
             del row[node_header]
 
-            # remove missing value
-            #row = {k: 'NaN' if (not v or v.lower() == 'none') else v for k, v in row.items() } ## replace empty to NaN
+            # Skip nodes that are not in target_nodes
+            if target_nodes and nodename not in target_nodes:
+                continue  
+
+            # Remove missing values
             row = {k: v for k, v in row.items() if not check_missing(v)}
 
-            if nodename in metadata.keys():
-                for prop, value in row.items():
-                    if duplicate:
-                        if prop in metadata[nodename]:
-                            exisiting_value = metadata[nodename][prop]
-                            new_value = ','.join([exisiting_value,value])
-                            metadata[nodename][prop] = new_value
-                            columns[prop].append(new_value)
-                        else:
-                            metadata[nodename][prop] = value
-                            columns[prop].append(value)
-                    else:
-                        metadata[nodename][prop] = value
-                        columns[prop].append(value)
-            else:
-                metadata[nodename] = dict(row)
-                for (prop, value) in row.items(): # go over each column name and value
-                    columns[prop].append(value) # append the value into the appropriate list
-                                    # based on column name k
+            if nodename not in metadata:
+                metadata[nodename] = defaultdict(list) if duplicate else {}
+
+            for prop, value in row.items():
+                if duplicate:
+                    metadata[nodename][prop].append(value)
+                else:
+                    metadata[nodename][prop] = value
+                columns[prop].append(value)
 
     def update_prop2type(node_props):
         for prop in node_props:
-            if set(columns[prop])=={'NaN'}:
-                #prop2type[prop] = np.str_
+            if set(columns[prop]) == {'NaN'}:
                 prop2type[prop] = str
             else:
-                dtype = infer_dtype(columns[prop])
-                prop2type[prop] = dtype # get_type_convert(dtype)
-    
+                prop2type[prop] = infer_dtype(columns[prop])
+
     for input_file in input_files:
-        # check file
         if check_tar_gz(input_file):
             with tarfile.open(input_file, 'r:gz') as tar:
                 for member in tar.getmembers():
                     if member.isfile() and member.name.endswith('.tsv'):
                         with tar.extractfile(member) as tsv_file:
                             tsv_text = tsv_file.read().decode('utf-8').splitlines()
+                            tsv_text = [line for line in tsv_text if not line.startswith('##')]
+
                             if no_headers:
                                 fields_len = len(tsv_text[0].split(delimiter))
-                                headers = ['col'+str(i) for i in range(fields_len)]
-                                reader = csv.DictReader(tsv_text, delimiter=delimiter,fieldnames=headers)
+                                headers = [f'col{i}' for i in range(fields_len)]
+                                reader = csv.DictReader(tsv_text, delimiter=delimiter, fieldnames=headers)
                             else:
                                 reader = csv.DictReader(tsv_text, delimiter=delimiter)
                                 headers = reader.fieldnames
+
                             node_header, node_props = headers[0], headers[1:]
                             update_metadata(reader, node_header)
-                        
+
                         update_prop2type(node_props)
 
-        else:          
+        else:
             with open(input_file, 'r') as f:
-                # Read the first line to determine the number of fields
-                first_line = next(f)
-                fields_len = len(first_line.split(delimiter))
+                lines = f.readlines()
 
-                # Reset the file pointer to the beginning
-                f.seek(0)
+            lines = [line for line in lines if not line.startswith('##')]
 
-                if no_headers:
-                    # Generate header names
-                    headers = ['col'+str(i) for i in range(fields_len)]
-                    # Create a CSV reader with the generated headers
-                    reader = csv.DictReader(f, delimiter=delimiter, fieldnames=headers)
-                else:
-                    # Use the existing headers in the file
-                    reader = csv.DictReader(f, delimiter=delimiter)
-                    headers = reader.fieldnames
+            first_line = lines[0].strip()
+            fields_len = len(first_line.split(delimiter))
 
-                node_header, node_props = headers[0], headers[1:]
+            if no_headers:
+                headers = [f'col{i}' for i in range(fields_len)]
+                reader = csv.DictReader(lines, delimiter=delimiter, fieldnames=headers)
+            else:
+                reader = csv.DictReader(lines, delimiter=delimiter)
+                headers = reader.fieldnames
 
-                for row in reader:
-                    nodename = row[node_header]
-                    del row[node_header]
-
-                    # remove missing value
-                    #row = {k: 'NaN' if (not v or v.lower() == 'none') else v for k, v in row.items() } ## replace empty to NaN
-                    row = {k: v for k, v in row.items() if not check_missing(v)}
-
-                    if nodename in metadata.keys():
-                        for prop, value in row.items():
-                            if duplicate:
-                                if prop in metadata[nodename]:
-                                    exisiting_value = metadata[nodename][prop]
-                                    new_value = ','.join([exisiting_value,value])
-                                    metadata[nodename][prop] = new_value
-                                    columns[prop].append(new_value)
-                                else:
-                                    metadata[nodename][prop] = value
-                                    columns[prop].append(value)
-                            else:
-                                metadata[nodename][prop] = value
-                                columns[prop].append(value)
-                    else:
-                        metadata[nodename] = dict(row)
-                        for (prop, value) in row.items(): # go over each column name and value
-                            columns[prop].append(value) # append the value into the appropriate list
-                                            # based on column name k
+            node_header, node_props = headers[0], headers[1:]
+            update_metadata(reader, node_header)
             update_prop2type(node_props)
+
+    # Convert lists back to strings at the end
+    if duplicate:
+        for nodename in metadata:
+            for prop in metadata[nodename]:
+                metadata[nodename][prop] = ','.join(metadata[nodename][prop])
+
+    return metadata, list(columns.keys()), columns, prop2type
+
+# def parse_csv(input_files, delimiter='\t', no_headers=False, duplicate=False, target_nodes=set()):
+#     """
+#     Takes tsv table as input
+#     Return
+#     metadata, as dictionary of dictionaries for each node's metadata
+#     node_props, a list of property names(column names of metadata table)
+#     columns, dictionary of property name and it's values
+#     """
+#     metadata = {}
+#     columns = defaultdict(list)
+#     prop2type = {}
+#     # Convert target_nodes to set for fast lookup
+#     if target_nodes is not None and not isinstance(target_nodes, set):
+#         target_nodes = set(target_nodes)
+
+#     def update_metadata(reader, node_header):
+#         # for tar.gz file
+#         for row in reader:
+#             if row[node_header].startswith('##'):
+#                 continue  # Skip commented lines
+#             nodename = row[node_header]
+            
+#             del row[node_header]
+
+#             # Skip nodes that are not in target_nodes
+#             if target_nodes is not None and nodename not in target_nodes:
+#                 continue  
+            
+#             # remove missing value
+#             ## replace empty to NaN
+#             row = {k: v for k, v in row.items() if not check_missing(v)}
+            
+#             if nodename in metadata.keys():
+#                 print(row.items())
+#                 for prop, value in row.items():
+#                     if duplicate:
+#                         if prop in metadata[nodename]:
+#                             exisiting_value = metadata[nodename][prop]
+#                             new_value = ','.join([exisiting_value,value])
+#                             metadata[nodename][prop] = new_value
+#                             columns[prop].append(new_value)
+#                         else:
+#                             metadata[nodename][prop] = value
+#                             columns[prop].append(value)
+#                     else:
+#                         metadata[nodename][prop] = value
+#                         columns[prop].append(value)
+#             else:
+#                 metadata[nodename] = dict(row)
+#                 for (prop, value) in row.items(): # go over each column name and value
+#                     columns[prop].append(value) # append the value into the appropriate list
+#                                     # based on column name k
+            
+#     def update_prop2type(node_props):
+#         for prop in node_props:
+#             if set(columns[prop])=={'NaN'}:
+#                 #prop2type[prop] = np.str_
+#                 prop2type[prop] = str
+#             else:
+#                 dtype = infer_dtype(columns[prop])
+#                 prop2type[prop] = dtype # get_type_convert(dtype)
     
-    return metadata, node_props, columns, prop2type
+#     for input_file in input_files:
+#         # check file
+#         if check_tar_gz(input_file):
+#             with tarfile.open(input_file, 'r:gz') as tar:
+#                 for member in tar.getmembers():
+#                     if member.isfile() and member.name.endswith('.tsv'):
+#                         with tar.extractfile(member) as tsv_file:
+#                             tsv_text = tsv_file.read().decode('utf-8').splitlines()
+#                             # Skip header comment lines
+#                             tsv_text = [line for line in tsv_text if not line.startswith('##')]
+
+#                             if no_headers:
+#                                 fields_len = len(tsv_text[0].split(delimiter))
+#                                 headers = ['col'+str(i) for i in range(fields_len)]
+#                                 reader = csv.DictReader(tsv_text, delimiter=delimiter,fieldnames=headers)
+#                             else:
+#                                 reader = csv.DictReader(tsv_text, delimiter=delimiter)
+#                                 headers = reader.fieldnames
+#                             node_header, node_props = headers[0], headers[1:]
+
+#                             update_metadata(reader, node_header)
+                        
+#                         update_prop2type(node_props)
+
+#         else:          
+#             with open(input_file, 'r') as f:
+#                 lines = f.readlines()
+
+#             # Skip header comment lines
+#             lines = [line for line in lines if not line.startswith('##')]
+
+#             first_line = lines[0].strip()
+#             fields_len = len(first_line.split(delimiter))
+
+#             # Reset the file pointer to the beginning
+#             #f.seek(0)
+
+#             if no_headers:
+#                 # Generate header names
+#                 headers = ['col'+str(i) for i in range(fields_len)]
+#                 # Create a CSV reader with the generated headers
+#                 reader = csv.DictReader(lines, delimiter=delimiter, fieldnames=headers)
+#             else:
+#                 # Use the existing headers in the file
+#                 reader = csv.DictReader(lines, delimiter=delimiter)
+#                 headers = reader.fieldnames
+
+#             node_header, node_props = headers[0], headers[1:]
+
+#             for row in reader:
+#                 nodename = row[node_header]
+#                 del row[node_header]
+                
+#                 # Skip nodes that are not in target_nodes
+#                 if target_nodes is not None and nodename not in target_nodes:
+#                     continue
+
+#                 # remove missing value
+#                 #row = {k: 'NaN' if (not v or v.lower() == 'none') else v for k, v in row.items() } ## replace empty to NaN
+#                 row = {k: v for k, v in row.items() if not check_missing(v)}
+
+#                 if nodename in metadata.keys():
+#                     print(row.items())
+#                     for prop, value in row.items():
+#                         if duplicate:
+#                             if prop in metadata[nodename]:
+#                                 exisiting_value = metadata[nodename][prop]
+#                                 new_value = ','.join([exisiting_value,value])
+#                                 metadata[nodename][prop] = new_value
+#                                 columns[prop].append(new_value)
+#                             else:
+#                                 metadata[nodename][prop] = value
+#                                 columns[prop].append(value)
+#                         else:
+#                             metadata[nodename][prop] = value
+#                             columns[prop].append(value)
+#                 else:
+#                     metadata[nodename] = dict(row)
+#                     for (prop, value) in row.items(): # go over each column name and value
+#                         columns[prop].append(value) # append the value into the appropriate list
+#                                         # based on column name k
+#             update_prop2type(node_props)
+    
+#     return metadata, node_props, columns, prop2type
 
 def parse_tsv_to_array(input_files, delimiter='\t', no_headers=True):
     """
@@ -1408,151 +1539,132 @@ def get_top_keys(counter, max_keys=2, separator="||", suffix="..."):
         return separator.join(top_keys[:max_keys]) + separator + suffix
     return separator.join(top_keys)
 
-def merge_text_annotations(nodes, target_props, column2method, acr_discrete_columns=[], emapper_mode=False):
-    pair_seperator = "--"
-    item_seperator = "||"
+def merge_text_annotations(nodes, target_props, column2method, acr_discrete_columns=None, emapper_mode=False):
+    pair_separator = "--"
+    item_separator = "||"
     internal_props = {}
     counters = {}
-    
-    # Ensure acr_discrete_columns is a set (avoids long condition checks)
-    acr_discrete_columns = set(acr_discrete_columns or [])
+
+    acr_discrete_columns = set(acr_discrete_columns or [])  # Convert once for fast lookup
 
     for target_prop in target_props:
-        counter_stat = column2method.get(target_prop, "raw")
-        
-        prop_list = utils.children_prop_array_missing(nodes, target_prop)
-        counter = dict(Counter(prop_list))  # Store the counter
-        if 'NaN' in counter:
-            del counter['NaN']
-        counters[target_prop] = counter  # Add the counter to the counters dictionary
+        counter_stat = column2method.get(target_prop, "raw")  # Store in local var
 
-        if counter_stat == 'raw':
+        # Collect property values and count occurrences
+        prop_list = utils.children_prop_array_missing(nodes, target_prop)
+        counter = Counter(prop_list)
+        counter.pop('NaN', None)  # Remove 'NaN' efficiently
+
+        # Store the counter result
+        counters[target_prop] = counter
+
+        if counter_stat in {'raw', 'dominant'}:
+            # Emapper mode handling
             if emapper_mode and counter and target_prop not in acr_discrete_columns:
-                # most_common_key = max(counter, key=counter.get)
                 internal_props[target_prop] = get_top_keys(counter)
 
-            # Add the raw counts to internal_props
-            internal_props[utils.add_suffix(target_prop, 'counter')] = item_seperator.join(
-                [utils.add_suffix(str(key), value, pair_seperator) for key, value in sorted(counter.items())]
+            # Sort and process counter items
+            sorted_items = sorted(counter.items())
+            internal_props[utils.add_suffix(target_prop, 'counter')] = item_separator.join(
+                f"{key}{pair_separator}{value}" for key, value in sorted_items
             )
 
         elif counter_stat == 'relative':
             total = sum(counter.values())
+            if total > 0:  # Avoid division by zero
+                sorted_items = sorted(counter.items())
+                internal_props[utils.add_suffix(target_prop, 'counter')] = item_separator.join(
+                    f"{key}{pair_separator}{value / total:.2f}" for key, value in sorted_items
+                )
 
-            # Add the relative counts to internal_props
-            internal_props[utils.add_suffix(target_prop, 'counter')] = item_seperator.join(
-                [utils.add_suffix(str(key), '{0:.2f}'.format(float(value)/total), pair_seperator) for key, value in sorted(counter.items())]
-            )
-        elif counter_stat == 'dominant':
-            # Find the key with the highest count
-            emapper_mode = True
-            if emapper_mode and counter and target_prop not in acr_discrete_columns:
-                # most_common_key = max(counter, key=counter.get)
-                internal_props[target_prop] = get_top_keys(counter)
-            
-            # Add the raw counts to internal_props
-            internal_props[utils.add_suffix(target_prop, 'counter')] = item_seperator.join(
-                [utils.add_suffix(str(key), value, pair_seperator) for key, value in sorted(counter.items())]
-            )
         elif counter_stat == 'none':
-            pass
+            continue
+
         else:
-            logger.error("invalid counter_stat")
+            logger.error("Invalid counter_stat")
             sys.exit(1)
+
     return internal_props
 
 def merge_multitext_annotations(nodes, target_props, column2method):
-    # Seperator of multiple text 'GO:0000003,GO:0000902,GO:0000904'
-    
-    multi_text_seperator = ','
-    pair_seperator = "--"
-    item_seperator = "||"
+    multi_text_separator = ','
+    pair_separator = "--"
+    item_separator = "||"
 
     internal_props = {}
     counters = {}
 
     for target_prop in target_props:
         counter_stat = column2method.get(target_prop, "raw")
+
+        # Get multi-text properties and flatten using itertools (faster)
         prop_list = utils.children_prop_array(nodes, target_prop)
-        # Flatten the list of lists into a single list
-        multi_prop_list = [item for sublist in prop_list for item in sublist]
-        counter = dict(Counter(multi_prop_list))  # Store the counter
-        counters[target_prop] = counter  # Add the counter to the counters dictionary
+        multi_prop_list = list(itertools.chain.from_iterable(prop_list))  # Flatten efficiently
 
-        if counter_stat == 'raw':
-            # Add the raw counts to internal_props
-            internal_props[utils.add_suffix(target_prop, 'counter')] = item_seperator.join(
-                [utils.add_suffix(str(key), value, pair_seperator) for key, value in sorted(counter.items())]
-            )
+        counter = Counter(multi_prop_list)  # Count occurrences
+        counters[target_prop] = counter  # Store counter result
 
-        elif counter_stat == 'relative':
-            total = sum(counter.values())
+        if counter_stat in {'raw', 'relative'}:
+            sorted_items = sorted(counter.items())  # Sort only once
 
-            # Add the relative counts to internal_props
-            internal_props[utils.add_suffix(target_prop, 'counter')] = item_seperator.join(
-                [utils.add_suffix(str(key), '{0:.2f}'.format(float(value) / total), pair_seperator) for key, value in sorted(counter.items())]
-            )
+            if counter_stat == 'raw':
+                internal_props[utils.add_suffix(target_prop, 'counter')] = item_separator.join(
+                    f"{key}{pair_separator}{value}" for key, value in sorted_items
+                )
 
-        else:
-            # Handle invalid counter_stat, if necessary
-            pass
+            elif counter_stat == 'relative':
+                total = sum(counter.values())
+                if total > 0:  # Avoid division by zero
+                    internal_props[utils.add_suffix(target_prop, 'counter')] = item_separator.join(
+                        f"{key}{pair_separator}{value / total:.2f}" for key, value in sorted_items
+                    )
 
     return internal_props
 
-
 def merge_num_annotations(nodes, target_props, column2method):
     internal_props = {}
+
     for target_prop in target_props:
         num_stat = column2method.get(target_prop, None)
-        if num_stat != 'none':
-            if target_prop != 'dist' and target_prop != 'support':
-                prop_array = np.array(utils.children_prop_array(nodes, target_prop),dtype=np.float64)
-                prop_array = prop_array[~np.isnan(prop_array)] # remove nan data
+        if num_stat == 'none':
+            continue
 
-                if prop_array is None or all(v is None for v in prop_array):
-                    # n, (smin, smax), sm, sv, ss, sk = None, (None, None), None, None, None, None
-                    continue
-                elif np.all(np.array(prop_array) == 0):
-                    # If prop_array is full of 0
-                    n, (smin, smax), sm, sv, ss, sk = 0, (0, 0), 0, 0, 0, 0
-                elif np.any(prop_array):  # Check if any element is non-zero/non-None
-                    n, (smin, smax), sm, sv, ss, sk = stats.describe(prop_array)
-                else:
-                    # For all other cases, fallback to a default
-                    n, (smin, smax), sm, sv, ss, sk = 0, (0, 0), 0, 0, 0, 0
-                
-                if num_stat == 'all':
-                    internal_props[utils.add_suffix(target_prop, 'avg')] = sm
-                    internal_props[utils.add_suffix(target_prop, 'sum')] = np.sum(prop_array)
-                    internal_props[utils.add_suffix(target_prop, 'max')] = smax
-                    internal_props[utils.add_suffix(target_prop, 'min')] = smin
-                    if math.isnan(sv) == False:
-                        internal_props[utils.add_suffix(target_prop, 'std')] = sv
-                    else:
-                        internal_props[utils.add_suffix(target_prop, 'std')] = 0
+        if target_prop in ('dist', 'support'):
+            continue  # Skip 'dist' and 'support'
 
-                elif num_stat == 'avg':
-                    internal_props[utils.add_suffix(target_prop, 'avg')] = sm
-                elif num_stat == 'sum':
-                    internal_props[utils.add_suffix(target_prop, 'sum')] = np.sum(prop_array)
-                elif num_stat == 'max':
-                    internal_props[utils.add_suffix(target_prop, 'max')] = smax
-                elif num_stat == 'min':
-                    internal_props[utils.add_suffix(target_prop, 'min')] = smin
-                elif num_stat == 'std':
-                    if math.isnan(sv) == False:
-                        internal_props[utils.add_suffix(target_prop, 'std')] = sv
-                    else:
-                        internal_props[utils.add_suffix(target_prop, 'std')] = 0
-                else:
-                    #print('Invalid stat method')
-                    pass
-                
+        # Get numeric values as NumPy array
+        prop_array = np.array(utils.children_prop_array(nodes, target_prop), dtype=np.float64)
+        prop_array = prop_array[~np.isnan(prop_array)]  # Remove NaNs
 
-    if internal_props:
-        return internal_props
-    else:
-        return None
+        if prop_array.size == 0:
+            continue  # Skip if array is empty after NaN removal
+
+        # Compute basic statistics efficiently using NumPy
+        prop_sum = np.sum(prop_array)
+        prop_min = np.min(prop_array)
+        prop_max = np.max(prop_array)
+        prop_avg = np.mean(prop_array)
+        prop_std = np.std(prop_array, ddof=1) if prop_array.size > 1 else 0  # Sample standard deviation
+
+        # Populate results based on requested stat method
+        if num_stat == 'all':
+            internal_props[utils.add_suffix(target_prop, 'avg')] = prop_avg
+            internal_props[utils.add_suffix(target_prop, 'sum')] = prop_sum
+            internal_props[utils.add_suffix(target_prop, 'max')] = prop_max
+            internal_props[utils.add_suffix(target_prop, 'min')] = prop_min
+            internal_props[utils.add_suffix(target_prop, 'std')] = prop_std
+        elif num_stat == 'avg':
+            internal_props[utils.add_suffix(target_prop, 'avg')] = prop_avg
+        elif num_stat == 'sum':
+            internal_props[utils.add_suffix(target_prop, 'sum')] = prop_sum
+        elif num_stat == 'max':
+            internal_props[utils.add_suffix(target_prop, 'max')] = prop_max
+        elif num_stat == 'min':
+            internal_props[utils.add_suffix(target_prop, 'min')] = prop_min
+        elif num_stat == 'std':
+            internal_props[utils.add_suffix(target_prop, 'std')] = prop_std
+
+    return internal_props if internal_props else None
 
 def compute_matrix_statistics(matrix, num_stat=None):
     """
@@ -1608,20 +1720,17 @@ def name_nodes(tree):
     return tree
 
 def gtdb_accession_to_taxid(accession):
-        """Given a GTDB accession number, returns its complete accession"""
-        if accession.startswith('GCA'):
-            prefix = 'GB_'
-            return prefix+accessionac
-        elif accession.startswith('GCF'):
-            prefix = 'RS_'
-            return prefix+accession
-        else:
-            return accession
+    """Given a GTDB accession number, returns its complete accession"""
+    if accession.startswith('GCA'):
+        prefix = 'GB_'
+        return prefix+accessionac
+    elif accession.startswith('GCF'):
+        prefix = 'RS_'
+        return prefix+accession
+    else:
+        return accession
 
 def get_gtdbtaxadump(version):
-    """
-    Download GTDB taxonomy dump
-    """
     url = f"https://github.com/etetoolkit/ete-data/raw/main/gtdb_taxonomy/gtdb{version}/gtdb{version}dump.tar.gz"
     fname = f"gtdb{version}dump.tar.gz"
     logger.info(f'Downloading GTDB taxa dump fname from {url} ...')
@@ -1756,7 +1865,7 @@ def get_range(input_range):
     #column_list_idx = [i for i in range(column_start, column_end+1)]
     return column_start, column_end
 
-def parse_emapper_annotations(input_file, delimiter='\t', no_headers=False):
+def parse_emapper_annotations(input_file, delimiter='\t', no_headers=False, target_nodes=None):
     metadata = {}
     columns = defaultdict(list)
     prop2type = {}
@@ -1764,6 +1873,10 @@ def parse_emapper_annotations(input_file, delimiter='\t', no_headers=False):
     #            "max_annot_lvl", "COG_category", "Description", "Preferred_name", "GOs",
     #            "EC", "KEGG_ko", "KEGG_Pathway", "KEGG_Module", "KEGG_Reaction", "KEGG_rclass",
     #            "BRITE", "KEGG_TC", "CAZy", "BiGG_Reaction", "PFAMs"]
+
+    # Convert target_nodes to set for fast lookup
+    if target_nodes is not None and not isinstance(target_nodes, set):
+        target_nodes = set(target_nodes)
 
     with open(input_file, 'r') as f:
         # Skip lines starting with '##'
@@ -1778,6 +1891,10 @@ def parse_emapper_annotations(input_file, delimiter='\t', no_headers=False):
         for row in reader:
             nodename = row[node_header]
             del row[node_header]
+
+            # Skip nodes that are not in target_nodes
+            if target_nodes is not None and nodename not in target_nodes:
+                continue
 
             # remove missing value
             #row = {k: 'NaN' if (not v or v.lower() == 'none') else v for k, v in row.items() } ## replace empty to NaN
