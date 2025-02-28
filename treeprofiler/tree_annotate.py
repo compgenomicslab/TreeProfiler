@@ -9,7 +9,7 @@ import csv
 import tarfile
 
 from collections import defaultdict, Counter
-from itertools import chain
+import itertools
 import numpy as np
 from scipy import stats
 import requests
@@ -1539,151 +1539,132 @@ def get_top_keys(counter, max_keys=2, separator="||", suffix="..."):
         return separator.join(top_keys[:max_keys]) + separator + suffix
     return separator.join(top_keys)
 
-def merge_text_annotations(nodes, target_props, column2method, acr_discrete_columns=[], emapper_mode=False):
-    pair_seperator = "--"
-    item_seperator = "||"
+def merge_text_annotations(nodes, target_props, column2method, acr_discrete_columns=None, emapper_mode=False):
+    pair_separator = "--"
+    item_separator = "||"
     internal_props = {}
     counters = {}
-    
-    # Ensure acr_discrete_columns is a set (avoids long condition checks)
-    acr_discrete_columns = set(acr_discrete_columns or [])
+
+    acr_discrete_columns = set(acr_discrete_columns or [])  # Convert once for fast lookup
 
     for target_prop in target_props:
-        counter_stat = column2method.get(target_prop, "raw")
-        
-        prop_list = utils.children_prop_array_missing(nodes, target_prop)
-        counter = dict(Counter(prop_list))  # Store the counter
-        if 'NaN' in counter:
-            del counter['NaN']
-        counters[target_prop] = counter  # Add the counter to the counters dictionary
+        counter_stat = column2method.get(target_prop, "raw")  # Store in local var
 
-        if counter_stat == 'raw':
+        # Collect property values and count occurrences
+        prop_list = utils.children_prop_array_missing(nodes, target_prop)
+        counter = Counter(prop_list)
+        counter.pop('NaN', None)  # Remove 'NaN' efficiently
+
+        # Store the counter result
+        counters[target_prop] = counter
+
+        if counter_stat in {'raw', 'dominant'}:
+            # Emapper mode handling
             if emapper_mode and counter and target_prop not in acr_discrete_columns:
-                # most_common_key = max(counter, key=counter.get)
                 internal_props[target_prop] = get_top_keys(counter)
 
-            # Add the raw counts to internal_props
-            internal_props[utils.add_suffix(target_prop, 'counter')] = item_seperator.join(
-                [utils.add_suffix(str(key), value, pair_seperator) for key, value in sorted(counter.items())]
+            # Sort and process counter items
+            sorted_items = sorted(counter.items())
+            internal_props[utils.add_suffix(target_prop, 'counter')] = item_separator.join(
+                f"{key}{pair_separator}{value}" for key, value in sorted_items
             )
 
         elif counter_stat == 'relative':
             total = sum(counter.values())
+            if total > 0:  # Avoid division by zero
+                sorted_items = sorted(counter.items())
+                internal_props[utils.add_suffix(target_prop, 'counter')] = item_separator.join(
+                    f"{key}{pair_separator}{value / total:.2f}" for key, value in sorted_items
+                )
 
-            # Add the relative counts to internal_props
-            internal_props[utils.add_suffix(target_prop, 'counter')] = item_seperator.join(
-                [utils.add_suffix(str(key), '{0:.2f}'.format(float(value)/total), pair_seperator) for key, value in sorted(counter.items())]
-            )
-        elif counter_stat == 'dominant':
-            # Find the key with the highest count
-            emapper_mode = True
-            if emapper_mode and counter and target_prop not in acr_discrete_columns:
-                # most_common_key = max(counter, key=counter.get)
-                internal_props[target_prop] = get_top_keys(counter)
-            
-            # Add the raw counts to internal_props
-            internal_props[utils.add_suffix(target_prop, 'counter')] = item_seperator.join(
-                [utils.add_suffix(str(key), value, pair_seperator) for key, value in sorted(counter.items())]
-            )
         elif counter_stat == 'none':
-            pass
+            continue
+
         else:
-            logger.error("invalid counter_stat")
+            logger.error("Invalid counter_stat")
             sys.exit(1)
+
     return internal_props
 
 def merge_multitext_annotations(nodes, target_props, column2method):
-    # Seperator of multiple text 'GO:0000003,GO:0000902,GO:0000904'
-    
-    multi_text_seperator = ','
-    pair_seperator = "--"
-    item_seperator = "||"
+    multi_text_separator = ','
+    pair_separator = "--"
+    item_separator = "||"
 
     internal_props = {}
     counters = {}
 
     for target_prop in target_props:
         counter_stat = column2method.get(target_prop, "raw")
+
+        # Get multi-text properties and flatten using itertools (faster)
         prop_list = utils.children_prop_array(nodes, target_prop)
-        # Flatten the list of lists into a single list
-        multi_prop_list = [item for sublist in prop_list for item in sublist]
-        counter = dict(Counter(multi_prop_list))  # Store the counter
-        counters[target_prop] = counter  # Add the counter to the counters dictionary
+        multi_prop_list = list(itertools.chain.from_iterable(prop_list))  # Flatten efficiently
 
-        if counter_stat == 'raw':
-            # Add the raw counts to internal_props
-            internal_props[utils.add_suffix(target_prop, 'counter')] = item_seperator.join(
-                [utils.add_suffix(str(key), value, pair_seperator) for key, value in sorted(counter.items())]
-            )
+        counter = Counter(multi_prop_list)  # Count occurrences
+        counters[target_prop] = counter  # Store counter result
 
-        elif counter_stat == 'relative':
-            total = sum(counter.values())
+        if counter_stat in {'raw', 'relative'}:
+            sorted_items = sorted(counter.items())  # Sort only once
 
-            # Add the relative counts to internal_props
-            internal_props[utils.add_suffix(target_prop, 'counter')] = item_seperator.join(
-                [utils.add_suffix(str(key), '{0:.2f}'.format(float(value) / total), pair_seperator) for key, value in sorted(counter.items())]
-            )
+            if counter_stat == 'raw':
+                internal_props[utils.add_suffix(target_prop, 'counter')] = item_separator.join(
+                    f"{key}{pair_separator}{value}" for key, value in sorted_items
+                )
 
-        else:
-            # Handle invalid counter_stat, if necessary
-            pass
+            elif counter_stat == 'relative':
+                total = sum(counter.values())
+                if total > 0:  # Avoid division by zero
+                    internal_props[utils.add_suffix(target_prop, 'counter')] = item_separator.join(
+                        f"{key}{pair_separator}{value / total:.2f}" for key, value in sorted_items
+                    )
 
     return internal_props
 
-
 def merge_num_annotations(nodes, target_props, column2method):
     internal_props = {}
+
     for target_prop in target_props:
         num_stat = column2method.get(target_prop, None)
-        if num_stat != 'none':
-            if target_prop != 'dist' and target_prop != 'support':
-                prop_array = np.array(utils.children_prop_array(nodes, target_prop),dtype=np.float64)
-                prop_array = prop_array[~np.isnan(prop_array)] # remove nan data
+        if num_stat == 'none':
+            continue
 
-                if prop_array is None or all(v is None for v in prop_array):
-                    # n, (smin, smax), sm, sv, ss, sk = None, (None, None), None, None, None, None
-                    continue
-                elif np.all(np.array(prop_array) == 0):
-                    # If prop_array is full of 0
-                    n, (smin, smax), sm, sv, ss, sk = 0, (0, 0), 0, 0, 0, 0
-                elif np.any(prop_array):  # Check if any element is non-zero/non-None
-                    n, (smin, smax), sm, sv, ss, sk = stats.describe(prop_array)
-                else:
-                    # For all other cases, fallback to a default
-                    n, (smin, smax), sm, sv, ss, sk = 0, (0, 0), 0, 0, 0, 0
-                
-                if num_stat == 'all':
-                    internal_props[utils.add_suffix(target_prop, 'avg')] = sm
-                    internal_props[utils.add_suffix(target_prop, 'sum')] = np.sum(prop_array)
-                    internal_props[utils.add_suffix(target_prop, 'max')] = smax
-                    internal_props[utils.add_suffix(target_prop, 'min')] = smin
-                    if math.isnan(sv) == False:
-                        internal_props[utils.add_suffix(target_prop, 'std')] = sv
-                    else:
-                        internal_props[utils.add_suffix(target_prop, 'std')] = 0
+        if target_prop in ('dist', 'support'):
+            continue  # Skip 'dist' and 'support'
 
-                elif num_stat == 'avg':
-                    internal_props[utils.add_suffix(target_prop, 'avg')] = sm
-                elif num_stat == 'sum':
-                    internal_props[utils.add_suffix(target_prop, 'sum')] = np.sum(prop_array)
-                elif num_stat == 'max':
-                    internal_props[utils.add_suffix(target_prop, 'max')] = smax
-                elif num_stat == 'min':
-                    internal_props[utils.add_suffix(target_prop, 'min')] = smin
-                elif num_stat == 'std':
-                    if math.isnan(sv) == False:
-                        internal_props[utils.add_suffix(target_prop, 'std')] = sv
-                    else:
-                        internal_props[utils.add_suffix(target_prop, 'std')] = 0
-                else:
-                    #print('Invalid stat method')
-                    pass
-                
+        # Get numeric values as NumPy array
+        prop_array = np.array(utils.children_prop_array(nodes, target_prop), dtype=np.float64)
+        prop_array = prop_array[~np.isnan(prop_array)]  # Remove NaNs
 
-    if internal_props:
-        return internal_props
-    else:
-        return None
+        if prop_array.size == 0:
+            continue  # Skip if array is empty after NaN removal
+
+        # Compute basic statistics efficiently using NumPy
+        prop_sum = np.sum(prop_array)
+        prop_min = np.min(prop_array)
+        prop_max = np.max(prop_array)
+        prop_avg = np.mean(prop_array)
+        prop_std = np.std(prop_array, ddof=1) if prop_array.size > 1 else 0  # Sample standard deviation
+
+        # Populate results based on requested stat method
+        if num_stat == 'all':
+            internal_props[utils.add_suffix(target_prop, 'avg')] = prop_avg
+            internal_props[utils.add_suffix(target_prop, 'sum')] = prop_sum
+            internal_props[utils.add_suffix(target_prop, 'max')] = prop_max
+            internal_props[utils.add_suffix(target_prop, 'min')] = prop_min
+            internal_props[utils.add_suffix(target_prop, 'std')] = prop_std
+        elif num_stat == 'avg':
+            internal_props[utils.add_suffix(target_prop, 'avg')] = prop_avg
+        elif num_stat == 'sum':
+            internal_props[utils.add_suffix(target_prop, 'sum')] = prop_sum
+        elif num_stat == 'max':
+            internal_props[utils.add_suffix(target_prop, 'max')] = prop_max
+        elif num_stat == 'min':
+            internal_props[utils.add_suffix(target_prop, 'min')] = prop_min
+        elif num_stat == 'std':
+            internal_props[utils.add_suffix(target_prop, 'std')] = prop_std
+
+    return internal_props if internal_props else None
 
 def compute_matrix_statistics(matrix, num_stat=None):
     """
@@ -1739,20 +1720,17 @@ def name_nodes(tree):
     return tree
 
 def gtdb_accession_to_taxid(accession):
-        """Given a GTDB accession number, returns its complete accession"""
-        if accession.startswith('GCA'):
-            prefix = 'GB_'
-            return prefix+accessionac
-        elif accession.startswith('GCF'):
-            prefix = 'RS_'
-            return prefix+accession
-        else:
-            return accession
+    """Given a GTDB accession number, returns its complete accession"""
+    if accession.startswith('GCA'):
+        prefix = 'GB_'
+        return prefix+accessionac
+    elif accession.startswith('GCF'):
+        prefix = 'RS_'
+        return prefix+accession
+    else:
+        return accession
 
 def get_gtdbtaxadump(version):
-    """
-    Download GTDB taxonomy dump
-    """
     url = f"https://github.com/etetoolkit/ete-data/raw/main/gtdb_taxonomy/gtdb{version}/gtdb{version}dump.tar.gz"
     fname = f"gtdb{version}dump.tar.gz"
     logger.info(f'Downloading GTDB taxa dump fname from {url} ...')
