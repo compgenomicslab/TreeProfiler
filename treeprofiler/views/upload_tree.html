@@ -64,7 +64,7 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label for="tree" class="col-sm-3 col-form-label">Upload Tree File in Newick Format</label>
+                    <label for="tree" class="col-sm-3 col-form-label">Upload Tree File in Newick/ETE Format</label>
                     <!-- <small class="form-text text-muted">upload a Newick file</small> -->
                     <input type="file" class="form-control-file mt-2" id="treeFile" name="treeFile">
                     <!-- Example Link -->
@@ -552,7 +552,7 @@
         if (treeFile) {
             await uploadFileInChunks(treeFile, 'treeFile', treename);
         } else {
-            alert("Please provide tree data in Newick format or upload a file.");
+            alert("Please provide tree data in Newick/ETE format or upload a file.");
             button.disabled = false;
             spinner.style.display = "none";
             return;
