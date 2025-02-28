@@ -1878,11 +1878,13 @@ $('#activateDomainLayout').click(() => activateLayout('domain-layout', '#activat
     async function checkTreeStatus() {
         const response = await fetch(`/iframe_status/{{ treename }}`);
         const data = await response.json();
+        const HOSTNAME = "{{ hostname }}";
+        const PORT = "{{ viewport }}";
 
         if (data.ready) {
             document.getElementById("loadingMessage").style.display = "none";
             document.getElementById("iframeContainer").style.display = "block";
-            document.getElementById("treeIframe").src = "http://138.4.138.153:5051";
+            document.getElementById("treeIframe").src = `http://${HOSTNAME}:${PORT}`;
         } else {
             setTimeout(checkTreeStatus, 500); // Check again in 0.5 second
         }

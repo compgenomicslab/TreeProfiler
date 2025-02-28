@@ -2,6 +2,7 @@ from bottle import route, run, request, redirect, template, static_file, respons
 from bottle import Bottle
 import requests
 import threading
+import argparse
 from tempfile import NamedTemporaryFile
 from collections import defaultdict
 import matplotlib.pyplot as plt
@@ -20,12 +21,24 @@ from treeprofiler import layouts
 
 from bottle import TEMPLATE_PATH
 
+# Parse command-line arguments
+parser = argparse.ArgumentParser(description="Run the Tree Explorer web application.")
+parser.add_argument("--host", type=str, default=os.getenv("TREEPROFILER_HOST", "localhost"), help="Server hostname")
+parser.add_argument("--hostport", type=int, default=int(os.getenv("TREEPROFILER_PORT", 8081)), help="Server port")
+parser.add_argument("--viewport", type=int, default=int(os.getenv("TREEPROFILERVIEW_PORT", 5051)), help="Server port")
+
+args = parser.parse_args()
+HOSTNAME = args.host
+HOSTPORT = args.hostport
+VIEWPORT = args.viewport
+
 # Set the template directory
 TEMPLATE_PATH.append(os.path.join(os.path.dirname(__file__), 'views'))
 EXTRACTED_METADATA_DIR = "/tmp/extracted_metadata"
 current_dir = os.path.dirname(os.path.abspath(__file__))
 GTDBEXAMPLE_FILE = os.path.abspath(os.path.join(current_dir, '..', 'examples', 'pratical_example', 'gtdb_r202', 'gtdbv202_annotated.ete.tar.gz'))
-HOSTNAME = "138.4.138.153"
+
+
 os.makedirs(EXTRACTED_METADATA_DIR, exist_ok=True)
 
 # In-memory storage for chunks and complete files
@@ -144,7 +157,7 @@ class CustomServerAdapter(ServerAdapter):
 def run_server():
     """Run the Bottle app."""
     global server_instance
-    server_instance = CustomServerAdapter(host=HOSTNAME, port=8081)
+    server_instance = CustomServerAdapter(host=HOSTNAME, port=HOSTPORT)
     app.run(server=server_instance)
 
 
@@ -1552,7 +1565,9 @@ def explore_tree(treename):
         selected_props=current_props,
         color_schemes=continuous_colormaps,
         layouts_metadata=layouts_metadata,
-        layouts_metadata_json = json.dumps(layouts_metadata)
+        layouts_metadata_json = json.dumps(layouts_metadata),
+        hostname=HOSTNAME,
+        viewport=VIEWPORT,
     )
 
 def get_colormap_hex_colors(colormap_name, num_colors):
@@ -2352,7 +2367,7 @@ def start_explore_thread(t, treename, current_layouts, current_props):
 
     def explore():
         print(f"Starting tree visualization for {treename}...")
-        t.explore(name=treename, layouts=current_layouts, host=HOSTNAME, port=5051, open_browser=False)
+        t.explore(name=treename, layouts=current_layouts, host=HOSTNAME, port=VIEWPORT, open_browser=False)
         tree_ready_status[treename] = True  # Mark tree as ready when done
 
     explorer_thread = threading.Thread(target=explore)
