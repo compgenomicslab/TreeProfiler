@@ -816,7 +816,7 @@ def explore_tree(treename):
     # Default configuration settings
     default_configs = {
         "level": 1,
-        "column_width": 70,
+        "column_width": 50,
         "padding_x": 1,
         "padding_y": 0,
         "color_config": color_config,
@@ -975,7 +975,7 @@ def explore_tree(treename):
                                 updated_metadata.append(layout_config)
                                 layout_manager[layout.name] = layout
 
-                            elif layout_prefix in ['profiling', 'categorical-matrix', 'binary-matrix']:
+                            elif layout_prefix in ['categorical-matrix', 'binary-matrix']:
                                 # Append with applied props and full config
                                 name = layout.name
                                 applied_props = layout.matrix_props
@@ -1038,7 +1038,10 @@ def explore_tree(treename):
                                         },
                                         "layer": {}
                                     }
-                                    if layout_prefix == 'textbranch':
+                                    if layout_prefix == 'profiling':
+                                        profiling_targets = layout.matrix_props
+                                        layout_config['layer']['profilingTargets'] = profiling_targets
+                                    elif layout_prefix == 'textbranch':
                                         layout_config['layer']['textPosition'] = layer.get('textPosition', 'branch_bottom')
                                         if layer.get('textunicolorColor'):
                                             layout_config['layer']['istextUnicolor'] = 'True'
@@ -1046,7 +1049,6 @@ def explore_tree(treename):
                                             layout_config['layer']['istextUnicolor'] = 'False'
                                         layout_config['layer']['textColorScheme'] = layer.get('textColorScheme')
                                         layout_config['layer']['textunicolorColor'] = layer.get('textunicolorColor')
-                                    
                                     else:
                                         layout_config['layer']['categoricalColorscheme'] = layer.get('categoricalColorscheme', 'default')   
                                 
@@ -1264,10 +1266,19 @@ def explore_tree(treename):
                                 layout.padding_x = layout_meta['config']['padding_x']
                                 layout.padding_y = layout_meta['config']['padding_y']
                                 layout.color_dict = color_config.get(prop).get('value2color')
+                            elif layout_prefix == 'profiling':
+                                profiling_targets = layout_meta['layer'].get('profilingTargets', None)
+                                matrix, value2color, all_profiling_values = tree_plot.multiple2matrix(
+                                    t, prop, prop2type=tree_info['prop2type'], color_config=color_config,
+                                    profiling_list=profiling_targets
+                                )
+                                layout.matrix = matrix
+                                layout.value_color = value2color
+                                layout.matrix_props = profiling_targets
+                                layout.poswidth = layout_meta['layer'].get('poswidth', 0.5)
+                                
                             elif layout_prefix == 'textbranch':
-
                                 layout.position = layout_meta['layer'].get('textPosition')
-
                                 if layout_meta['layer'].get('istextUnicolor') == 'True':
                                     layout.text_color = layout_meta['layer'].get('textunicolorColor')
                                     layout.color_dict = {}
@@ -1654,12 +1665,27 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
                     padding_x=padding_x, padding_y=padding_y, fgopacity=fgopacity,
                     scale=True, legend=True, active=True
                 )
-                level +=1 
                 current_layouts.append(layout)
-            
+                level +=1 
+        elif selected_layout == 'profiling-layout':
+            profiling_targets = layer.get('profilingTargets', [])
+            for profiling_prop in selected_props:
+                matrix, value2color, all_profiling_values = tree_plot.multiple2matrix(
+                    t, profiling_prop, prop2type=tree_info['prop2type'], color_config=color_config,
+                    profiling_list=profiling_targets
+                )
+
+                matrix_layout = tree_plot.profile_layouts.LayoutPropsMatrixBinary(
+                    name=f"Profiling_{profiling_prop}", prop=profiling_prop, matrix=matrix, matrix_props=all_profiling_values,
+                    value_range=[0, 1], value_color=value2color, column=level, poswidth=column_width
+                )
+                current_layouts.append(matrix_layout)
+                level += 1
         else:
             level, current_layouts = apply_categorical_layouts(t, selected_layout, selected_props, tree_info, current_layouts, level, column_width, padding_x, padding_y, color_config)
-        
+    
+    
+
     elif selected_layout == 'textbranch-layout':
         # text branch
 
@@ -1936,20 +1962,6 @@ def apply_categorical_layouts(t, selected_layout, selected_props, tree_info, cur
             t, selected_props, level, prop2type=prop2type
         )
         current_layouts.extend(background_layouts)
-
-    elif selected_layout == 'profiling-layout':
-        for profiling_prop in selected_props:
-            
-            matrix, value2color, all_profiling_values = tree_plot.multiple2matrix(
-                t, profiling_prop, prop2type=prop2type, color_config=color_config,
-            )
-            
-            matrix_layout = tree_plot.profile_layouts.LayoutPropsMatrixBinary(
-                name=f"Profiling_{profiling_prop}", matrix=matrix, matrix_props=all_profiling_values,
-                value_range=[0, 1], value_color=value2color, column=level, poswidth=column_width
-            )
-            current_layouts.append(matrix_layout)
-            level += 1
 
     elif selected_layout == 'categorical-matrix-layout':
         # Draws matrix array for categorical properties
