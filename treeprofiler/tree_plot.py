@@ -737,7 +737,7 @@ def run(args):
                     profiling_output_filename =  f'{profiling_prop}_profiling.tsv'
                     with open(profiling_output_filename, 'w') as f:
                         profiling_columns = '\t'.join(all_profiling_values)
-                        f.write(f'leafname\t{profiling_columns}\n')
+                        f.write(f'#name\t{profiling_columns}\n')
                         for leaf in leaves:
                             if matrix.get(leaf):
                                 row = leaf + '\t' + '\t'.join(map(str, matrix.get(leaf)))
