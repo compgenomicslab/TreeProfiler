@@ -231,7 +231,17 @@
                                                 % end
                                             </select>
                                         </div>
-
+                                        <!-- profiling settins -->
+                                        <div id="profilingSettings" class="form-group mt-4">
+                                            <label for="profilingTargets" class="form-label">Profiling Targets</label>
+                                            <p class="text-muted small">
+                                                Profiling Targets are values that will be converted into a presence-absence matrix.
+                                                If no input is provided, all profiling values will be included.
+                                            </p>
+                                            <textarea id="profilingTargets" name="profilingTargets" class="form-control" rows="6" 
+                                                      placeholder="Enter one target per line..."></textarea>
+                                            <small class="form-text text-muted">Each value should be on a new line.</small>
+                                        </div>
                                         <!--text branch settings-->
                                         <div id="textbranchSettings" class="form-group mt-4" style="display: none;">
                                             
@@ -835,13 +845,19 @@
         // Categorical layout settings
         const categoricalColorscheme = document.getElementById('categoricalColorscheme').value;
         
+        // Profiling settings
+        const profilingTargetsInput= document.getElementById('profilingTargets').value;
+        const profilingTargets = profilingTargetsInput
+            .split("\n") // Split by new line
+            .map(item => item.trim()) // Trim spaces from each item
+            .filter(item => item.length > 0); // Remove empty lines
+
         // Text Branch layout settings
         const textPosition = document.getElementById('textPosition').value;
         const istextUnicolor = document.getElementById('textunicolorOption').checked;
         const textColorScheme = istextUnicolor ? null : document.getElementById('textColorschemeSelect').value;
         const textunicolorColor = istextUnicolor ? document.getElementById('textunicolorColor').value : null;
         
-
         // Node Symbol Layout settings
         const symbolOption = document.getElementById('symbolOption').value;
         const symbolSize = document.getElementById('symbolSize').value;
@@ -888,6 +904,7 @@
             rankSelection,
             
             categoricalColorscheme,
+            profilingTargets,
             
             textColorScheme,
             textPosition,
@@ -1109,7 +1126,7 @@ $('#activateDomainLayout').click(() => activateLayout('domain-layout', '#activat
         // Populate the modal with the layout's configuration and layer fields
         function populateEditForm(layoutName) {
             const layout = layoutsMetadata.find(l => l.layout_name === layoutName);
-            console.log(layout);
+            
             const selectedProps = {{!selected_props}}; 
             if (layout) {
                 document.getElementById('editLayoutName').value = layout.layout_name;
@@ -1132,6 +1149,19 @@ $('#activateDomainLayout').click(() => activateLayout('domain-layout', '#activat
 
                 const layoutPrefix = layout.layout_name.split('_')[0].toLowerCase(); // Extract prefix and convert to lowercase
                 // Handle Text Branch Layout Specific Settings
+                if (layoutPrefix === 'profiling') {
+                    const profilingTargetsInput = document.querySelector('textarea#layer-profilingTargets');
+
+                    if (profilingTargetsInput && Array.isArray(layout.layer.profilingTargets)) {
+                        console.log("Original profilingTargets:", layout.layer.profilingTargets);
+
+                        // Ensure newline separation
+                        profilingTargetsInput.value = layout.layer.profilingTargets.join("\n");
+
+                        console.log("Formatted profilingTargets:", profilingTargetsInput.value);
+                    }
+                }
+
                 if (layoutPrefix === 'textbranch') {
                     const istextUnicolor = document.querySelector('select#layer-istextUnicolor');
                     const textunicolorColor = document.querySelector('input#layer-textunicolorColor');
@@ -1241,6 +1271,18 @@ $('#activateDomainLayout').click(() => activateLayout('domain-layout', '#activat
                     }
                     input.appendChild(option);
                 });
+            } else if (key === 'profilingTargets') {
+                // Create a textarea for profilingTargets
+                input = document.createElement('textarea');
+                input.setAttribute('id', `${type}-${key}`);
+                input.setAttribute('name', `${type}-${key}`);
+                input.classList.add('form-control');
+                input.setAttribute('rows', '5'); // Default height
+
+                // Ensure values appear one per row
+                if (Array.isArray(value)) {
+                    input.value = value.join("\n"); // Join array elements with newlines
+                }
             } else if (key === 'istextUnicolor') {
                 input = document.createElement('select');
                 input.classList.add('form-control');
@@ -1377,9 +1419,19 @@ $('#activateDomainLayout').click(() => activateLayout('domain-layout', '#activat
                 // Update Layer Fields
                 const layerContainer = document.getElementById('layerFieldsContainer');
                 layout.layer = {};
-                Array.from(layerContainer.querySelectorAll('input, select')).forEach(input => {
+                Array.from(layerContainer.querySelectorAll('input, textarea, select')).forEach(input => {
                     const key = input.name.split('-')[1];
-                    layout.layer[key] = input.type === 'number' ? parseFloat(input.value) || 0 : input.value;
+
+                    if (key === "profilingTargets") {
+                        // Convert textarea input into an array (one value per row)
+                        layout.layer[key] = input.value
+                            .split("\n") // Split by new line
+                            .map(item => item.trim()) // Trim spaces from each item
+                            .filter(item => item.length > 0); // Remove empty values
+                    } else {
+                        // Handle normal inputs (parse numbers correctly)
+                        layout.layer[key] = input.type === 'number' ? parseFloat(input.value) || 0 : input.value;
+                    }
                 });
 
                 // Update the hidden input with the new metadata
@@ -1394,7 +1446,7 @@ $('#activateDomainLayout').click(() => activateLayout('domain-layout', '#activat
         });
 
         // === End of Edit Layout Functionality ===
-
+        console.log('Layouts Metadata:', document.getElementById('layoutsMetadataInput').value);
         // Handle Apply Changes Button
         document.getElementById('applyChangesBtn').addEventListener('click', function () {
             const button = $("#applyChangesBtn");
@@ -1478,6 +1530,14 @@ $('#activateDomainLayout').click(() => activateLayout('domain-layout', '#activat
                 $('#categoricalSettings').show();
             } else {
                 $('#categoricalSettings').hide();
+            }
+
+            if (selectedLayout === "profiling-layout") {
+                $('#categoricalSettings').hide();
+                $('#profilingSettings').show();
+            } else {
+                $('#categoricalSettings').show();
+                $('#profilingSettings').hide();
             }
 
             if (selectedLayout === "textbranch-layout") {

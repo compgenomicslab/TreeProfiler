@@ -726,7 +726,7 @@ def run(args):
                 profiling_list=profiling_list)
                 
                 matrix_layout = profile_layouts.LayoutPropsMatrixBinary(name=f"Profiling_{profiling_prop}",
-                matrix=matrix, matrix_props=all_profiling_values, value_range=[0,1],
+                prop=profiling_prop, matrix=matrix, matrix_props=all_profiling_values, value_range=[0,1],
                 value_color=value2color, column=level, poswidth=args.column_width)
                 level += 1
                 layouts.append(matrix_layout)
@@ -804,7 +804,7 @@ def run(args):
             all_values = list(value2color.keys())
 
             matrix_layout = profile_layouts.LayoutPropsMatrixBinary(name=f"Binary-matrix_{binary_props}",
-                matrix=matrix, matrix_props=binary_props, value_range=[0,1],
+                prop=binary_props, matrix=matrix, matrix_props=binary_props, value_range=[0,1],
                 value_color=value2color, column=level, poswidth=args.column_width)
 
             level += 1
@@ -881,9 +881,8 @@ def run(args):
         for multiple_text_prop in multiple_text_props:
             matrix, value2color, all_profiling_values = multiple2matrix(tree, multiple_text_prop, prop2type=prop2type, eteformat_flag=eteformat_flag)
             multiple_text_prop_layout = profile_layouts.LayoutPropsMatrixBinary(name=f"Profiling_{multiple_text_prop}",
-            matrix=matrix, matrix_props=all_profiling_values, value_range=[0,1],
-            active=False,
-            value_color=value2color, column=level, poswidth=args.column_width)
+            prop=multiple_text_prop, matrix=matrix, matrix_props=all_profiling_values, 
+            value_range=[0,1], active=False, value_color=value2color, column=level, poswidth=args.column_width)
 
             # matrix, all_values = multiple2profile(tree, multiple_text_prop)
             # multiple_text_prop_layout = profile_layouts.LayoutProfile(
@@ -2516,6 +2515,7 @@ def multiple2matrix(tree, profiling_prop, prop2type=None, color_config=None, ete
 
     if not profiling_list:
         all_categorical_values = sorted(list(set(utils.flatten(tree_prop_array))), key=lambda x: (x != 'NaN', x))
+
     else:
         all_categorical_values = profiling_list
 
@@ -2525,10 +2525,13 @@ def multiple2matrix(tree, profiling_prop, prop2type=None, color_config=None, ete
 
     for node in tree.traverse():
         node_prop = node.props.get(profiling_prop)
+        
         if node.is_leaf and node_prop:
-            node_prop_set = set(node_prop)  # Convert to set for fast membership lookup
-            node2matrix[node.name] = [1 if val in node_prop_set else 0 for val in all_categorical_values_set]
-            
+            if data_type == list:
+                node_prop_set = set(node_prop)  # Convert to set for fast membership lookup
+                node2matrix[node.name] = [1 if val in node_prop_set else 0 for val in all_categorical_values_set]
+            else:
+                node2matrix[node.name] = [1 if val in node_prop else 0 for val in all_categorical_values_set]
         else:
             representative_prop = utils.add_suffix(profiling_prop, "counter")
             if node.props.get(representative_prop):

@@ -379,13 +379,14 @@ class LayoutPropsMatrixOld(TreeLayout):
                     collapsed_only=(not node.is_leaf))
 
 class LayoutPropsMatrixBinary(TreeLayout):
-    def __init__(self, name="Binary_profiling", matrix=None,  
-            matrix_props=None, is_list=False, width=None, 
-            poswidth=20, height=20,
+    def __init__(self, name="Binary_profiling", prop=None,
+            matrix=None,  matrix_props=None, is_list=False, 
+            width=None, poswidth=20, height=20,
             column=0, range=None, summarize_inner_nodes=False, 
             value_range=[], 
             value_color={}, legend=True, active=True):
         super().__init__(name, active=active)
+        self.prop = prop
         self.matrix = matrix
         self.matrix_props = matrix_props
         self.is_list = is_list
