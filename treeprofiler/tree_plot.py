@@ -301,6 +301,15 @@ def poplulate_plot_args(plot_args_p):
         nargs='+',
         required=False,
         help="<prop1> <prop2> names of properties which need to be convert to presence-absence profiling matrix of each value")
+    group.add_argument('--profiling-list',
+        nargs='+',
+        default=None,
+        required=False,
+        help="Chosing the values what you want to display in profiling layout as presence-absence matrix. If input is None, it display all the values. If the values are not in the list, they will be ignored.")
+    group.add_argument('--profiling-output',
+        required=False,
+        help="Ouput the profiling matrix to a file.")
+    
     # group.add_argument('--multi-profiling-layout',
     #     nargs='+',
     #     required=False,
@@ -703,14 +712,17 @@ def run(args):
         if layout == 'domain-layout':
             domain_layout = seq_layouts.LayoutDomain(name="Domain", prop='dom_arq')
             layouts.append(domain_layout)
-
+        
         # presence-absence profiling based on categorical data
         if layout == 'profiling-layout':
+            print("heelo")
             profiling_props = args.profiling_layout
+            profiling_list = args.profiling_list
             for profiling_prop in profiling_props:
+                
                 matrix, value2color, all_profiling_values = multiple2matrix(tree, profiling_prop, 
-                prop2type=prop2type, color_config=color_config, eteformat_flag=eteformat_flag)
-
+                prop2type=prop2type, color_config=color_config, eteformat_flag=eteformat_flag, profiling_list=profiling_list)
+                
                 matrix_layout = profile_layouts.LayoutPropsMatrixBinary(name=f"Profiling_{profiling_prop}",
                 matrix=matrix, matrix_props=all_profiling_values, value_range=[0,1],
                 value_color=value2color, column=level, poswidth=args.column_width)
@@ -2473,7 +2485,7 @@ def single2profile(tree, profiling_prop):
             matrix += absence * len(all_values) +'\n'
     return matrix, all_values
 
-def multiple2matrix(tree, profiling_prop, prop2type=None, color_config=None, eteformat_flag=False):
+def multiple2matrix(tree, profiling_prop, prop2type=None, color_config=None, eteformat_flag=False, profiling_list=None):
     precence_color = '#E60A0A'  # red
     absence_color = '#EBEBEB'   # grey
 
@@ -2481,19 +2493,28 @@ def multiple2matrix(tree, profiling_prop, prop2type=None, color_config=None, ete
     data_type = prop2type.get(profiling_prop)
 
     # Get all categorical values based on whether data_type is a list and eteformat_flag
+    
     if data_type and data_type == list:
         tree_prop_array = utils.tree_prop_array(tree, profiling_prop, leaf_only=True, list_type=not eteformat_flag)
     else:
         tree_prop_array = utils.tree_prop_array(tree, profiling_prop, leaf_only=True)
+    
 
-    all_categorical_values = sorted(list(set(utils.flatten(tree_prop_array))), key=lambda x: (x != 'NaN', x))
+    if not profiling_list:
+        all_categorical_values = sorted(list(set(utils.flatten(tree_prop_array))), key=lambda x: (x != 'NaN', x))
+    else:
+        all_categorical_values = profiling_list
 
     # Create node to matrix mappings
     node2matrix = {}
+    all_categorical_values_set = set(all_categorical_values)  # Convert to set for O(1) lookup
+
     for node in tree.traverse():
         node_prop = node.props.get(profiling_prop)
         if node.is_leaf and node_prop:
-            node2matrix[node.name] = [1 if val in node_prop else 0 for val in all_categorical_values]
+            node_prop_set = set(node_prop)  # Convert to set for fast membership lookup
+            node2matrix[node.name] = [1 if val in node_prop_set else 0 for val in all_categorical_values_set]
+            #node2matrix[node.name] = [1 if val in node_prop else 0 for val in all_categorical_values_set]
         else:
             representative_prop = utils.add_suffix(profiling_prop, "counter")
             if node.props.get(representative_prop):
@@ -2516,6 +2537,7 @@ def multiple2matrix(tree, profiling_prop, prop2type=None, color_config=None, ete
             index = np.abs(index_values - search_value).argmin() + 1
             value2color[search_value] = gradientscolor[index]
 
+    
     return node2matrix, value2color, all_categorical_values
 
 
