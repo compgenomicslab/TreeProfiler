@@ -816,7 +816,7 @@ def explore_tree(treename):
     # Default configuration settings
     default_configs = {
         "level": 1,
-        "column_width": 70,
+        "column_width": 50,
         "padding_x": 1,
         "padding_y": 0,
         "color_config": color_config,
@@ -1939,7 +1939,6 @@ def apply_categorical_layouts(t, selected_layout, selected_props, tree_info, cur
 
     elif selected_layout == 'profiling-layout':
         for profiling_prop in selected_props:
-            
             matrix, value2color, all_profiling_values = tree_plot.multiple2matrix(
                 t, profiling_prop, prop2type=prop2type, color_config=color_config,
             )
