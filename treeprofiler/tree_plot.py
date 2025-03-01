@@ -307,6 +307,7 @@ def poplulate_plot_args(plot_args_p):
         required=False,
         help="Chosing the values what you want to display in profiling layout as presence-absence matrix. If input is None, it display all the values. If the values are not in the list, they will be ignored.")
     group.add_argument('--profiling-output',
+        action="store_true", 
         required=False,
         help="Ouput the profiling matrix to a file.")
     
@@ -715,19 +716,32 @@ def run(args):
         
         # presence-absence profiling based on categorical data
         if layout == 'profiling-layout':
-            print("heelo")
             profiling_props = args.profiling_layout
             profiling_list = args.profiling_list
+            
             for profiling_prop in profiling_props:
                 
                 matrix, value2color, all_profiling_values = multiple2matrix(tree, profiling_prop, 
-                prop2type=prop2type, color_config=color_config, eteformat_flag=eteformat_flag, profiling_list=profiling_list)
+                prop2type=prop2type, color_config=color_config, eteformat_flag=eteformat_flag, 
+                profiling_list=profiling_list)
                 
                 matrix_layout = profile_layouts.LayoutPropsMatrixBinary(name=f"Profiling_{profiling_prop}",
                 matrix=matrix, matrix_props=all_profiling_values, value_range=[0,1],
                 value_color=value2color, column=level, poswidth=args.column_width)
                 level += 1
                 layouts.append(matrix_layout)
+
+                if args.profiling_output:
+                    # leaf only
+                    leaves = [leaf.name for leaf in tree.leaves()]
+                    profiling_output_filename =  f'{profiling_prop}_profiling.tsv'
+                    with open(profiling_output_filename, 'w') as f:
+                        profiling_columns = '\t'.join(all_profiling_values)
+                        f.write(f'leafname\t{profiling_columns}\n')
+                        for leaf in leaves:
+                            if matrix.get(leaf):
+                                row = leaf + '\t' + '\t'.join(map(str, matrix.get(leaf)))
+                                f.write(f'{row}\n')
 
         # categorical matrix
         if layout == 'categorical-matrix-layout':
@@ -2514,13 +2528,13 @@ def multiple2matrix(tree, profiling_prop, prop2type=None, color_config=None, ete
         if node.is_leaf and node_prop:
             node_prop_set = set(node_prop)  # Convert to set for fast membership lookup
             node2matrix[node.name] = [1 if val in node_prop_set else 0 for val in all_categorical_values_set]
-            #node2matrix[node.name] = [1 if val in node_prop else 0 for val in all_categorical_values_set]
+            
         else:
             representative_prop = utils.add_suffix(profiling_prop, "counter")
             if node.props.get(representative_prop):
                 ratios = utils.categorical2ratio(node, representative_prop, all_categorical_values)
                 node2matrix[node.name] = ratios
-
+    
     # Build a color gradient for binary values
     gradientscolor = utils.build_color_gradient(20, colormap_name='Reds')
     value2color = {1: precence_color, 0: absence_color}
