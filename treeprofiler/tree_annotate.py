@@ -17,6 +17,7 @@ import requests
 from ete4.parser.newick import NewickError
 from ete4 import SeqGroup
 from ete4 import Tree, PhyloTree
+from ete4.phylo.evolevents import EvolEvent
 from ete4 import GTDBTaxa
 from ete4 import NCBITaxa
 
@@ -127,6 +128,8 @@ def populate_annotate_args(parser):
         help="field of taxa name after delimiter. [default: 0]")
     add('--ignore-unclassified', action='store_true',
         help="Ignore unclassified taxa in taxonomic annotation")
+    add('--sos-thr', type=float, default=0.0,
+        help="Threshold for species overlap in evolutionary events [default: 0.0]")
     add('--emapper-annotations',
         help="attach eggNOG-mapper output out.emapper.annotations")
     add('--emapper-pfam',
@@ -265,7 +268,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         counter_stat='raw', num_stat='all', column2method={},
         taxadb='GTDB', gtdb_version=None, taxa_dump=None, taxon_column=None,
         taxon_delimiter='', taxa_field=0, ignore_unclassified=False,
-        rank_limit=None, pruned_by=None, 
+        sos_thr=0.0, rank_limit=None, pruned_by=None, 
         acr_discrete_columns=[], acr_continuous_columns=[], prediction_method="MPPA", model="F81", 
         delta_stats=False, ent_type="SE", 
         iteration=100, lambda0=0.1, se=0.5, thin=10, burn=100, 
@@ -657,7 +660,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
                     ignore_unclassified=ignore_unclassified)
                 
         # evolutionary events annotation
-        annotated_tree = annotate_evol_events(annotated_tree, sp_delimiter=taxon_delimiter, sp_field=taxa_field)
+        annotated_tree = annotate_evol_events(annotated_tree, sos_thr=sos_thr, sp_delimiter=taxon_delimiter, sp_field=taxa_field)
         prop2type.update(TAXONOMICDICT)
     else:
         rank2values = {}
@@ -860,6 +863,7 @@ def run(args):
         "taxon_delimiter": args.taxon_delimiter,
         "taxa_field": args.taxa_field,
         "ignore_unclassified": args.ignore_unclassified,
+        "sos_thr": args.sos_thr,
     }
 
     # Group emapper-related arguments
@@ -1836,26 +1840,98 @@ def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field
         
     return tree, rank2values
 
-def annotate_evol_events(tree, sp_delimiter='.', sp_field=0):
+# def annotate_evol_events(tree, sp_delimiter='.', sp_field=0):
+#     def return_spcode(leaf):
+#         try:
+#             return leaf.name.split(sp_delimiter)[sp_field]
+#         except (IndexError, ValueError):
+#             return leaf.name
+
+#     tree.set_species_naming_function(return_spcode)
+
+#     node2species = tree.get_cached_content('species')
+#     for n in tree.traverse():
+#         n.props['species'] = node2species[n]
+#         if len(n.children) == 2:
+#             dup_sp = node2species[n.children[0]] & node2species[n.children[1]]
+#             if dup_sp:
+#                 n.props['evoltype'] = 'D'
+#                 n.props['dup_sp'] = ','.join(dup_sp)
+#                 n.props['dup_percent'] = round(len(dup_sp)/len(node2species[n]), 3) * 100
+#             else:
+#                 n.props['evoltype'] = 'S'
+#         n.del_prop('_speciesFunction')
+#     return tree
+
+def annotate_evol_events(tree, sos_thr=0.0, sp_delimiter='.', sp_field=0):
     def return_spcode(leaf):
         try:
             return leaf.name.split(sp_delimiter)[sp_field]
         except (IndexError, ValueError):
             return leaf.name
-
+    
     tree.set_species_naming_function(return_spcode)
 
+    # Get species for each node
     node2species = tree.get_cached_content('species')
+
+    # idetify the smallest outgroup
+    root = tree.root
+
+    # Checks that is actually rooted
+    outgroups = root.get_children()
+    if len(outgroups) != 2:
+        raise TypeError("Tree is not rooted")
+
+    outgroup1 = set([n.name for n in root.children[0].leaves()])
+    outgroup2 = set([n.name for n in root.children[1].leaves()])
+    outgroup = outgroup1 if len(outgroup1) < len(outgroup2) else outgroup2
+
+    # Family size
+    fSize = len(list(tree.leaves()))
+
+    # List to store evolutionary events
+    all_events = []
     for n in tree.traverse():
         n.props['species'] = node2species[n]
+
         if len(n.children) == 2:
-            dup_sp = node2species[n.children[0]] & node2species[n.children[1]]
-            if dup_sp:
+            left_child, right_child = n.children
+            left_species = node2species[left_child]
+            right_species = node2species[right_child]
+
+            # Determine species overlap
+            shared_species = left_species & right_species
+            total_species = left_species | right_species
+            sos = len(shared_species) / len(total_species) if total_species else 0
+
+            # Create an EvolEvent object
+            event = EvolEvent()
+            event.famSize = fSize
+            event.branch_supports = [n.support, left_child.support, right_child.support]
+            event.sos = sos
+            event.outgroup_spcs = outgroup
+            event.in_seqs = set([n.name for n in left_child.leaves()])
+            event.out_seqs = set([n.name for n in right_child.leaves()])
+            event.inparalogs = event.in_seqs
+
+            if sos > sos_thr:  # Duplication
+                event.etype = "D"
+                event.outparalogs = event.out_seqs
+                event.orthologs = set()
                 n.props['evoltype'] = 'D'
-                n.props['dup_sp'] = ','.join(dup_sp)
-                n.props['dup_percent'] = round(len(dup_sp)/len(node2species[n]), 3) * 100
-            else:
+                n.props['dup_sp'] = ','.join(shared_species)
+                n.props['dup_percent'] = round((len(shared_species) / len(total_species)) * 100, 3) if total_species else 0
+            else:  # Speciation
+                event.etype = "S"
+                event.orthologs = event.out_seqs
+                event.outparalogs = set()
                 n.props['evoltype'] = 'S'
+
+            event.node = n
+            all_events.append(event)
+
+        # Cleanup after species processing
         n.del_prop('_speciesFunction')
     return tree
 
