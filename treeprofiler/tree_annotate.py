@@ -24,7 +24,7 @@ from ete4 import NCBITaxa
 from treeprofiler.src import utils
 from treeprofiler.src.phylosignal import run_acr_discrete, run_acr_continuous, run_delta
 from treeprofiler.src.ls import run_ls
-from treeprofiler.src import b64pickle
+from treeprofiler.src import ete_format
 
 from multiprocessing import Pool
 
@@ -924,7 +924,7 @@ def run(args):
 
         ### out ete
         with open(os.path.join(args.outdir, base+'_annotated.ete'), 'w') as f:
-            f.write(b64pickle.dumps(annotated_tree, encoder='pickle', pack=False))
+            f.write(ete_format.dumps(annotated_tree, encoder='pickle', pack=False))
 
         ### out tsv
         prop_keys = list(prop2type.keys())

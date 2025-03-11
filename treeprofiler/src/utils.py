@@ -1,5 +1,5 @@
 from __future__ import annotations
-from treeprofiler.src import b64pickle
+from treeprofiler.src import ete_format
 from ete4.parser.newick import NewickError
 from ete4.core.operations import remove
 from ete4 import Tree, PhyloTree
@@ -240,7 +240,7 @@ def validate_tree(tree_path, input_type, internal_parser=None):
         try:
             with open(tree_path, 'r') as f:
                 file_content = f.read()
-            tree = b64pickle.loads(file_content, encoder='pickle', unpack=False)
+            tree = ete_format.loads(file_content, encoder='pickle', unpack=False)
             eteformat_flag = True
         except Exception as e:
             if input_type == 'ete':
