@@ -380,7 +380,7 @@ def run(args):
     except utils.TreeFormatError as e:
         print(e)
         sys.exit(1)
-
+    
     # resolve polytomy
     if args.resolve_polytomy:
         tree.resolve_polytomy()
@@ -746,10 +746,11 @@ def run(args):
         # categorical matrix
         if layout == 'categorical-matrix-layout':
             categorical_props = args.categorical_matrix_layout
-
+            if len(categorical_props) > 50:
+                title = categorical_props[:50] + '...'
             # drawing as array in matrix
             matrix, value2color = categorical2matrix(tree, categorical_props, color_config=color_config)
-            matrix_layout = profile_layouts.LayoutPropsMatrixOld(name=f"Categorical-matrix_{categorical_props}",
+            matrix_layout = profile_layouts.LayoutPropsMatrixOld(name=f"Categorical-matrix_{title}",
                 matrix=matrix, matrix_type='categorical', matrix_props=categorical_props,
                 value_color=value2color, column=level, poswidth=args.column_width)
             
@@ -778,7 +779,9 @@ def run(args):
                 sorted_list_props = sorted(list_props, key=lambda x: index_map[x])
                 for list_prop in sorted_list_props:
                     matrix, minval, maxval, value2color = results_list[list_prop]
-                    matrix_layout = profile_layouts.LayoutPropsMatrixOld(name=f"Numerical-matrix_{list_prop}", 
+                    if len(list_prop) > 50:
+                        title = list_prop[:50] + '...'
+                    matrix_layout = profile_layouts.LayoutPropsMatrixOld(name=f"Numerical-matrix_{title}", 
                         matrix=matrix, matrix_type='numerical', matrix_props=[list_prop], is_list=True, 
                         value_color=value2color, value_range=[minval, maxval], column=level,
                         poswidth=args.column_width)
@@ -789,7 +792,9 @@ def run(args):
             if single_props:
                 index_map = {value: idx for idx, value in enumerate(numerical_props)}
                 sorted_single_props = sorted(single_props, key=lambda x: index_map[x])
-                matrix_layout = profile_layouts.LayoutPropsMatrixOld(name=f"Numerical_matrix_{sorted_single_props}", 
+                if len(sorted_single_props) > 50:
+                    title = sorted_single_props[:50] + '...'
+                matrix_layout = profile_layouts.LayoutPropsMatrixOld(name=f"Numerical_matrix_{title}", 
                     matrix=matrix, matrix_type='numerical', matrix_props=sorted_single_props, is_list=False, 
                     value_color=value2color, value_range=[minval, maxval], column=level,
                     poswidth=args.column_width)
@@ -802,8 +807,9 @@ def run(args):
             binary_props = args.binary_matrix_layout
             matrix, value2color, is_list = binary2matrix(tree, binary_props, color_config=color_config)
             all_values = list(value2color.keys())
-
-            matrix_layout = profile_layouts.LayoutPropsMatrixBinary(name=f"Binary-matrix_{binary_props}",
+            if len(binary_props) > 50:
+                title = binary_props[:50] + '...'
+            matrix_layout = profile_layouts.LayoutPropsMatrixBinary(name=f"Binary-matrix_{title}",
                 prop=binary_props, matrix=matrix, matrix_props=binary_props, value_range=[0,1],
                 value_color=value2color, column=level, poswidth=args.column_width)
 
