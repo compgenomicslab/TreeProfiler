@@ -160,7 +160,7 @@ def get_consensus_seq(matrix_string: Path | str, threshold=0.7) -> SeqRecord:
     consensus = summary.dumb_consensus(threshold, "-")
     return consensus
 
-def counter2ratio(node, prop, minimum=0.05):
+def counter2ratio(node, prop, minimum=0.01):
     counter_separator = '||'
     items_separator = '--'
     count_missing = True
@@ -188,11 +188,11 @@ def counter2ratio(node, prop, minimum=0.05):
         ratio = 0
     
     if ratio < minimum and ratio != 0: # show minimum color for too low
-        ratio = 0.05
+        ratio = minimum
     
     return ratio
 
-def categorical2ratio(node, prop, all_values, minimum=0.05):
+def categorical2ratio(node, prop, all_values, minimum=0.01):
     counter_separator = '||'
     items_separator = '--'
     count_missing = True
@@ -210,7 +210,7 @@ def categorical2ratio(node, prop, all_values, minimum=0.05):
             positive = 0
         ratio = positive / total
         if ratio < minimum and ratio != 0: # show minimum color for too low
-            ratio = 0.05
+            ratio = minimum
         ratios.append(ratio)
     
     return ratios
