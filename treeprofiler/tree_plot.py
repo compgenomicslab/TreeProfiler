@@ -1119,7 +1119,8 @@ def get_acr_discrete_layouts(tree, props, level, prop2type, column_width=70, pad
     return layouts, level, prop_color_dict
 
 def get_acr_continuous_layouts(tree, props, level, prop2type, padding_x=1, padding_y=0):
-    gradientscolor = utils.build_color_gradient(20, colormap_name='jet')
+    ncolors = 40
+    gradientscolor = utils.build_color_gradient(ncolors, colormap_name='jet')
     layouts = []
     for prop in props:
         try:
@@ -1148,12 +1149,13 @@ def get_ls_layouts(tree, props, level, prop2type, padding_x=1, padding_y=0, colo
     ls_clade_suffix = "ls_clade"
     ls_clade_props = [utils.add_suffix(prop, ls_clade_suffix) for prop in props]
     lsprop2color = utils.assign_color_to_values(ls_clade_props, paired_color)
-
+    ncolors = 40
     layouts = []
     ls_props = []
+    
     for prop in props:
         value2color = {}
-        gradientscolor = utils.build_color_gradient(20, colormap_name='bwr')
+        gradientscolor = utils.build_color_gradient(ncolors, colormap_name='bwr')
 
         for suffix in [precision_suffix, sensitivity_suffix, f1_suffix]:
             
@@ -1562,13 +1564,13 @@ def get_branchscore_layouts(tree, props, prop2type, padding_x=1, padding_y=0, in
             minval = float(temp_min_val)
         if temp_max_val:
             maxval = float(temp_max_val)
-
-        gradientscolor = utils.build_custom_gradient(20, min_color, max_color, mid_color)
+        ncolors = 40
+        gradientscolor = utils.build_custom_gradient(ncolors, min_color, max_color, mid_color)
 
         return gradientscolor, value2color, minval, maxval
 
     layouts = []
-
+   
     for prop in props:
         # Get leaf values of each prop
         leaf_all_values = np.array(sorted(list(set(utils.tree_prop_array(tree, prop, numeric=True))))).astype('float64')
@@ -1584,7 +1586,8 @@ def get_branchscore_layouts(tree, props, prop2type, padding_x=1, padding_y=0, in
         if color_config and color_config.get(prop) is not None:
             gradientscolor, value2color, minval, maxval = parse_color_config(prop, color_config, minval, maxval)
         else:
-            gradientscolor = utils.build_color_gradient(20, colormap_name='jet')
+            ncolors = 40
+            gradientscolor = utils.build_color_gradient(ncolors, colormap_name='jet')
 
         # Preload corresponding gradient color of each value
         num = len(gradientscolor)
@@ -1802,10 +1805,11 @@ def get_numerical_bubble_layouts(tree, props, level, prop2type, padding_x=0, pad
                 minval = float(temp_min_val)
             if temp_max_val:
                 maxval = float(temp_max_val)
-
-            gradientscolor = utils.build_custom_gradient(20, min_color, max_color, mid_color)
+            ncolors = 40
+            gradientscolor = utils.build_custom_gradient(ncolors, min_color, max_color, mid_color)
         else:
-            gradientscolor = utils.build_color_gradient(20, colormap_name='jet')
+            ncolors = 40
+            gradientscolor = utils.build_color_gradient(ncolors, colormap_name='jet')
         
         # assign color to each value
         if max_val == min_val:
@@ -1879,8 +1883,8 @@ def get_heatmap_layouts(tree, props, level, column_width=70, padding_x=1, paddin
             minval = float(temp_min_val)
         if temp_max_val:
             maxval = float(temp_max_val)
-
-        gradient = utils.build_custom_gradient(20, min_color, max_color, mid_color)
+        ncolors = 40
+        gradient = utils.build_custom_gradient(ncolors, min_color, max_color, mid_color)
         return gradient, value2color, minval, maxval, nan_color
 
     layouts = []
@@ -1914,8 +1918,9 @@ def get_heatmap_layouts(tree, props, level, column_width=70, padding_x=1, paddin
         if color_config and color_config.get(prop):
             gradientscolor, value2color, minval, maxval, nan_color = parse_color_config(prop, color_config, minval, maxval)
         if not gradientscolor:
-            gradientscolor = utils.build_color_gradient(20, colormap_name="Reds" if norm_method == 'min-max' else "coolwarm")
-
+            ncolors = 40
+            gradientscolor = utils.build_color_gradient(ncolors, colormap_name="Reds" if norm_method == 'min-max' else "coolwarm")
+        
         # Normalize values and map colors
         index_values = np.linspace(0, 1 if norm_method == 'min-max' else (-3 if norm_method == 'zscore' else -1), len(gradientscolor))
         for value in prop_all_values:
@@ -2112,7 +2117,8 @@ def numerical2matrix(tree, profiling_props, count_negative=True, internal_num_re
                     minval = float(temp_min_val)
                 if temp_max_val:
                     maxval = float(temp_max_val)
-                gradientscolor = utils.build_custom_gradient(20, min_color, max_color, mid_color)
+                ncolors = 40
+                gradientscolor = utils.build_custom_gradient(ncolors, min_color, max_color, mid_color)
 
         if profiling_props:
             for profiling_prop in profiling_props:
@@ -2137,7 +2143,8 @@ def numerical2matrix(tree, profiling_props, count_negative=True, internal_num_re
                             minval = float(temp_min_val)
                         if temp_max_val:
                             maxval = float(temp_max_val)
-                        gradientscolor = utils.build_custom_gradient(20, min_color, max_color, mid_color)
+                        ncolors = 40
+                        gradientscolor = utils.build_custom_gradient(ncolors, min_color, max_color, mid_color)
         
         return value2color, gradientscolor, minval, maxval, nan_color
 
@@ -2167,10 +2174,11 @@ def numerical2matrix(tree, profiling_props, count_negative=True, internal_num_re
             nan_color = '#EBEBEB'
 
         if not gradientscolor:
+            ncolors = 40
             if norm_method == 'min-max':
-                gradientscolor = utils.build_color_gradient(20, colormap_name="Reds")
+                gradientscolor = utils.build_color_gradient(ncolors, colormap_name="Reds")
             else: # "mean" "zscore"
-                gradientscolor = utils.build_color_gradient(20, colormap_name="coolwarm")
+                gradientscolor = utils.build_color_gradient(ncolors, colormap_name="coolwarm")
         
         num = len(gradientscolor)
         for search_value in all_values_raw:
@@ -2321,8 +2329,8 @@ def binary2matrix(tree, profiling_props, color_config=None):
                     if 'value2color' in prop_config and prop_config['value2color']:
                         value2color = prop_config['value2color']
                         value2color = {float(key): value for key, value in value2color.items()}
-    
-    gradientscolor = utils.build_color_gradient(20, colormap_name='Reds')
+    ncolors = 40
+    gradientscolor = utils.build_color_gradient(ncolors, colormap_name='Reds')
     
     # get color for binary value 0 to 1
     all_values_raw = list(set(utils.flatten([sublist for sublist in node2matrix.values()])))
@@ -2464,7 +2472,8 @@ def single2matrix(tree, profiling_prop):
                 node2matrix[node.name] = ratios  # Extend the ratio across all possible values
     
     #get color
-    gradientscolor = utils.build_color_gradient(20, colormap_name='Reds')
+    ncolors = 40
+    gradientscolor = utils.build_color_gradient(ncolors, colormap_name='Reds')
     #value2color = {}
     value2color = {1: precence_color, 0: absence_color}
     # get color for binary value 0 to 1
@@ -2553,7 +2562,8 @@ def multiple2matrix(tree, profiling_prop, prop2type=None, color_config=None, ete
                 node2matrix[node.name] = ratios
     
     # Build a color gradient for binary values
-    gradientscolor = utils.build_color_gradient(20, colormap_name='Reds')
+    ncolors = 40
+    gradientscolor = utils.build_color_gradient(ncolors, colormap_name='Reds')
     value2color = {1: precence_color, 0: absence_color}
 
     # Get unique values from node2matrix and sort non-NaN values
