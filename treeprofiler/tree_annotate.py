@@ -24,7 +24,7 @@ from ete4 import NCBITaxa
 from treeprofiler.src import utils
 from treeprofiler.src.phylosignal import run_acr_discrete, run_acr_continuous, run_delta
 from treeprofiler.src.ls import run_ls
-from treeprofiler.src import b64pickle
+from treeprofiler.src import ete_format
 
 from multiprocessing import Pool
 
@@ -112,7 +112,7 @@ def populate_annotate_args(parser):
     #     help=("<kingdom|phylum|class|order|family|genus|species|subspecies> "
     #           "reference tree from taxonomic database"))
     add('--taxadb', type=str.upper,
-        choices=['NCBI', 'GTDB', 'customdb'],
+        choices=['NCBI', 'GTDB', 'MOTUS', 'customdb'],
         help="<NCBI|GTDB> for taxonomic annotation or fetch taxatree")
     add('--gtdb-version', type=int,
         choices=[95, 202, 207, 214, 220],
@@ -648,6 +648,17 @@ def run_tree_annotate(tree, input_annotated_tree=False,
                 else:
                     logger.info("No specific version or dump file provided; using latest GTDB data...")
                     GTDBTaxa().update_taxonomy_database()
+            elif taxadb == 'MOTUS':
+                if gtdb_version and taxa_dump:
+                    logger.error('Please specify either GTDB version or taxa dump file, not both.')
+                    sys.exit(1)
+                if taxa_dump:
+                    logger.info(f"Loading GTDB database dump file {taxa_dump}...")
+                    GTDBTaxa().update_taxonomy_database(taxa_dump)
+                else:
+                    logger.info("No specific version or dump file provided; using latest GTDB data...")
+                    motus_dump = download_motus_dump()
+                    GTDBTaxa().update_taxonomy_database(motus_dump)
             elif taxadb == 'NCBI':
                 if taxa_dump:
                     logger.info(f"Loading NCBI database dump file {taxa_dump}...")
@@ -924,7 +935,7 @@ def run(args):
 
         ### out ete
         with open(os.path.join(args.outdir, base+'_annotated.ete'), 'w') as f:
-            f.write(b64pickle.dumps(annotated_tree, encoder='pickle', pack=False))
+            f.write(ete_format.dumps(annotated_tree, encoder='pickle', pack=False))
 
         ### out tsv
         prop_keys = list(prop2type.keys())
@@ -1780,7 +1791,7 @@ def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field
         return merged_dict
 
 
-    if db == "GTDB":
+    if db == "GTDB" or "MOTUS":
         gtdb = GTDBTaxa()
         tree.set_species_naming_function(return_spcode_gtdb)
         gtdb.annotate_tree(tree,  taxid_attr="species", ignore_unclassified=ignore_unclassified)
@@ -1840,28 +1851,27 @@ def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field
         
     return tree, rank2values
 
-# def annotate_evol_events(tree, sp_delimiter='.', sp_field=0):
-#     def return_spcode(leaf):
-#         try:
-#             return leaf.name.split(sp_delimiter)[sp_field]
-#         except (IndexError, ValueError):
-#             return leaf.name
+def download_motus_dump():
+    from hashlib import md5
+    import requests
 
-#     tree.set_species_naming_function(return_spcode)
+    url = "https://github.com/dengzq1234/ete-data/raw/refs/heads/main/motus_taxonomy/motus_latest_dump.tar.gz"
+    fname = './motus_latest_dump.tar.gz'
+    if not os.path.exists(fname):
+        print(f'Downloading {fname} from {url} ...')
+        with open(fname, 'wb') as f:
+            f.write(requests.get(url).content)
+    else:
+        md5_local = md5(open(fname, 'rb').read()).hexdigest()
+        md5_remote = requests.get(url + '.md5').text.split()[0]
 
-#     node2species = tree.get_cached_content('species')
-#     for n in tree.traverse():
-#         n.props['species'] = node2species[n]
-#         if len(n.children) == 2:
-#             dup_sp = node2species[n.children[0]] & node2species[n.children[1]]
-#             if dup_sp:
-#                 n.props['evoltype'] = 'D'
-#                 n.props['dup_sp'] = ','.join(dup_sp)
-#                 n.props['dup_percent'] = round(len(dup_sp)/len(node2species[n]), 3) * 100
-#             else:
-#                 n.props['evoltype'] = 'S'
-#         n.del_prop('_speciesFunction')
-#     return tree
+        if md5_local != md5_remote:
+            print(f'Updating {fname} from {url} ...')
+            with open(fname, 'wb') as f:
+                f.write(requests.get(url).content)
+        else:
+            print(f'File {fname} is already up-to-date with {url} .')
+    return fname
 
 def annotate_evol_events(tree, sos_thr=0.0, sp_delimiter='.', sp_field=0):
     def return_spcode(leaf):

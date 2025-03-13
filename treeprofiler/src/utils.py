@@ -1,5 +1,5 @@
 from __future__ import annotations
-from treeprofiler.src import b64pickle
+from treeprofiler.src import ete_format
 from ete4.parser.newick import NewickError
 from ete4.core.operations import remove
 from ete4 import Tree, PhyloTree
@@ -160,7 +160,7 @@ def get_consensus_seq(matrix_string: Path | str, threshold=0.7) -> SeqRecord:
     consensus = summary.dumb_consensus(threshold, "-")
     return consensus
 
-def counter2ratio(node, prop, minimum=0.05):
+def counter2ratio(node, prop, minimum=0.01):
     counter_separator = '||'
     items_separator = '--'
     count_missing = True
@@ -188,11 +188,11 @@ def counter2ratio(node, prop, minimum=0.05):
         ratio = 0
     
     if ratio < minimum and ratio != 0: # show minimum color for too low
-        ratio = 0.05
+        ratio = minimum
     
     return ratio
 
-def categorical2ratio(node, prop, all_values, minimum=0.05):
+def categorical2ratio(node, prop, all_values, minimum=0.01):
     counter_separator = '||'
     items_separator = '--'
     count_missing = True
@@ -210,7 +210,7 @@ def categorical2ratio(node, prop, all_values, minimum=0.05):
             positive = 0
         ratio = positive / total
         if ratio < minimum and ratio != 0: # show minimum color for too low
-            ratio = 0.05
+            ratio = minimum
         ratios.append(ratio)
     
     return ratios
@@ -240,7 +240,7 @@ def validate_tree(tree_path, input_type, internal_parser=None):
         try:
             with open(tree_path, 'r') as f:
                 file_content = f.read()
-            tree = b64pickle.loads(file_content, encoder='pickle', unpack=False)
+            tree = ete_format.loads(file_content, encoder='pickle', unpack=False)
             eteformat_flag = True
         except Exception as e:
             if input_type == 'ete':

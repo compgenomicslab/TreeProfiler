@@ -287,7 +287,10 @@ class LayoutHeatmap(TreeLayout):
 
     def set_tree_style(self, tree, tree_style):
         super().set_tree_style(tree, tree_style)
-
+        first_key = min(self.color_range.keys())
+        last_key = max(self.color_range.keys())
+        middle_key = sorted(self.color_range.keys())[len(self.color_range) // 2]
+        
         text = TextFace(self.prop,  padding_x=self.padding_x, width=self.width, rotation=315)
         tree_style.aligned_panel_header.add_face(text, column=self.column)
         if self.legend:
@@ -295,9 +298,9 @@ class LayoutHeatmap(TreeLayout):
                                     variable='continuous',
                                     value_range=self.value_range ,
                                     color_range=[
-                                        self.color_range.get(20),
-                                        self.color_range.get(10),
-                                        self.color_range.get(1),
+                                        self.color_range.get(last_key),
+                                        self.color_range.get(middle_key),
+                                        self.color_range.get(first_key),
                                     ]
                                     )
     def set_node_style(self, node):
@@ -397,8 +400,8 @@ class LayoutHeatmapOld(TreeLayout):
                                     variable='continuous',
                                     value_range=[self.minval, self.maxval],
                                     color_range=[
-                                        self.color_dict[20], 
-                                        self.color_dict[10], 
+                                        self.color_dict[-1], 
+                                        self.color_dict[len(self.color_dict)//2], 
                                         self.color_dict[1]
                                     ]
                                     )
