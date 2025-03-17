@@ -222,7 +222,7 @@ class LayoutText(TreeLayout):
                                     )
 
     def set_node_style(self, node):
-        if node.is_leaf and node.props.get(self.prop) is not '':
+        if node.is_leaf and node.props.get(self.prop) != '':
             prop_text = node.props.get(self.prop)
             if type(prop_text) == list:
                 prop_text = ",".join(prop_text)
