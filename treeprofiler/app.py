@@ -397,7 +397,7 @@ def process_upload_job(job_args):
                 "ignore_unclassified": job_args.get("ignore_unclassified"),
                 "sos_thr": float(job_args.get("sos_thr"))
             }
-
+        
         # for analytic methods
         analytic_options = {}
         acr_discrete_columns = []
