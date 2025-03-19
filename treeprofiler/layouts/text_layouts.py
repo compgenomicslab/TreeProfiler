@@ -191,7 +191,6 @@ class AlignLinkFace(Face):
                 style=style,
             )
 
-
 class LayoutText(TreeLayout):
     def __init__(self, name, column, color_dict, prop, width=70, min_fsize=5, max_fsize=15, padding_x=1, padding_y=0, legend=True, aligned_faces=True):
         super().__init__(name, aligned_faces=aligned_faces)

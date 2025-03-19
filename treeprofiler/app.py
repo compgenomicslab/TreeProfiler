@@ -219,7 +219,8 @@ def do_upload():
         "species_index": int(request.forms.get('speciesFieldIndex') or 0),
         "version": request.forms.get('version'),
         "ignore_unclassified": request.forms.get('ignoreUnclassified') == 'True',
-        
+        "sos_thr": request.forms.get('speciesOverlapThreshold'),
+
         "acr_columns": request.forms.getlist('acrColumn[]'),
         "prediction_method": request.forms.get('acrMethod'),
         "model": request.forms.get('acrModel'),
@@ -393,7 +394,8 @@ def process_upload_job(job_args):
                 "gtdb_version": job_args.get("version"),
                 "taxon_delimiter": job_args.get("species_delimiter"),
                 "taxa_field": job_args.get("species_index"),
-                "ignore_unclassified": job_args.get("ignore_unclassified")
+                "ignore_unclassified": job_args.get("ignore_unclassified"),
+                "sos_thr": float(job_args.get("sos_thr"))
             }
 
         # for analytic methods
@@ -1563,14 +1565,12 @@ def explore_tree(treename):
                 start_explore_thread(t, treename, emapper_example_layouts, current_props)
         elif treename == 'gtdb_r202_example':
             gtdb_example_layouts = load_gtdb_layout(t, prop2type)
-            
             if current_layouts:
                 current_layouts.extend(gtdb_example_layouts)
                 start_explore_thread(t, treename, current_layouts, current_props)
             else:
                 start_explore_thread(t, treename, gtdb_example_layouts, current_props)
         else:
-            print("check!", avail_props)
             start_explore_thread(t, treename, current_layouts, avail_props)
         
 
