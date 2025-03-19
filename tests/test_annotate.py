@@ -99,12 +99,12 @@ class TestAnnotate(unittest.TestCase):
             columns=columns, prop2type=prop2type, threads=4)
         
         props = ['col1', 'col1_sum','col1_max','col1_min','col1_std','col1_avg']
-        expected_tree_no_root = '(A:1[&&NHX:col1=1.0],(B:1[&&NHX:col1=2.0],(E:1[&&NHX:col1=4.0],D:1[&&NHX:col1=3.0])Internal_1:0.5[&&NHX:col1_sum=7.0:col1_max=4.0:col1_min=3.0:col1_std=0.5:col1_avg=3.5])Internal_2:0.5[&&NHX:col1_sum=9.0:col1_max=4.0:col1_min=2.0:col1_std=1.0:col1_avg=3.0]);'    
-        expected_tree_with_root = '(A:1[&&NHX:col1=1.0],(B:1[&&NHX:col1=2.0],(E:1[&&NHX:col1=4.0],D:1[&&NHX:col1=3.0])Internal_1:0.5[&&NHX:col1_sum=7.0:col1_max=4.0:col1_min=3.0:col1_std=0.5:col1_avg=3.5])Internal_2:0.5[&&NHX:col1_sum=9.0:col1_max=4.0:col1_min=2.0:col1_std=1.0:col1_avg=3.0])Root[&&NHX:col1_sum=10.0:col1_max=4.0:col1_min=1.0:col1_std=1.6666666666666667:col1_avg=2.5];'
-        
+        expected_tree_no_root = '(A:1[&&NHX:col1=1.0],(B:1[&&NHX:col1=2.0],(E:1[&&NHX:col1=4.0],D:1[&&NHX:col1=3.0])Internal_1:0.5[&&NHX:col1_sum=7.0:col1_max=4.0:col1_min=3.0:col1_std=0.7071067811865476:col1_avg=3.5])Internal_2:0.5[&&NHX:col1_sum=9.0:col1_max=4.0:col1_min=2.0:col1_std=1.0:col1_avg=3.0]);'    
+        expected_tree_with_root = '(A:1[&&NHX:col1=1.0],(B:1[&&NHX:col1=2.0],(E:1[&&NHX:col1=4.0],D:1[&&NHX:col1=3.0])Internal_1:0.5[&&NHX:col1_sum=7.0:col1_max=4.0:col1_min=3.0:col1_std=0.7071067811865476:col1_avg=3.5])Internal_2:0.5[&&NHX:col1_sum=9.0:col1_max=4.0:col1_min=2.0:col1_std=1.0:col1_avg=3.0])Root[&&NHX:col1_sum=10.0:col1_max=4.0:col1_min=1.0:col1_std=1.2909944487358056:col1_avg=2.5];'
+
         self.assertEqual(test_tree_annotated.write(props=props, parser=parser), expected_tree_no_root)
         self.assertEqual(test_tree_annotated.write(props=props, parser=parser, format_root_node=True), expected_tree_with_root)
-
+    
     def test_annotate_05(self):
         # test num_stat none and counter_stat none
         # internal_nodes annotation categorical data
@@ -284,7 +284,7 @@ class TestAnnotate(unittest.TestCase):
         props = ['col01', 'col02', 'col03', 'col04', 'col05', 'col06', 'col07', 'col01_counter', 
         'col02_counter', 'col07_counter', 'col05_counter', 'col6_counter', 'col03_avg', 'col03_sum', 
         'col03_max', 'col03_min', 'col03_std', 'col04_avg', 'col04_sum', 'col04_max', 'col04_min', 'col04_std']
-        expected_tree = '(A:1[&&NHX:col01=vowel:col02=vowel:col03=1.0:col04=1.0:col05=True:col06=True:col07=a|b|c],(B:1[&&NHX:col01=consonant:col02=consonant:col03=2.0:col04=2.0:col05=False:col06=False:col07=c|d],(E:1[&&NHX:col01=vowel:col02=vowel:col03=4.0:col04=4.0:col05=False:col06=False:col07=e|d|b],D:1[&&NHX:col01=consonant:col02=consonant:col03=3.0:col04=3.0:col05=True:col06=True:col07=a|c|d|e])Internal_1:0.5[&&NHX:col01_counter=consonant--1||vowel--1:col02_counter=consonant--1||vowel--1:col07_counter=a--1||b--1||c--1||d--2||e--2:col05_counter=False--1||True--1:col03_avg=3.5:col03_sum=7.0:col03_max=4.0:col03_min=3.0:col03_std=0.5:col04_avg=3.5:col04_sum=7.0:col04_max=4.0:col04_min=3.0:col04_std=0.5])Internal_2:0.5[&&NHX:col01_counter=consonant--2||vowel--1:col02_counter=consonant--2||vowel--1:col07_counter=a--1||b--1||c--2||d--3||e--2:col05_counter=False--2||True--1:col03_avg=3.0:col03_sum=9.0:col03_max=4.0:col03_min=2.0:col03_std=1.0:col04_avg=3.0:col04_sum=9.0:col04_max=4.0:col04_min=2.0:col04_std=1.0])Root[&&NHX:col01_counter=consonant--2||vowel--2:col02_counter=consonant--2||vowel--2:col07_counter=a--2||b--2||c--3||d--3||e--2:col05_counter=False--2||True--2:col03_avg=2.5:col03_sum=10.0:col03_max=4.0:col03_min=1.0:col03_std=1.6666666666666667:col04_avg=2.5:col04_sum=10.0:col04_max=4.0:col04_min=1.0:col04_std=1.6666666666666667];'
+        expected_tree = '(A:1[&&NHX:col01=vowel:col02=vowel:col03=1.0:col04=1.0:col05=True:col06=True:col07=a|b|c],(B:1[&&NHX:col01=consonant:col02=consonant:col03=2.0:col04=2.0:col05=False:col06=False:col07=c|d],(E:1[&&NHX:col01=vowel:col02=vowel:col03=4.0:col04=4.0:col05=False:col06=False:col07=e|d|b],D:1[&&NHX:col01=consonant:col02=consonant:col03=3.0:col04=3.0:col05=True:col06=True:col07=a|c|d|e])Internal_1:0.5[&&NHX:col01_counter=consonant--1||vowel--1:col02_counter=consonant--1||vowel--1:col07_counter=a--1||b--1||c--1||d--2||e--2:col05_counter=False--1||True--1:col03_avg=3.5:col03_sum=7.0:col03_max=4.0:col03_min=3.0:col03_std=0.7071067811865476:col04_avg=3.5:col04_sum=7.0:col04_max=4.0:col04_min=3.0:col04_std=0.7071067811865476])Internal_2:0.5[&&NHX:col01_counter=consonant--2||vowel--1:col02_counter=consonant--2||vowel--1:col07_counter=a--1||b--1||c--2||d--3||e--2:col05_counter=False--2||True--1:col03_avg=3.0:col03_sum=9.0:col03_max=4.0:col03_min=2.0:col03_std=1.0:col04_avg=3.0:col04_sum=9.0:col04_max=4.0:col04_min=2.0:col04_std=1.0])Root[&&NHX:col01_counter=consonant--2||vowel--2:col02_counter=consonant--2||vowel--2:col07_counter=a--2||b--2||c--3||d--3||e--2:col05_counter=False--2||True--2:col03_avg=2.5:col03_sum=10.0:col03_max=4.0:col03_min=1.0:col03_std=1.2909944487358056:col04_avg=2.5:col04_sum=10.0:col04_max=4.0:col04_min=1.0:col04_std=1.2909944487358056];'
         self.assertEqual(test_tree_annotated.write(props=props, parser=parser, format_root_node=True), expected_tree)
 
     def test_annotate_12(self):
@@ -317,8 +317,8 @@ class TestAnnotate(unittest.TestCase):
         metadata_dict=metadata_dict, node_props=node_props, counter_stat='raw',
         columns=columns, prop2type=prop2type)
 
-        expected_tree = '(A:1[&&NHX:alphabet_type=NaN],(B:1[&&NHX:alphabet_type=NaN],(E:1[&&NHX:alphabet_type=vowel],D:1[&&NHX:alphabet_type=NaN])Internal_1:0.5[&&NHX:alphabet_type_counter=NaN--1||vowel--1])Internal_2:0.5[&&NHX:alphabet_type_counter=NaN--2||vowel--1])Root[&&NHX:alphabet_type_counter=NaN--3||vowel--1];'
-        
+        expected_tree = '(A:1,(B:1,(E:1[&&NHX:alphabet_type=vowel],D:1)Internal_1:0.5[&&NHX:alphabet_type_counter=vowel--1])Internal_2:0.5[&&NHX:alphabet_type_counter=vowel--1])Root[&&NHX:alphabet_type_counter=vowel--1];'
+
         self.assertEqual(test_tree_annotated_1.write(props=None, parser=parser, format_root_node=True), expected_tree)
         self.assertEqual(test_tree_annotated_2.write(props=None, parser=parser, format_root_node=True), expected_tree)
 
@@ -361,8 +361,7 @@ class TestAnnotate(unittest.TestCase):
             metadata_dict=metadata_dict, node_props=node_props, num_stat='all', column2method={},
             columns=columns, prop2type=prop2type)
         props = ['col1', 'col1_sum','col1_max','col1_min','col1_std','col1_avg']
-        expected_tree_all = '(A:1[&&NHX:col1=1.0],(B:1[&&NHX:col1=2.0],(E:1[&&NHX:col1=4.0],D:1[&&NHX:col1=3.0])Internal_1:0.5[&&NHX:col1_sum=7.0:col1_max=4.0:col1_min=3.0:col1_std=0.5:col1_avg=3.5])Internal_2:0.5[&&NHX:col1_sum=9.0:col1_max=4.0:col1_min=2.0:col1_std=1.0:col1_avg=3.0])Root[&&NHX:col1_sum=10.0:col1_max=4.0:col1_min=1.0:col1_std=1.6666666666666667:col1_avg=2.5];'
-        
+        expected_tree_all = '(A:1[&&NHX:col1=1.0],(B:1[&&NHX:col1=2.0],(E:1[&&NHX:col1=4.0],D:1[&&NHX:col1=3.0])Internal_1:0.5[&&NHX:col1_sum=7.0:col1_max=4.0:col1_min=3.0:col1_std=0.7071067811865476:col1_avg=3.5])Internal_2:0.5[&&NHX:col1_sum=9.0:col1_max=4.0:col1_min=2.0:col1_std=1.0:col1_avg=3.0])Root[&&NHX:col1_sum=10.0:col1_max=4.0:col1_min=1.0:col1_std=1.2909944487358056:col1_avg=2.5];'
         self.assertEqual(test_tree_annotated_all.write(props=props, parser=parser, format_root_node=True), expected_tree_all)
 
     def test_annotate_14_b(self):
@@ -475,8 +474,8 @@ class TestAnnotate(unittest.TestCase):
             metadata_dict=metadata_dict, node_props=node_props, num_stat='std', column2method={},
             columns=columns, prop2type=prop2type)
 
-        expected_tree_std = '(A:1[&&NHX:col1=1.0],(B:1[&&NHX:col1=2.0],(E:1[&&NHX:col1=4.0],D:1[&&NHX:col1=3.0])Internal_1:0.5[&&NHX:col1_std=0.5])Internal_2:0.5[&&NHX:col1_std=1.0])Root[&&NHX:col1_std=1.6666666666666667];'
-        
+        expected_tree_std = '(A:1[&&NHX:col1=1.0],(B:1[&&NHX:col1=2.0],(E:1[&&NHX:col1=4.0],D:1[&&NHX:col1=3.0])Internal_1:0.5[&&NHX:col1_std=0.7071067811865476])Internal_2:0.5[&&NHX:col1_std=1.0])Root[&&NHX:col1_std=1.2909944487358056];'
+
         self.assertEqual(test_tree_annotated_std.write(props=None, parser=parser, format_root_node=True), expected_tree_std)
 
     def test_annotate_tar(self):
@@ -511,6 +510,27 @@ class TestAnnotate(unittest.TestCase):
         expected_tree = '(a:1[&&NHX:col1=apple:col2=3.0]);'
         self.assertEqual(test_tree_annotated.write(props=props), expected_tree)
 
+    def test_array_annotate_01(self):
+        # test data-matrix one column
+        # load tree
+        internal_parser = "name"
+        parser = utils.get_internal_parser(internal_parser)
+
+        test_tree = utils.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;")
+
+        # load metadata
+        # Get the current script directory
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        custom_filename = os.path.join(current_dir, "data_matrix.tsv")
+        with open(custom_filename, "w") as f_annotation:
+            f_annotation.write("A\t1\nB\t2\nD\t3\nE\t4\n")
+            # os.rename(temp_name, custom_name)  # Rename the temp file    
+        array_dict = tree_annotate.parse_tsv_to_array([custom_filename])
+
+        test_tree_annotated = tree_annotate.run_array_annotate(test_tree, array_dict, num_stat="avg", column2method={})
+        expected_tree_avgs = "(A:1[&&NHX:data_matrix.tsv=1.0],(B:1[&&NHX:data_matrix.tsv=2.0],(E:1[&&NHX:data_matrix.tsv=4.0],D:1[&&NHX:data_matrix.tsv=3.0])Internal_1:0.5[&&NHX:data_matrix.tsv_avg=3.5])Internal_2:0.5[&&NHX:data_matrix.tsv_avg=3.0])Root[&&NHX:data_matrix.tsv_avg=2.5];"
+        self.assertEqual(test_tree_annotated.write(props=None, parser=parser, format_root_node=True), expected_tree_avgs)
+
     def test_internal_parser_01(self):
         parser='name'
         test_tree = utils.ete4_parse("(A:1,(B:1,(E:1,D:1)Internal_1:0.5)Internal_2:0.5)Root;", internal_parser=parser)
@@ -519,7 +539,7 @@ class TestAnnotate(unittest.TestCase):
 
         self.assertEqual(test_tree.write(props=None, parser=1, format_root_node=True), expected_tree_paser_1)
         self.assertEqual(test_tree.write(props=None, parser=0), expected_tree_paser_0)
-
+            
 
     def test_internal_parser_02(self):
         parser='support'

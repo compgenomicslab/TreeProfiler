@@ -628,6 +628,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
 
     # taxa annotations
     start = time.time()
+    
     if taxon_column:
         if not taxadb:
             logger.error('Please specify which taxa db using --taxadb <GTDB|NCBI>')
@@ -665,7 +666,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
                     NCBITaxa().update_taxonomy_database(taxa_dump)
                 # else:
                 #     NCBITaxa().update_taxonomy_database()
-                
+
             annotated_tree, rank2values = annotate_taxa(annotated_tree, db=taxadb, \
                     taxid_attr=taxon_column, sp_delimiter=taxon_delimiter, sp_field=taxa_field, \
                     ignore_unclassified=ignore_unclassified)
@@ -1672,7 +1673,7 @@ def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field
                             lca_dict[potential_rank] = taxa
                 n.add_prop("lca", utils.dict_to_string(lca_dict))
 
-    elif db == "NCBI":
+    if db == "NCBI":
         ncbi = NCBITaxa()
         # extract sp codes from leaf names
         tree.set_species_naming_function(return_spcode_ncbi)
