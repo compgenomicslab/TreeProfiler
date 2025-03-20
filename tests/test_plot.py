@@ -77,7 +77,7 @@ class TestTreePlots(unittest.TestCase):
         layouts.extend(label_layouts)
         expected_config = "{'default': {'Branch length': True, 'Branch support': True, 'Leaf name': True, 'Number of leaves': False, 'Label_alphabet_type': True}}"
         expected_draw = "[['line', [0, 2.0], [2.0, 2.0], '', [], {'stroke': '#000000', 'stroke-width': 0.5, 'fill': '#e5e5e5', 'fill-opacity': 0.3, 'type': 'solid'}], ['nodebox', [0, 0, 2.0, 4.0], '', {'name': '', 'dist': 0.0, 'support': 1.0}, [], [], {'fill': 'transparent'}]]"
-        expected_layout = "{'name': 'Label_alphabet_type', 'active': True, 'aligned_faces': True, 'description': '', 'legend': True, 'always_render': False, 'ts': None, 'ns': None, 'text_prop': 'alphabet_type', 'column': 1, 'color_dict': {'consonant': '#9a312f', 'vowel': '#9b57d0'}, 'internal_prop': 'alphabet_type_counter', 'width': 70, 'height': None, 'min_fsize': 5, 'max_fsize': 15, 'absence_color': '#EBEBEB', 'padding_x': 1, 'padding_y': 0}"
+        expected_layout = "{'name': 'Label_alphabet_type', 'active': True, 'aligned_faces': True, 'description': '', 'legend': True, 'always_render': False, 'ts': None, 'ns': None, 'prop': 'alphabet_type', 'column': 1, 'color_dict': {'consonant': '#9a312f', 'vowel': '#9b57d0'}, 'internal_prop': 'alphabet_type_counter', 'width': 70, 'height': None, 'min_fsize': 5, 'max_fsize': 15, 'absence_color': '#EBEBEB', 'padding_x': 1, 'padding_y': 0}"
         get_parallel(test_tree, layouts, expected_draw, expected_config)
         
         self.assertEqual(str(layouts[0].__dict__), expected_layout)
@@ -107,7 +107,7 @@ class TestTreePlots(unittest.TestCase):
         layouts.extend(colorbranch_layouts)
         expected_config = "{'default': {'Branch length': True, 'Branch support': True, 'Leaf name': True, 'Number of leaves': False, 'Colorbranch_alphabet_type': True}}"
         expected_draw = "[['line', [0, 2.0], [2.0, 2.0], '', [], {'stroke': '#000000', 'stroke-width': 0.5, 'fill': '#e5e5e5', 'fill-opacity': 0.3, 'type': 'solid'}], ['nodebox', [0, 0, 2.0, 4.0], '', {'name': '', 'dist': 0.0, 'support': 1.0}, [], [], {'fill': 'transparent'}]]"
-        expected_layout = "{'name': 'Colorbranch_alphabet_type', 'active': True, 'aligned_faces': True, 'description': '', 'legend': True, 'always_render': False, 'ts': None, 'ns': None, 'text_prop': 'alphabet_type', 'column': 1, 'color_dict': {'consonant': '#9a312f', 'vowel': '#9b57d0'}, 'internal_prop': 'alphabet_type_counter', 'height': None, 'absence_color': '#EBEBEB', 'width': 70, 'padding_x': 1, 'padding_y': 0}"
+        expected_layout = "{'name': 'ColorBranch_alphabet_type', 'active': True, 'aligned_faces': True, 'description': '', 'legend': True, 'always_render': False, 'ts': None, 'ns': None, 'prop': 'alphabet_type', 'column': 1, 'color_dict': {'consonant': '#9a312f', 'vowel': '#9b57d0'}, 'internal_prop': 'alphabet_type_counter', 'height': None, 'absence_color': '#EBEBEB', 'width': 70, 'padding_x': 1, 'padding_y': 0}"
         get_parallel(test_tree, layouts, expected_draw, expected_config)
         
         self.assertEqual(str(layouts[0].__dict__), expected_layout)
@@ -137,7 +137,7 @@ class TestTreePlots(unittest.TestCase):
         layouts.extend(rectangular_layouts)
         expected_config = "{'default': {'Branch length': True, 'Branch support': True, 'Leaf name': True, 'Number of leaves': False, 'Rectangular_alphabet_type': True}}"
         expected_draw = "[['line', [0, 2.0], [2.0, 2.0], '', [], {'stroke': '#000000', 'stroke-width': 0.5, 'fill': '#e5e5e5', 'fill-opacity': 0.3, 'type': 'solid'}], ['nodebox', [0, 0, 2.0, 4.0], '', {'name': '', 'dist': 0.0, 'support': 1.0}, [], [], {'fill': 'transparent'}]]"
-        expected_layout = "{'name': 'Rectangular_alphabet_type', 'active': True, 'aligned_faces': True, 'description': '', 'legend': True, 'always_render': False, 'ts': None, 'ns': None, 'text_prop': 'alphabet_type', 'column': 1, 'color_dict': {'consonant': '#9a312f', 'vowel': '#9b57d0'}, 'absence_color': '#EBEBEB', 'internal_prop': 'alphabet_type_counter', 'width': 70, 'height': None, 'min_fsize': 5, 'max_fsize': 15, 'padding_x': 1, 'padding_y': 0}"
+        expected_layout = "{'name': 'Rectangle_alphabet_type', 'active': True, 'aligned_faces': True, 'description': '', 'legend': True, 'always_render': False, 'ts': None, 'ns': None, 'prop': 'alphabet_type', 'column': 1, 'color_dict': {'consonant': '#9a312f', 'vowel': '#9b57d0'}, 'absence_color': '#EBEBEB', 'internal_prop': 'alphabet_type_counter', 'width': 70, 'height': None, 'min_fsize': 5, 'max_fsize': 15, 'padding_x': 1, 'padding_y': 0}"
         get_parallel(test_tree, layouts, expected_draw, expected_config)
         
         self.assertEqual(str(layouts[0].__dict__), expected_layout)
@@ -190,8 +190,9 @@ class TestTreePlots(unittest.TestCase):
         layouts.extend(heatmap_layouts)
         expected_config = "{'default': {'Branch length': True, 'Branch support': True, 'Leaf name': True, 'Number of leaves': False, 'Heatmap_col1': True}}"
         expected_draw = "[['line', [0, 2.0], [2.0, 2.0], '', [], {'stroke': '#000000', 'stroke-width': 0.5, 'fill': '#e5e5e5', 'fill-opacity': 0.3, 'type': 'solid'}], ['nodebox', [0, 0, 2.0, 4.0], '', {'name': '', 'dist': 0.0, 'support': 1.0}, [], [], {'fill': 'transparent'}]]"
-        expected_layout = "{'name': 'Heatmap_col1_min-max', 'active': True, 'aligned_faces': True, 'description': '', 'legend': True, 'always_render': False, 'ts': None, 'ns': None, 'heatmap_prop': 'col1', 'internal_prop': 'col1_avg', 'column': 1, 'value_color': {1.0: '#fff5f0', 2.0: '#fca689', 3.0: '#dd2a25', 4.0: '#67000d', 3.5: '#af1117'}, 'value_range': [1.0, 4.0], 'color_range': {1: '#fff5f0', 2: '#ffece4', 3: '#fee4d8', 4: '#fdd7c6', 5: '#fdc7b2', 6: '#fcb79c', 7: '#fca689', 8: '#fc9474', 9: '#fc8464', 10: '#fb7252', 11: '#f96044', 12: '#f34c37', 13: '#ed392b', 14: '#dd2a25', 15: '#cf1c1f', 16: '#be151a', 17: '#af1117', 18: '#9a0c14', 19: '#800610', 20: '#67000d'}, 'absence_color': '#EBEBEB', 'maxval': 4.0, 'minval': 1.0, 'width': 70, 'height': None, 'padding_x': 1, 'padding_y': 0}"
+        expected_layout = "{'name': 'Heatmap_col1_min-max', 'active': True, 'aligned_faces': True, 'description': '', 'legend': True, 'always_render': False, 'ts': None, 'ns': None, 'prop': 'col1', 'internal_prop': 'col1_avg', 'column': 1, 'value_color': {1.0: '#fff5f0', 2.0: '#fca082', 3.0: '#e32f27', 4.0: '#67000d', 3.5: '#ad1117'}, 'value_range': [1.0, 4.0], 'color_range': {1: '#fff5f0', 2: '#fff1ea', 3: '#ffece4', 4: '#fee8de', 5: '#fee4d8', 6: '#fee0d2', 7: '#fed8c7', 8: '#fdd1be', 9: '#fdc9b3', 10: '#fcc1a8', 11: '#fcb99f', 12: '#fcb095', 13: '#fca98c', 14: '#fca082', 15: '#fc9879', 16: '#fc8f6f', 17: '#fc8666', 18: '#fc7f5f', 19: '#fb7656', 20: '#fb6e4e', 21: '#fa6547', 22: '#f75c41', 23: '#f5523a', 24: '#f34935', 25: '#f03f2e', 26: '#ea362a', 27: '#e32f27', 28: '#db2824', 29: '#d42121', 30: '#cc191e', 31: '#c5171c', 32: '#bd151a', 33: '#b51318', 34: '#ad1117', 35: '#a50f15', 36: '#9a0c14', 37: '#8c0912', 38: '#800610', 39: '#73030f', 40: '#67000d'}, 'absence_color': '#EBEBEB', 'maxval': 4.0, 'minval': 1.0, 'width': 70, 'height': None, 'padding_x': 1, 'padding_y': 0}"
         get_parallel(test_tree, layouts, expected_draw, expected_config)
+        
         self.assertEqual(str(layouts[0].__dict__), expected_layout)
 
     def test_plot_07(self):
@@ -218,6 +219,7 @@ class TestTreePlots(unittest.TestCase):
         expected_draw = "[['line', [0, 2.0], [2.0, 2.0], '', [], {'stroke': '#000000', 'stroke-width': 0.5, 'fill': '#e5e5e5', 'fill-opacity': 0.3, 'type': 'solid'}], ['nodebox', [0, 0, 2.0, 4.0], '', {'name': '', 'dist': 0.0, 'support': 1.0}, [], [], {'fill': 'transparent'}]]"
         expected_layout = "{'name': 'Barplot_col1', 'active': True, 'aligned_faces': True, 'description': '', 'legend': True, 'always_render': False, 'ts': None, 'ns': None, 'width': 70, 'position': 'aligned', 'column': 1, 'scale': True, 'padding_x': 10, 'padding_y': 0, 'internal_rep': 'avg', 'prop': 'col1', 'size_prop': 'col1', 'color_prop': None, 'size_range': [0, 4.0], 'color': '#9b57d0', 'colors': None, 'color_gradient': None}"
         get_parallel(test_tree, layouts, expected_draw, expected_config)
+    
         self.assertEqual(str(layouts[0].__dict__), expected_layout)
 
     def test_plot_08(self):
@@ -232,8 +234,9 @@ class TestTreePlots(unittest.TestCase):
         layouts.append(aln_layout)
         expected_config = "{'default': {'Branch length': True, 'Branch support': True, 'Leaf name': True, 'Number of leaves': False, 'Alignment_layout': True}}"
         expected_draw = "[['line', [0, 2.0], [2.0, 2.0], '', [], {'stroke': '#000000', 'stroke-width': 0.5, 'fill': '#e5e5e5', 'fill-opacity': 0.3, 'type': 'solid'}], ['nodebox', [0, 0, 2.0, 4.0], '', {'name': '', 'dist': 0.0, 'support': 1.0}, [], [], {'fill': 'transparent'}]]"
-        expected_layout = "{'name': 'Alignment_layout', 'active': True, 'aligned_faces': True, 'description': '', 'legend': True, 'always_render': False, 'ts': None, 'ns': None, 'alignment_prop': 'alignment', 'width': 700, 'height': 15, 'column': 1, 'format': 'seq', 'scale_range': (0, 56), 'summarize_inner_nodes': True}"
+        expected_layout = "{'name': 'Alignment_layout', 'active': True, 'aligned_faces': True, 'description': '', 'legend': True, 'always_render': False, 'ts': None, 'ns': None, 'alignment_prop': 'alignment', 'width': 700, 'height': 15, 'column': 1, 'format': 'seq', 'scale_range': (0, 56), 'window': [], 'summarize_inner_nodes': True}"
         get_parallel(test_tree, layouts, expected_draw, expected_config)
+        
         self.assertEqual(str(layouts[0].__dict__), expected_layout)
 
     def test_plot_09(self):
@@ -306,7 +309,8 @@ class TestTreePlots(unittest.TestCase):
         level = 1
         layouts = []
         profiling_props = ['col3', 'col4'] 
-        matrix, minval, maxval, _, _, _, _ = tree_plot.numerical2matrix(test_tree, profiling_props)
+        prop2type={'col3':float, 'col4':float}
+        matrix, minval, maxval, _, _, _, _ = tree_plot.numerical2matrix(test_tree, profiling_props, prop2type=prop2type)
         # profile_layout = profile_layouts.LayoutProfile(name='numerical_matrix_layout', mode='numerical', 
         # alignment=matrix, seq_format='gradients', profiles=profiling_props, 
         # value_range=[minval, maxval], column=level)   
@@ -372,9 +376,10 @@ class TestTreePlots(unittest.TestCase):
         
         expected_config = "{'default': {'Branch length': True, 'Branch support': True, 'Leaf name': True, 'Number of leaves': False, 'TaxaClade_species': True, 'TaxaRect_species': True, 'TaxaClade_subfamily': True, 'TaxaRect_subfamily': True, 'Taxa Scientific name': True, 'Taxa Evolutionary events': True}}"
         expected_draw = "[['line', [0, 1.5], [2.0, 1.5], '', [], {'stroke': '#000000', 'stroke-width': 0.5, 'fill': '#e5e5e5', 'fill-opacity': 0.3, 'type': 'solid'}], ['nodebox', [0, 0, 2.0, 3.0], '', {'name': '', 'dist': 0.0, 'support': 1.0}, [], [], {'fill': 'transparent'}]]"
-        expected_layout = "{'name': 'TaxaClade_species', 'active': True, 'aligned_faces': True, 'description': '', 'legend': True, 'always_render': False, 'ts': None, 'ns': None, 'activate': False, 'column': 1, 'rank': 'species', 'color_dict': {'Mus musculus': 'red', 'Pan troglodytes': 'darkblue', 'Homo sapiens': 'lightgreen'}}"
+        expected_layout = "{'name': 'TaxaClade_species', 'active': True, 'aligned_faces': True, 'description': '', 'legend': True, 'always_render': False, 'ts': None, 'ns': None, 'column': 1, 'rank': 'species', 'color_dict': {'Mus musculus': 'red', 'Pan troglodytes': 'darkblue', 'Homo sapiens': 'lightgreen'}}"
         get_parallel(test_tree, layouts, expected_draw, expected_config)
         layout_dict = layouts[0].__dict__
+        
         self.assertEqual(str(layout_dict), expected_layout)
 
 if __name__ == '__main__':

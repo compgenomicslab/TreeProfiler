@@ -12,19 +12,19 @@ from treeprofiler import tree_annotate
 from treeprofiler.src import utils
 from ete4 import GTDBTaxa
 
-# GTDB_r202_url = "https://github.com/etetoolkit/ete-data/raw/main/gtdb_taxonomy/gtdb202/gtdb202dump.tar.gz"
+GTDB_r202_url = "https://github.com/etetoolkit/ete-data/raw/main/gtdb_taxonomy/gtdb202/gtdb202dump.tar.gz"
 
-# def update_gtdb_r202():
-#     gtdb = GTDBTaxa()
-#     fname = "gtdb202dump.tar.gz"
-#     #utils.download_file(GTDB_r202_url, "gtdb202dump.tar.gz")
-#     if not os.path.exists(fname):
-#         print(f'Downloading {fname} from {GTDB_r202_url} ... for testing GTDB taxonomic annotation')
-#         with open(fname, 'wb') as f:
-#             f.write(requests.get(GTDB_r202_url).content)
+def update_gtdb_r202():
+    gtdb = GTDBTaxa()
+    fname = "gtdb202dump.tar.gz"
+    #utils.download_file(GTDB_r202_url, "gtdb202dump.tar.gz")
+    if not os.path.exists(fname):
+        print(f'Downloading {fname} from {GTDB_r202_url} ... for testing GTDB taxonomic annotation')
+        with open(fname, 'wb') as f:
+            f.write(requests.get(GTDB_r202_url).content)
 
-#     gtdb.update_taxonomy_database("gtdb202dump.tar.gz")
-#     os.remove(fname)
+    gtdb.update_taxonomy_database("gtdb202dump.tar.gz")
+    os.remove(fname)
 
 # need gtdb release to be 202
 #update_gtdb_r202()
@@ -36,6 +36,7 @@ class TestNCBITaxonomy(unittest.TestCase):
         sp_field = ''
         test_tree = utils.ete4_parse("((9598, 9606), 10090);")
         test_tree_annotated, rank2values = tree_annotate.annotate_taxa(test_tree, db='NCBI', taxid_attr="name", sp_delimiter=sp_delimiter, sp_field=sp_field)
+        
         expected_tree = "((9598:1[&&NHX:taxid=9598:sci_name=Pan troglodytes:common_name=Pan troglodytes:lineage=1|131567|2759|33154|33208|6072|33213|33511|7711|89593|7742|7776|117570|117571|8287|1338369|32523|32524|40674|32525|9347|1437010|314146|9443|376913|314293|9526|314295|9604|207598|9596|9598:rank=species:named_lineage=root|Eukaryota|Eumetazoa|Chordata|Vertebrata|Gnathostomata|Sarcopterygii|Eutheria|Primates|Catarrhini|Pan|Pan troglodytes|Hominidae|Tetrapoda|Amniota|Theria|Opisthokonta|Metazoa|Bilateria|Deuterostomia|Mammalia|Craniata|Teleostomi|Euteleostomi|cellular organisms|Homininae|Euarchontoglires|Simiiformes|Hominoidea|Haplorrhini|Dipnotetrapodomorpha|Boreoeutheria],9606:1[&&NHX:taxid=9606:sci_name=Homo sapiens:common_name=Homo sapiens:lineage=1|131567|2759|33154|33208|6072|33213|33511|7711|89593|7742|7776|117570|117571|8287|1338369|32523|32524|40674|32525|9347|1437010|314146|9443|376913|314293|9526|314295|9604|207598|9605|9606:rank=species:named_lineage=root|Eukaryota|Eumetazoa|Chordata|Vertebrata|Gnathostomata|Sarcopterygii|Eutheria|Primates|Catarrhini|Hominidae|Homo|Homo sapiens|Tetrapoda|Amniota|Theria|Opisthokonta|Metazoa|Bilateria|Deuterostomia|Mammalia|Craniata|Teleostomi|Euteleostomi|cellular organisms|Homininae|Euarchontoglires|Simiiformes|Hominoidea|Haplorrhini|Dipnotetrapodomorpha|Boreoeutheria]):1[&&NHX:taxid=207598:sci_name=Homininae:common_name=:lineage=1|131567|2759|33154|33208|6072|33213|33511|7711|89593|7742|7776|117570|117571|8287|1338369|32523|32524|40674|32525|9347|1437010|314146|9443|376913|314293|9526|314295|9604|207598:rank=subfamily:named_lineage=root|Eukaryota|Eumetazoa|Chordata|Vertebrata|Gnathostomata|Sarcopterygii|Eutheria|Primates|Catarrhini|Hominidae|Tetrapoda|Amniota|Theria|Opisthokonta|Metazoa|Bilateria|Deuterostomia|Mammalia|Craniata|Teleostomi|Euteleostomi|cellular organisms|Homininae|Euarchontoglires|Simiiformes|Hominoidea|Haplorrhini|Dipnotetrapodomorpha|Boreoeutheria],10090:1[&&NHX:taxid=10090:sci_name=Mus musculus:common_name=Mus musculus:lineage=1|131567|2759|33154|33208|6072|33213|33511|7711|89593|7742|7776|117570|117571|8287|1338369|32523|32524|40674|32525|9347|1437010|314146|314147|9989|1963758|337687|10066|39107|10088|862507|10090:rank=species:named_lineage=root|Eukaryota|Eumetazoa|Chordata|Vertebrata|Gnathostomata|Sarcopterygii|Eutheria|Rodentia|Muridae|Mus|Mus musculus|Tetrapoda|Amniota|Theria|Opisthokonta|Metazoa|Bilateria|Deuterostomia|Murinae|Mammalia|Craniata|Teleostomi|Euteleostomi|cellular organisms|Euarchontoglires|Glires|Muroidea|Mus|Dipnotetrapodomorpha|Boreoeutheria|Myomorpha]);"
         props = ['taxid', 'sci_name', 'common_name', 'lineage', 'rank', 'named_lineage']
         self.assertEqual(test_tree_annotated.write(props=props, parser=1), expected_tree)

@@ -191,7 +191,6 @@ class AlignLinkFace(Face):
                 style=style,
             )
 
-
 class LayoutText(TreeLayout):
     def __init__(self, name, column, color_dict, prop, width=70, min_fsize=5, max_fsize=15, padding_x=1, padding_y=0, legend=True, aligned_faces=True):
         super().__init__(name, aligned_faces=aligned_faces)
@@ -222,7 +221,7 @@ class LayoutText(TreeLayout):
                                     )
 
     def set_node_style(self, node):
-        if node.is_leaf and node.props.get(self.prop) is not '':
+        if node.is_leaf and node.props.get(self.prop) != '':
             prop_text = node.props.get(self.prop)
             if type(prop_text) == list:
                 prop_text = ",".join(prop_text)
@@ -636,7 +635,7 @@ class LayoutSymbolNode(TreeLayout):
     def set_tree_style(self, tree, tree_style):
         super().set_tree_style(tree, tree_style)
         if self.legend:
-            if self.color_dict and len(self.color_dict) > 1:
+            if self.color_dict and len(self.color_dict) >= 1:
                 # self.color_dict['NA'] = self.absence_color
                 tree_style.add_legend(title=self.prop,
                                     variable='discrete',
@@ -651,13 +650,14 @@ class LayoutSymbolNode(TreeLayout):
                                     )
     
     def set_node_style(self, node):
-        prop_text = node.props.get(self.prop) 
+        prop_text = node.props.get(self.prop)
+
         if prop_text is not None and prop_text != '':
             if type(prop_text) == list:
                 prop_text = ",".join(prop_text)
             else:
                 pass
-            if self.color_dict and len(self.color_dict) > 1:
+            if self.color_dict and len(self.color_dict) >= 1:
                 node.sm_style['shape'] = self.symbol
                 node.sm_style["fgcolor"] = self.color_dict.get(prop_text)
                 node.sm_style['size'] =  self.symbol_size

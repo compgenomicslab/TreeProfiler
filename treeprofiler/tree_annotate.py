@@ -484,7 +484,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
 
                 for prop, delta_result in prop2delta.items():
                     logger.info(f"Delta statistic of {prop} is: {delta_result}")
-                    tree.add_prop(utils.add_suffix(prop, "delta"), delta_result)
+                    annotated_tree.add_prop(utils.add_suffix(prop, "delta"), delta_result)
 
                 # start calculating p_value
                 logger.info(f"Calculating p_value for delta statistic...")
@@ -504,7 +504,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
                 for prop, delta_array in prop2delta_array.items():
                     p_value = np.sum(np.array(delta_array) > prop2delta[prop]) / len(delta_array)
                     logger.info(f"p_value of {prop} is {p_value}")
-                    tree.add_prop(utils.add_suffix(prop, "pval"), p_value)
+                    annotated_tree.add_prop(utils.add_suffix(prop, "pval"), p_value)
                     prop2type.update({
                         utils.add_suffix(prop, "pval"): float
                     })
@@ -628,6 +628,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
 
     # taxa annotations
     start = time.time()
+    
     if taxon_column:
         if not taxadb:
             logger.error('Please specify which taxa db using --taxadb <GTDB|NCBI>')
@@ -665,7 +666,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
                     NCBITaxa().update_taxonomy_database(taxa_dump)
                 # else:
                 #     NCBITaxa().update_taxonomy_database()
-                
+
             annotated_tree, rank2values = annotate_taxa(annotated_tree, db=taxadb, \
                     taxid_attr=taxon_column, sp_delimiter=taxon_delimiter, sp_field=taxa_field, \
                     ignore_unclassified=ignore_unclassified)
@@ -1115,153 +1116,6 @@ def parse_csv(input_files, delimiter='\t', no_headers=False, duplicate=False, ta
                 metadata[nodename][prop] = ','.join(metadata[nodename][prop])
 
     return metadata, list(columns.keys()), columns, prop2type
-
-# def parse_csv(input_files, delimiter='\t', no_headers=False, duplicate=False, target_nodes=set()):
-#     """
-#     Takes tsv table as input
-#     Return
-#     metadata, as dictionary of dictionaries for each node's metadata
-#     node_props, a list of property names(column names of metadata table)
-#     columns, dictionary of property name and it's values
-#     """
-#     metadata = {}
-#     columns = defaultdict(list)
-#     prop2type = {}
-#     # Convert target_nodes to set for fast lookup
-#     if target_nodes is not None and not isinstance(target_nodes, set):
-#         target_nodes = set(target_nodes)
-
-#     def update_metadata(reader, node_header):
-#         # for tar.gz file
-#         for row in reader:
-#             if row[node_header].startswith('##'):
-#                 continue  # Skip commented lines
-#             nodename = row[node_header]
-            
-#             del row[node_header]
-
-#             # Skip nodes that are not in target_nodes
-#             if target_nodes is not None and nodename not in target_nodes:
-#                 continue  
-            
-#             # remove missing value
-#             ## replace empty to NaN
-#             row = {k: v for k, v in row.items() if not check_missing(v)}
-            
-#             if nodename in metadata.keys():
-#                 print(row.items())
-#                 for prop, value in row.items():
-#                     if duplicate:
-#                         if prop in metadata[nodename]:
-#                             exisiting_value = metadata[nodename][prop]
-#                             new_value = ','.join([exisiting_value,value])
-#                             metadata[nodename][prop] = new_value
-#                             columns[prop].append(new_value)
-#                         else:
-#                             metadata[nodename][prop] = value
-#                             columns[prop].append(value)
-#                     else:
-#                         metadata[nodename][prop] = value
-#                         columns[prop].append(value)
-#             else:
-#                 metadata[nodename] = dict(row)
-#                 for (prop, value) in row.items(): # go over each column name and value
-#                     columns[prop].append(value) # append the value into the appropriate list
-#                                     # based on column name k
-            
-#     def update_prop2type(node_props):
-#         for prop in node_props:
-#             if set(columns[prop])=={'NaN'}:
-#                 #prop2type[prop] = np.str_
-#                 prop2type[prop] = str
-#             else:
-#                 dtype = infer_dtype(columns[prop])
-#                 prop2type[prop] = dtype # get_type_convert(dtype)
-    
-#     for input_file in input_files:
-#         # check file
-#         if check_tar_gz(input_file):
-#             with tarfile.open(input_file, 'r:gz') as tar:
-#                 for member in tar.getmembers():
-#                     if member.isfile() and member.name.endswith('.tsv'):
-#                         with tar.extractfile(member) as tsv_file:
-#                             tsv_text = tsv_file.read().decode('utf-8').splitlines()
-#                             # Skip header comment lines
-#                             tsv_text = [line for line in tsv_text if not line.startswith('##')]
-
-#                             if no_headers:
-#                                 fields_len = len(tsv_text[0].split(delimiter))
-#                                 headers = ['col'+str(i) for i in range(fields_len)]
-#                                 reader = csv.DictReader(tsv_text, delimiter=delimiter,fieldnames=headers)
-#                             else:
-#                                 reader = csv.DictReader(tsv_text, delimiter=delimiter)
-#                                 headers = reader.fieldnames
-#                             node_header, node_props = headers[0], headers[1:]
-
-#                             update_metadata(reader, node_header)
-                        
-#                         update_prop2type(node_props)
-
-#         else:          
-#             with open(input_file, 'r') as f:
-#                 lines = f.readlines()
-
-#             # Skip header comment lines
-#             lines = [line for line in lines if not line.startswith('##')]
-
-#             first_line = lines[0].strip()
-#             fields_len = len(first_line.split(delimiter))
-
-#             # Reset the file pointer to the beginning
-#             #f.seek(0)
-
-#             if no_headers:
-#                 # Generate header names
-#                 headers = ['col'+str(i) for i in range(fields_len)]
-#                 # Create a CSV reader with the generated headers
-#                 reader = csv.DictReader(lines, delimiter=delimiter, fieldnames=headers)
-#             else:
-#                 # Use the existing headers in the file
-#                 reader = csv.DictReader(lines, delimiter=delimiter)
-#                 headers = reader.fieldnames
-
-#             node_header, node_props = headers[0], headers[1:]
-
-#             for row in reader:
-#                 nodename = row[node_header]
-#                 del row[node_header]
-                
-#                 # Skip nodes that are not in target_nodes
-#                 if target_nodes is not None and nodename not in target_nodes:
-#                     continue
-
-#                 # remove missing value
-#                 #row = {k: 'NaN' if (not v or v.lower() == 'none') else v for k, v in row.items() } ## replace empty to NaN
-#                 row = {k: v for k, v in row.items() if not check_missing(v)}
-
-#                 if nodename in metadata.keys():
-#                     print(row.items())
-#                     for prop, value in row.items():
-#                         if duplicate:
-#                             if prop in metadata[nodename]:
-#                                 exisiting_value = metadata[nodename][prop]
-#                                 new_value = ','.join([exisiting_value,value])
-#                                 metadata[nodename][prop] = new_value
-#                                 columns[prop].append(new_value)
-#                             else:
-#                                 metadata[nodename][prop] = value
-#                                 columns[prop].append(value)
-#                         else:
-#                             metadata[nodename][prop] = value
-#                             columns[prop].append(value)
-#                 else:
-#                     metadata[nodename] = dict(row)
-#                     for (prop, value) in row.items(): # go over each column name and value
-#                         columns[prop].append(value) # append the value into the appropriate list
-#                                         # based on column name k
-#             update_prop2type(node_props)
-    
-#     return metadata, node_props, columns, prop2type
 
 def parse_tsv_to_array(input_files, delimiter='\t', no_headers=True):
     """
@@ -1819,7 +1673,7 @@ def annotate_taxa(tree, db="GTDB", taxid_attr="name", sp_delimiter='.', sp_field
                             lca_dict[potential_rank] = taxa
                 n.add_prop("lca", utils.dict_to_string(lca_dict))
 
-    elif db == "NCBI":
+    if db == "NCBI":
         ncbi = NCBITaxa()
         # extract sp codes from leaf names
         tree.set_species_naming_function(return_spcode_ncbi)

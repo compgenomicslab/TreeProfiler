@@ -219,7 +219,8 @@ def do_upload():
         "species_index": int(request.forms.get('speciesFieldIndex') or 0),
         "version": request.forms.get('version'),
         "ignore_unclassified": request.forms.get('ignoreUnclassified') == 'True',
-        
+        "sos_thr": request.forms.get('speciesOverlapThreshold'),
+
         "acr_columns": request.forms.getlist('acrColumn[]'),
         "prediction_method": request.forms.get('acrMethod'),
         "model": request.forms.get('acrModel'),
@@ -393,9 +394,10 @@ def process_upload_job(job_args):
                 "gtdb_version": job_args.get("version"),
                 "taxon_delimiter": job_args.get("species_delimiter"),
                 "taxa_field": job_args.get("species_index"),
-                "ignore_unclassified": job_args.get("ignore_unclassified")
+                "ignore_unclassified": job_args.get("ignore_unclassified"),
+                "sos_thr": float(job_args.get("sos_thr"))
             }
-
+        
         # for analytic methods
         analytic_options = {}
         acr_discrete_columns = []
@@ -606,6 +608,7 @@ def process_upload_job(job_args):
             "updated_tree": "",
             'annotated_tree': annotated_newick,
             'prop2type': prop2type,
+            'avail_props': node_props, 
             'layouts': [],
             'taxonomic_annotation': True if job_args.get("taxon_column") else False,
             'rank_list':rank_list,
@@ -800,13 +803,14 @@ def explore_tree(treename):
     current_layouts = tree_info.get('layouts', [])
     color_config = {}
     layout_manager = {}
-
+    
     if current_layouts:
         layout_manager = {layout.name: layout for layout in current_layouts}
     
     prop2type = tree_info['prop2type']
     current_props = sorted(list(tree_info['prop2type'].keys()))
-
+    avail_props = tree_info['avail_props']
+    
     if tree_info['updated_tree']:
         t = Tree(tree_info['updated_tree'])
     else:
@@ -857,10 +861,12 @@ def explore_tree(treename):
                 for layer in layers:
                     # Query queryType
                     query_type = layer.get('queryType', '')
+                    selected_props = layer.get('props', [])
                     if query_type == 'rank_limit':
                         rank_selection = layer.get('rankSelection')
                         t = utils.taxatree_prune(t, rank_limit=rank_selection)
                         tree_info['updated_tree'] = t.write(props=current_props, format_root_node=True)
+                        
                     elif query_type == 'prune':
                         # prune tree by condition 
                         query_box = layer.get('query', '')
@@ -874,6 +880,11 @@ def explore_tree(treename):
                         column_width, padding_x, padding_y, color_config, internal_num_rep, default_paired_color, 
                     )
                     
+                    for avail_prop in selected_props:
+                        avail_props.append(avail_prop)
+                        if internal_num_rep: 
+                            avail_props.append(f"{avail_prop}_{internal_num_rep}")
+                        avail_props.append(f"{avail_prop}_counter")
                     
                     # Update layouts_metadata after process_layer
                     #layouts_metadata.clear()  # Reset to avoid duplicates or outdated data
@@ -1537,7 +1548,7 @@ def explore_tree(treename):
                         current_layouts.append(layout)
 
                 tree_info['layouts'] = current_layouts
-
+                
                 start_explore_thread(t, treename, current_layouts, current_props)
                 #return "Layouts metadata updated successfully."
             except json.JSONDecodeError:
@@ -1554,14 +1565,13 @@ def explore_tree(treename):
                 start_explore_thread(t, treename, emapper_example_layouts, current_props)
         elif treename == 'gtdb_r202_example':
             gtdb_example_layouts = load_gtdb_layout(t, prop2type)
-            
             if current_layouts:
                 current_layouts.extend(gtdb_example_layouts)
                 start_explore_thread(t, treename, current_layouts, current_props)
             else:
                 start_explore_thread(t, treename, gtdb_example_layouts, current_props)
         else:
-            start_explore_thread(t, treename, current_layouts, current_props)
+            start_explore_thread(t, treename, current_layouts, avail_props)
         
 
     # Before rendering the template, convert to JSON
@@ -1658,7 +1668,7 @@ def process_layer(t, layer, tree_info, current_layouts, current_props, level, co
                 if symbol_size:
                     symbol_size = float(symbol_size)
                 fgopacity = layer.get('fgopacity', 0.8)
-                
+
                 layout = layouts.text_layouts.LayoutSymbolNode(f'{symbol}Node_{prop}', prop=prop,
                     column=level, symbol=symbol, symbol_color=None, color_dict=color_dict,
                     symbol_size=symbol_size, 
@@ -2370,7 +2380,7 @@ def load_gtdb_layout(tree, prop2type):
 
 tree_ready_status = {}
 
-def start_explore_thread(t, treename, current_layouts, current_props):
+def start_explore_thread(t, treename, current_layouts, show_props):
     """
     Starts the ete exploration in a separate thread and tracks when the tree is ready.
     """
@@ -2379,7 +2389,7 @@ def start_explore_thread(t, treename, current_layouts, current_props):
 
     def explore():
         print(f"Starting tree visualization for {treename}...")
-        t.explore(name=treename, layouts=current_layouts, host=HOSTNAME, port=VIEWPORT, open_browser=False)
+        t.explore(name=treename, include_props=show_props, layouts=current_layouts, host=HOSTNAME, port=VIEWPORT, open_browser=False)
         tree_ready_status[treename] = True  # Mark tree as ready when done
 
     explorer_thread = threading.Thread(target=explore)
