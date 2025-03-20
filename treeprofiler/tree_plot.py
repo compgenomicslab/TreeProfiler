@@ -1138,7 +1138,7 @@ def get_acr_continuous_layouts(tree, props, level, prop2type, padding_x=1, paddi
             value2color[search_value] = gradientscolor[index]
         layout = phylosignal_layouts.LayoutACRContinuous(name='ACR_'+prop, column=level, \
             color_dict=value2color, score_prop=prop, value_range=[minval, maxval], \
-            color_range=[gradientscolor[20], gradientscolor[10], gradientscolor[1]])
+            color_range=[gradientscolor[num], gradientscolor[num//2], gradientscolor[1]])
         layouts.append(layout)
     return layouts
 
@@ -1183,12 +1183,12 @@ def get_ls_layouts(tree, props, level, prop2type, padding_x=1, padding_y=0, colo
             if suffix != "f1":
                 layout = staple_layouts.LayoutBranchScore(name='LS_'+ls_prop, \
                     color_dict=value2color, prop=ls_prop, value_range=[minval, maxval], \
-                    color_range=[gradientscolor[20], gradientscolor[10], gradientscolor[1]], 
+                    color_range=[gradientscolor[num], gradientscolor[num//2], gradientscolor[1]], 
                     show_score=True, active=False)
             else:
                 layout = staple_layouts.LayoutBranchScore(name='LS_'+ls_prop, \
                     color_dict=value2color, prop=ls_prop, value_range=[minval, maxval], \
-                    color_range=[gradientscolor[20], gradientscolor[10], gradientscolor[1]], 
+                    color_range=[gradientscolor[num], gradientscolor[num//2], gradientscolor[1]], 
                     show_score=True)
             
             layouts.append(layout)
@@ -1597,7 +1597,7 @@ def get_branchscore_layouts(tree, props, prop2type, padding_x=1, padding_y=0, in
             if search_value not in value2color:
                 index = np.abs(index_values - search_value).argmin() + 1
                 value2color[search_value] = gradientscolor[index]
-
+        
         # Get corresponding gradient color on the fly of visualization
         layout = staple_layouts.LayoutBranchScore(
             name='BranchScore_' + prop,
@@ -1605,7 +1605,7 @@ def get_branchscore_layouts(tree, props, prop2type, padding_x=1, padding_y=0, in
             prop=prop,
             internal_rep=internal_rep,
             value_range=[minval, maxval],
-            color_range=[gradientscolor[20], gradientscolor[10], gradientscolor[1]]
+            color_range=[gradientscolor[num], gradientscolor[num//2], gradientscolor[1]]
         )
         layouts.append(layout)
 
@@ -1828,14 +1828,15 @@ def get_numerical_bubble_layouts(tree, props, level, prop2type, padding_x=0, pad
 
                 # Assign the color from the gradient
                 value2color[val] = gradientscolor[color_index+1]
-
+        num = len(gradientscolor)
         # Configure and add layout
         layout = staple_layouts.LayoutBubbleNumerical(name=f'Numerical-Bubble_{prop}', 
         column=level, prop=prop, max_radius=max_radius, abs_maxval=abs_maxval, 
         padding_x=padding_x, padding_y=padding_y, value2color=value2color, 
         bubble_range=bubble_range, 
-        color_range=[gradientscolor[20], gradientscolor[10], gradientscolor[1]],
+        color_range=[gradientscolor[num], gradientscolor[num//2], gradientscolor[1]],
         internal_rep=internal_rep)
+
         layouts.append(layout)
         level += 1
 
