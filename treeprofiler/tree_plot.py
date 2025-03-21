@@ -747,7 +747,7 @@ def run(args):
         if layout == 'categorical-matrix-layout':
             categorical_props = args.categorical_matrix_layout
             if len(categorical_props) > 10:
-                title = categorical_props[:10] + '...'
+                title = ','.join(categorical_props[:10]) + '...'
             else:
                 title = categorical_props
             # drawing as array in matrix
@@ -782,7 +782,7 @@ def run(args):
                 for list_prop in sorted_list_props:
                     matrix, minval, maxval, value2color = results_list[list_prop]
                     if len(list_prop) > 10:
-                        title = list_prop[:10] + '...'
+                        title = ','.join(list_prop[:10]) + '...'
                     else:
                         title = list_prop
                     matrix_layout = profile_layouts.LayoutPropsMatrixOld(name=f"Numerical-matrix_{title}", 
@@ -797,7 +797,7 @@ def run(args):
                 index_map = {value: idx for idx, value in enumerate(numerical_props)}
                 sorted_single_props = sorted(single_props, key=lambda x: index_map[x])
                 if len(sorted_single_props) > 10:
-                    title = sorted_single_props[:10] + '...'
+                    title = ','.join(sorted_single_props[:10]) + '...'
                 else:
                     title = sorted_single_props
                 matrix_layout = profile_layouts.LayoutPropsMatrixOld(name=f"Numerical_matrix_{title}", 
@@ -814,7 +814,7 @@ def run(args):
             matrix, value2color, is_list = binary2matrix(tree, binary_props, color_config=color_config)
             all_values = list(value2color.keys())
             if len(binary_props) > 10:
-                title = binary_props[:10] + '...'
+                title = ','.join(binary_props[:10]) + '...'
             else:
                 title = binary_props
             matrix_layout = profile_layouts.LayoutPropsMatrixBinary(name=f"Binary-matrix_{title}",
