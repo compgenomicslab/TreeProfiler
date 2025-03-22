@@ -1743,9 +1743,14 @@ def annotate_evol_events(tree, sos_thr=0.0, sp_delimiter='.', sp_field=0):
     root = tree.root
 
     # Checks that is actually rooted
-    # outgroups = root.get_children()
-    # if len(outgroups) != 2:
-    #     raise TypeError("Tree is not rooted")
+    outgroups = root.get_children()
+    if len(outgroups) != 2:
+        logger.warning(
+            "Tree appears to be unrooted (root has %d children). This may affect duplication/speciation inference. "
+            "Consider rooting the tree using `tree.set_outgroup()` in ETE4. "
+            "try the `--resolve-polytomy` argument to improve topology.",
+            len(outgroups)
+        )
 
     outgroup1 = set([n.name for n in root.children[0].leaves()])
     outgroup2 = set([n.name for n in root.children[1].leaves()])
