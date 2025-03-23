@@ -89,13 +89,14 @@ class TaxaClade(TreeLayout):
             
 
 class LayoutSciName(TreeLayout):
-    def __init__(self, name="Scientific name", color_dict={}):
+    def __init__(self, name="Scientific name", color_dict={}, sci_prop='sci_name'):
         super().__init__(name, aligned_faces=True)
         self.color_dict = color_dict
+        self.sci_prop = sci_prop
 
     def set_node_style(self, node):
         if node.is_leaf:
-            sci_name = node.props.get('sci_name')
+            sci_name = node.props.get(self.sci_prop)
             prot_id = node.name
 
             rank_colordict = self.color_dict.get(node.props.get('rank'),'')
@@ -115,7 +116,7 @@ class LayoutSciName(TreeLayout):
             names = summary(node.children)
             texts = names if len(names) < 6 else (names[:3] + ['...'] + names[-2:])
             for i, text in enumerate(texts):
-                sci_name = node.props.get('sci_name')
+                sci_name = node.props.get(self.sci_prop)
                 rank_colordict = self.color_dict.get(node.props.get('rank'),'')
                 if rank_colordict:
                     color = rank_colordict.get(sci_name, 'gray')

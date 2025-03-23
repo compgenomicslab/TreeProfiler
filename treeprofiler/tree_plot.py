@@ -772,10 +772,10 @@ def run(args):
             #     poswidth=args.column_width)
             
             # if is list, it should provide more than one matrix
-            matrix, minval, maxval, value2color, results_list, list_props, single_props = numerical2matrix(tree, 
+            matrix, minval, maxval, value2color, results_list, list_props, single_props, gradientscolor = numerical2matrix(tree, 
                 numerical_props, count_negative=True, internal_num_rep=internal_num_rep, 
                 color_config=color_config, norm_method='min-max', prop2type=prop2type, eteformat_flag=eteformat_flag)
-
+            
             if list_props:
                 index_map = {value: idx for idx, value in enumerate(numerical_props)}
                 sorted_list_props = sorted(list_props, key=lambda x: index_map[x])
@@ -787,8 +787,8 @@ def run(args):
                         title = list_prop
                     matrix_layout = profile_layouts.LayoutPropsMatrixOld(name=f"Numerical-matrix_{title}", 
                         matrix=matrix, matrix_type='numerical', matrix_props=[list_prop], is_list=True, 
-                        value_color=value2color, value_range=[minval, maxval], column=level,
-                        poswidth=args.column_width)
+                        value_color=value2color, value_range=[minval, maxval], gradientscolor=gradientscolor,
+                        column=level, poswidth=args.column_width)
 
                     level += 1
                     layouts.append(matrix_layout)
@@ -802,8 +802,8 @@ def run(args):
                     title = sorted_single_props
                 matrix_layout = profile_layouts.LayoutPropsMatrixOld(name=f"Numerical_matrix_{title}", 
                     matrix=matrix, matrix_type='numerical', matrix_props=sorted_single_props, is_list=False, 
-                    value_color=value2color, value_range=[minval, maxval], column=level,
-                    poswidth=args.column_width)
+                    value_color=value2color, value_range=[minval, maxval], gradientscolor=gradientscolor, 
+                    column=level, poswidth=args.column_width)
 
                 level += 1
                 layouts.append(matrix_layout)
@@ -957,8 +957,14 @@ def run(args):
     #### prune at the last step in case of losing leaves information
     # prune tree by rank
     if args.rank_limit:
-        tree = utils.taxatree_prune(tree, rank_limit=args.rank_limit)
-        
+        tree, taxon2values = utils.taxatree_prune(tree, rank_limit=args.rank_limit)
+        taxon_color_dict = {}
+        for rank, value in sorted(rank2values.items()):
+            value = list(set(value))
+            color_dict = utils.assign_color_to_values(value, paired_color)
+            taxon_color_dict[rank] = color_dict
+        taxa_layout = taxon_layouts.LayoutSciName(name = 'Taxa_LCA_name', color_dict=taxon_color_dict, sci_prop='latest_lca')
+        layouts.append(taxa_layout)
     # prune tree by condition 
     if args.pruned_by: # need to be wrap with quotes
         condition_strings = args.pruned_by
@@ -1957,7 +1963,7 @@ def get_heatmap_layouts(tree, props, level, column_width=70, padding_x=1, paddin
 
 def get_heatmap_matrix_layouts(layout_name, numerical_props, norm_method, internal_num_rep, color_config, args, level):
     layouts = []
-    matrix, minval, maxval, value2color, results_list, list_props = numerical2matrix(tree,
+    matrix, minval, maxval, value2color, results_list, list_props, gradientscolor = numerical2matrix(tree,
                                                             numerical_props,
                                                             count_negative=True,
                                                             internal_num_rep=internal_num_rep,
@@ -2208,7 +2214,7 @@ def numerical2matrix(tree, profiling_props, count_negative=True, internal_num_re
                             sys.exit(1)
                         index = np.abs(index_values - normalized_value).argmin() + 1
                         value2color[search_value] = gradientscolor.get(index, "")
-        return minval, maxval, value2color
+        return minval, maxval, value2color, gradientscolor
 
     node2matrix_single = {}
     node2matrix_list = {prop: {} for prop in profiling_props}
@@ -2261,9 +2267,9 @@ def numerical2matrix(tree, profiling_props, count_negative=True, internal_num_re
 
     # Process single values
     if single_props:
-        minval_single, maxval_single, value2color_single = process_color_configuration(node2matrix_single, profiling_props)
+        minval_single, maxval_single, value2color_single, gradientscolor = process_color_configuration(node2matrix_single, profiling_props)
     else:
-        minval_single, maxval_single, value2color_single = None, None, None
+        minval_single, maxval_single, value2color_single, gradientscolor = None, None, None
     
     if list_props:
         # Process list values for each profiling_prop
@@ -2277,7 +2283,7 @@ def numerical2matrix(tree, profiling_props, count_negative=True, internal_num_re
     else:
         results_list = None
 
-    return node2matrix_single, minval_single, maxval_single, value2color_single, results_list, list_props, single_props
+    return node2matrix_single, minval_single, maxval_single, value2color_single, results_list, list_props, single_props, gradientscolor
 
 def binary2matrix(tree, profiling_props, color_config=None):
     """

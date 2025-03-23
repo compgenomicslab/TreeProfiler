@@ -682,7 +682,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
     
     # prune tree by rank
     if rank_limit:
-        annotated_tree = utils.taxatree_prune(annotated_tree, rank_limit=rank_limit)
+        annotated_tree, _ = utils.taxatree_prune(annotated_tree, rank_limit=rank_limit)
 
     # prune tree by condition
     if pruned_by: # need to be wrap with quotes
