@@ -31,10 +31,11 @@ setup(
     
     #package_dir = {'treeprofiler' : '' },
     packages=find_packages(),
+    include_package_data=True,
     package_data = { 
         'treeprofiler' : [
             'treeprofiler/*',
-            'views/*.tpl',
+            'views/*.html',   
             'layouts/pfam2color.json',
             'layouts/smart2color.json',
             ],

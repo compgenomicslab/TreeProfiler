@@ -652,7 +652,7 @@ def home():
             thread.join(timeout=1)  # Wait for the thread to terminate
             del explore_threads[treename]  # Clean up
 
-    return template('upload_tree')  # Render the home page
+    return template('upload_tree.html')  # Render the home page
 
 @app.post('/extract_metadata_tar')
 def extract_metadata_tar():
@@ -776,7 +776,7 @@ def show_tree(treename):
     # Fetch the tree data by its name
     tree_info = trees.get(treename)
     if tree_info:
-        return template('tree_details', treename=treename, tree_info=tree_info)
+        return template('tree_details.html', treename=treename, tree_info=tree_info)
     else:
         return f"Tree '{treename}' not found."
 
@@ -1585,7 +1585,7 @@ def explore_tree(treename):
 
     # Render template
     return template(
-        'explore_tree_v3',
+        'explore_tree_v3.html',
         treename=treename,
         tree_info=tree_info,
         selected_props=current_props,
