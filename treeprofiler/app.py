@@ -13,7 +13,7 @@ import json
 import time
 from wsgiref.simple_server import WSGIServer, WSGIRequestHandler
 import tarfile
-from importlib import resources  # Python 3.7+
+from importlib.resources import files
 
 from ete4 import Tree
 from treeprofiler.tree_annotate import run_tree_annotate, run_array_annotate, parse_emapper_annotations, parse_csv, parse_tsv_to_array, name_nodes  # or other functions you need
@@ -122,8 +122,9 @@ job_status = {}  # Dictionary to store job statuses
 # Global variables
 app = Bottle()
 # Dynamically find the views/ path inside the installed package
-with resources.path('treeprofiler.views', '') as views_path:
-    bottle.TEMPLATE_PATH.insert(0, str(views_path))
+views_path = files('treeprofiler').joinpath('views')
+bottle.TEMPLATE_PATH.insert(0, str(views_path))
+
 server_thread = None
 server_instance = None
 stop_event = threading.Event()
