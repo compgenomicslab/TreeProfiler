@@ -34,10 +34,10 @@ setup(
     package_data = { 
         'treeprofiler' : [
             'treeprofiler/*',
+            'views/*.tpl',
             'layouts/pfam2color.json',
             'layouts/smart2color.json',
             ],
-        'treeprofiler.views': ['*.tpl'],
         },
     #scripts=['treeprofiler.py'],
     entry_points = {
