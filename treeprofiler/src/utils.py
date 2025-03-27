@@ -8,6 +8,7 @@ from Bio.Align import MultipleSeqAlignment
 from Bio.Align.AlignInfo import SummaryInfo
 from itertools import chain
 from distutils.util import strtobool
+from collections import defaultdict
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import matplotlib.colors as mcolors
@@ -303,6 +304,7 @@ def ete4_parse(newick, internal_parser="name"):
 
 # pruning
 def taxatree_prune(tree, rank_limit='subspecies'):
+    taxon2values = defaultdict(list)
     for node in tree.traverse("preorder"):
         rank = node.props.get('rank')
         if rank == rank_limit:
@@ -316,12 +318,14 @@ def taxatree_prune(tree, rank_limit='subspecies'):
             if lca_dict:
                 lca = lca_dict.get(rank_limit, None)
                 if lca:
-                    node.name = lca
+                    #node.name = lca
+                    node.add_prop('latest_lca', lca)
+                    taxon2values[rank_limit].append(lca)
                     children = node.children.copy()
                     for ch in children:
                         print("prune", ch.name)
                         remove(ch)
-    return tree
+    return tree, taxon2values
 
 def conditional_prune(tree, conditions_input, prop2type):
     conditional_output = []

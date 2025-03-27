@@ -269,7 +269,7 @@ class LayoutPropsMatrixOld(TreeLayout):
     def __init__(self, name="Profile", matrix=None, matrix_type='categorical', \
             matrix_props=None, is_list=False, width=None, poswidth=20, height=20,
             column=0, range=None, summarize_inner_nodes=False, value_range=[], \
-            value_color={}, legend=True, active=True):
+            value_color={}, gradientscolor={}, legend=True, active=True):
         super().__init__(name, active=active)
         self.matrix = matrix
         self.matrix_type = matrix_type
@@ -289,6 +289,7 @@ class LayoutPropsMatrixOld(TreeLayout):
         self.scale_range = range or (0, self.length)
         self.value_range = value_range
         self.value_color = value_color
+        self.gradientscolor = gradientscolor
 
         self.summarize_inner_nodes = summarize_inner_nodes
         self.legend = legend
@@ -304,7 +305,7 @@ class LayoutPropsMatrixOld(TreeLayout):
                     total_width = self.width
                 face = MatrixScaleFace(width=total_width, scale_range=(0, ncols), padding_y=0)
                 header = self.matrix_props
-                title = TextFace(header, min_fsize=5, max_fsize=12, 
+                title = TextFace(header, min_fsize=10, max_fsize=20, 
                     padding_x=0, padding_y=2, width=self.width)
                 tree_style.aligned_panel_header.add_face(face, column=self.column)
                 tree_style.aligned_panel_header.add_face(title, column=self.column)
@@ -316,22 +317,23 @@ class LayoutPropsMatrixOld(TreeLayout):
 
         if self.legend:
             if self.matrix_type == 'numerical':
-                keys_list = list(self.value_color.keys())  
-                middle_index = len(keys_list) // 2  
-                middle_key = keys_list[middle_index]  
-                middle_value = self.value_color[middle_key]  
-
-                if self.value_range:
+                num = len(self.gradientscolor)
+                if num > 1:
                     color_gradient = [
-                        self.value_color[self.value_range[1]], 
-                        middle_value,
-                        self.value_color[self.value_range[0]]
+                        self.gradientscolor[num], self.gradientscolor[num//2], self.gradientscolor[1]
                         ]
+                else:
+                    color_gradient = [
+                        self.gradientscolor[1], self.gradientscolor[1], self.gradientscolor[1]
+                        ]
+                if self.value_range:
+                    
                     tree_style.add_legend(title=self.name,
                                     variable="continuous",
                                     value_range=self.value_range,
                                     color_range=color_gradient,
                                     )
+
             if self.matrix_type == 'categorical':
                 tree_style.add_legend(title=self.name,
                                     variable='discrete',

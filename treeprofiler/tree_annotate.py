@@ -672,7 +672,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
                     ignore_unclassified=ignore_unclassified)
                 
         # evolutionary events annotation
-        annotated_tree = annotate_evol_events(annotated_tree, sos_thr=sos_thr, sp_delimiter=taxon_delimiter, sp_field=taxa_field)
+        annotated_tree = annotate_evol_events(annotated_tree, taxid_attr=taxon_column, sos_thr=sos_thr, sp_delimiter=taxon_delimiter, sp_field=taxa_field)
         prop2type.update(TAXONOMICDICT)
     else:
         rank2values = {}
@@ -682,7 +682,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
     
     # prune tree by rank
     if rank_limit:
-        annotated_tree = utils.taxatree_prune(annotated_tree, rank_limit=rank_limit)
+        annotated_tree, _ = utils.taxatree_prune(annotated_tree, rank_limit=rank_limit)
 
     # prune tree by condition
     if pruned_by: # need to be wrap with quotes
@@ -1727,25 +1727,30 @@ def download_motus_dump():
             print(f'File {fname} is already up-to-date with {url} .')
     return fname
 
-def annotate_evol_events(tree, sos_thr=0.0, sp_delimiter='.', sp_field=0):
+def annotate_evol_events(tree, taxid_attr="name", sos_thr=0.0, sp_delimiter='.', sp_field=0):
     def return_spcode(leaf):
         try:
-            return leaf.name.split(sp_delimiter)[sp_field]
+            return str(leaf.props.get(taxid_attr)).split(sp_delimiter)[sp_field]
         except (IndexError, ValueError):
-            return leaf.name
-    
-    tree.set_species_naming_function(return_spcode)
+            return str(leaf.props.get(taxid_attr))
 
+    tree.set_species_naming_function(return_spcode)
+    
     # Get species for each node
     node2species = tree.get_cached_content('species')
-
+    
     # idetify the smallest outgroup
     root = tree.root
 
     # Checks that is actually rooted
-    # outgroups = root.get_children()
-    # if len(outgroups) != 2:
-    #     raise TypeError("Tree is not rooted")
+    outgroups = root.get_children()
+    if len(outgroups) != 2:
+        logger.warning(
+            "Tree appears to be unrooted (root has %d children). This may affect duplication/speciation inference. "
+            "Consider rooting the tree using `tree.set_outgroup()` in ETE4. "
+            "try the `--resolve-polytomy` argument to improve topology.",
+            len(outgroups)
+        )
 
     outgroup1 = set([n.name for n in root.children[0].leaves()])
     outgroup2 = set([n.name for n in root.children[1].leaves()])
@@ -1758,7 +1763,7 @@ def annotate_evol_events(tree, sos_thr=0.0, sp_delimiter='.', sp_field=0):
     all_events = []
     for n in tree.traverse():
         n.props['species'] = node2species[n]
-
+        
         if len(n.children) == 2:
             left_child, right_child = n.children
             left_species = node2species[left_child]
@@ -1784,14 +1789,15 @@ def annotate_evol_events(tree, sos_thr=0.0, sp_delimiter='.', sp_field=0):
                 event.outparalogs = event.out_seqs
                 event.orthologs = set()
                 n.props['evoltype'] = 'D'
-                n.props['dup_sp'] = ','.join(shared_species)
-                n.props['dup_percent'] = round((len(shared_species) / len(total_species)) * 100, 3) if total_species else 0
+                if shared_species and shared_species != {None}:
+                    n.props['dup_sp'] = ','.join(shared_species)
+                    n.props['dup_percent'] = round((len(shared_species) / len(total_species)) * 100, 3) if total_species else 0
             else:  # Speciation
                 event.etype = "S"
                 event.orthologs = event.out_seqs
                 event.outparalogs = set()
                 n.props['evoltype'] = 'S'
-
+            
             event.node = n
             all_events.append(event)
 

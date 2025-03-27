@@ -349,6 +349,7 @@ def process_upload_job(job_args):
             'treeparser': treeparser,
             #'columns': columns,
             #'metadata': job_args.get("metadata"),
+            'avail_props': avail_props,
             'node_props': node_props,
             "updated_tree": '',
             'annotated_tree': annotated_newick,
