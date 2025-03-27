@@ -1,5 +1,6 @@
 from bottle import route, run, request, redirect, template, static_file, response, ServerAdapter
 from bottle import Bottle
+import bottle
 import requests
 import threading
 import argparse
@@ -121,6 +122,7 @@ binary_prefix = [
 job_status = {}  # Dictionary to store job statuses
 # Global variables
 app = Bottle()
+bottle.TEMPLATE_PATH.insert(0, os.path.join(os.path.dirname(__file__), 'views'))
 server_thread = None
 server_instance = None
 stop_event = threading.Event()
