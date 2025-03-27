@@ -1,5 +1,5 @@
 from bottle import route, run, request, redirect, template, static_file, response, ServerAdapter
-from bottle import Bottle
+from bottle import Bottle, TEMPLATE_PATH
 import bottle
 import requests
 import threading
@@ -13,14 +13,13 @@ import json
 import time
 from wsgiref.simple_server import WSGIServer, WSGIRequestHandler
 import tarfile
+from importlib import resources  # Python 3.7+
 
 from ete4 import Tree
 from treeprofiler.tree_annotate import run_tree_annotate, run_array_annotate, parse_emapper_annotations, parse_csv, parse_tsv_to_array, name_nodes  # or other functions you need
 from treeprofiler import tree_plot
 from treeprofiler.src import utils
 from treeprofiler import layouts
-
-from bottle import TEMPLATE_PATH
 
 # Parse command-line arguments
 parser = argparse.ArgumentParser(description="Run the Tree Explorer web application.")
@@ -34,7 +33,7 @@ HOSTPORT = args.hostport
 VIEWPORT = args.viewport
 
 # Set the template directory
-TEMPLATE_PATH.append(os.path.join(os.path.dirname(__file__), 'views'))
+#TEMPLATE_PATH.append(os.path.join(os.path.dirname(__file__), 'views'))
 EXTRACTED_METADATA_DIR = "/tmp/extracted_metadata"
 current_dir = os.path.dirname(os.path.abspath(__file__))
 GTDBEXAMPLE_FILE = os.path.abspath(os.path.join(current_dir, '..', 'examples', 'pratical_example', 'gtdb_r202', 'gtdbv202_annotated.ete.tar.gz'))
@@ -122,7 +121,9 @@ binary_prefix = [
 job_status = {}  # Dictionary to store job statuses
 # Global variables
 app = Bottle()
-bottle.TEMPLATE_PATH.insert(0, os.path.join(os.path.dirname(__file__), 'views'))
+# Dynamically find the views/ path inside the installed package
+with resources.path('treeprofiler.views', '') as views_path:
+    bottle.TEMPLATE_PATH.insert(0, str(views_path))
 server_thread = None
 server_instance = None
 stop_event = threading.Event()
