@@ -1797,7 +1797,7 @@ def annotate_evol_events(tree, taxid_attr="name", sos_thr=0.0, sp_delimiter='.',
                 event.orthologs = event.out_seqs
                 event.outparalogs = set()
                 n.props['evoltype'] = 'S'
-
+            
             event.node = n
             all_events.append(event)
 
