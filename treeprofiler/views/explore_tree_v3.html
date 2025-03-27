@@ -250,7 +250,7 @@
                                                 
                                                 <select class="form-select" id="textPosition" name="textPosition">
                                                     <option value="branch_bottom">Branch Bottom</option>
-                                                    <option value="branch_up">Branch Up</option>
+                                                    <option value="branch_top">Branch Top</option>
                                                     <option value="branch_right">Branch Right</option>
                                                     <option value="aligned">Aligned</option>
                                                 </select>
@@ -1310,7 +1310,7 @@ $('#activateDomainLayout').click(() => activateLayout('domain-layout', '#activat
                 input.classList.add('form-control');
                 input.setAttribute('id', `${type}-${key}`);
                 input.setAttribute('name', `${type}-${key}`);
-                ['branch_bottom', 'branch_up', 'branch_right', 'aligned'].forEach(optionValue => {
+                ['branch_bottom', 'branch_top', 'branch_right', 'aligned'].forEach(optionValue => {
                     const option = document.createElement('option');
                     option.value = optionValue;
                     option.textContent = optionValue;

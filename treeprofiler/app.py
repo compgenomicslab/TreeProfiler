@@ -886,10 +886,16 @@ def explore_tree(treename):
                     )
                     
                     for avail_prop in selected_props:
-                        avail_props.append(avail_prop)
-                        if internal_num_rep: 
-                            avail_props.append(f"{avail_prop}_{internal_num_rep}")
-                        avail_props.append(f"{avail_prop}_counter")
+                        if avail_prop in prop2type and avail_prop not in avail_props:
+                            avail_props.append(avail_prop)
+                        if internal_num_rep:
+                            internal_prop = f"{avail_prop}_{internal_num_rep}"
+                            if internal_prop in prop2type and internal_prop not in avail_props:
+                                avail_props.append(internal_prop)
+                        else:
+                            internal_prop = f"{avail_prop}_counter"
+                            if internal_prop in prop2type and internal_prop not in avail_props:
+                                avail_props.append(internal_prop)
                     
                     # Update layouts_metadata after process_layer
                     #layouts_metadata.clear()  # Reset to avoid duplicates or outdated data
