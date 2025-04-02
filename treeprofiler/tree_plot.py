@@ -375,11 +375,15 @@ def run(args):
     setup_logger()
 
     # parsing tree
+    import time
+    start = time.time()
     try:
         tree, eteformat_flag = utils.validate_tree(args.tree, args.input_type, args.internal)
     except utils.TreeFormatError as e:
         print(e)
         sys.exit(1)
+    end = time.time()
+    print(f"Tree parsing time: {end-start} seconds")
     
     # resolve polytomy
     if args.resolve_polytomy:
@@ -844,10 +848,12 @@ def run(args):
                 pass
             
             # assign color for each value of each rank
+            
             for rank, value in sorted(rank2values.items()):
                 value = list(set(value))
                 color_dict = utils.assign_color_to_values(value, paired_color)
-                taxa_layout = taxon_layouts.TaxaCollapse(name = "TaxaCollapse_"+rank, rank=rank, rect_width=args.column_width, color_dict=color_dict, column=level)
+                active = False
+                taxa_layout = taxon_layouts.TaxaCollapse(name = "TaxaCollapse_"+rank, rank=rank, rect_width=args.column_width, color_dict=color_dict, column=level, active=active)
                 taxa_layouts.append(taxa_layout)
                 
             layouts = layouts + taxa_layouts

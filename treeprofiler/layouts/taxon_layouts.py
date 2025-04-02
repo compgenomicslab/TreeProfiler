@@ -8,7 +8,7 @@ paried_color = ["red", "darkblue", "darkgreen", "darkyellow", "violet", "mediumt
 #collapse in layout
 #kingdom, phylum, class, order, family, genus, species, subspecies
 
-@lru_cache(maxsize=10000)
+@lru_cache(maxsize=5000)
 def memoized_string_to_dict(s):
     return utils.string_to_dict(s)
 
@@ -190,10 +190,10 @@ class TaxaRectangular(TreeLayout):
         #             collapsed_only=True)
 
 class TaxaCollapse(TreeLayout):
-    def __init__(self, name="Last common ancestor", rank=None, color_dict={}, rect_width=20, column=0, padding_x=1, padding_y=0, legend=True ):
+    def __init__(self, name="Last common ancestor", rank=None, color_dict={}, rect_width=20, column=0, padding_x=1, padding_y=0, legend=True, active=True):
         super().__init__(name, aligned_faces=True)
 
-        self.active = True
+        self.active = active
         self.rank = rank
         self.color_dict=color_dict
         self.rect_width = rect_width
