@@ -2,10 +2,16 @@ from ete4.smartview import TreeStyle, NodeStyle, TreeLayout
 from ete4.smartview  import RectFace, CircleFace, SeqMotifFace, TextFace, OutlineFace, LegendFace
 from collections import  OrderedDict
 from treeprofiler.src import utils 
+from functools import lru_cache
 paried_color = ["red", "darkblue", "darkgreen", "darkyellow", "violet", "mediumturquoise", "sienna", "lightCoral", "lightSkyBlue", "indigo", "tan", "coral", "olivedrab", "teal"]
 
 #collapse in layout
 #kingdom, phylum, class, order, family, genus, species, subspecies
+
+@lru_cache(maxsize=10000)
+def memoized_string_to_dict(s):
+    return utils.string_to_dict(s)
+
 def get_level(node, level=0):
     if node.is_root:
         return level
@@ -216,7 +222,7 @@ class TaxaCollapse(TreeLayout):
         #lca = next((elem for elem in named_lineage if elem in self.taxa_list), None)
         lca_value = node.props.get('lca')
         if lca_value:
-            lca_dict = utils.string_to_dict(lca_value)
+            lca_dict = memoized_string_to_dict(lca_value)
             lca = lca_dict.get(self.rank, None)
             if lca:
                 color = self.color_dict.get(lca, 'lightgray')
@@ -238,7 +244,7 @@ class TaxaCollapse(TreeLayout):
                     collapsed_only=True)
                 node.add_face(TextFace(lca, color = color, padding_x=2),
                 column=1, position="branch_right", collapsed_only=True)
-
+        # else: 
             # elif node_sciname and (node_rank == self.rank):
             #     lca = node_sciname
             #     color = self.color_dict.get(lca, 'lightgray')
