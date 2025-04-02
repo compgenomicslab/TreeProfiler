@@ -935,8 +935,9 @@ def run(args):
         for rank, value in sorted(rank2values.items()):
             value = list(set(value))
             color_dict = utils.assign_color_to_values(value, paired_color)
+            active = False
             if args.taxonclade_layout:
-                taxa_layout = taxon_layouts.TaxaClade(name='TaxaClade_'+rank, level=level, rank = rank, color_dict=color_dict)
+                taxa_layout = taxon_layouts.TaxaClade(name='TaxaClade_'+rank, level=level, rank=rank, color_dict=color_dict, active=active)
                 taxa_layouts.append(taxa_layout)
 
             if args.taxonrectangle_layout:
