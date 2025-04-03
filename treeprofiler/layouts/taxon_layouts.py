@@ -268,7 +268,7 @@ class LayoutEvolEvents(TreeLayout):
             prop="evoltype",
             speciation_color="blue", 
             duplication_color="red", node_size = 2,
-            legend=True):
+            active=True, legend=True):
         super().__init__(name)
         
         self.prop = prop
@@ -277,7 +277,7 @@ class LayoutEvolEvents(TreeLayout):
         self.node_size = node_size
         self.legend = legend
 
-        self.active = True
+        self.active = active
 
     def set_tree_style(self, tree, tree_style):
         super().set_tree_style(tree, tree_style)

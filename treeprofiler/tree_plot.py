@@ -956,7 +956,7 @@ def run(args):
         taxa_layouts.append(taxon_layouts.LayoutEvolEvents(name = 'Taxa_Evolutionary_events', prop="evoltype",
             speciation_color="blue", 
             duplication_color="red", node_size = 3,
-            legend=True))
+            active = False, legend=True))
         layouts = layouts + taxa_layouts
         level += 1
         total_color_dict.append(taxon_color_dict)
@@ -1897,7 +1897,7 @@ def get_heatmap_layouts(tree, props, level, column_width=70, padding_x=1, paddin
             minval = float(temp_min_val)
         if temp_max_val:
             maxval = float(temp_max_val)
-        ncolors = 40
+        ncolors = 100
         gradient = utils.build_custom_gradient(ncolors, min_color, max_color, mid_color)
         return gradient, value2color, minval, maxval, nan_color
 
