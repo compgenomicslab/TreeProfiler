@@ -92,8 +92,6 @@ class TaxaClade(TreeLayout):
         #         node.sm_style["outline_color"] = color
                 
 
-            
-
 class LayoutSciName(TreeLayout):
     def __init__(self, name="Scientific name", color_dict={}, sci_prop='sci_name'):
         super().__init__(name, aligned_faces=True)
@@ -132,79 +130,18 @@ class LayoutSciName(TreeLayout):
                         position="branch_right", column=1, collapsed_only=True)
                         
 class TaxaRectangular(TreeLayout):
-    def __init__(self, name="Last common ancestor", rank=None, color_dict={}, rect_width=20, column=0, legend=True ):
+    def __init__(self, name="Last common ancestor", rank=None, color_dict={}, rect_width=20, column=0, padding_x=1, padding_y=0, legend=True, active=True):
         super().__init__(name, aligned_faces=True)
 
-        self.active = True
         self.rank = rank
         self.color_dict = color_dict
         self.rect_width = rect_width
         self.column = column
-
-    def set_tree_style(self, tree, tree_style):
-        super().set_tree_style(tree, tree_style)
-        if self.legend:
-            if self.color_dict:
-                tree_style.add_legend(title='TaxaRectangular_'+self.rank,
-                                    variable='discrete',
-                                    colormap=self.color_dict,
-                                    )
-
-    def set_node_style(self, node):
-        node_rank = node.props.get('rank')
-        node_sciname = node.props.get('sci_name')
-        if node_sciname and (node_rank == self.rank):
-            lca = node_sciname
-            color = self.color_dict.get(lca, 'lightgray')
-            level = get_level(node, level=self.column)
-            tooltip = ""
-            if node.name:
-                tooltip += f'<b>{node_sciname}</b><br>'
-            if lca:
-                tooltip += f'rank: {node_rank}<br>'
-                tooltip += f'sci_name: {lca}<br>'
-
-            lca_face = RectFace(self.rect_width, None, text = lca, color=color, padding_x=1, padding_y=1, tooltip=tooltip)
-            lca_face.rotate_text = True
-            node.add_face(lca_face, position='aligned', column=level)
-            node.add_face(lca_face, position='aligned', column=level,
-                collapsed_only=True)
-        # else:
-        #     named_lineage = node.props.get('named_lineage', None)
-        #     lca = next((elem for elem in named_lineage if elem in self.taxa_list), None)
-        #     if lca:
-        #         color = self.color_dict.get(lca, 'lightgray')
-        #         #level = get_level(node, level=self.column)
-        #         level = self.column
-        #         tooltip = ""
-        #         if node.name:
-        #             tooltip += f'<b>{node.name}</b><br>'
-        #         if lca:
-        #             tooltip += f'rank: {node_rank}<br>'
-        #             tooltip += f'sci_name: {lca}<br>'
-
-        #         lca_face = RectFace(self.rect_width, None, text = lca, color=color, padding_x=1, padding_y=1, tooltip=tooltip)
-        #         lca_face.rotate_text = True
-        #         node.add_face(lca_face, position='aligned', column=level)
-        #         node.add_face(lca_face, position='aligned', column=level,
-        #             collapsed_only=True)
-
-class TaxaCollapse(TreeLayout):
-    def __init__(self, name="Last common ancestor", rank=None, color_dict={}, rect_width=20, column=0, padding_x=1, padding_y=0, legend=True, active=True):
-        super().__init__(name, aligned_faces=True)
-
-        self.active = active
-        self.rank = rank
-        self.color_dict=color_dict
-        self.rect_width = rect_width
-        self.column = column
         self.padding_x = padding_x
         self.padding_y = padding_y
-
-        self.taxa_list =  list(color_dict.keys())
+        self.active = active
 
     def set_tree_style(self, tree, tree_style):
-        super().set_tree_style(tree, tree_style)
         super().set_tree_style(tree, tree_style)
         text = TextFace(" ", min_fsize=10, max_fsize=15, padding_x=self.padding_x, width=self.rect_width, rotation=315)
         tree_style.aligned_panel_header.add_face(text, column=self.column)
@@ -214,20 +151,77 @@ class TaxaCollapse(TreeLayout):
                                     variable='discrete',
                                     colormap=self.color_dict,
                                     )
+
+    def set_node_style(self, node):
+        lca_value = node.props.get('lca')
+        if not lca_value:
+            return
+
+        lca_dict = memoized_string_to_dict(lca_value)
+        lca = lca_dict.get(self.rank, None)
+        if not lca:
+            return
+
+        # Check if parent has the same LCA
+        parent = node.up
+        parent_lca = None
+        if parent and parent.props.get('lca'):
+            parent_lca_dict = memoized_string_to_dict(parent.props['lca'])
+            parent_lca = parent_lca_dict.get(self.rank, None)
+
+        # Skip drawing if parent's LCA is the same
+        if parent_lca == lca:
+            return
+
+        # Draw LCA band since parent is different (or missing)
+        color = self.color_dict.get(lca, 'lightgray')
+        tooltip = f"<b>{lca}</b><br>rank: {self.rank}<br>sci_name: {lca}<br>"
+
+        lca_face = RectFace(self.rect_width, None, text=lca, 
+        color=color, padding_x=1, padding_y=1, tooltip=tooltip)
+        lca_face.rotate_text = True
+        
+        node.sm_style["draw_descendants"] = True
+        node.add_face(lca_face, position='aligned', column=self.column)
+        node.add_face(lca_face, position='aligned', column=self.column, 
+            collapsed_only=True)
+        # node.add_face(TextFace(lca, color=color, padding_x=2), column=1,
+        #             position="branch_right", collapsed_only=True)
+
+class TaxaCollapse(TreeLayout):
+    def __init__(self, name="Last common ancestor", rank=None, color_dict={}, rect_width=20, column=0, padding_x=1, padding_y=0, legend=True, active=True):
+        super().__init__(name, aligned_faces=True)
+
+        self.rank = rank
+        self.color_dict=color_dict
+        self.rect_width = rect_width
+        self.column = column
+        self.padding_x = padding_x
+        self.padding_y = padding_y
+        self.active = active
+
+    def set_tree_style(self, tree, tree_style):
+        super().set_tree_style(tree, tree_style)
+        text = TextFace(" ", min_fsize=10, max_fsize=15, padding_x=self.padding_x, width=self.rect_width, rotation=315)
+        tree_style.aligned_panel_header.add_face(text, column=self.column)
+        if self.legend:
+            if self.color_dict:
+                tree_style.add_legend(title='TaxaCollapse_'+self.rank,
+                                    variable='discrete',
+                                    colormap=self.color_dict,
+                                    )
     
     def set_node_style(self, node):
         node_rank = node.props.get('rank')
         node_sciname = node.props.get('sci_name')
         named_lineage = node.props.get('named_lineage', None)
-        #lca = next((elem for elem in named_lineage if elem in self.taxa_list), None)
+        
         lca_value = node.props.get('lca')
         if lca_value:
             lca_dict = memoized_string_to_dict(lca_value)
             lca = lca_dict.get(self.rank, None)
             if lca:
                 color = self.color_dict.get(lca, 'lightgray')
-                #level = get_level(node, level=self.column)
-                level = self.column
                 tooltip = ""
                 if node.name:
                     tooltip += f'<b>{lca}</b><br>'
@@ -235,33 +229,15 @@ class TaxaCollapse(TreeLayout):
                     tooltip += f'rank: {self.rank}<br>'
                     tooltip += f'sci_name: {lca}<br>'
 
-                lca_face = RectFace(self.rect_width, None, text = lca, color=color, padding_x=1, padding_y=1, tooltip=tooltip)
+                lca_face = RectFace(self.rect_width, None, text=lca, 
+                color=color, padding_x=1, padding_y=1, tooltip=tooltip)
                 lca_face.rotate_text = True
                 node.sm_style["draw_descendants"] = False
-                
-                node.add_face(lca_face, position='aligned', column=level)
-                node.add_face(lca_face, position='aligned', column=level,
+                node.add_face(lca_face, position='aligned', column=self.column)
+                node.add_face(lca_face, position='aligned', column=self.column,
                     collapsed_only=True)
                 node.add_face(TextFace(lca, color = color, padding_x=2),
                 column=1, position="branch_right", collapsed_only=True)
-        # else: 
-            # elif node_sciname and (node_rank == self.rank):
-            #     lca = node_sciname
-            #     color = self.color_dict.get(lca, 'lightgray')
-            #     level = self.column
-            #     tooltip = ""
-            #     if node.name:
-            #         tooltip += f'<b>{node.name}</b><br>'
-            #     if lca:
-            #         tooltip += f'rank: {node_rank}<br>'
-            #         tooltip += f'sci_name: {lca}<br>'
-
-            #     lca_face = RectFace(self.rect_width, None, text = lca, color=color, padding_x=1, padding_y=1, tooltip=tooltip)
-            #     lca_face.rotate_text = True
-            #     node.sm_style["draw_descendants"] = False
-            #     node.add_face(lca_face, position='aligned', column=level)
-            #     node.add_face(lca_face, position='aligned', column=level,
-            #         collapsed_only=True)
 
 class LayoutEvolEvents(TreeLayout):
     def __init__(self, name="Evolutionary events", 

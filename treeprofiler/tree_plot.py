@@ -684,6 +684,7 @@ def run(args):
 
 
         if layout == 'barplot-layout':
+            
             barplot_layouts, level, color_dict = get_barplot_layouts(tree, args.barplot_layout, level, 
             prop2type, column_width=args.barplot_width, padding_x=args.padding_x, padding_y=args.padding_y, 
             internal_rep=internal_num_rep, anchor_column=args.barplot_scale, color_config=color_config, 
@@ -828,10 +829,10 @@ def run(args):
             level += 1
             layouts.append(matrix_layout)
 
-        if layout == "taxoncollapse-layout":
+        if layout == "taxoncollapse-layout" or layout == "taxonrectangle-layout":
             taxon_color_dict = {}
             taxa_layouts = []
-
+            band_width = args.column_width / 2
             # generate a rank2values dict for pre taxonomic annotated tree
             if not rank2values:
                 rank2values = defaultdict(list)
@@ -853,11 +854,25 @@ def run(args):
                 value = list(set(value))
                 color_dict = utils.assign_color_to_values(value, paired_color)
                 active = False
-                taxa_layout = taxon_layouts.TaxaCollapse(name = "TaxaCollapse_"+rank, rank=rank, rect_width=args.column_width, color_dict=color_dict, column=level, active=active)
-                taxa_layouts.append(taxa_layout)
+                if args.taxoncollapse_layout:
+                    taxa_layout = taxon_layouts.TaxaCollapse(name='TaxaCollapse_'+rank, rect_width=band_width, rank=rank, color_dict=color_dict, column=level, active=active)
+                    taxa_layouts.append(taxa_layout)
+
+                if args.taxonrectangle_layout:
+                    taxa_layout = taxon_layouts.TaxaRectangular(name='TaxaRect_'+rank, rect_width=band_width, rank=rank, color_dict=color_dict, column=level, active=active)
+                    taxa_layouts.append(taxa_layout)
                 
+                taxon_color_dict[rank] = color_dict
+            
+            taxa_layouts.append(taxon_layouts.LayoutSciName(name = 'Taxa_Scientific_name', color_dict=taxon_color_dict))
+            taxa_layouts.append(taxon_layouts.LayoutEvolEvents(name = 'Taxa_Evolutionary_events', prop="evoltype",
+                speciation_color="blue", 
+                duplication_color="red", node_size=3,
+                active=False, legend=True))
+
             layouts = layouts + taxa_layouts
             level += 1
+            total_color_dict.append(taxon_color_dict)
 
     # emapper layout 
     if args.emapper_layout:
@@ -917,7 +932,7 @@ def run(args):
             layouts.append(multiple_text_prop_layout)
             
     # Taxa layouts
-    if args.taxonclade_layout or args.taxonrectangle_layout:
+    if args.taxonclade_layout:
         taxon_color_dict = {}
         taxa_layouts = []
 
@@ -935,28 +950,18 @@ def run(args):
         for rank, value in sorted(rank2values.items()):
             value = list(set(value))
             color_dict = utils.assign_color_to_values(value, paired_color)
-            active = False
-            if args.taxonclade_layout:
-                taxa_layout = taxon_layouts.TaxaClade(name='TaxaClade_'+rank, level=level, rank=rank, color_dict=color_dict, active=active)
-                taxa_layouts.append(taxa_layout)
+            active=False
 
-            if args.taxonrectangle_layout:
-                taxa_layout = taxon_layouts.TaxaRectangular(name = "TaxaRect_"+rank, rank=rank, rect_width=args.column_width, color_dict=color_dict, column=level)
-                taxa_layouts.append(taxa_layout)
-                #level += 1
-
-            # if args.taxoncollapse_layout:
-            #     taxa_layout = taxon_layouts.TaxaCollapse(name = "TaxaCollapse_"+rank, rank=rank, rect_width=args.column_width, color_dict=color_dict, column=level)
-            #     taxa_layouts.append(taxa_layout)
+            taxa_layout = taxon_layouts.TaxaClade(name='TaxaClade_'+rank, level=level, rank=rank, color_dict=color_dict, active=active)
+            taxa_layouts.append(taxa_layout)
 
             taxon_color_dict[rank] = color_dict
             
-        #taxa_layouts.append(taxon_layouts.TaxaRectangular(name = "Last Common Ancester", color_dict=taxon_color_dict, column=level))
         taxa_layouts.append(taxon_layouts.LayoutSciName(name = 'Taxa_Scientific_name', color_dict=taxon_color_dict))
         taxa_layouts.append(taxon_layouts.LayoutEvolEvents(name = 'Taxa_Evolutionary_events', prop="evoltype",
             speciation_color="blue", 
-            duplication_color="red", node_size = 3,
-            active = False, legend=True))
+            duplication_color="red", node_size=3,
+            active=False, legend=True))
         layouts = layouts + taxa_layouts
         level += 1
         total_color_dict.append(taxon_color_dict)
@@ -972,6 +977,7 @@ def run(args):
             taxon_color_dict[rank] = color_dict
         taxa_layout = taxon_layouts.LayoutSciName(name = 'Taxa_LCA_name', color_dict=taxon_color_dict, sci_prop='latest_lca')
         layouts.append(taxa_layout)
+
     # prune tree by condition 
     if args.pruned_by: # need to be wrap with quotes
         condition_strings = args.pruned_by
