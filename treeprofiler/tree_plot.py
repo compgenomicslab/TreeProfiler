@@ -1918,11 +1918,15 @@ def get_heatmap_layouts(tree, props, level, column_width=70, padding_x=1, paddin
     # Create heatmap layouts for each property
     for prop in props:
         value2color = {}
-        leaf_values = np.array(sorted(set(utils.tree_prop_array(tree, prop, numeric=True)))).astype('float64')
-        internal_values = np.array(sorted(set(utils.tree_prop_array(tree, utils.add_suffix(prop, internal_rep), numeric=True)))).astype('float64')
-        prop_all_values = np.concatenate((leaf_values, internal_values))
+        # leaf_values = np.array(sorted(set(utils.tree_prop_array(tree, prop, numeric=True)))).astype('float64')
+        # internal_values = np.array(sorted(set(utils.tree_prop_array(tree, utils.add_suffix(prop, internal_rep), numeric=True)))).astype('float64')
+        # prop_all_values = np.concatenate((leaf_values, internal_values))
+        # prop_all_values = prop_all_values[~np.isnan(prop_all_values)]
+        leaf_values = np.array(utils.tree_prop_array(tree, prop, numeric=True), dtype=np.float64)
+        internal_values = np.array(utils.tree_prop_array(tree, utils.add_suffix(prop, internal_rep), numeric=True), dtype=np.float64)
+        prop_all_values = np.concatenate([leaf_values, internal_values])
         prop_all_values = prop_all_values[~np.isnan(prop_all_values)]
-
+        
         # Use global min/max if specified; otherwise, use property-specific min/max
         minval, maxval = (global_minval, global_maxval) if global_scaling else (np.min(prop_all_values), np.max(prop_all_values))
         mean_val, std_val = np.mean(prop_all_values), np.std(prop_all_values)
