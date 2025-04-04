@@ -3,7 +3,6 @@ from ete4.smartview  import RectFace, CircleFace, SeqMotifFace, TextFace, Outlin
 from collections import  OrderedDict
 from treeprofiler.src import utils 
 from functools import lru_cache
-paried_color = ["red", "darkblue", "darkgreen", "darkyellow", "violet", "mediumturquoise", "sienna", "lightCoral", "lightSkyBlue", "indigo", "tan", "coral", "olivedrab", "teal"]
 
 #collapse in layout
 #kingdom, phylum, class, order, family, genus, species, subspecies
