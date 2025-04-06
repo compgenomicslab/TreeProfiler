@@ -49,3 +49,8 @@ dependencies = [
 treeprofiler = "treeprofiler:main"
 treeprofiler-desktop = "treeprofiler.app:start_server"
 
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]

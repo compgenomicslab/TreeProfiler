@@ -1,0 +1,2 @@
+recursive-include treeprofiler/static *
+recursive-include treeprofiler/views *.html
