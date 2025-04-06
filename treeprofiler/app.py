@@ -2250,6 +2250,7 @@ def load_emapper_layout(tree):
     ]
 
     for multiple_text_prop in multiple_text_props:
+        
         matrix, value2color, all_profiling_values = tree_plot.multiple2matrix(tree, multiple_text_prop, prop2type=prop2type, eteformat_flag=eteformat_flag)
         
         if multiple_text_prop == 'KEGG_ko':
