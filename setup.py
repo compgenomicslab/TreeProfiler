@@ -34,7 +34,8 @@ setup(
     include_package_data=True,
     package_data = { 
         'treeprofiler' : [
-            'treeprofiler/*',
+            'static/css/*',
+            'static/js/*',
             'views/*.html',   
             'layouts/pfam2color.json',
             'layouts/smart2color.json',

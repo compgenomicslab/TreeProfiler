@@ -121,13 +121,18 @@ binary_prefix = [
 job_status = {}  # Dictionary to store job statuses
 # Global variables
 app = Bottle()
+
 # Dynamically find the views/ path inside the installed package
 views_path = files('treeprofiler').joinpath('views')
 bottle.TEMPLATE_PATH.insert(0, str(views_path))
 
+from importlib.resources import files as ir_files
+STATIC_DIR = str(ir_files("treeprofiler").joinpath("static"))
+
 server_thread = None
 server_instance = None
 stop_event = threading.Event()
+print("Serving static files from:", STATIC_DIR)
 
 class CustomWSGIServer(WSGIServer):
     """Custom WSGI server to enable graceful shutdown."""
@@ -149,8 +154,9 @@ class CustomServerAdapter(ServerAdapter):
     """Custom server adapter for Bottle to use CustomWSGIServer."""
     def run(self, handler):
         self.options['handler_class'] = WSGIRequestHandler
-        self.server = CustomWSGIServer((self.host, self.port), self.options.get('handler_class', WSGIRequestHandler))
-        self.server.set_app(handler)  # Set the Bottle app
+        # ✅ Correct setup: handler is WSGI app, set via set_app()
+        self.server = CustomWSGIServer((self.host, self.port), self.options['handler_class'])
+        self.server.set_app(handler)  # 👈 This is necessary and correct
         self.server.serve_forever()
 
     def stop(self):
@@ -158,12 +164,13 @@ class CustomServerAdapter(ServerAdapter):
             self.server.shutdown()
 
 
+from bottle import run as bottle_run
+
 def run_server():
-    """Run the Bottle app."""
+    """Run the Bottle app using the custom server and correct app context."""
     global server_instance
     server_instance = CustomServerAdapter(host=HOSTNAME, port=HOSTPORT)
-    app.run(server=server_instance)
-
+    bottle_run(app=app, server=server_instance, host=HOSTNAME, port=HOSTPORT)
 
 def start_server():
     """Start the Bottle app in a separate thread."""
@@ -172,7 +179,19 @@ def start_server():
     server_thread = threading.Thread(target=run_server)
     server_thread.start()
 
+@app.route('/debug-static')
+def debug_static():
+    return f"STATIC_DIR is: {STATIC_DIR}"
 
+@app.route('/debug-css')
+def debug_css():
+    path = os.path.join(STATIC_DIR, "css", "bootstrap.min.css")
+    return f"Bootstrap CSS file exists at: {path} → {'✅' if os.path.exists(path) else '❌'}"
+@app.route('/debug-js')
+def debug_js():
+    path = os.path.join(STATIC_DIR, "js", "bootstrap.bundle.min.js")
+    return f"Bootstrap JS file exists at: {path} → {'✅' if os.path.exists(path) else '❌'}"
+    
 @app.route('/stop_explore')
 def stop_explore():
     """Stop and restart the server."""
@@ -639,7 +658,7 @@ def process_upload_job(job_args):
 # Route to serve static files like CSS and JS
 @app.route('/static/<filepath:path>')
 def server_static(filepath):
-    return static_file(filepath, root='./static')
+    return static_file(filepath, root=STATIC_DIR)
 
 explore_threads = {}  # Store threads and stop signals for exploration sessions
 @app.route('/')
