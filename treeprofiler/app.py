@@ -771,8 +771,9 @@ def upload_chunk():
 
 @app.route('/examples/<filepath:path>')
 def serve_examples(filepath):
-    """Serve example files."""
-    examples_dir = os.path.abspath(os.path.join(os.getcwd(), '..', 'examples'))
+    """Serve example files from ../examples (outside the package)."""
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    examples_dir = os.path.abspath(os.path.join(base_dir, '..', 'examples'))
     return static_file(filepath, root=examples_dir)
 
 @app.route('/job_status/<job_id>')
