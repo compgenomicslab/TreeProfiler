@@ -2050,7 +2050,7 @@ def apply_taxonomic_layouts(t, selected_layout, selected_props, tree_info, curre
     taxon_color_dict = {}
     taxa_layouts = []
     rank2values = defaultdict(list)
-
+    active = False
     # Traverse tree nodes to build rank2values dictionary
     for n in t.traverse():
         if n.props.get('lca'):
@@ -2076,7 +2076,8 @@ def apply_taxonomic_layouts(t, selected_layout, selected_props, tree_info, curre
                 rank=rank,
                 rect_width=column_width/2,
                 color_dict=color_dict,
-                column=level
+                column=level,
+                active=active
             )
             taxa_layouts.append(taxa_layout)
         elif selected_layout == 'taxonclade-layout':
@@ -2084,7 +2085,8 @@ def apply_taxonomic_layouts(t, selected_layout, selected_props, tree_info, curre
                 name='TaxaClade_' + rank,
                 level=level,
                 rank=rank,
-                color_dict=color_dict
+                color_dict=color_dict,
+                active=active
             )
             taxa_layouts.append(taxa_layout)
         elif selected_layout == 'taxonrectangle-layout':
@@ -2093,7 +2095,8 @@ def apply_taxonomic_layouts(t, selected_layout, selected_props, tree_info, curre
                 rank=rank,
                 rect_width=column_width/2,
                 color_dict=color_dict,
-                column=level
+                column=level,
+                active=active
             )
             taxa_layouts.append(taxa_layout)
 
