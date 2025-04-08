@@ -855,6 +855,7 @@ def run(args):
                 value = list(set(value))
                 color_dict = utils.assign_color_to_values(value, paired_color)
                 active = False
+                
                 if args.taxoncollapse_layout:
                     taxa_layout = taxon_layouts.TaxaCollapse(name='TaxaCollapse_'+rank, rect_width=band_width, rank=rank, color_dict=color_dict, column=level, active=active)
                     taxa_layouts.append(taxa_layout)

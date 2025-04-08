@@ -59,7 +59,11 @@ class TaxaClade(TreeLayout):
 
     def set_node_style(self, node):
         named_lineage = node.props.get('named_lineage', None)
+
         if named_lineage:
+            if isinstance(named_lineage, str):
+                named_lineage = named_lineage.split('|')
+
             for clade, color in self.color_dict.items():
                 if clade in named_lineage:
                     node.sm_style["hz_line_color"] = color
