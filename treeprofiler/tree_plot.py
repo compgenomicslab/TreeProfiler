@@ -519,7 +519,7 @@ def run(args):
             for prop in args.heatmap_layout:
                 visualized_props.append(prop)
                 visualized_props.append(utils.add_suffix(prop, internal_num_rep))
-            
+
         if layout == 'heatmap-mean-layout':
             heatmap_mean_layouts, level = get_heatmap_layouts(tree, 
             args.heatmap_mean_layout, level, column_width=args.column_width, 
@@ -829,10 +829,11 @@ def run(args):
             level += 1
             layouts.append(matrix_layout)
 
-        if layout == "taxoncollapse-layout" or layout == "taxonrectangle-layout":
+        if layout == "taxoncollapse-layout" or layout == "taxonrectangle-layout" or "taxonclade-layout":
+            # Taxa layouts
             taxon_color_dict = {}
             taxa_layouts = []
-            band_width = args.column_width / 2
+            band_width = args.column_width * 0.75
             # generate a rank2values dict for pre taxonomic annotated tree
             if not rank2values:
                 rank2values = defaultdict(list)
@@ -861,6 +862,13 @@ def run(args):
                 if args.taxonrectangle_layout:
                     taxa_layout = taxon_layouts.TaxaRectangular(name='TaxaRect_'+rank, rect_width=band_width, rank=rank, color_dict=color_dict, column=level, active=active)
                     taxa_layouts.append(taxa_layout)
+                
+                if args.taxonclade_layout:
+                    taxa_layout = taxon_layouts.TaxaClade(name='TaxaClade_'+rank, level=level, rank=rank, color_dict=color_dict, active=active)
+                    taxa_layouts.append(taxa_layout)
+
+                taxa_layout = taxon_layouts.TaxaLCA(name='TaxaLCA_'+rank, rect_width=band_width, rank=rank, color_dict=color_dict, column=level, active=active)
+                taxa_layouts.append(taxa_layout)
                 
                 taxon_color_dict[rank] = color_dict
             
@@ -931,41 +939,6 @@ def run(args):
             level += 1
             layouts.append(multiple_text_prop_layout)
             
-    # Taxa layouts
-    if args.taxonclade_layout:
-        taxon_color_dict = {}
-        taxa_layouts = []
-
-        # generate a rank2values dict for pre taxonomic annotated tree
-        if not rank2values:
-            rank2values = defaultdict(list)
-            for n in tree.traverse():
-                if n.props.get('rank') and n.props.get('rank') != 'Unknown':
-                    rank = n.props.get('rank')
-                    rank2values[rank].append(n.props.get('sci_name',''))
-        else:       
-            pass
-
-        # assign color for each value of each rank
-        for rank, value in sorted(rank2values.items()):
-            value = list(set(value))
-            color_dict = utils.assign_color_to_values(value, paired_color)
-            active=False
-
-            taxa_layout = taxon_layouts.TaxaClade(name='TaxaClade_'+rank, level=level, rank=rank, color_dict=color_dict, active=active)
-            taxa_layouts.append(taxa_layout)
-
-            taxon_color_dict[rank] = color_dict
-            
-        taxa_layouts.append(taxon_layouts.LayoutSciName(name = 'Taxa_Scientific_name', color_dict=taxon_color_dict))
-        taxa_layouts.append(taxon_layouts.LayoutEvolEvents(name = 'Taxa_Evolutionary_events', prop="evoltype",
-            speciation_color="blue", 
-            duplication_color="red", node_size=3,
-            active=False, legend=True))
-        layouts = layouts + taxa_layouts
-        level += 1
-        total_color_dict.append(taxon_color_dict)
-        
     #### prune at the last step in case of losing leaves information
     # prune tree by rank
     if args.rank_limit:
@@ -984,8 +957,22 @@ def run(args):
         tree = utils.conditional_prune(tree, condition_strings, prop2type)
 
     #### Output #####
-    popup_prop_keys.extend(list(set(visualized_props)))
-    popup_prop_keys = sorted(tuple(popup_prop_keys))
+    viz_props = [
+        'name',
+        'dist',
+        'support',
+        'rank',
+        'sci_name',
+        'taxid',
+        'lineage',
+        'named_lineage',
+        'evoltype',
+        'dup_sp',
+        'dup_percent',
+        'lca',
+    ]
+    viz_props.extend(list(set(visualized_props)))
+    viz_props = sorted(tuple(viz_props))
 
     if args.out_colordict:
         wrtie_color(total_color_dict)
@@ -994,7 +981,7 @@ def run(args):
         get_image(tree, layouts, args.port, os.path.abspath(file_path))
     else:
         tree.explore(keep_server=True, compress=False, quiet=args.verbose, 
-        layouts=layouts, port=args.port, include_props=popup_prop_keys,
+        layouts=layouts, port=args.port, include_props=viz_props,
         show_leaf_name=args.hide_leaf_name, show_branch_support=args.hide_branch_support,
         show_branch_length=args.hide_branch_distance)
 

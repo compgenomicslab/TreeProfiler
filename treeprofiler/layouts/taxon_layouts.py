@@ -127,7 +127,7 @@ class LayoutSciName(TreeLayout):
                     color = 'gray'
                 node.add_face(TextFace(text, padding_x=2, color = color, min_fsize=4, max_fsize=25),
                         position="branch_right", column=1, collapsed_only=True)
-                        
+
 class TaxaRectangular(TreeLayout):
     def __init__(self, name="Last common ancestor", rank=None, color_dict={}, rect_width=20, column=0, padding_x=1, padding_y=0, legend=True, active=True):
         super().__init__(name, aligned_faces=True)
@@ -235,8 +235,8 @@ class TaxaCollapse(TreeLayout):
                 node.add_face(lca_face, position='aligned', column=self.column)
                 node.add_face(lca_face, position='aligned', column=self.column,
                     collapsed_only=True)
-                node.add_face(TextFace(lca, color = color, padding_x=2),
-                column=1, position="branch_right", collapsed_only=True)
+                # node.add_face(TextFace(lca, color = color, padding_x=2),
+                # column=1, position="branch_right", collapsed_only=True)
 
 class LayoutEvolEvents(TreeLayout):
     def __init__(self, name="Evolutionary events", 
@@ -272,3 +272,41 @@ class LayoutEvolEvents(TreeLayout):
             elif node.props.get(self.prop, "") == "D":
                 node.sm_style["fgcolor"] = self.duplication_color
                 node.sm_style["size"] = self.node_size
+
+class TaxaLCA(TreeLayout):
+    def __init__(self, name="LCA", rank=None, color_dict={}, rect_width=20, column=0, padding_x=1, padding_y=0, legend=True, active=True):
+        super().__init__(name, aligned_faces=True)
+
+        self.rank = rank
+        self.color_dict = color_dict
+        self.rect_width = rect_width
+        self.column = column
+        self.padding_x = padding_x
+        self.padding_y = padding_y
+        self.active = active
+
+    def set_tree_style(self, tree, tree_style):
+        super().set_tree_style(tree, tree_style)
+        text = TextFace(" ", min_fsize=10, max_fsize=15, padding_x=self.padding_x, width=self.rect_width, rotation=315)
+        tree_style.aligned_panel_header.add_face(text, column=self.column)
+        if self.legend:
+            if self.color_dict:
+                tree_style.add_legend(title='TaxaLCA_'+self.rank,
+                                    variable='discrete',
+                                    colormap=self.color_dict,
+                                    )
+
+    def set_node_style(self, node):
+        lca_value = node.props.get('lca')
+        if not lca_value:
+            return
+
+        lca_dict = memoized_string_to_dict(lca_value)
+        lca = lca_dict.get(self.rank, None)
+        if not lca:
+            return
+
+        # Draw LCA band since parent is different (or missing)
+        color = self.color_dict.get(lca, 'lightgray')
+        node.add_face(TextFace(lca, color=color, padding_x=2), column=1,
+                    position="branch_right", collapsed_only=True)
