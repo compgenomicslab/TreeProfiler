@@ -829,7 +829,7 @@ def run(args):
             level += 1
             layouts.append(matrix_layout)
 
-        if layout == "taxoncollapse-layout" or layout == "taxonrectangle-layout" or "taxonclade-layout":
+        if layout == "taxoncollapse-layout" or layout == "taxonrectangle-layout" or layout == "taxonclade-layout":
             # Taxa layouts
             taxon_color_dict = {}
             taxa_layouts = []
@@ -853,7 +853,7 @@ def run(args):
             
             for rank, value in sorted(rank2values.items()):
                 value = list(set(value))
-                color_dict = utils.assign_color_to_values(value, paired_color)
+                color_dict = utils.assign_color_to_values(value, paired_color[::1])
                 active = False
                 
                 if args.taxoncollapse_layout:
