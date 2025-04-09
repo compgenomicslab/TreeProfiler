@@ -2414,7 +2414,7 @@ def load_gtdb_layout(tree, prop2type):
         else:
             active = False
 
-        taxa_layout = taxon_layouts.TaxaRectangular(name='TaxaRect_'+rank, rect_width=band_width, rank=rank, color_dict=color_dict, column=level, active=active)
+        taxa_layout = layouts.taxon_layouts.TaxaRectangular(name='TaxaRect_'+rank, rect_width=band_width, rank=rank, color_dict=color_dict, column=level, active=active)
         taxa_layouts.append(taxa_layout)
         
         taxa_layout = layouts.taxon_layouts.TaxaClade(name='TaxaClade_'+rank, level=level, rank=rank, color_dict=color_dict, active=active)
