@@ -829,7 +829,7 @@ def run(args):
             level += 1
             layouts.append(matrix_layout)
 
-        if layout == "taxoncollapse-layout" or layout == "taxonrectangle-layout" or layout == "taxonclade-layout":
+        if layout in ["taxoncollapse-layout", "taxonrectangle-layout", "taxonclade-layout"]:
             # Taxa layouts
             taxon_color_dict = {}
             taxa_layouts = []
@@ -838,11 +838,18 @@ def run(args):
             if not rank2values:
                 rank2values = defaultdict(list)
                 for n in tree.traverse():
-                    if n.props.get('lca'):
-                        lca_dict = utils.string_to_dict(n.props.get('lca'))
-                        for rank, sci_name in lca_dict.items():
-                            rank2values[rank].append(sci_name)
-
+                    lca_raw = n.props.get('lca')
+                    if isinstance(lca_raw, str):
+                        try:
+                            lca_dict = utils.string_to_dict(lca_raw)
+                            for rank, sci_name in lca_dict.items():
+                                rank2values[rank].append(sci_name)
+                        except Exception as e:
+                            #print(f"[Warning] Invalid LCA format on node {n.name}: {lca_raw}")
+                            continue  # skip this node
+                    else:
+                        pass  # lca is None or not a string
+                    
                     current_rank = n.props.get('rank')
                     if current_rank and current_rank != 'Unknown':
                         rank2values[current_rank].append(n.props.get('sci_name',''))
