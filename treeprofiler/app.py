@@ -2381,11 +2381,24 @@ def load_gtdb_layout(tree, prop2type):
 
     taxon_color_dict = {}
     taxa_layouts = []
+    band_width = column_width * 0.75
 
     # generate a rank2values dict for pre taxonomic annotated tree
     if not rank2values:
         rank2values = defaultdict(list)
         for n in tree.traverse():
+            lca_raw = n.props.get('lca')
+            if isinstance(lca_raw, str):
+                try:
+                    lca_dict = utils.string_to_dict(lca_raw)
+                    for rank, sci_name in lca_dict.items():
+                        rank2values[rank].append(sci_name)
+                except Exception as e:
+                    #print(f"[Warning] Invalid LCA format on node {n.name}: {lca_raw}")
+                    continue  # skip this node
+            else:
+                pass  # lca is None or not a string
+
             if n.props.get('rank') and n.props.get('rank') != 'Unknown':
                 rank = n.props.get('rank')
                 rank2values[rank].append(n.props.get('sci_name',''))
@@ -2400,8 +2413,13 @@ def load_gtdb_layout(tree, prop2type):
             active = True
         else:
             active = False
+
+        taxa_layout = taxon_layouts.TaxaRectangular(name='TaxaRect_'+rank, rect_width=band_width, rank=rank, color_dict=color_dict, column=level, active=active)
+        taxa_layouts.append(taxa_layout)
+        
         taxa_layout = layouts.taxon_layouts.TaxaClade(name='TaxaClade_'+rank, level=level, rank=rank, color_dict=color_dict, active=active)
         taxa_layouts.append(taxa_layout)
+        
         taxon_color_dict[rank] = color_dict
 
     taxa_layouts.append(layouts.taxon_layouts.LayoutSciName(name = 'Taxa_Scientific_name', color_dict=taxon_color_dict))
