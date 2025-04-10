@@ -114,8 +114,9 @@ class LayoutSciName(TreeLayout):
             node.add_face(TextFace(sci_name, color = color, padding_x=2, min_fsize=4, max_fsize=25),
                 column=0, position="branch_right")
 
-            if len(prot_id) > 40:
-                prot_id = prot_id[0:37] + " ..."
+            if prot_id:
+                if len(prot_id) > 40:
+                    prot_id = prot_id[0:37] + " ..."
            
             #node.add_face(TextFace(prot_id, color = 'Gray', padding_x=2), column = 2, position = "aligned")
         else:
