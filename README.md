@@ -112,8 +112,8 @@ TreeProfiler requires
 conda create -n treeprofiler python=3.10
 conda activate treeprofiler
 
-# Install ETE Toolkit v4
-pip install --force-reinstall https://github.com/etetoolkit/ete/archive/ete4.zip
+# Install ETE Toolkit v4 for treeprofiler
+pip install --force-reinstall "git+https://github.com/etetoolkit/ete.git@ete4_treeprofiler"
 
 # Install custom pastml package for ete4
 pip install "git+https://github.com/dengzq1234/pastml.git@pastml2ete4" 
