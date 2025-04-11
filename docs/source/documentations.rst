@@ -30,8 +30,8 @@ Quick install via pip
 ---------------------
 ::
 
-    # Install ETE Toolkit v4
-    pip install --force-reinstall https://github.com/etetoolkit/ete/archive/ete4.zip
+    # Install ETE Toolkit v4 for treeprofiler
+    pip install --force-reinstall "git+https://github.com/etetoolkit/ete.git@ete4_treeprofiler"
 
 
     # Install TreeProfiler dependencies
