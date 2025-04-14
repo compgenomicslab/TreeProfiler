@@ -58,3 +58,4 @@ include-package-data = true
 [tool.setuptools.package-data]
 # include these files at the root of the package
 "treeprofiler" = ["README.md", "LICENSE"]
+treeprofiler.layouts = ["pfam2color.json", "smart2color.json"]
