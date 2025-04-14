@@ -15,3 +15,5 @@ __pycache__/*
 .covarage
 .cache/
 .cache/*
+tests/htmlcov/
+tests/htmlcov/*
