@@ -1,2 +1,4 @@
 recursive-include treeprofiler/static *
 recursive-include treeprofiler/views *.html
+include README.md
+include LICENSE
