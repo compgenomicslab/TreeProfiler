@@ -2260,11 +2260,13 @@ def numerical2matrix(tree, profiling_props, count_negative=True, internal_num_re
                 if internal_num_rep != 'none':
                     representative_prop = utils.add_suffix(profiling_prop, internal_num_rep)
                     prop_value = node.props.get(representative_prop)
+                    
                     if prop_value is not None:
                         if isinstance(prop_value, list) or prop2type.get(representative_prop) == list:
                             list_props.add(profiling_prop)
                             if not eteformat_flag:
                                 prop_value = prop_value.split(list_sep)
+                            
                             prop_value = list(map(float, prop_value))
                             if node.name not in node2matrix_list[profiling_prop]:
                                 node2matrix_list[profiling_prop][node.name] = []
@@ -2281,14 +2283,14 @@ def numerical2matrix(tree, profiling_props, count_negative=True, internal_num_re
     if single_props:
         minval_single, maxval_single, value2color_single, gradientscolor = process_color_configuration(node2matrix_single, profiling_props)
     else:
-        minval_single, maxval_single, value2color_single, gradientscolor = None, None, None
+        minval_single, maxval_single, value2color_single, gradientscolor = None, None, None, None
     
     if list_props:
         # Process list values for each profiling_prop
         results_list = {}
         for prop in profiling_props:
             if prop in list_props:
-                minval_list, maxval_list, value2color_list = process_color_configuration(node2matrix_list[prop], profiling_props)
+                minval_list, maxval_list, value2color_list, gradientscolor = process_color_configuration(node2matrix_list[prop], profiling_props)
                 results_list[prop] = (node2matrix_list[prop], minval_list, maxval_list, value2color_list)
             else:
                 results_list[prop] = (None, None, None, None)
