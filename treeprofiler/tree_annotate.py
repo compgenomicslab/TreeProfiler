@@ -996,7 +996,7 @@ def check_missing(input_string):
     2) The exact strings "none", "None", "null", or "NaN".
     3) An empty string (zero characters).
     """
-    pattern = r'^(?:\W+|none|None|null|Null|NaN|)$'
+    pattern = r'^(?:\W+|none|None|null|Null|NaN|NA|)$'
     
     if input_string is None:
         return True

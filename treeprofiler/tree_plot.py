@@ -859,7 +859,7 @@ def run(args):
             # assign color for each value of each rank
             
             for rank, value in sorted(rank2values.items()):
-                value = list(set(value))
+                value = sorted(list(set(value)))
                 color_dict = utils.assign_color_to_values(value, paired_color[::1])
                 active = False
                 
