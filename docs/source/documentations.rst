@@ -884,7 +884,7 @@ In this part we will demostrate the usage of taxonomic annotation in examples of
 
 
 Using different taxonomic databases from GTDB/NCBI/mOTUs
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 To start taxonomic annotation, using ``--taxon-column`` and ``--taxadb`` to locate where is the taxon and which taxonomic databases to be used. If taxon is leaf name, then using ``--taxon-column name``. Otherwise ``--taxon-column <prop_name>`` which refers to the column in the metadata.
 
 Examples in NCBI taxonomic database
@@ -2097,7 +2097,7 @@ single value example
     --profiling-layout random_type
 
 .. image:: https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_profiling_layout_single.png?raw=true
-    :alt: profiling_layout example
+    :alt: profiling_layout_single example
 
 List value example
 :: 
@@ -2118,7 +2118,7 @@ List value example
     --profiling-layout list_data
 
 .. image:: https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_profiling_layout_list.png?raw=true
-    :alt: profiling_layout example
+    :alt: profiling_layout_list example
 
 
 Using ``--profiling-list PROFILING_LIST`` can choose the values what you want to display in profiling layout as presence-absence matrix. If input is None, it display all the values. If the values are not in the list, they will be ignored. 
@@ -2143,7 +2143,7 @@ single value example with ``--profiling-list``
     --profiling-list low medium
 
 .. image:: https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_profiling_layout_single_list.png?raw=true
-    :alt: profiling_layout example
+    :alt: profiling_layout_sinlge_list example
 
 List value example with ``--profiling-list``
 :: 
@@ -2165,7 +2165,7 @@ List value example with ``--profiling-list``
     --profiling-list x y z
 
 .. image:: https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_profiling_layout_list_list.png?raw=true
-    :alt: profiling_layout example
+    :alt: profiling_layout_list_list example
 
 Using ``--profiling-output``  can ouput the profiling matrix to a file.
 
@@ -2387,7 +2387,7 @@ Colorbranch with summarized property (avg will be the representative value of in
 
 
 CircleNode Layout
-^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^
 ``--circlenode-layout`` will color the node with the given property. It will be shown as circle on nodes.
 
 Circle with property that share from leaf to root:
@@ -2399,7 +2399,7 @@ Circle with property that share from leaf to root:
     :alt: circle_name example
 
 SquareNode Layout
-^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^
 ``--squarenode-layout`` will color the node with the given property. It will be shown as Square on nodes.
 
 Square with property that share from leaf to root:
@@ -2411,7 +2411,7 @@ Square with property that share from leaf to root:
     :alt: square_name example
 
 TriangleNode Layout
-^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^
 ``--trianglenode-layout`` will color the node with the given property. It will be shown as triangle on nodes.
 
 Triangle with property that share from leaf to root:
