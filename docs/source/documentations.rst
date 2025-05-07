@@ -2121,6 +2121,77 @@ List value example
     :alt: profiling_layout example
 
 
+Using ``--profiling-list PROFILING_LIST`` can choose the values what you want to display in profiling layout as presence-absence matrix. If input is None, it display all the values. If the values are not in the list, they will be ignored. 
+
+single value example with ``--profiling-list``
+::  
+
+    # check metadata
+    awk '{print $1,$7}' basic_example1_metadata1.tsv|head
+    #name random_type
+    Phy003I7ZJ_CHICK medium
+    Phy0054BO3_MELGA medium
+    Phy00508FR_NIPNI low
+    Phy004O1E0_APTFO medium
+    Phy004PA1B_ANAPL medium
+
+
+    treeprofiler plot \
+    --tree basic_example1_annotated.ete \
+    --input-type ete \
+    --profiling-layout random_type \
+    --profiling-list low medium
+
+.. image:: https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_profiling_layout_single_list.png?raw=true
+    :alt: profiling_layout example
+
+List value example with ``--profiling-list``
+:: 
+
+    # check metadata
+    awk '{print $1,$3}' basic_example1_metadata2.tsv|head
+    #name list_data
+    Phy003I7ZJ_CHICK w,t,t
+    Phy0054BO3_MELGA r,q,s
+    Phy00508FR_NIPNI z,f,p
+    Phy004O1E0_APTFO z,t,b
+    Phy004PA1B_ANAPL z,r,p
+    Phy004TLNA_APAVI u,e,i
+
+    # convert each letter into presence/absence matrix
+    treeprofiler plot \
+    -t basic_example1_annotated.ete \
+    --profiling-layout list_data \
+    --profiling-list x y z
+
+.. image:: https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_profiling_layout_list_list.png?raw=true
+    :alt: profiling_layout example
+
+Using ``--profiling-output``  can ouput the profiling matrix to a file.
+
+List value example with ``--profiling-list``
+:: 
+
+    # convert each letter into presence/absence matrix
+    treeprofiler plot \
+    -t basic_example1_annotated.ete \
+    --profiling-layout list_data \
+    --profiling-list x y z \
+    --profiling-output
+
+    head list_data_profiling.tsv
+    #name	x	y	z
+    Phy004OLZN_COLLI	0	1	0
+    Phy004OLZM_COLLI	0	0	0
+    Phy004UIZ8_CALAN	0	0	0
+    Phy004SNJQ_CHAVO	0	0	0
+    Phy00535AU_PYGAD	0	0	0
+    Phy004O1E0_APTFO	0	0	1
+    Phy004STVX_187382	1	0	0
+    Phy00527O5_PICPB	0	0	1
+    Phy004TLNA_APAVI	0	0	0
+
+
 Categorical Matrix Layout
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 ``--categorical-matrix-layout`` is similar to ``--rectangle-layout`` , which shows color block to represent the variable. But ``--rectangle-layout`` take **EACH** given column as one individual case as one layout, ``--categorical-matrix-layout`` take **ALL** given columns as one case to one layout.
