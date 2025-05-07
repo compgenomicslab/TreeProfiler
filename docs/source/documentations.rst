@@ -32,7 +32,6 @@ Quick install via pip
     # Install ETE Toolkit v4 for treeprofiler
     pip install "git+https://github.com/etetoolkit/ete.git@ete4_treeprofiler"
 
-
     # Install custom pastml package for ete4
     pip install "git+https://github.com/dengzq1234/pastml.git@pastml2ete4" 
 

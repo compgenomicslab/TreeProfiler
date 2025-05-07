@@ -23,7 +23,6 @@ TreeProfiler requires
   - scipy >= 1.8.0
   - matplotlib >= 3.4
   - pymc >= 5.0.0
-  - aesara
   - pastml (custom)
 
 Quick install via pip
@@ -33,9 +32,6 @@ Quick install via pip
     # Install ETE Toolkit v4 for treeprofiler
     pip install --force-reinstall "git+https://github.com/etetoolkit/ete.git@ete4_treeprofiler"
 
-
-    # Install TreeProfiler dependencies
-    pip install biopython selenium scipy matplotlib pymc aesara
 
     # Install custom pastml package for ete4
     pip install "git+https://github.com/dengzq1234/pastml.git@pastml2ete4" 

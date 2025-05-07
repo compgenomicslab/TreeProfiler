@@ -582,7 +582,7 @@ def assign_color_to_values(values, paired_colors):
         # Use predefined colors if enough are available
         color_dict = {val: paired_colors[i] for i, val in enumerate(values)}
     else:
-        color_dict = assign_colors(values, cmap_name='terrain')
+        color_dict = assign_colors(values, cmap_name='gist_earth')
         
     return dict(sorted(color_dict.items()))
 

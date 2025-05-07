@@ -106,14 +106,14 @@ TreeProfiler requires
   - webdriver_manager
   - pyvirtualdisplay
 
-### Quick Install Environment
+### Quick install via pip
 ```
 # create environment
 conda create -n treeprofiler python=3.10
 conda activate treeprofiler
 
 # Install ETE Toolkit v4 for treeprofiler
-pip install --force-reinstall "git+https://github.com/etetoolkit/ete.git@ete4_treeprofiler"
+pip install "git+https://github.com/etetoolkit/ete.git@ete4_treeprofiler"
 
 # Install custom pastml package for ete4
 pip install "git+https://github.com/dengzq1234/pastml.git@pastml2ete4" 
