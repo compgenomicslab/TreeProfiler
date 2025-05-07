@@ -2029,7 +2029,41 @@ If internal node doesn't have the given property, once it collapsed,  aligned pa
     :alt: colorbranch_layout example
 
 
+CircleNode Layout
+^^^^^^^^^^^^^^^^^^
+``--circlenode-layout`` will color the node with the given property. It will be shown as circle on nodes.
 
+Circle with property that share from leaf to root:
+::
+
+    treeprofiler plot -t basic_example1_annotated.nw --circlenode-layout name
+
+.. image:: https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_circlenode_layout_name.png?raw=true
+    :alt: circle_name example
+
+SquareNode Layout
+^^^^^^^^^^^^^^^^^^
+``--squarenode-layout`` will color the node with the given property. It will be shown as Square on nodes.
+
+Square with property that share from leaf to root:
+::
+
+    treeprofiler plot -t basic_example1_annotated.nw --squarenode-layout name
+
+.. image:: https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_squarenode_layout_name.png?raw=true
+    :alt: square_name example
+
+TriangleNode Layout
+^^^^^^^^^^^^^^^^^^^
+``--trianglenode-layout`` will color the node with the given property. It will be shown as triangle on nodes.
+
+Triangle with property that share from leaf to root:
+::
+
+    treeprofiler plot -t basic_example1_annotated.nw --trianglenode-layout name
+
+.. image:: https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_trianglenode_layout_name.png?raw=true
+    :alt: triangle_name example
 
 Bubble Layout
 ^^^^^^^^^^^^^^
@@ -2384,44 +2418,6 @@ Colorbranch with summarized property (avg will be the representative value of in
 
 .. image:: https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_colorbranch_layout_support.png?raw=true
     :alt: colorbranch_absdata example
-
-
-CircleNode Layout
-^^^^^^^^^^^^^^^^^^
-``--circlenode-layout`` will color the node with the given property. It will be shown as circle on nodes.
-
-Circle with property that share from leaf to root:
-::
-
-    treeprofiler plot -t basic_example1_annotated.nw --circlenode-layout name
-
-.. image:: https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_circlenode_layout_name.png?raw=true
-    :alt: circle_name example
-
-SquareNode Layout
-^^^^^^^^^^^^^^^^^^
-``--squarenode-layout`` will color the node with the given property. It will be shown as Square on nodes.
-
-Square with property that share from leaf to root:
-::
-
-    treeprofiler plot -t basic_example1_annotated.nw --squarenode-layout name
-
-.. image:: https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_squarenode_layout_name.png?raw=true
-    :alt: square_name example
-
-TriangleNode Layout
-^^^^^^^^^^^^^^^^^^^
-``--trianglenode-layout`` will color the node with the given property. It will be shown as triangle on nodes.
-
-Triangle with property that share from leaf to root:
-::
-
-    treeprofiler plot -t basic_example1_annotated.nw --trianglenode-layout name
-
-.. image:: https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_trianglenode_layout_name.png?raw=true
-    :alt: triangle_name example
-    
 
 Bubble Layout
 ^^^^^^^^^^^^^
