@@ -1909,6 +1909,10 @@ Users can add the following flag to activate layouts for categorical data.
      - ``<prop1> <prop2>`` names of properties where values will be displayed on the aligned panel.
      - TextFace
      - Stacked Horizontal RecFace (only collapsed)
+   * - ``--textbranch-layout TEXTBRANCH_LAYOUT [TEXTBRANCH_LAYOUT ...]``
+     - ``<prop1> <prop2>`` names of properties where values will be displayed on the branch in text.
+     - TextFace of given property at the bottom of the branch
+     - TextFace of given property at the bottom of the branch
    * - ``--rectangle-layout RECTANGLE_LAYOUT [RECTANGLE_LAYOUT ...]``
      - ``<prop1> <prop2>`` names of properties where values will be labeled as rectangular color blocks on the aligned panel.
      - RecFace
@@ -1917,6 +1921,18 @@ Users can add the following flag to activate layouts for categorical data.
      - ``<prop1> <prop2>`` names of properties where branches will be colored based on different values.
      - Branch with color
      - Stacked Horizontal RecFace (only collapsed)
+   * - ``--circlenode-layout CIRCLENODE_LAYOUT [CIRCLENODE_LAYOUT ...]``
+     - ``<prop1> <prop2>`` names of properties where values will be displayed on the branch in the shape of cricle.
+     - Node shape become circles with color
+     - Node shape become circles with color
+   * - ``--squarenode-layout SQUARENODE_LAYOUT [SQUARENODE_LAYOUT ...]``
+     - ``<prop1> <prop2>`` names of properties where values will be displayed on the branch in the shape of square.
+     - Node shape become squares with color
+     - Node shape become squares with color
+   * - ``--trianglenode-layout TRIANGLENODE_LAYOUT [TRIANGLENODE_LAYOUT ...]``
+     - ``<prop1> <prop2>`` names of properties where values will be displayed on the branch in the shape of triangle.
+     - Node shape become triangles with color
+     - Node shape become triangles with color
    * - ``--bubble-layout BUBBLE_LAYOUT [BUBBLE_LAYOUT ...]``
      - ``<prop1> <prop2>`` names of properties where nodes will be colored based on different bubble.
      - Circles with color
@@ -1952,6 +1968,22 @@ Examples:
 
 .. image:: https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_label_layout.jpeg?raw=true
    :alt: label_layout example
+
+
+TextBranch Layout
+^^^^^^^^^^^^^^^^^^
+``--textbranch-layout`` will display the values of the given properties on the branch.
+
+Examples:
+::
+
+    treeprofiler plot \
+    --tree basic_example1_annotated.ete \
+    --input-type ete \
+    --textbranch-layout name
+
+.. image:: https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_textbranch_layout_name.png?raw=true
+   :alt: textbranch example
 
 Rectangle Layout
 ^^^^^^^^^^^^^^^^
@@ -1996,6 +2028,9 @@ If internal node doesn't have the given property, once it collapsed,  aligned pa
 
 .. image:: https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_colorbranch_layout_random.png?raw=true
     :alt: colorbranch_layout example
+
+
+
 
 Bubble Layout
 ^^^^^^^^^^^^^^
@@ -2280,6 +2315,44 @@ Colorbranch with summarized property (avg will be the representative value of in
 .. image:: https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_colorbranch_layout_support.png?raw=true
     :alt: colorbranch_absdata example
 
+
+CircleNode Layout
+^^^^^^^^^^^^^
+``--circlenode-layout`` will color the node with the given property. It will be shown as circle on nodes.
+
+Circle with property that share from leaf to root:
+::
+
+    treeprofiler plot -t basic_example1_annotated.nw --circlenode-layout name
+
+.. image:: https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_circlenode_layout_name.png?raw=true
+    :alt: circle_name example
+
+SquareNode Layout
+^^^^^^^^^^^^^
+``--squarenode-layout`` will color the node with the given property. It will be shown as Square on nodes.
+
+Square with property that share from leaf to root:
+::
+
+    treeprofiler plot -t basic_example1_annotated.nw --squarenode-layout name
+
+.. image:: https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_squarenode_layout_name.png?raw=true
+    :alt: square_name example
+
+TriangleNode Layout
+^^^^^^^^^^^^^
+``--trianglenode-layout`` will color the node with the given property. It will be shown as triangle on nodes.
+
+Triangle with property that share from leaf to root:
+::
+
+    treeprofiler plot -t basic_example1_annotated.nw --trianglenode-layout name
+
+.. image:: https://github.com/dengzq1234/treeprofiler_gallery/blob/main/plot_trianglenode_layout_name.png?raw=true
+    :alt: triangle_name example
+    
+
 Bubble Layout
 ^^^^^^^^^^^^^
 ``--bubble-layout`` will scale the given absolute value property as size of bubble. Noted that if value is negative, bubble will be blue, otherwise bubble is red. 
@@ -2311,7 +2384,6 @@ A series of heatmap layout is only the matter how to normalize the value to show
 ``--heatmap-mean-layout`` values will be normalized between -1 and 1 by using the formula (val-mean)/(max-min)
 
 ``--heatmap-zscore-layout``  values will be Z-score normalized by using the formula (val-mean)/std.
-
 
 
 ``--heatmap-layout`` Examples:
