@@ -23,7 +23,6 @@ TreeProfiler requires
   - scipy >= 1.8.0
   - matplotlib >= 3.4
   - pymc >= 5.0.0
-  - aesara
   - pastml (custom)
 
 Quick install via pip
@@ -31,11 +30,8 @@ Quick install via pip
 ::
 
     # Install ETE Toolkit v4 for treeprofiler
-    pip install --force-reinstall "git+https://github.com/etetoolkit/ete.git@ete4_treeprofiler"
+    pip install "git+https://github.com/etetoolkit/ete.git@ete4_treeprofiler"
 
-
-    # Install TreeProfiler dependencies
-    pip install biopython selenium scipy matplotlib pymc aesara
 
     # Install custom pastml package for ete4
     pip install "git+https://github.com/dengzq1234/pastml.git@pastml2ete4" 
@@ -112,24 +108,7 @@ Install ETE v4
 Quick way
 ::
 
-    pip install https://github.com/etetoolkit/ete/archive/ete4.zip
-
-For local development
-To install ETE in a local directory to help with the development, you can:
-
-- Clone this repository (git clone https://github.com/etetoolkit/ete.git)
-- Install dependecies
-  - If you are using conda: 
-
-  ``conda install -c conda-forge cython bottle brotli pyqt numpy<2.0``
-  
-  - Otherwise, you can install them with 
-  
-  ``pip install <dependencies>``
-  
-  - Build and install ete4 from the repository's root directory: 
-  
-  ``pip install -e .``
+    pip install --force-reinstall "git+https://github.com/etetoolkit/ete.git@ete4_treeprofiler"
 
 (In Linux there may be some cases where the gcc library must be installed, which can be done with ``conda install -c conda-forge gcc_linux-64``)
 
@@ -138,16 +117,18 @@ Install TreeProfiler
 Install dependencies
 ::
 
-    # install BioPython, selenium, scipy via conda
-    conda install -c conda-forge biopython selenium scipy matplotlib pymc
+    # Install custom pastml package for ete4
+    pip install "git+https://github.com/dengzq1234/pastml.git@pastml2ete4"
 
-    # or pip
-    pip install biopython selenium scipy matplotlib
 
 Install TreeProfiler
 ::
 
-    # install TreeProfiler
+    # Install TreeProfiler tool via pypi
+    pip install TreeProfiler
+
+    # Or install TreeProfiler
+    
     git clone https://github.com/compgenomicslab/TreeProfiler
     cd TreeProfiler/
     python setup.py install
@@ -869,7 +850,7 @@ example, here we use three different metadata: ``categorical.tsv``, ``numerical.
   
 Taxonomic annotation
 ~~~~~~~~~~~~~~~~~~~~
-Treeprofiler annotate tree node with target taxonomy, you can either use [GTDB](https://gtdb.ecogenomic.org/) or [NCBI](https://www.ncbi.nlm.nih.gov/) taxonomic database, such as following commands 
+Treeprofiler annotate tree node with target taxonomy, you can use [GTDB](https://gtdb.ecogenomic.org/), [NCBI](https://www.ncbi.nlm.nih.gov/) or [mOTUs](https://motus-db.org/) taxonomic database, such as following commands 
 
 .. list-table:: 
    :header-rows: 1
@@ -878,8 +859,8 @@ Treeprofiler annotate tree node with target taxonomy, you can either use [GTDB](
      - Description
    * - ``--taxon-column TAXON_COLUMN``
      - Choose the column in metadata which represents taxon for activating the taxonomic annotation. Default is the first column, which should be the column of leaf_name.
-   * - ``--taxadb {NCBI,GTDB,customdb}``
-     - NCBI or GTDB, choose the Taxonomic Database for annotation.
+   * - ``--taxadb {NCBI,GTDB, MOTUS, customdb}``
+     - NCBI, GTDB or MOTUS, choose the Taxonomic Database for annotation.
    * - ``--taxon-delimiter TAXON_DELIMITER``
      - Delimiter of taxa columns. ``[default: None]``
    * - ``--taxa-field TAXA_FIELD``
@@ -890,6 +871,8 @@ Treeprofiler annotate tree node with target taxonomy, you can either use [GTDB](
      - GTDB version for taxonomic annotation, such as 220. If it is not provided, the latest version will be used.
    * - ``--ignore-unclassified``
      - Ignore unclassified taxa in taxonomic annotation.
+   * - ``--sos-thr SOS_THR``
+     - Threshold for species overlap in evolutionary events [default: 0.0]
 
 
 In this part we will demostrate the usage of taxonomic annotation in examples of ``examples/taxonomy_example``
@@ -901,7 +884,7 @@ In this part we will demostrate the usage of taxonomic annotation in examples of
   demo3.tsv   demo4.tsv   gtdb_v202.tree      missing_ncbi.tree       show_tree_props.py
 
 
-Using different taxonomic databases from GTDB/NCBI
+Using different taxonomic databases from GTDB/NCBI/mOTUs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 To start taxonomic annotation, using ``--taxon-column`` and ``--taxadb`` to locate where is the taxon and which taxonomic databases to be used. If taxon is leaf name, then using ``--taxon-column name``. Otherwise ``--taxon-column <prop_name>`` which refers to the column in the metadata.
 
@@ -1022,6 +1005,43 @@ For gtdb taxa, users can choose ``--gtdb-version {95,202,207,214,220}`` to selec
   'sci_name': 's__Korarchaeum cryptofilum', 
   'species': 'GB_GCA_011358815.1', 
   'taxid': 'GB_GCA_011358815.1'
+  }
+
+Examples in mOTUs taxonomic database
+::
+
+  # check example tree
+  cat motus.tree 
+  ((mOTUv4.0_000001:0.3,mOTUv4.0_000003:0.4):0.2,(mOTUv4.0_000006:0.5,(mOTUv4.0_000008:0.3,mOTUv4.0_000010:0.4):0.2):0.3);
+
+  # run taxonomic annotation and locate taxon column in leaf name
+  treeprofiler annotate -t motus.tree --taxon-column name --taxadb motus -o ./
+
+  # check annotation results
+  python show_tree_props.py motus_annotated.nw
+  Target tree internal node Root contains the following properties:  
+  {
+  'name': 'Root', 
+  'rank': 'superkingdom', 
+  'sci_name': 'd__Bacteria', 
+  'taxid': 'd__Bacteria', 
+  'lineage': '1|4', 
+  'named_lineage': 'root|d__Bacteria', 
+  'evoltype': 'S', 
+  'lca': 'superkingdom--d__Bacteria', 
+  'common_name': ''
+  }
+  Target tree leaf node contains the following propertiies:  
+  {
+  'name': 'mOTUv4.0_000001', 
+  'dist': 0.3, 
+  'rank': 'subspecies', 
+  'sci_name': 's__Unknown Prevotella mOTUv4.0_000001', 
+  'taxid': 'mOTUv4.0_000001', 
+  'lineage': '1|4|12|13|14|15|16|17|18', 
+  'named_lineage': 'root|d__Bacteria|p__Bacteroidota|c__Bacteroidia|o__Bacteroidales|f__Bacteroidaceae|g__Prevotella|s__Unknown Prevotella mOTUv4.0_000001|mOTUv4.0_000001', 'lca': 'superkingdom--d__Bacteria||phylum--p__Bacteroidota||class--c__Bacteroidia||order--o__Bacteroidales||family--f__Bacteroidaceae||genus--g__Prevotella||species--s__Unknown Prevotella mOTUv4.0_000001', 
+  'common_name': '', 
+  'species': 'mOTUv4.0_000001'
   }
 
 Identifying taxon names in different metadata fields/columns
