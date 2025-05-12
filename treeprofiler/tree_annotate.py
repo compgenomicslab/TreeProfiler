@@ -1978,6 +1978,13 @@ def parse_fasta(fastafile):
     return fasta_dict
 
 def _worker_function(iteration_data):
+
+    import hashlib
+    # Derive a unique seed per worker using time or iteration data
+    unique_string = str(iteration_data) + str(time.time())
+    seed = int(hashlib.sha256(unique_string.encode()).hexdigest(), 16) % (2**32)
+    np.random.seed(seed)
+    
     # Unpack the necessary data for one iteration
     prop2array, dump_tree, acr_discrete_columns_dict, prediction_method, model, ent_type, lambda0, se, sim, burn, thin, threads = iteration_data
 

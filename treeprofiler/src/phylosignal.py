@@ -60,7 +60,6 @@ def mhalpha(a, b, x, l0, se):
 
 
 # Metropolis-Hastings step for beta parameter
-
 def mhbeta(a, b, x, l0, se):
     """
     Metropolis-Hastings step for beta parameter (no numba).
@@ -250,6 +249,7 @@ def run_delta(acr_results, tree, run_whole_tree=False, ent_type='LSE', lambda0=0
                     marginal_probs = np.asarray(children_data)
                 # run delta for each discrete trait
                 # load annotations to leaves
+                np.random.seed(42)  # or any integer seed you prefer
                 delta_result = delta(marginal_probs, lambda0, se, sim, burn, thin, ent_type, threads)
                 node.add_prop(add_suffix(prop, "delta"), delta_result)
     else:
@@ -259,6 +259,7 @@ def run_delta(acr_results, tree, run_whole_tree=False, ent_type='LSE', lambda0=0
             marginal_probs = np.asarray(acr_result[0]['marginal_probabilities'].drop(leafnames))
             # run delta for each discrete trait
             # load annotations to leaves
+            np.random.seed(42)  # or any integer seed you prefer
             delta_result = delta(marginal_probs, lambda0, se, sim, burn, thin, ent_type, threads)
             #tree.add_prop(add_suffix(prop, "delta"), delta_result)
             prop2delta[prop] = delta_result
