@@ -261,7 +261,7 @@ TreeProfiler accpept input tree in `.nw` or `.ete` by putting `--input-type {new
  - `ete` format is a novel format developed to solve the situation we encounter in the previous step, annotated tree can be **recover easily with all the annotated data without changing the data type**. Besides, the ete format optimized the tree file size after mapped with its associated data. Hence it's very handy for programers in their own script. At this moment we can only view the ete format in treeprofiler, but we will make the ete format more universal to other phylogenetic software. **Hence using ete format in `plot` subcommand is highly reccomended**
 
 ### Tree parser
-TreeProfiler provides argument `--internal {name,support}` to specify `newick` tree when it include values in internal node. `[default: name]`
+TreeProfiler provides argument `--internal {name,support}` to specify `newick` tree when it include values in internal node. `[default: support]`
 
 | newick  |      leaves  |  internal_node value |  internal_parser 
 |----------|-------------   |-------------   |-------------   |
