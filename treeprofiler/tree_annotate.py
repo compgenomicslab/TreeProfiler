@@ -1445,12 +1445,14 @@ def merge_text_annotations(nodes, target_props, column2method, acr_discrete_colu
             # Emapper mode handling
             if emapper_mode and counter and target_prop not in acr_discrete_columns:
                 internal_props[target_prop] = get_top_keys(counter)
-
-            # Sort and process counter items
-            sorted_items = sorted(counter.items())
-            internal_props[utils.add_suffix(target_prop, 'counter')] = item_separator.join(
-                f"{key}{pair_separator}{value}" for key, value in sorted_items
-            )
+            elif counter_stat == 'dominant':
+                internal_props[target_prop] = get_top_keys(counter)
+            else:
+                # Sort and process counter items
+                sorted_items = sorted(counter.items())
+                internal_props[utils.add_suffix(target_prop, 'counter')] = item_separator.join(
+                    f"{key}{pair_separator}{value}" for key, value in sorted_items
+                )
 
         elif counter_stat == 'relative':
             total = sum(counter.values())
