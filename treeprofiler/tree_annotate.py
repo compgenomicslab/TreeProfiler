@@ -791,6 +791,7 @@ def run(args):
     if args.metadata: # make a series of metadatas
         metadata_dict, node_props, columns, metadata_prop2type = parse_csv(args.metadata, delimiter=args.metadata_sep, \
         no_headers=args.no_headers, duplicate=args.duplicate, target_nodes=node_names)
+        
         prop2type.update(metadata_prop2type)
     else: # annotated_tree
         node_props=[]
@@ -1070,7 +1071,7 @@ def parse_csv(input_files, delimiter='\t', no_headers=False, duplicate=False, ta
                 else:
                     metadata[nodename][prop] = value
                 columns[prop].append(value)
-
+            
     def update_prop2type(node_props):
         for prop in node_props:
             if set(columns[prop]) == {'NaN'}:
@@ -1118,6 +1119,7 @@ def parse_csv(input_files, delimiter='\t', no_headers=False, duplicate=False, ta
 
             node_header, node_props = headers[0], headers[1:]
             update_metadata(reader, node_header)
+            
             update_prop2type(node_props)
 
     # Convert lists back to strings at the end
@@ -1125,7 +1127,8 @@ def parse_csv(input_files, delimiter='\t', no_headers=False, duplicate=False, ta
         for nodename in metadata:
             for prop in metadata[nodename]:
                 metadata[nodename][prop] = ','.join(metadata[nodename][prop])
-
+                prop2type[prop] = list
+                
     return metadata, list(columns.keys()), columns, prop2type
 
 def parse_tsv_to_array(input_files, delimiter='\t', no_headers=True):
