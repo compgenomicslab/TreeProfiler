@@ -1873,13 +1873,14 @@ def annot_tree_pfam_table(post_tree, pfam_table, alg_fasta, domain_prop='dom_arq
     item_seperator = "||"
     fasta = SeqGroup(alg_fasta) # aligned_fasta
     raw2alg = defaultdict(dict)
-    
+    len_alg = 0   
     for num, (name, seq, _) in enumerate(fasta):
         p_raw = 1
         for p_alg, (a) in enumerate(seq, 1):
             if a != '-':
                 raw2alg[name][p_raw] = p_alg
                 p_raw +=1
+        len_alg = len(seq)
     
     seq2doms = defaultdict(list)
     with open(pfam_table) as f_in:
@@ -1905,16 +1906,20 @@ def annot_tree_pfam_table(post_tree, pfam_table, alg_fasta, domain_prop='dom_arq
             domains = seq2doms[l.name]
             domains_string = item_seperator.join(domains)
             l.add_prop(domain_prop, domains_string)
+            l.add_prop('len_alg', len_alg)
 
     for n in post_tree.traverse():
         # get the most common domain
         if not n.is_leaf:
             prop_list = utils.children_prop_array(n, domain_prop)
+            
             if prop_list:
-                counter = dict(Counter(prop_list))
+                counter = dict(Counter(sorted(prop_list)))
                 most_common_key = max(counter, key=counter.get)
+                
                 n.add_prop(domain_prop, most_common_key)
-
+                n.add_prop('len_alg', len_alg)
+                
     # for n in post_tree.traverse():
     #     print(n.name, n.props.get('dom_arq'))
 
