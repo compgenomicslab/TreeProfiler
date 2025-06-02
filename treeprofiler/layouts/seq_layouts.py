@@ -21,13 +21,13 @@ def get_colormap():
 
 class LayoutAlignment(TreeLayout):
     def __init__(self, name="Alignment",
-            alignment=None, alignment_prop=None, format='seq', width=700, height=15,
+            alignment=None, alignment_prop=None, format='seq', width=800, height=15,
             column=0, scale_range=None, window=[], summarize_inner_nodes=True, 
             aligned_faces=True):
         super().__init__(name, aligned_faces=aligned_faces)
         #self.alignment = SeqGroup(alignment) if alignment else None
         self.alignment_prop = alignment_prop
-        self.width = width
+        self.width = int(width)
         self.height = height
         self.column = column
         self.aligned_faces = True
@@ -81,8 +81,8 @@ def get_alnface(seq_prop, level):
 class LayoutDomain(TreeLayout):
     def __init__(self, prop, name,
             column=10, colormap={},
-            min_fsize=4, max_fsize=15,
-            padding_x=5, padding_y=0):
+            min_fsize=4, max_fsize=15, 
+            padding_x=5, padding_y=0, width=800):
         super().__init__(name or "Domains layout")
         self.prop = prop
         self.column = column
@@ -90,10 +90,20 @@ class LayoutDomain(TreeLayout):
         self.min_fsize = min_fsize
         self.max_fsize = max_fsize
         self.padding = draw_helpers.Padding(padding_x, padding_y)
+        self.width = int(width)
         if not colormap:
             self.colormap = get_colormap()
         else:
             self.colormap = colormap
+
+    def set_tree_style(self, tree, tree_style):
+        super().set_tree_style(tree, tree_style)
+        if self.legend:
+            if self.colormap:
+                tree_style.add_legend(title=self.name,
+                                    variable='discrete',
+                                    colormap=self.colormap,
+                                    )
 
     def get_doms(self, node):
         pair_delimiter = "@"
@@ -118,7 +128,7 @@ class LayoutDomain(TreeLayout):
             color = self.colormap.get(name, "lightgray")
             dom = [int(start), int(end), "()", 
                    None, None, color, color,
-                   "arial|30|black|%s" %(name)]
+                   f"arial|30|black|{name}"]
             doms.append(dom)
         return doms
 
@@ -129,13 +139,13 @@ class LayoutDomain(TreeLayout):
             fake_seq = '-' * int(node.props.get("len_alg", 0))
             
             if doms or fake_seq:
-                seqFace = SeqMotifFace(seq=fake_seq, motifs=doms, width=400,
+                seqFace = SeqMotifFace(seq=fake_seq, motifs=doms, width=self.width,
                         height=30)
                 node.add_face(seqFace, column=self.column, 
                         position="aligned",
                         collapsed_only=(not node.is_leaf))
-        else:
-            print("no domain found for node %s" % node.name)
+        # else:
+        #     print("no domain found for node %s" % node.name)
 
 class ScaleFace(Face):
     def __init__(self, name='', width=None, color='black',

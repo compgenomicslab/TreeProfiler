@@ -775,6 +775,9 @@ def run(args):
     if args.resolve_polytomy:
         tree.resolve_polytomy()
     
+    if args.midgroup:
+        tree.set_outgroup(tree.get_midpoint_outgroup())
+        
     # set logger level
     if args.quiet:
         logger.setLevel(logging.CRITICAL)  # Mute all log levels below CRITICA
@@ -1400,8 +1403,9 @@ def process_node(node_data):
     if alignment and name2seq is not None:  # Check alignment and name2seq together
         aln_sum = column2method.get('alignment')
         if aln_sum is None or aln_sum != 'none' or consensus_cutoff is not None:
-            matrix_string = build_matrix_string(node, name2seq)  # Assuming 'name2seq' is accessible here
-            consensus_seq = utils.get_consensus_seq(matrix_string, threshold=consensus_cutoff)
+            if consensus_cutoff != 0:
+                matrix_string = build_matrix_string(node, name2seq)  # Assuming 'name2seq' is accessible here
+                consensus_seq = utils.get_consensus_seq(matrix_string, threshold=consensus_cutoff)
 
     return internal_props, consensus_seq
 

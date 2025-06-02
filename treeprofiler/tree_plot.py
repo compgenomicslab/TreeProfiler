@@ -302,6 +302,10 @@ def poplulate_plot_args(plot_args_p):
         default=None,
         required=False,
         help="Set the window of alignment layout. Such as: 3-200, from position 3 to 200.")
+    group.add_argument('--alignment-width',
+        default=800,
+        required=False,
+        help="Set the width of alignment/domain layout, default is 800px.")
     group.add_argument('--profiling-layout',
         nargs='+',
         required=False,
@@ -393,6 +397,9 @@ def run(args):
     # resolve polytomy
     if args.resolve_polytomy:
         tree.resolve_polytomy()
+
+    if args.midgroup:
+        tree.set_outgroup(tree.get_midpoint_outgroup())
 
     #rest_prop = []
     if args.prop2type:
@@ -715,13 +722,15 @@ def run(args):
             else:
                 window = []
 
+            width = args.alignment_width 
             aln_layout = seq_layouts.LayoutAlignment(name='Alignment', 
                         alignment_prop='alignment', column=level, scale_range=lengh, 
-                        window=window, summarize_inner_nodes=True)
+                        window=window, width=width, summarize_inner_nodes=True)
             layouts.append(aln_layout)
 
         if layout == 'domain-layout':
-            domain_layout = seq_layouts.LayoutDomain(name="Domain", prop='dom_arq')
+            width = args.alignment_width 
+            domain_layout = seq_layouts.LayoutDomain(name="Domain", prop='dom_arq', width=width)
             layouts.append(domain_layout)
         
         # presence-absence profiling based on categorical data

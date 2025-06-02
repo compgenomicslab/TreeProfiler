@@ -48,6 +48,11 @@ def populate_main_args(main_args_p):
         action='store_true',
         required=False,
         help="Preprocess tree by changing polytomies into series of dicotomies.")
+    group.add_argument('--midgroup',
+        default=False,
+        action='store_true',
+        required=False,
+        help="Set midgroup for the tree, which is used to determine the root of the tree. ")
     group = main_args_p.add_argument_group(title='Pruning parameters',
         description="Auto pruning parameters")
     group.add_argument('--rank-limit',
