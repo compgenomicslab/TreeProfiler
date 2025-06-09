@@ -11,7 +11,7 @@ def get_files(directory):
             file_list.append(file_path)
     return file_list
 
-VERSION = '2.0.3'
+VERSION = '2.0.4'
 install_requires = ['ete4', 'selenium', 'biopython','scipy']
 example_files = get_files('examples/')
 test_files = get_files('tests/')
