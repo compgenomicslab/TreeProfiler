@@ -112,7 +112,7 @@ class TestAnalytic(unittest.TestCase):
         
         expected_tree_with_root = '(A:1[&&NHX:alphabet_type=vowel],(B:1[&&NHX:alphabet_type=vowel],(E:1[&&NHX:alphabet_type=consonant],D:1[&&NHX:alphabet_type=consonant])Internal_1:0.5[&&NHX:alphabet_type=consonant_vowel:alphabet_type_counter=consonant--2])Internal_2:0.5[&&NHX:alphabet_type=consonant_vowel:alphabet_type_counter=consonant--2||vowel--1])Root[&&NHX:alphabet_type=consonant_vowel:alphabet_type_counter=consonant--2||vowel--2:alphabet_type_delta=0.2:alphabet_type_pval=0.0];'
         self.assertEqual(test_tree_annotated.write(props=None, parser=parser, format_root_node=True), expected_tree_with_root)
-
+    
     def test_acr_discrete_03(self):
         # test acr discrete with other method
         # load tree

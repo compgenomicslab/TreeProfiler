@@ -203,8 +203,7 @@ class TestTreeAnnotation(unittest.TestCase):
                 test_tree_annotated, annotated_prop2type = tree_annotate.run_tree_annotate(test_tree, 
                 alignment=f_msa.name, emapper_pfam=f_pfam.name, emapper_mode=emapper_mode)
 
-            expected_tree = "(1000565.METUNv1_03972:1[&&NHX:dom_arq=Fer4_NifH@171@608],(1007099.SAMN05216287:1,(1121400.SAMN02746065_101305:1[&&NHX:dom_arq=Oxidored_nitro@780@1312||Fer4_NifH@169@610],1009370.ALO_07448:1[&&NHX:dom_arq=Fer4_NifH@169@607])Internal_1:0.5[&&NHX:dom_arq=Oxidored_nitro@780@1312||Fer4_NifH@169@610])Internal_2:0.5[&&NHX:dom_arq=Oxidored_nitro@780@1312||Fer4_NifH@169@610])Root[&&NHX:dom_arq=Fer4_NifH@171@608];"
-
+            expected_tree = "(1000565.METUNv1_03972:1[&&NHX:dom_arq=Fer4_NifH@171@608],(1007099.SAMN05216287:1,(1121400.SAMN02746065_101305:1[&&NHX:dom_arq=Oxidored_nitro@780@1312||Fer4_NifH@169@610],1009370.ALO_07448:1[&&NHX:dom_arq=Fer4_NifH@169@607])Internal_1:0.5[&&NHX:dom_arq=Fer4_NifH@169@607])Internal_2:0.5[&&NHX:dom_arq=Fer4_NifH@169@607])Root[&&NHX:dom_arq=Fer4_NifH@169@607];"
         self.assertEqual(test_tree_annotated.write(props=["dom_arq"], parser=parser, format_root_node=True), expected_tree)
 
     def test_smart(self):
