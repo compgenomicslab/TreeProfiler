@@ -409,6 +409,7 @@ class LayoutBranchScore(TreeLayout):
                                     value_range=self.value_range,
                                     color_range=self.color_range,
                                     )
+                                    
     def _get_color(self, search_value):
         num = len(self.color_dict)
         index_values = np.linspace(self.value_range[0], self.value_range[1], num)
