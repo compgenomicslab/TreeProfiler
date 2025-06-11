@@ -13,21 +13,16 @@ Table of Contents
 Installation
 ============
 
-Dependencies
-------------
-TreeProfiler requires 
-  - Python version >= 3.10
-  - ETE Toolkit v4
-  - biopython >= 1.8
-  - selenium >= 4.24
-  - scipy >= 1.8.0
-  - matplotlib >= 3.4
-  - pymc >= 5.0.0
-  - pastml (custom)
-
 Quick install via pip
 ---------------------
 ::
+
+    # create environment
+    conda create -n treeprofiler python=3.10
+    conda activate treeprofiler
+
+    # dependencies for ETE Toolkit v4 (optional)
+    conda install conda-forge::gcc
 
     # Install ETE Toolkit v4 for treeprofiler
     pip install "git+https://github.com/etetoolkit/ete.git@ete4_treeprofiler"
@@ -101,6 +96,19 @@ Check other tutorial scripts
 
 Manual installation
 -------------------
+
+Dependencies
+------------
+TreeProfiler requires 
+  - Python version >= 3.10
+  - ETE Toolkit v4
+  - biopython >= 1.8
+  - selenium >= 4.24
+  - scipy >= 1.8.0
+  - matplotlib >= 3.4
+  - pymc >= 5.0.0
+  - pastml (custom)
+
 
 Install ETE v4
 ~~~~~~~~~~~~~~
