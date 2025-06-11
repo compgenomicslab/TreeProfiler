@@ -28,8 +28,27 @@ Ziqi Deng, Ana Hernández-Plaza, Jaime Huerta-Cepas.
 bioRxiv (2023) doi: 10.1101/2023.09.21.558621
 ```
 
+# Table of Contents
+
+- [TreeProfiler Overview](#treeprofiler-overview)
+- [Installation](#installation)
+  - [Quick Install via pip with Conda](#quick-install-via-pip-with-conda)
+  - [Quick Start with Example Dataset](#quick-start-with-example-dataset)
+  - [Install Latest TreeProfiler for Local Development](#install-latest-treeprofiler-for-local-development)
+
+- [Basic Usage](#basic-usage)
+  - [Input Files](#input-files)
+  - [Using TreeProfiler via Command Line](#using-treeprofiler-via-command-line)
+  - [Using TreeProfiler via GUI Interface](#using-treeprofiler-via-gui-interface)
+
+- [Documentation](#documentation)
+
+- [Gallery of Examples](#gallery-of-examples)
+
+- [Getting Support and Issues](#getting-support-and-issues)
+
 # Installation
-## Quick install via pip with conda environment for treeprofiler
+## Quick install via pip with conda
 ```
 # create environment
 conda create -n treeprofiler python=3.10
@@ -48,7 +67,7 @@ pip install "git+https://github.com/dengzq1234/pastml.git@pastml2ete4"
 pip install treeprofiler
 ```
 
-## Quick Start with examples dataset
+## Quick start with example dataset
 TreeProfiler provide various example dataset for testing in `examples/` or https://github.com/compgenomicslab/TreeProfiler/tree/main/examples,
 each directory consists a demo script `*_demo.sh` for quick starting different functions in TreeProfiler which alreadyh as annotate-plot pipeline of example data. User can fast explore different example tree with different visualizations. Here is the demonstration:
 
@@ -122,7 +141,7 @@ Check other tutorial scripts
 ./examples/pratical_example/emapper/emapper_demo.sh
 ```
 
-Install latest TreeProfiler for local development
+## Install latest TreeProfiler for local development
 
 Once installed ete4 and pastml as previous step, users can install latest version of treeprofiler for local development 
 ```
@@ -150,7 +169,7 @@ TreeProfiler takes following file types as input
 
 - Metadata input could be single or multiple files, either tar.gz compressed file(s) which contains multiple .tsv or plain .tsv file(s). **Ideally with Column names and first column is the name of nodes.**
 
-## Use TreeProfiler via command line 
+## Using TreeProfiler via command line
 TreeProfiler has two main subcommand:
  - annotate
  - plot
@@ -172,7 +191,7 @@ or
 treeprofiler plot --tree tree_annotated.ete --input-type ete 
 ```
 
-## Use TreeProfiler via GUI interface 
+## Using TreeProfiler via GUI interface 
 TreeProfiler also provide a local GUI interface for annotation and visualization. Simply execute
 ```
 treeprofiler-desktop
