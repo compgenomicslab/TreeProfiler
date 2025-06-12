@@ -17,11 +17,8 @@ TreeProfiler is a command line tool designed to automate the annotation of large
   - Phylogenetic Signal Delta Statistic]
   - Lineage Specificity Analysis
 
-## Demo Video
-<video width="640" height="360" controls>
-  <source src="https://github.com/dengzq1234/treeprofiler_gallery/raw/refs/heads/main/motus_habitat_full_render.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
+## Demo Animation
+![TreeProfiler Demo](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/motus_habitat_full_render.gif?raw=true)
 
 ## Documentation and Citation
 The official documentation of TreeProfiler is in https://dengzq1234.github.io/TreeProfiler/ where provides detailed instructions with examples.
