@@ -1,6 +1,8 @@
 # TreeProfiler Overview
 TreeProfiler is a command line tool designed to automate the annotation of large phylogenetic trees with corresponding metadata. It also facilitates the visual exploration of these annotations as phylogenetic profiles, making it a powerful resource for researchers working with complex biological data.
 
+![treeprofiler abstract](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/TreeProfiler_2025.png?raw=true)
+
 Key Features:
 - Automated Annotation that integrates metadata into phylogenetic tree, and summarizes annotation in internal nodes, including:
   - Categorical/Numerical metadata in TSV/CSV format
