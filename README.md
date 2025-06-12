@@ -1,9 +1,10 @@
 # TreeProfiler Overview
 TreeProfiler is a command line tool designed to automate the annotation of large phylogenetic trees with corresponding metadata. It also facilitates the visual exploration of these annotations as phylogenetic profiles, making it a powerful resource for researchers working with complex biological data.
 
-![treeprofiler abstract](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/TreeProfiler_2025.png?raw=true)
+## Graphical Abstract
+<img src="https://github.com/dengzq1234/treeprofiler_gallery/blob/main/TreeProfiler_2025.png?raw=true" alt="TreeProfiler Abstract" width="640" height="360" />
 
-Key Features:
+## Key Features:
 - Automated Annotation that integrates metadata into phylogenetic tree, and summarizes annotation in internal nodes, including:
   - Categorical/Numerical metadata in TSV/CSV format
   - Taxonomic Annotation of NCBI/GTDB taxonomy database
@@ -16,6 +17,13 @@ Key Features:
   - Phylogenetic Signal Delta Statistic]
   - Lineage Specificity Analysis
 
+## Demo Video
+<video width="640" height="360" controls>
+  <source src="https://github.com/dengzq1234/treeprofiler_gallery/raw/refs/heads/main/motus_habitat_full_render.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
+
+## Documentation and Citation
 The official documentation of TreeProfiler is in https://dengzq1234.github.io/TreeProfiler/ where provides detailed instructions with examples.
 
 If you have any doubts, please drop a line in issue or contact https://x.com/deng_ziqi
