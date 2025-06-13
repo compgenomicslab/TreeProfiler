@@ -466,6 +466,10 @@ def run_tree_annotate(tree, input_annotated_tree=False,
             sys.exit(1)
         #############################
         start = time.time()
+        logger.info("treeprofiler using pastml to conduct the acr analysis, please cite\n"
+                    "Ishikawa SA, Zhukova A, Iwasaki W, Gascuel O. (2019). "
+                    "A Fast Likelihood Method to Reconstruct and Visualize Ancestral Scenarios. "
+                    "Molecular Biology and Evolution, msz131.")
         acr_discrete_columns_dict = {k: v for k, v in columns.items() if k in acr_discrete_columns}
         acr_results, annotated_tree = run_acr_discrete(annotated_tree, acr_discrete_columns_dict, \
         prediction_method=prediction_method, model=model, threads=threads, outdir=outdir)
@@ -476,6 +480,7 @@ def run_tree_annotate(tree, input_annotated_tree=False,
         # get observed delta
         # only MPPA,MAP method has marginal probabilities to calculate delta
         if delta_stats:
+            
             if prediction_method in ['MPPA', 'MAP']:
                 logger.info(f"Performing Delta Statistic analysis with Character {acr_discrete_columns}...\n")
                 prop2delta = run_delta(acr_results, annotated_tree, ent_type=ent_type, 
@@ -488,6 +493,12 @@ def run_tree_annotate(tree, input_annotated_tree=False,
 
                 # start calculating p_value
                 logger.info(f"Calculating p_value for delta statistic...")
+                logger.info("treeprofiler calculating delta statistic, please cite:\n"
+                "[1] Borges, R. et al. (2019). Measuring phylogenetic signal between categorical traits and phylogenies. "
+                "Bioinformatics, 35, 1862-1869.\n"
+                "[2] Ribeiro, D. et al. (2023). Testing phylogenetic signal with categorical traits and tree uncertainty, "
+                "Bioinformatics, Volume 39, Issue 7, July 2023")
+                
                 # get a copy of the tree
                 dump_tree = annotated_tree.copy()
                 utils.clear_extra_features([dump_tree], ["name", "dist", "support"])
