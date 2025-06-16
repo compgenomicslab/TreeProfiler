@@ -1,8 +1,23 @@
 # TreeProfiler Overview
 TreeProfiler is a command line tool designed to automate the annotation of large phylogenetic trees with corresponding metadata. It also facilitates the visual exploration of these annotations as phylogenetic profiles, making it a powerful resource for researchers working with complex biological data.
 
-## Graphical Abstract
-<img src="https://github.com/dengzq1234/treeprofiler_gallery/blob/main/TreeProfiler_2025.png?raw=true" alt="TreeProfiler Abstract" width="640" height="360" />
+## Demo Animation
+![TreeProfiler Demo](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/motus_habitat_full_render.gif?raw=true)
+
+# Gallery of Interactive Examples
+Here is some examples figure from treeprofiler paper to demonstrate the scalbility and use case. For full code and figure reproduction instructions, please check at https://github.com/dengzq1234/treeprofiler_paper.
+
+- [Figure 1A–E Layout Demos](https://treeprofiler_ex1.cgmlab.org/) and [Figure 1F–H Trait Types & Features](https://treeprofiler_ex2.cgmlab.org/). General overview. 
+
+![TreeProfiler general overview](https://github.com/dengzq1234/treeprofiler_paper/blob/main/fig1_general/fig1_general.png?raw=true)
+
+- [Figure 2: POR_N Domain Family](https://treeprofiler_ex3.cgmlab.org/). Visualization of POR_N family phylogenetic tree across 13,297 sequences with taxonomic annotation, KEGG KO profiling and Pfam domain architectures.
+
+![TreeProfiler emapper  overview](https://github.com/dengzq1234/treeprofiler_paper/blob/main/fig2_POR_N/fig2_POR_N.png?raw=true)
+
+- [Figure 3: mOTUs Abundance Profiles](https://treeprofiler_ex4.cgmlab.org/). Visualization of the mOTUs reference taxonomy tree with 124,295 leaves annotated with 51 habitat-specific abundance profiles. 
+
+![TreeProfiler motus overview](https://github.com/dengzq1234/treeprofiler_paper/blob/main/fig3_motus_full_habitat/fig3_motus_full_habitat.png?raw=true)
 
 ## Key Features:
 - Automated Annotation that integrates metadata into phylogenetic tree, and summarizes annotation in internal nodes, including:
@@ -17,8 +32,6 @@ TreeProfiler is a command line tool designed to automate the annotation of large
   - Phylogenetic Signal Delta Statistic]
   - Lineage Specificity Analysis
 
-## Demo Animation
-![TreeProfiler Demo](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/motus_habitat_full_render.gif?raw=true)
 
 ## Documentation and Citation
 The official documentation of TreeProfiler is in https://dengzq1234.github.io/TreeProfiler/ where provides detailed instructions with examples.
@@ -38,20 +51,16 @@ bioRxiv (2023) doi: 10.1101/2023.09.21.558621
 # Table of Contents
 
 - [TreeProfiler Overview](#treeprofiler-overview)
+- [Gallery of Interactive Examples](#gallery-of-interactive-examples)
 - [Installation](#installation)
   - [Quick Install via pip with Conda](#quick-install-via-pip-with-conda)
   - [Quick Start with Example Dataset](#quick-start-with-example-dataset)
   - [Install Latest TreeProfiler for Local Development](#install-latest-treeprofiler-for-local-development)
-
 - [Basic Usage](#basic-usage)
   - [Input Files](#input-files)
   - [Using TreeProfiler via Command Line](#using-treeprofiler-via-command-line)
   - [Using TreeProfiler via GUI Interface](#using-treeprofiler-via-gui-interface)
-
 - [Documentation](#documentation)
-
-- [Gallery of Examples](#gallery-of-examples)
-
 - [Getting Support and Issues](#getting-support-and-issues)
 
 # Installation
@@ -215,19 +224,6 @@ Result visualization demo
 We provided detailed step-by-step instructions covering most of the options with examples in the official documentation, and is available in: 
 
 https://dengzq1234.github.io/TreeProfiler/
-
-# Gallery of examples
-Here is some examples figure from treeprofiler paper to demonstrate the scalbility and use case. For full code and figure reproduction instructions, please check at https://github.com/dengzq1234/treeprofiler_paper.
-
-General overview (Online interactive session in [Figure 1A–E Layout Demos](http://138.4.139.25:5030/) and [Figure 1F–H Trait Types & Features](http://138.4.139.25:5031/))
-![TreeProfiler general overview](https://github.com/dengzq1234/treeprofiler_paper/blob/main/fig1_general/fig1_general.png?raw=true)
-
-Visualization of POR_N family phylogenetic tree across 13,297 sequences with taxonomic annotation, KEGG KO profiling and Pfam domain architectures.
-(Online interactive session in [Figure 2: POR_N Domain Family](http://138.4.139.25:5032/))
-![TreeProfiler emapper  overview](https://github.com/dengzq1234/treeprofiler_paper/blob/main/fig2_POR_N/fig2_POR_N.png?raw=true)
-
-Visualization of the mOTUs reference taxonomy tree with 124,295 leaves annotated with 51 habitat-specific abundance profiles(Online interactive session in [Figure 3: mOTUs Abundance Profiles](http://138.4.139.25:5033/))
-![TreeProfiler motus overview](https://github.com/dengzq1234/treeprofiler_paper/blob/main/fig3_motus_full_habitat/fig3_motus_full_habitat.png?raw=true)
 
 # Getting support and issues
 For bug reports, feature requests and general discussion, use
