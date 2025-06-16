@@ -1,7 +1,20 @@
 # TreeProfiler Overview
 TreeProfiler is a command line tool designed to automate the annotation of large phylogenetic trees with corresponding metadata. It also facilitates the visual exploration of these annotations as phylogenetic profiles, making it a powerful resource for researchers working with complex biological data.
 
-## Demo Animation
+# Key Features:
+- Automated Annotation that integrates metadata into phylogenetic tree, and summarizes annotation in internal nodes, including:
+  - Categorical/Numerical metadata in TSV/CSV format
+  - Taxonomic Annotation of NCBI/GTDB taxonomy database
+  - Functional Annotation from eggnog-mapper output
+  - Domain annotation from pfam/smart
+  - Multiple Sequence Alignment annotation
+- Visual Exploration that allows for the detailed examination of annotated trees, aiding in the interpretation and presentation of data.
+- Analytic Methods for computing analysis from leaf nodes:
+  - Ancestral Character Reconstruction for both discrete and continuous traits.
+  - Phylogenetic Signal Delta Statistic]
+  - Lineage Specificity Analysis
+
+# Demo Animation
 ![TreeProfiler Demo](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/motus_habitat_full_render.gif?raw=true)
 
 # Gallery of Interactive Examples
@@ -19,21 +32,7 @@ Here is some examples figure from treeprofiler paper to demonstrate the scalbili
 
 ![TreeProfiler motus overview](https://github.com/dengzq1234/treeprofiler_paper/blob/main/fig3_motus_full_habitat/fig3_motus_full_habitat.png?raw=true)
 
-## Key Features:
-- Automated Annotation that integrates metadata into phylogenetic tree, and summarizes annotation in internal nodes, including:
-  - Categorical/Numerical metadata in TSV/CSV format
-  - Taxonomic Annotation of NCBI/GTDB taxonomy database
-  - Functional Annotation from eggnog-mapper output
-  - Domain annotation from pfam/smart
-  - Multiple Sequence Alignment annotation
-- Visual Exploration that allows for the detailed examination of annotated trees, aiding in the interpretation and presentation of data.
-- Analytic Methods for computing analysis from leaf nodes:
-  - Ancestral Character Reconstruction for both discrete and continuous traits.
-  - Phylogenetic Signal Delta Statistic]
-  - Lineage Specificity Analysis
-
-
-## Documentation and Citation
+# Documentation and Citation
 The official documentation of TreeProfiler is in https://dengzq1234.github.io/TreeProfiler/ where provides detailed instructions with examples.
 
 If you have any doubts, please drop a line in issue or contact https://x.com/deng_ziqi
@@ -43,15 +42,16 @@ Full manuscript of TreeProfiler is in https://doi.org/10.1101/2023.09.21.558621
 If you use TreeProfiler, please cite:
 
 ```
-Ziqi Deng, Ana Hernández-Plaza, Jaime Huerta-Cepas. 
+Ziqi Deng, Ana Hernández-Plaza, Adrian Arellano Davin, Jaime Huerta-Cepas. 
 "TreeProfiler: A command-line tool for computing and visualizing phylogenetic profiles against large trees"  
 bioRxiv (2023) doi: 10.1101/2023.09.21.558621
 ```
 
 # Table of Contents
-
 - [TreeProfiler Overview](#treeprofiler-overview)
+- [Key Features](#key-features)
 - [Gallery of Interactive Examples](#gallery-of-interactive-examples)
+- [Documentation and Citation](#documentation-and-citation)
 - [Installation](#installation)
   - [Quick Install via pip with Conda](#quick-install-via-pip-with-conda)
   - [Quick Start with Example Dataset](#quick-start-with-example-dataset)
