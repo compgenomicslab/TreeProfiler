@@ -1,6 +1,21 @@
 # TreeProfiler Overview
 TreeProfiler is a command line tool designed to automate the annotation of large phylogenetic trees with corresponding metadata. It also facilitates the visual exploration of these annotations as phylogenetic profiles, making it a powerful resource for researchers working with complex biological data.
 
+# Table of Contents
+- [TreeProfiler Overview](#treeprofiler-overview)
+- [Key Features](#key-features)
+- [Gallery of Interactive Examples](#gallery-of-interactive-examples)
+  - [Demo Animation](#demo-animation)
+  - [Interactive Examples](#interactive-exampels)
+- [Documentation and Citation](#documentation-and-citation)
+- [Installation](#installation)
+- [Basic Usage](#basic-usage)
+  - [Input Files](#input-files)
+  - [Using TreeProfiler via Command Line](#using-treeprofiler-via-command-line)
+  - [Using TreeProfiler via GUI Interface](#using-treeprofiler-via-gui-interface)
+- [Full Tutorial](#full-tutorial)
+- [Getting Support and Issues](#getting-support-and-issues)
+
 # Key Features:
 - Automated Annotation that integrates metadata into phylogenetic tree, and summarizes annotation in internal nodes, including:
   - Categorical/Numerical metadata in TSV/CSV format
@@ -11,15 +26,17 @@ TreeProfiler is a command line tool designed to automate the annotation of large
 - Visual Exploration that allows for the detailed examination of annotated trees, aiding in the interpretation and presentation of data.
 - Analytic Methods for computing analysis from leaf nodes:
   - Ancestral Character Reconstruction for both discrete and continuous traits.
-  - Phylogenetic Signal Delta Statistic]
+  - Phylogenetic Signal Delta Statistic
   - Lineage Specificity Analysis
 
-# Demo Animation
-![TreeProfiler Demo](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/motus_habitat_full_render.gif?raw=true)
 
 # Gallery of Interactive Examples
 Here is some examples figure from treeprofiler paper to demonstrate the scalbility and use case. For full code and figure reproduction instructions, please check at https://github.com/dengzq1234/treeprofiler_paper.
 
+## Demo Animation
+![TreeProfiler Demo](https://github.com/dengzq1234/treeprofiler_gallery/blob/main/motus_habitat_full_render.gif?raw=true)
+
+## Interactive Examples
 - [Figure 1A–E Layout Demos](https://treeprofiler_ex1.cgmlab.org/) and [Figure 1F–H Trait Types & Features](https://treeprofiler_ex2.cgmlab.org/). General overview. 
 
 ![TreeProfiler general overview](https://github.com/dengzq1234/treeprofiler_paper/blob/main/fig1_general/fig1_general.png?raw=true)
@@ -46,22 +63,6 @@ Ziqi Deng, Ana Hernández-Plaza, Adrian Arellano Davin, Jaime Huerta-Cepas.
 "TreeProfiler: A command-line tool for computing and visualizing phylogenetic profiles against large trees"  
 bioRxiv (2023) doi: 10.1101/2023.09.21.558621
 ```
-
-# Table of Contents
-- [TreeProfiler Overview](#treeprofiler-overview)
-- [Key Features](#key-features)
-- [Gallery of Interactive Examples](#gallery-of-interactive-examples)
-- [Documentation and Citation](#documentation-and-citation)
-- [Installation](#installation)
-  - [Quick Install via pip with Conda](#quick-install-via-pip-with-conda)
-  - [Quick Start with Example Dataset](#quick-start-with-example-dataset)
-  - [Install Latest TreeProfiler for Local Development](#install-latest-treeprofiler-for-local-development)
-- [Basic Usage](#basic-usage)
-  - [Input Files](#input-files)
-  - [Using TreeProfiler via Command Line](#using-treeprofiler-via-command-line)
-  - [Using TreeProfiler via GUI Interface](#using-treeprofiler-via-gui-interface)
-- [Documentation](#documentation)
-- [Getting Support and Issues](#getting-support-and-issues)
 
 # Installation
 ## Quick install via pip with conda
@@ -220,7 +221,7 @@ Result visualization demo
 ![TreeProfiler desktop result overview](https://raw.githubusercontent.com/dengzq1234/treeprofiler_gallery/refs/heads/main/treeprofiler_desktop_emapper.png)
 
 
-# Documentation
+# Full Tutorial
 We provided detailed step-by-step instructions covering most of the options with examples in the official documentation, and is available in: 
 
 https://dengzq1234.github.io/TreeProfiler/
